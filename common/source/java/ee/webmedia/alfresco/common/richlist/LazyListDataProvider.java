@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -12,7 +13,8 @@ import java.util.Set;
 import org.alfresco.web.data.IDataContainer;
 import org.alfresco.web.data.QuickSort;
 import org.alfresco.web.data.Sort;
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.util.Assert;
@@ -25,7 +27,6 @@ public abstract class LazyListDataProvider<Key, Value> implements Serializable {
 
     private static final Log LOG = LogFactory.getLog(LazyListDataProvider.class);
 
-    // TODO: make configurable?
     private static final int MIN_SLICE_SIZE = 100;
     protected List<Key> objectKeys;
     private int loadedRowsBeginIndex = -1;
@@ -104,8 +105,7 @@ public abstract class LazyListDataProvider<Key, Value> implements Serializable {
         loadedRowsEndIndex = pageEndIndex + 1;
         if (pageEndIndex < 0 || pageEndIndex > getListSize()) {
             loadedRowsEndIndex = getListSize();
-        }
-        else if (pageEndIndex - pageStartIndex < MIN_SLICE_SIZE) {
+        } else if (pageEndIndex - pageStartIndex < MIN_SLICE_SIZE) {
             loadedRowsEndIndex = pageStartIndex + MIN_SLICE_SIZE;
         }
         if (loadedRowsEndIndex > getListSize()) {
@@ -118,7 +118,6 @@ public abstract class LazyListDataProvider<Key, Value> implements Serializable {
         loadedRows = loadData(nodesToLoad);
         int missingNodesCount = nodesToLoad.size() - loadedRows.size();
         if (missingNodesCount > 0) {
-            @SuppressWarnings("unchecked")
             Collection<Key> missingNodes = CollectionUtils.subtract(nodesToLoad, loadedRows.keySet());
             objectKeys.removeAll(missingNodes);
             missingNodesCount += loadPage(pageStartIndex, pageEndIndex);
@@ -150,10 +149,46 @@ public abstract class LazyListDataProvider<Key, Value> implements Serializable {
     }
 
     public Object getRow(int index) {
-        Assert.isTrue(index >= loadedRowsBeginIndex && index < loadedRowsEndIndex, "Row with index=" + index + " is not loaded, call loadSlice for loading required data!");
+        validateIndex(index);
         Key rowRef = objectKeys.get(index);
-        Assert.isTrue(loadedRows.containsKey(rowRef), "Row for nodeRef=" + rowRef + " is not loaded, use loadPage to load required rows!");
+        validateKey(rowRef);
         return loadedRows.get(rowRef);
+    }
+
+    private void validateIndex(int index) {
+        if (!(index >= loadedRowsBeginIndex && index < loadedRowsEndIndex)) {
+            throwIllegalArgument("Row with index=" + index + " is not loaded, call loadSlice for loading required data!");
+        }
+    }
+
+    private void validateKey(Key rowRef) {
+        if (!loadedRows.containsKey(rowRef)) {
+            throwIllegalArgument("Row for nodeRef=" + rowRef + " is not loaded, use loadPage to load required rows!");
+        }
+    }
+
+    private String throwIllegalArgument(String msg) {
+        msg += "\n";
+        msg += "loadedRowsBeginIndex = " + loadedRowsBeginIndex + "\n";
+        msg += "loadedRowsEndIndex = " + loadedRowsEndIndex + "\n";
+        msg += getFieldInfo("objectKeys", objectKeys);
+        msg += getFieldInfo("loadedRows", loadedRows);
+        msg += "class = " + this.getClass().getName();
+        Set<String> jspPages = new HashSet<>();
+        for (StackTraceElement ste : Thread.currentThread().getStackTrace()) {
+            if (StringUtils.contains(ste.getFileName(), "jsp")) {
+                jspPages.add(ste.toString());
+            }
+        }
+        if (!jspPages.isEmpty()) {
+            msg += "\nassociated jsps = " + StringUtils.join(jspPages, "; ");
+        }
+        throw new IllegalArgumentException(msg);
+    }
+
+    private String getFieldInfo(String fieldName, Object field) {
+        String msg = fieldName + " " + ((field == null) ? " is null" : "contains " + CollectionUtils.size(field) + " elements");
+        return msg + "\n";
     }
 
     protected boolean checkAndSetOrderedList(List<Key> orderedList) {

@@ -3,6 +3,8 @@ package ee.webmedia.alfresco.utils;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentConfigService;
 
 import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -22,6 +24,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 
+import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.Field;
@@ -368,6 +371,17 @@ public class TextUtil {
                     + string.substring(pos + toReplace.length(), string.length());
         }
         return string;
+    }
+
+    /**
+     * @return decoded url using {@link ee.webmedia.alfresco.app.AppConstants#CHARSET} as encoding or original input if decoding fails
+     */
+    public static String decodeUrl(String str) {
+        try {
+            return URLDecoder.decode(str, AppConstants.CHARSET);
+        } catch (UnsupportedEncodingException e) {
+            return str;
+        }
     }
 
 }

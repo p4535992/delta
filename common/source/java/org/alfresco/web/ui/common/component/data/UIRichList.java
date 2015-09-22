@@ -188,7 +188,7 @@ public class UIRichList extends UIComponentBase implements IDataContainer, Seria
             if (bookmarksMap != null) {
                 bookmark = bookmarksMap.get(listId);
             } else {
-                bookmarksMap = new HashMap<String, PagedListBookmark>();
+                bookmarksMap = new HashMap<>();
                 dialogBean.addCustomAttribute(RICH_LIST_PAGE_BOOKMARKS, bookmarksMap);
             }
             if (bookmark == null) {
@@ -640,7 +640,9 @@ public class UIRichList extends UIComponentBase implements IDataContainer, Seria
             maxRowIndex = (rowCount - 1);
         }
         if (!ignoreRefreshOnBind && getRefreshOnBind()) {
-            int missingRowsCount = getDataModel().loadSlice(rowIndex < 0 ? 0 : rowIndex, maxRowIndex < 0 ? -1 : maxRowIndex + 1);
+            int fromRow = rowIndex < 0 ? 0 : rowIndex;
+            int toRow = maxRowIndex < 0 ? -1 : maxRowIndex + 1;
+            int missingRowsCount = getDataModel().loadSlice(fromRow, toRow);
             if (maxRowIndex > 0) {
                 maxRowIndex -= missingRowsCount;
             }
@@ -738,7 +740,7 @@ public class UIRichList extends UIComponentBase implements IDataContainer, Seria
     // Private data
 
     /** map of available IRichListRenderer instances */
-    private final Map<String, IRichListRenderer> viewRenderers = new HashMap<String, IRichListRenderer>(4, 1.0f);
+    private final Map<String, IRichListRenderer> viewRenderers = new HashMap<>(4, 1.0f);
 
     // component state
     private int currentPage = 0;
@@ -896,7 +898,7 @@ public class UIRichList extends UIComponentBase implements IDataContainer, Seria
     }
 
     private List<UIColumn> getColumns(List<UIComponent> children) {
-        List<UIColumn> columns = new ArrayList<UIColumn>(children.size());
+        List<UIColumn> columns = new ArrayList<>(children.size());
         for (UIComponent child : children)
         {
             if (child instanceof UIColumn)
@@ -1239,7 +1241,7 @@ public class UIRichList extends UIComponentBase implements IDataContainer, Seria
      * @param context is the current faces context.
      * @param processAction specifies a JSF phase: decode, validate or update.
      */
-    private void processColumnChildren(FacesContext context, int processAction)
+    private void processColumnChildrenInternal(FacesContext context, int processAction)
     {
         /*
          * int first = getFirst();
@@ -1286,6 +1288,24 @@ public class UIRichList extends UIComponentBase implements IDataContainer, Seria
                     }
                 }
             }
+        }
+    }
+
+    // The purpose of this method is to investigate task DELTA-844.
+    // After the task is fixed remove this method and rename processColumnChildrenInternal -> processColumnChildren
+    private void processColumnChildren(FacesContext context, int processAction)
+    {
+        try {
+            processColumnChildrenInternal(context, processAction);
+        } catch (IllegalArgumentException e) {
+            String state = "currentPage = " + currentPage + "\n";
+            state += "dataModel = " + dataModel.getClass().getName() + "\n";
+            state += "pageSize = " + pageSize + "\n";
+            state += "rowIndex = " + rowIndex + "\n";
+            state += "maxRowIndex = " + maxRowIndex + "\n";
+            state += "pageCount = " + pageCount + "\n";
+            logger.warn("Rendering failed: " + e.getMessage() + "\nUIRichList state:\n" + state);
+            throw e;
         }
     }
 

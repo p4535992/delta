@@ -35,7 +35,7 @@
 
 </a:panel>
 
-<a:panel id="additional-tasks-panel" styleClass="panel-100 with-pager" label="#{MyTasksBean.additionalListTitle}" progressive="true" rendered="#{not empty MyTasksBean.additionalTasks}" >
+<a:panel id="additional-tasks-panel" styleClass="panel-100 with-pager" label="#{MyTasksBean.additionalListTitle}" progressive="true" rendered="#{MyTasksBean.containsAdditionalTasks}" >
    <%-- Additional List --%>
    <a:booleanEvaluator value="#{not MyTasksBean.lessColumns}">
       <a:richList id="additionalTaskList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"

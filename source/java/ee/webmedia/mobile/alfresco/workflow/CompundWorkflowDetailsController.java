@@ -14,6 +14,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -132,7 +133,7 @@ public class CompundWorkflowDetailsController extends AbstractCompoundWorkflowCo
             return "redirect:/m/tasks";
         }
         List<ee.webmedia.alfresco.workflow.service.Task> myTasks = workflowService.getMyTasksInProgress(Arrays.asList(compoundWorkflow.getNodeRef()));
-        Map<String, Task> myTasksMap = new HashMap<>();
+        Map<String, Task> myTasksMap = new LinkedHashMap<>(); // Must preserve insertion order
         Map<NodeRef, List<Pair<String, String>>> taskOutcomeButtons = new HashMap<>();
         SigningFlowContainer signingFlow = null;
         SignatureTask signatureTask = null;

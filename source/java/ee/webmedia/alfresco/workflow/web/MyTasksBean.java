@@ -60,6 +60,7 @@ public class MyTasksBean extends BaseDialogBean {
     private TaskAndDocumentDataProvider confirmationTasks;
     private TaskAndDocumentDataProvider additionalTasks;
     private long lastLoadMillis = 0;
+    private boolean containsAdditionalTasks = false;
 
     private transient ParametersService parametersService;
     private transient DocumentService documentService;
@@ -119,6 +120,7 @@ public class MyTasksBean extends BaseDialogBean {
         loadTasksWithoutOverdueCondition();
         additionalTasks = groupAssignmentTasks;
         additionalListTitle = MessageUtil.getMessage("task_list_group_assignment_title");
+        containsAdditionalTasks = additionalTasks != null && additionalTasks.getListSize() > 0;
         specificList = LIST_ASSIGNMENT;
         loadTasksWithoutOverdueCondition();
     }
@@ -222,6 +224,10 @@ public class MyTasksBean extends BaseDialogBean {
 
     public TaskAndDocumentDataProvider getAdditionalTasks() {
         return additionalTasks;
+    }
+
+    public boolean isContainsAdditionalTasks() {
+        return containsAdditionalTasks;
     }
 
     public TaskAndDocumentDataProvider getLinkedReviewTasks() {
@@ -403,6 +409,7 @@ public class MyTasksBean extends BaseDialogBean {
         additionalTasks = null;
         lastLoadMillis = 0;
         hidePrimaryList = false;
+        containsAdditionalTasks = false;
     }
 
     protected void loadTasksWithoutOverdueCondition() {
