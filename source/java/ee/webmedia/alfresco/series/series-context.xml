@@ -10,17 +10,10 @@
       </property>
    </bean>
 
-   <bean id="seriesBundleBootstrap" class="org.alfresco.web.app.ResourceBundleBootstrap">
+   <bean id="seriesResourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee.webmedia.alfresco.series.web.series-webclient</value>
-         </list>
-      </property>
-   </bean>
-
-   <bean class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
-      <property name="resourceBundles">
-         <list>
             <value>ee.webmedia.alfresco.series.service.series-log</value>
          </list>
       </property>
@@ -57,11 +50,13 @@
       <property name="dictionaryService" ref="DictionaryService" />
       <property name="nodeService" ref="NodeService" />
       <property name="generalService" ref="GeneralService" />
-      <property name="docLogService" ref="DocumentLogService" />
       <property name="appLogService" ref="LogService" />
       <property name="userService" ref="UserService" />
       <property name="privilegeService" ref="PrivilegeService" />
+      <property name="bulkLoadNodeService" ref="BulkLoadNodeService" />
+      <property name="applicationConstantsBean" ref="applicationConstantsBean" />
       <!--  XXX: property:volumeService - retrieved from applicationContext to avoid circular dependency between VolumeService and SeriesService      -->
+      <property name="seriesCache" ref="seriesCache" />
    </bean>
 
    <bean id="SeriesService" class="org.springframework.aop.framework.ProxyFactoryBean">

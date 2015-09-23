@@ -23,7 +23,7 @@ import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
 /**
- *         Refactored from DocumentServiceImpl.
+ * Refactored from DocumentServiceImpl.
  */
 public abstract class AbstractFavoritesServiceImpl implements FavoritesService {
     protected NodeService nodeService;
@@ -118,7 +118,7 @@ public abstract class AbstractFavoritesServiceImpl implements FavoritesService {
                 favDir = favDirs.get(0).getChildRef();
             }
             nodeService.createAssociation(favDir, nodeRef, favoriteAssocQName);
-            if (updateMenu) {            
+            if (updateMenu) {
                 menuService.process(BeanHelper.getMenuBean().getMenu(), false, true);
             }
         } else {

@@ -9,7 +9,7 @@
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<h:panelGroup rendered="#{DocumentDialogHelperBean.inWorkspace and !DocumentDialogHelperBean.inEditMode}">
+<h:panelGroup id="document-dynamic-dialog-workflow-block" rendered="#{DocumentDialogHelperBean.inWorkspace and !DocumentDialogHelperBean.inEditMode}">
    <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/workflow-block.jsp" />
 </h:panelGroup>
 <h:panelGroup id="dialog-modal-container" binding="#{DocumentDynamicDialog.modalContainer}" />

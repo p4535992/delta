@@ -191,7 +191,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         }
         NodeRef documentRef = new NodeRef(ActionUtil.getParam(event, PARAM_DOCUMENT_NODE_REF));
         try {
-            final String wordFileDisplayName = getDocumentTemplateService().populateTemplate(documentRef, overwriteGranted);
+            String wordFileDisplayName = getDocumentTemplateService().populateTemplate(documentRef, overwriteGranted);
             MessageUtil.addInfoMessage("document_createWordFile_success", wordFileDisplayName);
         } catch (ExistingFileFromTemplateException e) {
             Map<String, String> params = new HashMap<String, String>(2);
@@ -673,6 +673,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
             // needed for file-block
             final Serializable updatedStatus = getNodeService().getProperty(getDocumentDialogHelperBean().getNodeRef(), DocumentCommonModel.Props.DOC_STATUS);
             getDocumentDialogHelperBean().getProps().put(DocumentCommonModel.Props.DOC_STATUS.toString(), updatedStatus);
+            BeanHelper.getWorkflowBlockBean().clearRequestCache();
         } catch (InvalidNodeRefException e) {
             final FacesContext context = FacesContext.getCurrentInstance();
             MessageUtil.addErrorMessage(context, "document_registerDoc_error_docDeleted");
@@ -683,12 +684,11 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     @Override
     public List<DialogButtonConfig> getAdditionalButtons() {
         List<DialogButtonConfig> buttons = new ArrayList<DialogButtonConfig>(1);
-        RegisterDocumentEvaluator registrationEval = new RegisterDocumentEvaluator();
         if (metadataBlockBean.isInEditMode() &&
                 (metadataBlockBean.getDocumentType().getId().equals(DocumentSubtypeModel.Types.LICENCE)
                         || metadataBlockBean.getDocumentType().getId().equals(DocumentSubtypeModel.Types.INCOMING_LETTER)
                         || metadataBlockBean.getDocumentType().getId().equals(DocumentSubtypeModel.Types.INCOMING_LETTER_MV))
-                && registrationEval.evaluateAdditionalButton(metadataBlockBean.getDocument())) {
+                        && RegisterDocumentEvaluator.evaluateAdditionalButton(metadataBlockBean.getDocument())) {
             if (searchBlockBean.isShowSimilarDocumentsBlock()) {
                 buttons.add(new DialogButtonConfig("documentRegisterButton", null, "document_registerDoc_continue",
                         "#{DocumentDialog.saveAndRegisterContinue}", "false", null));

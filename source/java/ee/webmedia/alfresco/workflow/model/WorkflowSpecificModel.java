@@ -34,6 +34,7 @@ public interface WorkflowSpecificModel {
         /** Kooskõlastamiseks */
         QName REVIEW_WORKFLOW = QName.createQName(URI, "reviewWorkflow");
         /** Asutuseüleseks kooskõlastamiseks */
+        @Deprecated
         QName EXTERNAL_REVIEW_WORKFLOW = QName.createQName(URI, "externalReviewWorkflow");
         /** Allkirjastamiseks */
         QName SIGNATURE_WORKFLOW = QName.createQName(URI, "signatureWorkflow");
@@ -56,6 +57,7 @@ public interface WorkflowSpecificModel {
         QName OPINION_TASK = QName.createQName(URI, "opinionTask");
         /** Kooskõlastamiseks */
         QName REVIEW_TASK = QName.createQName(URI, "reviewTask");
+        @Deprecated
         QName EXTERNAL_REVIEW_TASK = QName.createQName(URI, "externalReviewTask");
         /** Kooskõlastamine teisest asutusest */
         QName LINKED_REVIEW_TASK = QName.createQName(URI, "linkedReviewTask");
@@ -157,6 +159,7 @@ public interface WorkflowSpecificModel {
         QName ORIGINAL_TASK_OBJECT_URL = QName.createQName(URI, "originalTaskObjectUrl");
 
         QName COMPOUND_WORKFLOW_ID = QName.createQName(URI, "compoundWorkflowId");
+        QName COMPOUND_WORKFLOW_STORE_ID = QName.createQName(URI, "compoundWorkflowStoreId");
     }
 
     enum SignatureTaskOutcome {

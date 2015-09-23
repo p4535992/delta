@@ -38,7 +38,6 @@ public class ApplicationServiceImpl implements ApplicationService, InitializingB
     private String logoutRedirectUrl;
     private String serverUrl;
     private File logoFile;
-    private File jumploaderFile;
     private String logoMimeType;
 
     // Cache parameter values here, because these are accessed very frequently
@@ -144,10 +143,6 @@ public class ApplicationServiceImpl implements ApplicationService, InitializingB
         this.logoFile = StringUtils.isBlank(logoFile) ? null : new File(logoFile);
     }
 
-    public void setJumploaderFile(String jumploaderFile) {
-        this.jumploaderFile = StringUtils.isBlank(jumploaderFile) ? null : new File(jumploaderFile);
-    }
-
     @Override
     public String getHeaderText() {
         if (headerText == null) {
@@ -189,28 +184,6 @@ public class ApplicationServiceImpl implements ApplicationService, InitializingB
             }, AuthenticationUtil.getSystemUserName());
         }
         return mDeltaFooterText;
-    }
-
-    @Override
-    public String getJumploaderUrl() {
-        if (jumploaderFile == null) {
-            return "/applet/jumploader_z.jar";
-        }
-        return "/n/jumploader";
-    }
-
-    @Override
-    public Pair<byte[], String> getJumploaderApplet() {
-        if (jumploaderFile == null) {
-            return null;
-        }
-        try {
-            byte[] appletBytes = FileUtils.readFileToByteArray(jumploaderFile);
-            return Pair.newInstance(appletBytes, "application/java-archive");
-        } catch (IOException e) {
-            LOG.warn("Error reading jumploader applet file '" + jumploaderFile.getPath() + "': " + e.getMessage(), e);
-            return null;
-        }
     }
 
     @Override

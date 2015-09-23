@@ -24,7 +24,7 @@ public class ProgressTracker implements Serializable {
         stepStartTime = thisRunStartTime;
     }
 
-    public String step(long i) {
+    public synchronized String step(long i) {
         stepCompletedSize += i;
         thisRunCompletedSize += i;
         completedSize += i;

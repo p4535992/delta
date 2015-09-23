@@ -1,20 +1,20 @@
 /*
- * Copyright (C) 2005-2007 Alfresco Software Limited.
+ * Copyright (C) 2005-2013 Alfresco Software Limited.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
-
- * This program is distributed in the hope that it will be useful,
+ * This file is part of Alfresco
+ *
+ * Alfresco is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Alfresco is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
-
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with Alfresco. If not, see <http://www.gnu.org/licenses/>.
  * As a special exception to the terms and conditions of version 2.0 of 
  * the GPL, you may redistribute this Program in connection with Free/Libre 
  * and Open Source Software ("FLOSS") applications as described in Alfresco's 
@@ -25,7 +25,9 @@
 package org.alfresco.repo.webdav;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.io.Writer;
+import java.net.SocketException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -36,22 +38,27 @@ import java.util.StringTokenizer;
 import javax.servlet.http.HttpServletResponse;
 
 import org.alfresco.i18n.I18NUtil;
+import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.filestore.FileContentReader;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
+import org.alfresco.repo.web.util.HttpRangeProcessor;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.model.FileNotFoundException;
+import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.ContentReader;
 import org.alfresco.service.cmr.repository.MimetypeService;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.repository.Path;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.cmr.repository.datatype.TypeConverter;
-import org.alfresco.service.transaction.TransactionService;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.webdav.WebDAVCustomHelper;
+import org.alfresco.service.namespace.QName;
 
 /**
  * Implements the WebDAV GET method
@@ -62,12 +69,15 @@ public class GetMethod extends WebDAVMethod
 {
     // Request parameters
 
+    private static final String RANGE_HEADER_UNIT_SPECIFIER = "bytes=";
+    private static final int MAX_RECURSE_ERROR_STACK = 20;
     private ArrayList ifMatchTags = null;
     private ArrayList ifNoneMatchTags = null;
     private Date m_ifModifiedSince = null;
     private Date m_ifUnModifiedSince = null;
 
     protected boolean m_returnContent = true;
+    private String byteRanges;
 
     /**
      * Default constructor
@@ -89,7 +99,11 @@ public class GetMethod extends WebDAVMethod
 
         if (strRange != null && strRange.length() > 0)
         {
-            logger.warn("Range header (" + strRange + ") not supported");
+            byteRanges = strRange;
+            if (logger.isDebugEnabled())
+            {
+                logger.debug("Range header supplied: " + byteRanges);
+            }
         }
 
         // Capture all the If headers, process later
@@ -169,6 +183,13 @@ public class GetMethod extends WebDAVMethod
         String path = getPath();
         String servletPath = getServletPath();
 
+        if (!m_returnContent)
+        {
+            // There are multiple cases where no content is sent (due to a HEAD request).
+            // All of them require that the content length is set appropriately.
+            m_response.setContentLength(0);
+        }
+
         FileInfo nodeInfo = null;
         try
         {
@@ -178,15 +199,50 @@ public class GetMethod extends WebDAVMethod
         {
             throw new WebDAVServerException(HttpServletResponse.SC_NOT_FOUND, e);
         }
-        
+        FileInfo realNodeInfo = nodeInfo;
+
+        // ALF-12008: Due to Windows Explorer's URL concatenation behaviour, we must present links as shortcuts to the real URL, rather than direct hrefs
+        // This is at least consistent with the way the CIFS server handles links. See org.alfresco.filesys.repo.ContentDiskDriver.openFile().
+        if (realNodeInfo.isLink())
+        {
+            Path pathToNode = getNodeService().getPath(nodeInfo.getLinkNodeRef());
+            if (pathToNode.size() > 2)
+            {
+                    pathToNode = pathToNode.subPath(2, pathToNode.size() -1);
+                }
+
+            String rootURL = getDAVHelper().getURLForPath(m_request, pathToNode.toDisplayPath(getNodeService(), BeanHelper.getPermissionService()), true);
+            if (rootURL.endsWith(WebDAVHelper.PathSeperator) == false)
+            {
+                rootURL = rootURL + WebDAVHelper.PathSeperator;
+            }
+
+            String fname = (String) getNodeService().getProperty(nodeInfo.getLinkNodeRef(), ContentModel.PROP_NAME);
+            StringBuilder urlStr = new StringBuilder(200);
+            urlStr.append("[InternetShortcut]\r\n");
+            urlStr.append("URL=file://");
+            urlStr.append(m_request.getServerName());
+            // Only append the port if it is non-default for compatibility with XP
+            int port = m_request.getServerPort();
+            if (port != 80)
+            {
+                urlStr.append(":").append(port);
+            }
+            urlStr.append(rootURL).append(WebDAVHelper.encodeURL(fname, m_userAgent));
+            urlStr.append("\r\n");
+
+            m_response.setHeader(WebDAV.HEADER_CONTENT_TYPE, "text/plain; charset=ISO-8859-1");
+            m_response.setHeader(WebDAV.HEADER_CONTENT_LENGTH, String.valueOf(urlStr.length()));
+            m_response.getWriter().write(urlStr.toString());
+        }
         // Check if the node is a folder
-        if (nodeInfo.isFolder())
+        else if (realNodeInfo.isFolder())
         {
             // is content required
             if (!m_returnContent)
             {
-                // it is a folder and no content is required
-                throw new WebDAVServerException(HttpServletResponse.SC_BAD_REQUEST);
+                // ALF-7883 fix, HEAD for collection (see http://www.webdav.org/specs/rfc2518.html#rfc.section.8.4)
+                return;
             }
             
             // Generate a folder listing
@@ -198,7 +254,7 @@ public class GetMethod extends WebDAVMethod
             NodeRef pathNodeRef = nodeInfo.getNodeRef();
             // Return the node details, and content if requested, check that the node passes the pre-conditions
 
-            checkPreConditions(nodeInfo);
+            checkPreConditions(realNodeInfo);
 
             // Build the response header
             m_response.setHeader(WebDAV.HEADER_ETAG, getDAVHelper().makeQuotedETag(pathNodeRef));
@@ -214,42 +270,127 @@ public class GetMethod extends WebDAVMethod
             // Tundub, et järgnev header paneb asja toimima firefox'i jaoks, aga pole kindel, et see mõnda uut viga mõne IE või MS Office versiooniga ei tekita!
             // m_response.setHeader("Cache-control", "must-revalidate");
 
-            Date modifiedDate = nodeInfo.getModifiedDate();
+            Date modifiedDate = realNodeInfo.getModifiedDate();
             if (modifiedDate != null)
             {
                 long modDate = DefaultTypeConverter.INSTANCE.longValue(modifiedDate);
                 m_response.setHeader(WebDAV.HEADER_LAST_MODIFIED, WebDAV.formatHeaderDate(modDate));
             }
 
-            ContentReader reader = fileFolderService.getReader(nodeInfo.getNodeRef());
+            ContentReader reader = fileFolderService.getReader(realNodeInfo.getNodeRef());
             // ensure that we generate something, even if the content is missing
             reader = FileContentReader.getSafeContentReader(
                     (ContentReader) reader,
                     I18NUtil.getMessage(FileContentReader.MSG_MISSING_CONTENT),
-                    nodeInfo.getNodeRef(), reader);
+                    realNodeInfo.getNodeRef(), reader);
             // there is content associated with the node
             m_response.setHeader(WebDAV.HEADER_CONTENT_LENGTH, Long.toString(reader.getSize()));
             String guessedMimetype = BeanHelper.getMimetypeService().guessMimetype(nodeInfo.getName());
             m_response.setContentType(guessedMimetype);
             m_response.setCharacterEncoding(reader.getEncoding());
 
+            readContent(realNodeInfo, reader);
+        }
+    }
+
+
+    protected void readContent(FileInfo realNodeInfo, ContentReader reader) throws IOException,
+                WebDAVServerException
+    {
+        try
+        {
+            attemptReadContent(realNodeInfo, reader);
+        }
+        catch (final Throwable e)
+        {
+            boolean logAsError = true;
+            Throwable t = e;
+            // MNT-8989: Traverse the exception cause hierarchy, if we find a SocketException at fault,
+            // assume this is a dropped connection and do not log a stack trace.
+            int levels = 0;
+            while (t.getCause() != null)
+            {
+                if (t == t.getCause() || ++levels == MAX_RECURSE_ERROR_STACK)
+                {
+                    // Avoid infinite loops.
+                    break;
+                }
+                t = t.getCause();
+                if (t instanceof SocketException || t.getClass().getSimpleName().equals("ClientAbortException"))
+                {
+                    logAsError = false;
+                }
+            }
+
+            if (logAsError && logger.isErrorEnabled())
+            {
+                // Only log at ERROR level when not a SocketException as underlying cause.
+                logger.error("Error while reading content", e);
+            }
+            else if (logger.isDebugEnabled())
+            {
+                // Log other errors at DEBUG level.
+                logger.debug("Error while reading content", e);
+            }
+
+            // Note no cause parameter supplied - avoid logging stack trace elsewhere.
+            throw new WebDAVServerException(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    protected void attemptReadContent(FileInfo realNodeInfo, ContentReader reader)
+                throws IOException
+    {
+        if (byteRanges != null && byteRanges.startsWith(RANGE_HEADER_UNIT_SPECIFIER))
+        {
+            HttpRangeProcessor rangeProcessor = new HttpRangeProcessor(getContentService());
+            String userAgent = m_request.getHeader(WebDAV.HEADER_USER_AGENT);
+
             if (m_returnContent)
             {
-                final NodeRef parentRef = ((WebDAVCustomHelper) getDAVHelper()).getNodeService().getPrimaryParent(nodeInfo.getNodeRef()).getParentRef();
-                if (DocumentCommonModel.Types.DOCUMENT.equals(((WebDAVCustomHelper) getDAVHelper()).getNodeService().getType(parentRef))) {
-                    final String name = nodeInfo.getName();
-                    ((WebDAVCustomHelper) getDAVHelper()).getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
-                        @Override
-                        public Void execute() throws Throwable {
-                            ((WebDAVCustomHelper) getDAVHelper()).getDocumentLogService().addDocumentLog(
-                                    parentRef, MessageUtil.getMessage("file_opened", name));
-                            return null;
-                        }
-                    }, false, true);
-                }
+                rangeProcessor.processRange(
+                        m_response,
+                        reader,
+                        byteRanges.substring(6),
+                        realNodeInfo.getNodeRef(),
+                        ContentModel.PROP_CONTENT,
+                        reader.getMimetype(),
+                        userAgent);
+
+                // Log only if the first bytes are requested?
+                logFileOpened(realNodeInfo);
                 // copy the content to the response output stream
                 reader.getContent(m_response.getOutputStream());
             }
+        }
+        else
+        {
+                if (m_returnContent)
+                {
+                // there is content associated with the node
+                m_response.setHeader(WebDAV.HEADER_CONTENT_LENGTH, Long.toString(reader.getSize()));
+                m_response.setHeader(WebDAV.HEADER_CONTENT_TYPE, reader.getMimetype());
+
+                logFileOpened(realNodeInfo);
+
+                // copy the content to the response output stream
+                reader.getContent(m_response.getOutputStream());
+            }
+        }
+    }
+
+    private void logFileOpened(FileInfo realNodeInfo) {
+        final NodeRef parentRef = ((WebDAVCustomHelper) getDAVHelper()).getNodeService().getPrimaryParent(realNodeInfo.getNodeRef()).getParentRef();
+        if (DocumentCommonModel.Types.DOCUMENT.equals(((WebDAVCustomHelper) getDAVHelper()).getNodeService().getType(parentRef))) {
+            final String name = realNodeInfo.getName();
+            ((WebDAVCustomHelper) getDAVHelper()).getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
+                @Override
+                public Void execute() throws Throwable {
+                    ((WebDAVCustomHelper) getDAVHelper()).getDocumentLogService().addDocumentLog(
+                            parentRef, MessageUtil.getMessage("file_opened", name));
+                    return null;
+                }
+            }, false, true);
         }
     }
 
@@ -259,7 +400,7 @@ public class GetMethod extends WebDAVMethod
      * @param nodeInfo the node to check
      * @throws WebDAVServerException if a pre-condition is not met
      */
-    protected void checkPreConditions(FileInfo nodeInfo) throws WebDAVServerException
+    protected void checkPreConditions(FileInfo nodeInfo) throws Exception
     {
         // Make an etag for the node
 
@@ -277,6 +418,42 @@ public class GetMethod extends WebDAVMethod
             }
         }
 
+        FileInfo realNodeInfo = nodeInfo;
+
+        // ALF-12008: Due to Windows Explorer's URL concatenation behaviour, we must present links as shortcuts to the real URL, rather than direct hrefs
+        // This is at least consistent with the way the CIFS server handles links. See org.alfresco.filesys.repo.ContentDiskDriver.openFile().
+        if (realNodeInfo.isLink())
+        {
+            Path pathToNode = getNodeService().getPath(nodeInfo.getLinkNodeRef());
+            if (pathToNode.size() > 2)
+            {
+                pathToNode = pathToNode.subPath(2, pathToNode.size() -1);
+            }
+
+            String rootURL = getDAVHelper().getURLForPath(m_request, pathToNode.toDisplayPath(getNodeService(), BeanHelper.getPermissionService()), true);
+            if (rootURL.endsWith(WebDAVHelper.PathSeperator) == false)
+            {
+                rootURL = rootURL + WebDAVHelper.PathSeperator;
+            }
+
+            String fname = (String) getNodeService().getProperty(nodeInfo.getLinkNodeRef(), ContentModel.PROP_NAME);
+            StringBuilder urlStr = new StringBuilder(200);
+            urlStr.append("[InternetShortcut]\r\n");
+            urlStr.append("URL=file://");
+            urlStr.append(m_request.getServerName());
+            // Only append the port if it is non-default for compatibility with XP
+            int port = m_request.getServerPort();
+            if (port != 80)
+            {
+                urlStr.append(":").append(port);
+            }
+            urlStr.append(rootURL).append(WebDAVHelper.encodeURL(fname, m_userAgent));
+            urlStr.append("\r\n");
+
+            m_response.setHeader(WebDAV.HEADER_CONTENT_TYPE, "text/plain; charset=ISO-8859-1");
+            m_response.setHeader(WebDAV.HEADER_CONTENT_LENGTH, String.valueOf(urlStr.length()));
+            m_response.getWriter().write(urlStr.toString());
+        }
         // Check the If-None-Match header, don't send any content back if any of the tags
         // in the list match the etag, or the wildcard is present
 
@@ -347,12 +524,20 @@ public class GetMethod extends WebDAVMethod
     {
         FileFolderService fileFolderService = getFileFolderService();
         MimetypeService mimeTypeService = getMimetypeService();
+        NodeService nodeService = getNodeService();
         
         Writer writer = null;
 
         try
         {
             writer = m_response.getWriter();
+
+            boolean wasLink = false;
+            if (fileInfo.isLink())
+            {
+                fileInfo = getFileFolderService().getFileInfo(fileInfo.getLinkNodeRef());
+                wasLink = true;
+            }
 
             // Get the list of child nodes for the parent node
             List<FileInfo> childNodeInfos = fileFolderService.list(fileInfo.getNodeRef());
@@ -400,21 +585,37 @@ public class GetMethod extends WebDAVMethod
             writer.write("</tr>\n");
 
             // Get the URL for the root path
-            String rootURL = WebDAV.getURLForPath(m_request, getPath(), true);
+            String rootURL = getDAVHelper().getURLForPath(m_request, getPath(), true);
             if (rootURL.endsWith(WebDAVHelper.PathSeperator) == false)
             {
                 rootURL = rootURL + WebDAVHelper.PathSeperator;
             }
 
+            if (wasLink)
+            {
+                Path pathToNode = nodeService.getPath(fileInfo.getNodeRef());
+                if (pathToNode.size() > 2)
+                {
+                    pathToNode = pathToNode.subPath(2, pathToNode.size() - 1);
+                }
+
+                rootURL = getDAVHelper().getURLForPath(m_request, pathToNode.toDisplayPath(nodeService, BeanHelper.getPermissionService()), true);
+                if (rootURL.endsWith(WebDAVHelper.PathSeperator) == false)
+                {
+                    rootURL = rootURL + WebDAVHelper.PathSeperator;
+                }
+
+                rootURL = rootURL + WebDAVHelper.encodeURL(fileInfo.getName(), m_userAgent) + WebDAVHelper.PathSeperator;
+            }
             // Start with a link to the parent folder so we can navigate back up, unless we are at the root level
-            if (fileInfo.getNodeRef().equals(getRootNodeRef()) == false)
+            if (! getDAVHelper().isRootPath(getPath(), getServletPath()))
             {
                 writer.write("<tr class='rowOdd'>");
                 writer.write("<td colspan='4' class='textData'><a href=\"");
 
                 // Strip the last folder from the path
-                String[] paths = getDAVHelper().splitPath(rootURL.substring(0, rootURL.length() - 1));
-                writer.write(paths[0]);
+                String parentFolderUrl = parentFolder(rootURL);
+                writer.write(parentFolderUrl);
 
                 writer.write("\">");
                 writer.write("[");
@@ -445,13 +646,33 @@ public class GetMethod extends WebDAVMethod
                 // name field
                 String fname = childNodeInfo.getName();
 
-                writer.write(WebDAVHelper.encodeURL(fname));
+                writer.write(WebDAVHelper.encodeURL(fname, m_userAgent));
                 writer.write("\">");
                 writer.write(WebDAVHelper.encodeHTML(fname));
                 writer.write("</a>");
 
                 // size field
                 writer.write("</td><td class='textData'>");
+
+                ContentData contentData = null;
+                if (!childNodeInfo.isFolder())
+                {
+                    Serializable contentPropertyName = nodeService.getProperty(childNodeInfo.getNodeRef(), ContentModel.PROP_CONTENT_PROPERTY_NAME);
+                    QName contentPropertyQName = DefaultTypeConverter.INSTANCE.convert(QName.class, contentPropertyName);
+
+                    if (null == contentPropertyQName)
+                    {
+                        contentPropertyQName = ContentModel.PROP_CONTENT;
+                    }
+
+                    Serializable contentProperty = nodeService.getProperty(childNodeInfo.getNodeRef(), contentPropertyQName);
+
+                    if (contentProperty instanceof ContentData)
+                    {
+                        contentData = (ContentData) contentProperty;
+                    }
+                }
+
                 if (childNodeInfo.isFolder())
                 {
                     writer.write("&nbsp;");
@@ -460,11 +681,15 @@ public class GetMethod extends WebDAVMethod
                 {
                     ContentReader reader = fileFolderService.getReader(childNodeInfo.getNodeRef());
                     long fsize = 0L;
-                    if (reader != null)
+                    if (null != contentData)
                     {
-                        fsize = reader.getSize();
+                        writer.write(formatSize(Long.toString(contentData.getSize())));
                     }
-                    writer.write(formatSize(Long.toString(fsize)));
+                    else
+                    {
+                        writer.write("&nbsp;");
+                    }
+
                 }
                 writer.write("</td><td class='textData'>");
 
@@ -475,11 +700,16 @@ public class GetMethod extends WebDAVMethod
                 }
                 else
                 {
-                    ContentReader reader = fileFolderService.getReader(childNodeInfo.getNodeRef());
-                    String mimetype = "";
-                    if (reader != null)
+                    String mimetype = "&nbsp;";
+                    if (null != contentData)
                     {
-                        mimetype = mimeTypeService.getDisplaysByMimetype().get(reader.getMimetype());
+                        mimetype = contentData.getMimetype();
+                        String displayType = mimeTypeService.getDisplaysByMimetype().get(mimetype);
+
+                        if (displayType != null)
+                        {
+                            mimetype = displayType;
+                        }
                     }
                     writer.write(mimetype);
                 }
@@ -527,6 +757,29 @@ public class GetMethod extends WebDAVMethod
     }
 
     /**
+     * Given a path, will return the parent path. For example: /a/b/c
+     * will return /a/b and /a/b will return /a.
+     *
+     * @param path The path to return the parent of - must be non-null.
+     * @return String - parent path.
+     */
+    private String parentFolder(String path)
+    {
+        if (path.endsWith(WebDAVHelper.PathSeperator))
+        {
+            // Strip trailing slash.
+            path = path.substring(0, path.length() - 1);
+        }
+        String[] paths = getDAVHelper().splitPath(path);
+        String parent = paths[0];
+        if (parent.equals(""))
+        {
+            parent = WebDAVHelper.PathSeperator;
+        }
+        return parent;
+    }
+
+    /**
      * Formats the given size for display in a directory listing
      * 
      * @param strSize The content size
@@ -562,7 +815,7 @@ public class GetMethod extends WebDAVMethod
             String strRight = strSize.substring(length - 6, length - 5);
 
             StringBuilder buffer = new StringBuilder(strLeft);
-            if (!strRight.equals('0'))
+            if (!strRight.equals("0"))
             {
                 buffer.append('.');
                 buffer.append(strRight);

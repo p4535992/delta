@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.series.service;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getBulkLoadNodeService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
 import static ee.webmedia.alfresco.log.PropDiffHelper.value;
 
 import java.io.Serializable;
@@ -8,17 +10,19 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
+import org.alfresco.repo.cache.SimpleCache;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
-import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
 import org.apache.commons.lang.ObjectUtils;
@@ -29,12 +33,14 @@ import org.springframework.beans.factory.BeanFactoryAware;
 
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
+import ee.webmedia.alfresco.common.service.ApplicationConstantsBean;
+import ee.webmedia.alfresco.common.service.BulkLoadNodeService;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.service.NodeBasedObjectCallback;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.web.ListReorderHelper;
 import ee.webmedia.alfresco.docadmin.web.NodeOrderModifier;
 import ee.webmedia.alfresco.docconfig.generator.systematic.AccessRestrictionGenerator;
-import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.eventplan.model.EventPlanModel;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
@@ -47,11 +53,12 @@ import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
+import ee.webmedia.alfresco.series.model.UnmodifiableSeries;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
-import ee.webmedia.alfresco.volume.model.Volume;
+import ee.webmedia.alfresco.volume.model.UnmodifiableVolume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.volume.service.VolumeService;
 
@@ -64,40 +71,45 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     private PrivilegeService privilegeService;
     private GeneralService generalService;
     private UserService userService;
-    private DocumentLogService docLogService;
     private LogService appLogService;
     private BeanFactory beanFactory;
+    private ApplicationConstantsBean applicationConstantsBean;
     /** NB! not injected - use getter to obtain instance of volumeService */
     private VolumeService _volumeService;
     /** NB! not injected - use getter to obtain instance of functionsService */
     private FunctionsService _functionsService;
+    private BulkLoadNodeService bulkLoadNodeService;
+    private SimpleCache<NodeRef, UnmodifiableSeries> seriesCache;
+    private static final Map<String, QName> ACCESS_RESTRICTION_DOCCOM_NS_PROPS = new HashMap<>();
+    private static final Set<QName> SERIES_DOCUMENT_TYPE_PROPS = new HashSet<>(Arrays.asList(SeriesModel.Props.STATUS, SeriesModel.Props.DOC_TYPE));
 
     @Override
     public List<NodeRef> getAllSeriesRefsByFunction(NodeRef functionRef) {
-        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(functionRef, RegexQNamePattern.MATCH_ALL, SeriesModel.Associations.SERIES);
-        List<NodeRef> seriesRefs = new ArrayList<NodeRef>(childAssocs.size());
-        for (ChildAssociationRef series : childAssocs) {
-            seriesRefs.add(series.getChildRef());
-        }
-        return seriesRefs;
+        return getSeriesByFunctionNodeRefs(functionRef);
+    }
+
+    private List<NodeRef> getSeriesByFunctionNodeRefs(NodeRef functionRef) {
+        return bulkLoadNodeService.loadChildRefs(functionRef, SeriesModel.Types.SERIES);
     }
 
     @Override
-    public List<Series> getAllSeriesByFunction(NodeRef functionNodeRef) {
-        List<NodeRef> seriesRefs = getAllSeriesRefsByFunction(functionNodeRef);
-        List<Series> seriesOfFunction = new ArrayList<Series>(seriesRefs.size());
-        for (NodeRef seriesNodeRef : seriesRefs) {
-            seriesOfFunction.add(getSeriesByNoderef(seriesNodeRef, functionNodeRef));
+    public List<UnmodifiableSeries> getAllSeriesByFunction(NodeRef functionNodeRef) {
+        List<NodeRef> childRefs = getSeriesByFunctionNodeRefs(functionNodeRef);
+        List<UnmodifiableSeries> seriesList = new ArrayList<>();
+        Map<Long, QName> propertyTypes = new HashMap<>();
+        for (NodeRef seriesRef : childRefs) {
+            UnmodifiableSeries series = getUnmodifiableSeries(seriesRef, functionNodeRef, propertyTypes);
+            seriesList.add(series);
         }
-        Collections.sort(seriesOfFunction);
-        return seriesOfFunction;
+        Collections.sort(seriesList);
+        return seriesList;
     }
 
     @Override
-    public List<Series> getAllCaseFileSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status) {
-        List<Series> series = getAllSeriesByFunction(functionNodeRef);
-        for (Iterator<Series> i = series.iterator(); i.hasNext();) {
-            Series s = i.next();
+    public List<UnmodifiableSeries> getAllCaseFileSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status) {
+        List<UnmodifiableSeries> series = getAllSeriesByFunction(functionNodeRef);
+        for (Iterator<UnmodifiableSeries> i = series.iterator(); i.hasNext();) {
+            UnmodifiableSeries s = i.next();
             if (!status.getValueName().equals(s.getStatus()) || !s.getVolType().contains(VolumeType.CASE_FILE.name())) {
                 i.remove();
             }
@@ -106,11 +118,11 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     }
 
     @Override
-    public List<Series> getAllSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status, Set<String> docTypeIds) {
-        List<Series> series = getAllSeriesByFunction(functionNodeRef);
-        for (Iterator<Series> i = series.iterator(); i.hasNext();) {
-            Series s = i.next();
-            if (!status.getValueName().equals(s.getStatus()) || !s.getDocType().containsAll(docTypeIds)) {
+    public List<UnmodifiableSeries> getAllSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status, Set<String> docTypeIds) {
+        List<UnmodifiableSeries> series = getAllSeriesByFunction(functionNodeRef);
+        for (Iterator<UnmodifiableSeries> i = series.iterator(); i.hasNext();) {
+            UnmodifiableSeries s = i.next();
+            if (!status.getValueName().equals(s.getStatus()) || !s.getDocTypes().containsAll(docTypeIds)) {
                 i.remove();
             }
         }
@@ -118,29 +130,32 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     }
 
     @Override
-    public List<Series> getAllSeriesByFunctionForStructUnit(NodeRef functionNodeRef, String structUnitId) {
-        List<ChildAssociationRef> seriesAssocs = nodeService.getChildAssocs(functionNodeRef, RegexQNamePattern.MATCH_ALL, SeriesModel.Associations.SERIES);
-        List<Series> seriesOfFunction = new ArrayList<Series>(seriesAssocs.size());
-        for (ChildAssociationRef series : seriesAssocs) {
-            NodeRef seriesNodeRef = series.getChildRef();
-            @SuppressWarnings("unchecked")
-            List<String> structUnits = (List<String>) nodeService.getProperty(seriesNodeRef, SeriesModel.Props.STRUCT_UNIT);
-
-            if (structUnits != null && structUnits.contains(structUnitId)) {
-                seriesOfFunction.add(getSeriesByNoderef(seriesNodeRef, functionNodeRef));
+    public List<UnmodifiableSeries> getAllSeriesByFunctionForStructUnit(NodeRef functionNodeRef, String structUnitId) {
+        List<UnmodifiableSeries> series = getAllSeriesByFunction(functionNodeRef);
+        for (Iterator<UnmodifiableSeries> i = series.iterator(); i.hasNext();) {
+            UnmodifiableSeries s = i.next();
+            List<String> structUnits = s.getStructUnits();
+            if (structUnits == null || !structUnits.contains(structUnitId)) {
+                i.remove();
             }
         }
-        return seriesOfFunction;
-    }
-
-    @Override
-    public Series getSeriesByNodeRef(String seriesNodeRef) {
-        return getSeriesByNoderef(new NodeRef(seriesNodeRef), null);
+        return series;
     }
 
     @Override
     public Series getSeriesByNodeRef(NodeRef nodeRef) {
         return getSeriesByNoderef(nodeRef, null);
+    }
+
+    @Override
+    public String getSeriesLabel(NodeRef seriesRef) {
+        UnmodifiableSeries series = getUnmodifiableSeries(seriesRef, null);
+        return series != null ? series.getSeriesLabel() : "";
+    }
+
+    @Override
+    public boolean hasSeries(NodeRef functionNodeRef) {
+        return !getSeriesByFunctionNodeRefs(functionNodeRef).isEmpty();
     }
 
     @Override
@@ -156,8 +171,9 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     private void saveOrUpdate(Series series, boolean performReorder) {
         Map<String, Object> stringQNameProperties = series.getNode().getProperties();
         Integer previousOrder = null;
+        NodeRef seriesNodeRef;
         if (series.getNode() instanceof TransientNode) { // save
-            NodeRef seriesNodeRef = nodeService.createNode(series.getFunctionNodeRef(),
+            seriesNodeRef = nodeService.createNode(series.getFunctionNodeRef(),
                     SeriesModel.Associations.SERIES, SeriesModel.Associations.SERIES, SeriesModel.Types.SERIES,
                     RepoUtil.toQNameProperties(stringQNameProperties, false, true)).getChildRef();
             setSeriesDefaultPermissionsOnCreate(seriesNodeRef);
@@ -168,10 +184,10 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
             appLogService.addLogEntry(LogEntry.create(LogObject.SERIES, userService, seriesNodeRef, "applog_space_add",
                     props.get(SeriesModel.Props.SERIES_IDENTIFIER.toString()), props.get(SeriesModel.Props.TITLE.toString())));
         } else { // update
-            final NodeRef seriesRef = series.getNode().getNodeRef();
-            previousOrder = (Integer) nodeService.getProperty(seriesRef, SeriesModel.Props.ORDER);
+            seriesNodeRef = series.getNode().getNodeRef();
+            previousOrder = (Integer) nodeService.getProperty(seriesNodeRef, SeriesModel.Props.ORDER);
 
-            Map<QName, Serializable> repoProps = nodeService.getProperties(seriesRef);
+            Map<QName, Serializable> repoProps = nodeService.getProperties(seriesNodeRef);
             Map<QName, Serializable> newProps = RepoUtil.toQNameProperties(stringQNameProperties);
             String propDiff = new PropDiffHelper()
             .label(SeriesModel.Props.STATUS, "series_status")
@@ -193,16 +209,16 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
             .diff(repoProps, newProps);
 
             if (propDiff != null) {
-                appLogService.addLogEntry(LogEntry.create(LogObject.SERIES, userService, seriesRef, "applog_space_edit",
+                appLogService.addLogEntry(LogEntry.create(LogObject.SERIES, userService, seriesNodeRef, "applog_space_edit",
                         series.getSeriesIdentifier(), series.getTitle(), propDiff));
             }
 
             PropDiffHelper labelProvider = new PropDiffHelper().watchAccessRights();
             for (QName accessRestrictionProp : AccessRestrictionGenerator.ACCESS_RESTRICTION_PROPS) {
-                QName docComProp = QName.createQName(DocumentCommonModel.DOCCOM_URI, accessRestrictionProp.getLocalName());
+                QName docComProp = RepoUtil.getFromQNamePool(accessRestrictionProp.getLocalName(), DocumentCommonModel.DOCCOM_URI, ACCESS_RESTRICTION_DOCCOM_NS_PROPS);
                 String accessReasonDiff = new PropDiffHelper().label(docComProp, labelProvider.getPropLabels().get(accessRestrictionProp)).diff(repoProps, newProps);
                 if (accessReasonDiff != null) {
-                    appLogService.addLogEntry(LogEntry.create(LogObject.SERIES, userService, seriesRef, "series_log_status_accessRestrictionChanged", accessReasonDiff));
+                    appLogService.addLogEntry(LogEntry.create(LogObject.SERIES, userService, seriesNodeRef, "series_log_status_accessRestrictionChanged", accessReasonDiff));
                 }
             }
 
@@ -210,23 +226,29 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
             NodeRef newEventPlan = (NodeRef) newProps.get(SeriesModel.Props.EVENT_PLAN);
             if (!ObjectUtils.equals(repoEventPlan, newEventPlan)) {
                 String emptyLabel = PropDiffHelper.getEmptyLabel();
-                appLogService.addLogEntry(LogEntry.create(LogObject.SERIES, userService, seriesRef, "series_log_eventplan_modified",
+                appLogService.addLogEntry(LogEntry.create(LogObject.SERIES, userService, seriesNodeRef, "series_log_eventplan_modified",
                         value((repoEventPlan == null || !nodeService.exists(repoEventPlan)) ? null
                                 : nodeService.getProperty(repoEventPlan, EventPlanModel.Props.NAME), emptyLabel),
-                        value((newEventPlan == null || !nodeService.exists(newEventPlan)) ? null
-                                : nodeService.getProperty(newEventPlan, EventPlanModel.Props.NAME), emptyLabel)
+                                value((newEventPlan == null || !nodeService.exists(newEventPlan)) ? null
+                                        : nodeService.getProperty(newEventPlan, EventPlanModel.Props.NAME), emptyLabel)
                         ));
             }
-
-            generalService.setPropertiesIgnoringSystem(seriesRef, stringQNameProperties);
+            generalService.refreshMaterializedViews(SeriesModel.Types.SERIES);
+            generalService.setPropertiesIgnoringSystem(seriesNodeRef, stringQNameProperties);
         }
+        removeFromCache(seriesNodeRef);
         if (performReorder) {
             reorderSeries(series, previousOrder);
         }
     }
 
+    @Override
+    public void removeFromCache(NodeRef seriesNodeRef) {
+        seriesCache.remove(seriesNodeRef);
+    }
+
     private void reorderSeries(Series series, Integer previousSeriesOrder) {
-        final List<Series> allSeriesByFunction = getAllSeriesByFunction(series.getFunctionNodeRef());
+        final List<Series> allSeriesByFunction = getModifiableSeries(series.getFunctionNodeRef());
         // get Nodes of the Series
         List<Node> allSeriesNodesByFunction = new ArrayList<Node>(allSeriesByFunction.size());
         for (Series ser : allSeriesByFunction) {
@@ -251,6 +273,16 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         }
     }
 
+    private List<Series> getModifiableSeries(NodeRef functionNodeRef) {
+        List<NodeRef> seriesRefs = getAllSeriesRefsByFunction(functionNodeRef);
+        List<Series> seriesOfFunction = new ArrayList<Series>(seriesRefs.size());
+        for (NodeRef seriesNodeRef : seriesRefs) {
+            seriesOfFunction.add(getSeriesByNoderef(seriesNodeRef, functionNodeRef));
+        }
+        Collections.sort(seriesOfFunction);
+        return seriesOfFunction;
+    }
+
     @Override
     public Series createSeries(NodeRef functionNodeRef) {
         Map<QName, Serializable> props = new HashMap<QName, Serializable>(1);
@@ -261,7 +293,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         series.setNode(transientNode);
         series.setOrder(order);
         series.setFunctionNodeRef(functionNodeRef);
-        final String functionMark = getFunctionsService().getFunctionByNodeRef(functionNodeRef).getMark();
+        final String functionMark = getFunctionsService().getUnmodifiableFunction(functionNodeRef, null).getMark();
         final String initialSeriesIdentifier = functionMark + "-";
         series.setSeriesIdentifier(initialSeriesIdentifier);
         series.setInitialSeriesIdentifier(initialSeriesIdentifier);
@@ -276,7 +308,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
 
         List<Privilege> archivistsPermissionsToAdd = new ArrayList<Privilege>();
         archivistsPermissionsToAdd.add(Privilege.VIEW_DOCUMENT_META_DATA);
-        boolean caseVolumeEnabled = getVolumeService().isCaseVolumeEnabled();
+        boolean caseVolumeEnabled = applicationConstantsBean.isCaseVolumeEnabled();
         if (caseVolumeEnabled) {
             archivistsPermissionsToAdd.add(Privilege.VIEW_CASE_FILE);
         }
@@ -304,13 +336,12 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
             return true;
         }
         final NodeRef seriesRef = seriesNode.getNodeRef();
-        final List<Volume> allVolumesOfSeries = getVolumeService().getAllVolumesBySeries(seriesRef);
         boolean allVolumesClosed = true;
         Map<String, Object> props = seriesNode.getProperties();
         if (!(seriesNode instanceof TransientNode)) {
-            for (Volume volume : allVolumesOfSeries) {
-                final Map<String, Object> volProps = volume.getNode().getProperties();
-                if (StringUtils.equals(DocListUnitStatus.OPEN.getValueName(), (String) volProps.get(VolumeModel.Props.STATUS))) {
+            final List<UnmodifiableVolume> allVolumesOfSeries = getVolumeService().getAllVolumesBySeries(seriesRef);
+            for (UnmodifiableVolume volume : allVolumesOfSeries) {
+                if (StringUtils.equals(DocListUnitStatus.OPEN.getValueName(), volume.getStatus())) {
                     allVolumesClosed = false;
                     break;
                 }
@@ -329,11 +360,13 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
 
     @Override
     public void delete(Series series) {
-        List<ChildAssociationRef> allVolumes = getVolumeService().getAllVolumeRefsBySeries(series.getNode().getNodeRef());
+        NodeRef seriesRef = series.getNode().getNodeRef();
+        List<NodeRef> allVolumes = getVolumeService().getAllVolumeRefsBySeries(seriesRef);
         if (!allVolumes.isEmpty()) {
             throw new UnableToPerformException("series_delete_not_empty");
         }
-        nodeService.deleteNode(series.getNode().getNodeRef());
+        nodeService.deleteNode(seriesRef);
+        removeFromCache(seriesRef);
     }
 
     private boolean isInClosedFunction(Series series) {
@@ -381,15 +414,37 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
             functionNodeRef = parentAssocs.get(0).getParentRef();
         }
         series.setFunctionNodeRef(functionNodeRef);
-        if (log.isDebugEnabled()) {
-            // XXX:ruins everything due to order being NULL log.debug("Found series: " + series);
+        return series;
+    }
+
+    @Override
+    public UnmodifiableSeries getUnmodifiableSeries(NodeRef seriesRef, Map<Long, QName> propertyTypes) {
+        return getUnmodifiableSeries(seriesRef, null, propertyTypes);
+    }
+
+    private UnmodifiableSeries getUnmodifiableSeries(NodeRef seriesRef, NodeRef functionRef, Map<Long, QName> propertyTypes) {
+        UnmodifiableSeries series = seriesCache.get(seriesRef);
+        if (series == null) {
+            if (functionRef == null) {
+                functionRef = nodeService.getPrimaryParent(seriesRef).getParentRef();
+            }
+            final NodeRef finalFunctionRef = functionRef;
+            // beanPropertyMapper is not used here because this method is very heavily used and direct method call should be faster than using reflection
+            series = generalService.fetchObject(seriesRef, null, new NodeBasedObjectCallback<UnmodifiableSeries>() {
+
+                @Override
+                public UnmodifiableSeries create(Node node) {
+                    return new UnmodifiableSeries(node, finalFunctionRef);
+                }
+            }, propertyTypes);
+            seriesCache.put(seriesRef, series);
         }
         return series;
     }
 
     private int getNextSeriesOrderNrByFunction(NodeRef functionNodeRef) {
         int maxOrder = 0;
-        for (Series fn : getAllSeriesByFunction(functionNodeRef)) {
+        for (UnmodifiableSeries fn : getAllSeriesByFunction(functionNodeRef)) {
             if (maxOrder < fn.getOrder()) {
                 maxOrder = fn.getOrder();
             }
@@ -401,6 +456,48 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     public void updateContainingDocsCountByVolume(NodeRef seriesNodeRef, NodeRef volumeNodeRef, boolean volumeAdded) {
         Integer count = (Integer) nodeService.getProperty(volumeNodeRef, VolumeModel.Props.CONTAINING_DOCS_COUNT);
         generalService.updateParentContainingDocsCount(seriesNodeRef, SeriesModel.Props.CONTAINING_DOCS_COUNT, volumeAdded, count);
+        removeFromCache(seriesNodeRef);
+    }
+
+    @Override
+    public boolean hasSelectableSeries(NodeRef functionRef, boolean isSearchFilter, Set<String> idList, boolean forDocumentType) {
+        if (isSearchFilter || idList == null) {
+            return getBulkLoadNodeService().countChildNodes(functionRef, SeriesModel.Types.SERIES) > 0;
+        } else if (getGeneralService().getStore().equals(functionRef.getStoreRef())) {
+            if (forDocumentType) {
+                return hasOpenSeriesForDocTypes(functionRef, DocListUnitStatus.OPEN, idList);
+            }
+            return hasCaseFileSeriesWithStatus(functionRef, DocListUnitStatus.OPEN);
+        }
+        return false;
+    }
+
+    private boolean hasOpenSeriesForDocTypes(NodeRef functionNodeRef, DocListUnitStatus status, Set<String> docTypeIds) {
+        Map<NodeRef, Map<NodeRef, Map<QName, Serializable>>> allSeries = BeanHelper.getBulkLoadNodeService().loadChildNodes(Collections.singleton(functionNodeRef),
+                SERIES_DOCUMENT_TYPE_PROPS);
+        Map<NodeRef, Map<QName, Serializable>> seriesProps = allSeries.get(functionNodeRef);
+        if (seriesProps == null) {
+            return false;
+        }
+        for (Entry<NodeRef, Map<QName, Serializable>> s : seriesProps.entrySet()) {
+            Map<QName, Serializable> props = s.getValue();
+            List<String> docTypes = (List<String>) props.get(SeriesModel.Props.DOC_TYPE);
+            if (docTypes != null && docTypes.containsAll(docTypeIds) && status.getValueName().equals(props.get(SeriesModel.Props.STATUS))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean hasCaseFileSeriesWithStatus(NodeRef functionNodeRef, DocListUnitStatus status) {
+        List<UnmodifiableSeries> series = getAllSeriesByFunction(functionNodeRef);
+        String caseFileTypeName = VolumeType.CASE_FILE.name();
+        for (UnmodifiableSeries s : series) {
+            if (status.getValueName().equals(s.getStatus()) && s.getVolType().contains(caseFileTypeName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // START: getters / setters
@@ -422,10 +519,6 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
 
     public void setUserService(UserService userService) {
         this.userService = userService;
-    }
-
-    public void setDocLogService(DocumentLogService docLogService) {
-        this.docLogService = docLogService;
     }
 
     public void setAppLogService(LogService appLogService) {
@@ -456,6 +549,19 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         }
         return _volumeService;
     }
+
     // END: getters / setters
+
+    public void setSeriesCache(SimpleCache<NodeRef, UnmodifiableSeries> seriesCache) {
+        this.seriesCache = seriesCache;
+    }
+
+    public void setApplicationConstantsBean(ApplicationConstantsBean applicationConstantsBean) {
+        this.applicationConstantsBean = applicationConstantsBean;
+    }
+
+    public void setBulkLoadNodeService(BulkLoadNodeService bulkLoadNodeService) {
+        this.bulkLoadNodeService = bulkLoadNodeService;
+    }
 
 }

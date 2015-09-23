@@ -22,20 +22,26 @@ import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
 public abstract class BaseWorkflowObject extends NodeBaseVO {
 
+    /**
+     * denotes that BaseWorkflowObject (task or information/opinion workflow) temporarily having this property is not saved,
+     * but generated for delegating original assignment task to other people
+     */
+    public static final QName TMP_ADDED_BY_DELEGATION = RepoUtil.createTransientProp("addedByDelegation");
+
     private Map<QName, Serializable> originalProperties;
 
     protected BaseWorkflowObject(WmNode node) {
         Assert.notNull(node);
         this.node = node;
         if (node.isUnsaved()) {
-            originalProperties = new HashMap<QName, Serializable>();
+            setOriginalProperties(new HashMap<QName, Serializable>());
         } else {
-            originalProperties = getProperties(true);
+            setOriginalProperties(getProperties(true));
         }
     }
 
     protected <T extends BaseWorkflowObject> T copyImpl(T copy) {
-        copy.originalProperties = RepoUtil.copyProperties(originalProperties);
+        copy.setOriginalProperties(RepoUtil.copyProperties(originalProperties));
         return copy;
     }
 
@@ -164,6 +170,10 @@ public abstract class BaseWorkflowObject extends NodeBaseVO {
 
     protected void preSave() {
         // Subclasses can override
+    }
+
+    public void setOriginalProperties(Map<QName,Serializable> originalProperties) {
+        this.originalProperties = originalProperties;
     }
 
 }

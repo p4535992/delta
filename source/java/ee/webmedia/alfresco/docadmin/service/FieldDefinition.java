@@ -80,11 +80,11 @@ public class FieldDefinition extends Field {
         setProp(DocumentAdminModel.Props.PARAMETER_ORDER_IN_VOL_SEARCH, parameterOrderInVolSearch);
     }
 
-    public final List<String> getVolTypes() {
+    public List<String> getVolTypes() {
         return getPropList(DocumentAdminModel.Props.VOL_TYPES);
     }
 
-    public final void setVolTypes(List<String> volTypes) {
+    public void setVolTypes(List<String> volTypes) {
         setPropList(DocumentAdminModel.Props.VOL_TYPES, volTypes);
     }
 

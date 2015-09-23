@@ -3,16 +3,20 @@ package ee.webmedia.alfresco.report.job;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
+import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.transaction.TransactionService;
-import org.alfresco.web.bean.repository.Node;
+import org.alfresco.util.Pair;
 import org.apache.commons.collections.comparators.NullComparator;
 import org.apache.commons.collections.comparators.TransformingComparator;
 import org.apache.commons.logging.Log;
@@ -34,6 +38,8 @@ import ee.webmedia.alfresco.utils.UnableToPerformException;
 public class ExecuteReportsJob implements StatefulJob {
     private static final Log LOG = LogFactory.getLog(ExecuteReportsJob.class);
 
+    public static final Lock REORDER_LOCK = new ReentrantLock();
+
     private ReportService reportService;
     private TransactionService transactionService;
     private NodeService nodeService;
@@ -44,30 +50,37 @@ public class ExecuteReportsJob implements StatefulJob {
         LOG.debug("Starting ExecuteReportsJob");
         setServices(context);
         RetryingTransactionHelper retryingTransactionHelper = transactionService.getRetryingTransactionHelper();
-        RetryingTransactionCallback<List<Node>> getAllExecutableReportsCallback = new GetAllExecutableReportsCallback();
+        RetryingTransactionCallback<List<Pair<NodeRef, Serializable>>> getAllExecutableReportsCallback = new GetAllExecutableReportsCallback();
         ReportDataCollector reportDataProvider = new ReportDataCollector();
         RetryingTransactionCallback<Object> markReportRunningCallback = new MarkReportRunningCallback(reportDataProvider);
         RetryingTransactionCallback<Object> createReportInMemoryCallback = new CreateReportInMemoryCallback(reportDataProvider);
         RetryingTransactionCallback<Object> addReportResultFileCallback = new AddReportResultFileCallback(reportDataProvider);
-        TransformingComparator comparator = new TransformingComparator(new Transformer<Node, Date>() {
+        RetryingTransactionCallback<Void> reorderReportJobs = new ReorderReportsCallback();
+        TransformingComparator comparator = new TransformingComparator(new Transformer<Pair<NodeRef, Serializable>, Date>() {
             @Override
-            public Date tr(Node node) {
-                return (Date) node.getProperties().get(ReportModel.Props.USER_START_DATE_TIME);
+            public Date tr(Pair<NodeRef, Serializable> pair) {
+                return (Date) pair.getSecond();
             }
         }, new NullComparator());
         while (true) {
             reportService.doPauseReportGeneration();
             // retrieve all reports with status IN_QUEUE (read-only transaction)
-            List<Node> reports = retryingTransactionHelper.doInTransaction(getAllExecutableReportsCallback, true, true);
+            final List<Pair<NodeRef, Serializable>> reports = retryingTransactionHelper.doInTransaction(getAllExecutableReportsCallback, true, true);
             if (reports.isEmpty()) {
                 // if there are no reports in queue, quit current execution cycle.
                 // The job will be executed again after time stated in bean config (currently one minute)
                 break;
             }
             Collections.sort(reports, comparator);
-            for (Node report : reports) {
+            for (Pair<NodeRef, Serializable> report : reports) {
                 reportDataProvider.reset();
-                NodeRef reportResultRef = report.getNodeRef();
+                final NodeRef reportResultRef = report.getFirst();
+                try {
+                    REORDER_LOCK.lock();
+                    retryingTransactionHelper.doInTransaction(reorderReportJobs, false, true);
+                } finally {
+                    REORDER_LOCK.unlock();
+                }
                 reportDataProvider.setReportResultNodeRef(reportResultRef);
                 reportDataProvider.setReportResultProps(nodeService.getProperties(reportResultRef));
                 // check if user has marked current report for deleting or cancelling
@@ -90,7 +103,24 @@ public class ExecuteReportsJob implements StatefulJob {
                 }
                 // if deleting is requested, delete repostResult,
                 // otherwise write results to repo, move node to appropriate location and set required reportResult status (new rw transaction)
-                retryingTransactionHelper.doInTransaction(addReportResultFileCallback, false, true);
+                Object result = retryingTransactionHelper.doInTransaction(addReportResultFileCallback, false, true);
+                if (result != null) {
+                    final NodeRef reportResultNodeRef = (NodeRef) result;
+                    retryingTransactionHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
+
+                        @Override
+                        public Void execute() throws Throwable {
+                            FileInfo fileInfo = BeanHelper.getReportService().getReportResultFileName(reportResultNodeRef);
+                            if (fileInfo != null) {
+                                Map<QName, Serializable> props = new HashMap<>();
+                                props.put(ReportModel.Props.REPORT_RESULT_FILE_NAME, fileInfo.getName());
+                                props.put(ReportModel.Props.REPORT_RESULT_FILE_REF, fileInfo.getNodeRef());
+                                nodeService.addProperties(reportResultNodeRef, props);
+                            }
+                            return null;
+                        }
+                    });
+                }
             }
         }
     }
@@ -101,10 +131,31 @@ public class ExecuteReportsJob implements StatefulJob {
         nodeService = BeanHelper.getNodeService();
     }
 
-    private class GetAllExecutableReportsCallback implements RetryingTransactionCallback<List<Node>> {
+    private class ReorderReportsCallback implements RetryingTransactionCallback<Void> {
 
         @Override
-        public List<Node> execute() throws Throwable {
+        public Void execute() throws Throwable {
+            List<Pair<NodeRef, Serializable>> reports = reportService.getAllInQueueReportsWithOrderNumbers();
+            for (Pair<NodeRef, Serializable> report : reports) {
+                NodeRef reportRef = report.getFirst();
+                Integer orderInQueue = (Integer) report.getSecond();
+                if (orderInQueue != null) {
+                    if (orderInQueue > 1) {
+                        nodeService.setProperty(reportRef, ReportModel.Props.ORDER_IN_QUEUE, orderInQueue - 1);
+                    } else {
+                        nodeService.removeProperty(reportRef, ReportModel.Props.ORDER_IN_QUEUE);
+                    }
+                }
+            }
+            return null;
+        }
+
+    }
+
+    private class GetAllExecutableReportsCallback implements RetryingTransactionCallback<List<Pair<NodeRef, Serializable>>> {
+
+        @Override
+        public List<Pair<NodeRef, Serializable>> execute() throws Throwable {
             return reportService.getAllInQueueReports();
         }
 

@@ -71,7 +71,7 @@ public class AddressbookGroupsManagerBean implements Serializable {
     public void addToContactGroup(String groupNodeRef) {
         UserDetails details = new UserDetails(getContactFullName(getNodeService().getProperties(currentNode), getNodeService().getType(currentNode)), currentNode.toString());
 
-        final MessageDataWrapper feedback = getAddressbookService().addToGroup(new NodeRef(groupNodeRef), Arrays.asList(details));
+        final MessageDataWrapper feedback = getAddressbookService().addToGroup(new NodeRef(groupNodeRef), Arrays.asList(details), true);
         MessageUtil.addStatusMessages(FacesContext.getCurrentInstance(), feedback);
         resetGroups();
     }

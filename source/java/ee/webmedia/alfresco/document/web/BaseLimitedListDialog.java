@@ -20,13 +20,19 @@ public abstract class BaseLimitedListDialog extends BaseDialogBean {
     private int limit = -1;
     private boolean limited = false;
     private boolean showShowAll = true;
+    protected String limitedMessage;
+    private int limitedMessageParam;
 
     /**
      * Must call this from subclasses on every entrance to dialog
      */
     protected void resetLimit(boolean limitedShowAll) {
         showAllUnlimited = limitedShowAll;
+        int oldLimit = limit;
         limit = getParametersService().getLongParameter(Parameters.MAX_SEARCH_RESULT_ROWS).intValue();
+        if (limit != oldLimit) {
+            limitedMessage = null;
+        }
         limited = false;
         showShowAll = true;
     }
@@ -36,6 +42,9 @@ public abstract class BaseLimitedListDialog extends BaseDialogBean {
      */
     protected <E> E setLimited(Pair<E, Boolean> results) {
         limited = results.getSecond();
+        if (!limited) {
+            showShowAll = false;
+        }
         return results.getFirst();
     }
 
@@ -78,7 +87,11 @@ public abstract class BaseLimitedListDialog extends BaseDialogBean {
     }
 
     public String getLimitedMessage() {
-        return MessageUtil.getMessage("document_list_limited", limit);
+        if (limitedMessage == null || limitedMessageParam != limit) {
+            limitedMessage = MessageUtil.getMessage("document_list_limited", limit);
+            limitedMessageParam = limit;
+        }
+        return limitedMessage;
     }
 
 }

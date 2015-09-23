@@ -10,7 +10,7 @@
         </property>
     </bean>
 
-    <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
+    <bean id="registerResourceBundle" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
         <property name="resourceBundles">
             <list>
                 <value>ee/webmedia/alfresco/document/register/web/register-webclient</value>
@@ -18,8 +18,4 @@
         </property>
     </bean>
 
-    <bean class="ee.webmedia.alfresco.document.register.web.RegisterMenuItemProcessor">
-      <property name="menuService" ref="MenuService" />
-      <property name="documentSearchService" ref="DocumentSearchService" />
-   </bean>
 </beans>

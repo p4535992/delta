@@ -61,6 +61,7 @@ import org.alfresco.util.CachingDateFormat;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.app.context.IContextListener;
 import org.alfresco.web.app.context.UIContextService;
+import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.BrowseBean;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.MapNode;
@@ -119,6 +120,8 @@ public class TrashcanDialog extends BaseDialogBean implements IContextListener
    private final static String DATE_ATTR = Repository.escapeQName(ContentModel.PROP_ARCHIVED_DATE);
    
    private final static String SEARCH_USERPREFIX  = "@" + USER_ATTR + ":%s";
+   
+   private boolean skipRefresh = false;
    
    @Override
    public void restored(){
@@ -858,8 +861,12 @@ public class TrashcanDialog extends BaseDialogBean implements IContextListener
       return Application.getCurrentUser(FacesContext.getCurrentInstance()).isAdmin();
    }
    
-   private void refresh(){
+   private void refresh() {
        contextUpdated();
+       if (skipRefresh) {
+           skipRefresh = false;
+           return;
+       }
        property.setShowItems(true);
    }   
    
@@ -898,6 +905,7 @@ public class TrashcanDialog extends BaseDialogBean implements IContextListener
    public String cancel()
    {
       close();
+      doNotLoadDataWhenReturningToTrashcanDialog();
       return super.cancel();
    }
    
@@ -905,6 +913,17 @@ public class TrashcanDialog extends BaseDialogBean implements IContextListener
    public String getCancelButtonLabel()
    {
        return Application.getMessage(FacesContext.getCurrentInstance(), MSG_CLOSE);
+   }
+   
+   protected void doNotLoadDataWhenReturningToTrashcanDialog() { // Le hack
+       TrashcanDialog dialog = (TrashcanDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), "TrashcanDialog");
+       if (dialog != null) {
+           dialog.setSkipRefresh(true);
+       }
+   }
+
+   public void setSkipRefresh(boolean skipRefresh) {
+       this.skipRefresh = skipRefresh;
    }
 
 }

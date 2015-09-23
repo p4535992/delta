@@ -108,7 +108,7 @@ public class AssociationModelDetailsDialog extends BaseDialogBean {
 
             @Override
             public int compare(SelectItem o1, SelectItem o2) {
-                return AppConstants.DEFAULT_COLLATOR.compare(o1.getLabel(), o2.getLabel());
+                return AppConstants.getNewCollatorInstance().compare(o1.getLabel(), o2.getLabel());
             }
 
         });

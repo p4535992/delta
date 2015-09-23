@@ -1,9 +1,10 @@
 package ee.webmedia.alfresco.menu.ui.component;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getApplicationConstantsBean;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
@@ -25,10 +26,9 @@ import ee.webmedia.alfresco.menu.model.MenuItem;
 import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.menu.service.MenuService.MenuItemFilter;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
-import ee.webmedia.alfresco.menu.web.MenuItemCountBean;
 import ee.webmedia.alfresco.orgstructure.amr.service.RSService;
 import ee.webmedia.alfresco.user.service.UserService;
-import ee.webmedia.alfresco.workflow.service.WorkflowService;
+import ee.webmedia.alfresco.workflow.service.WorkflowConstantsBean;
 
 public class MenuRenderer extends BaseRenderer {
 
@@ -37,7 +37,7 @@ public class MenuRenderer extends BaseRenderer {
     public static final String PRIMARY_MENU_PREFIX = "pm";
 
     private UserService userService;
-    private WorkflowService workflowService;
+    private WorkflowConstantsBean workflowConstantsBean;
     private MenuService menuService;
     private EInvoiceService einvoiceService;
 
@@ -81,13 +81,11 @@ public class MenuRenderer extends BaseRenderer {
 
         UIMenuComponent menuComponent = (UIMenuComponent) component;
         boolean primary = ((Boolean) menuComponent.getAttributes().get(UIMenuComponent.PRIMARY_ATTRIBUTE_KEY));
-        if (!primary) {
-            MenuItemCountBean menuItemCountBean = (MenuItemCountBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MenuItemCountBean.BEAN_NAME);
+        if (!primary && !getApplicationConstantsBean().isMyTasksAndDocumentsMenuClosed()
+                && Integer.parseInt(BeanHelper.getMenuBean().getActiveItemId()) == MenuBean.MY_TASKS_AND_DOCUMENTS_ID) {
             out.write("<script type=\"text/javascript\">\n");
             out.write("$jQ(document).ready(function() {\n");
-            for (Entry<String, Long> entry : menuItemCountBean.getNextUpdates().entrySet()) {
-                out.write("   queueUpdateMenuItemCount('" + entry.getKey() + "', " + entry.getValue() + ");\n");
-            }
+            out.write("updateMenuItemsCount();\n");
             out.write("});\n");
             out.write("</script>\n");
         }
@@ -100,7 +98,7 @@ public class MenuRenderer extends BaseRenderer {
 
     /**
      * Renders scripts necessary for BrowseMenuItems
-     * 
+     *
      * @param context
      * @param menu
      * @throws IOException
@@ -140,7 +138,7 @@ public class MenuRenderer extends BaseRenderer {
 
     /**
      * Renders the sub menu for currently active page section.
-     * 
+     *
      * @param context
      * @param activeItemId main menu active item id
      * @param menu menu component that is being rendered
@@ -163,7 +161,7 @@ public class MenuRenderer extends BaseRenderer {
             int i = 0;
             String id = SECONDARY_MENU_PREFIX;
             for (MenuItem item : menuItems) {
-                UIComponent menuItem = item.createComponent(context, id + i, getUserService(), getWorkflowService(), getEinvoiceService(), getRsService());
+                UIComponent menuItem = item.createComponent(context, id + i, getUserService(), getWorkflowConstantsBean(), getRsService());
                 if (menuItem != null) {
                     children.add(menuItem);
                 }
@@ -182,7 +180,7 @@ public class MenuRenderer extends BaseRenderer {
 
     /**
      * Renders the primary menu; usually top level menu with different site sections
-     * 
+     *
      * @param context
      * @param activeItemid currently active menu item id
      * @param menu menu component that is being rendered
@@ -202,7 +200,7 @@ public class MenuRenderer extends BaseRenderer {
         Map<String, MenuItemFilter> menuItemFilters = getMenuService().getMenuItemFilters();
         for (MenuItem item : menuItems) {
             if (activeItemid.equals(Integer.toString(i))) {
-                UIComponent menuItem = item.createComponent(context, id + i, true, getUserService(), getWorkflowService(), getEinvoiceService(), getRsService(), false);
+                UIComponent menuItem = item.createComponent(context, id + i, true, getUserService(), getWorkflowConstantsBean(), getRsService(), false);
                 if (menuItem != null) {
                     children.add(menuItem);
                 }
@@ -218,12 +216,12 @@ public class MenuRenderer extends BaseRenderer {
                     filter = null; // reset for next cycle
                 }
 
-                UIComponent menuItem = item.createComponent(context, id + i, getUserService(), getWorkflowService(), getEinvoiceService(), getRsService());
+                UIComponent menuItem = item.createComponent(context, id + i, getUserService(), getWorkflowConstantsBean(), getRsService());
                 if (menuItem != null) {
                     children.add(removeTooltipRecursive(menuItem));
                 }
             } else {
-                UIComponent menuItem = item.createComponent(context, id + i, getUserService(), getWorkflowService(), getEinvoiceService(), getRsService());
+                UIComponent menuItem = item.createComponent(context, id + i, getUserService(), getWorkflowConstantsBean(), getRsService());
                 if (menuItem != null) {
                     children.add(menuItem);
                 }
@@ -239,7 +237,7 @@ public class MenuRenderer extends BaseRenderer {
 
     /**
      * Removes tooltips so they don't block the view.
-     * 
+     *
      * @param menuItem
      * @return
      */
@@ -277,14 +275,6 @@ public class MenuRenderer extends BaseRenderer {
         return userService;
     }
 
-    protected WorkflowService getWorkflowService() {
-        if (workflowService == null) {
-            workflowService = (WorkflowService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-                    .getBean(WorkflowService.BEAN_NAME);
-        }
-        return workflowService;
-    }
-
     protected MenuService getMenuService() {
         if (menuService == null) {
             menuService = (MenuService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
@@ -299,6 +289,13 @@ public class MenuRenderer extends BaseRenderer {
                     .getBean(EInvoiceService.BEAN_NAME);
         }
         return einvoiceService;
+    }
+
+    public WorkflowConstantsBean getWorkflowConstantsBean() {
+        if (workflowConstantsBean == null) {
+            workflowConstantsBean = BeanHelper.getWorkflowConstantsBean();
+        }
+        return workflowConstantsBean;
     }
 
 }

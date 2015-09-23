@@ -35,6 +35,7 @@ import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.collections.comparators.NullComparator;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.common.service.ApplicationConstantsBean;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.orgstructure.model.OrganizationStructure;
@@ -55,6 +56,7 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
     private NodeService nodeService;
     private UserRegistry userRegistry;
     private AuthorityService authorityService;
+    private ApplicationConstantsBean applicationConstantsBean;
     // START: properties that would cause dependency cycle when trying to inject them
     private UserService _userService;
     // END: properties that would cause dependency cycle when trying to inject them
@@ -91,7 +93,7 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
 
     @Override
     public int updateOrganisationStructureBasedGroups() {
-        if (!getUserService().isGroupsEditingAllowed()) {
+        if (!applicationConstantsBean.isGroupsEditingAllowed()) {
             return 0; // System uses Active Directory
         }
 
@@ -304,21 +306,26 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
     @Override
     public List<Node> setUsersUnit(List<Node> users) {
         for (Node user : users) {
-            Map<String, Object> props = user.getProperties();
-
-            String unitId = (String) props.get(ContentModel.PROP_ORGID);
-            String orgStruct;
-            if (StringUtils.isBlank(unitId)) {
-                unitId = "";
-                orgStruct = "";
-            } else {
-                orgStruct = getOrganizationStructureName(unitId);
-            }
-
-            props.put(UNIT_PROP, unitId + (StringUtils.equals(unitId, orgStruct) ? "" : " " + orgStruct));
-            props.put(UNIT_NAME_PROP, orgStruct);
+            loadUserUnit(user);
         }
         return users;
+    }
+
+    @Override
+    public void loadUserUnit(Node user) {
+        Map<String, Object> props = user.getProperties();
+
+        String unitId = (String) props.get(ContentModel.PROP_ORGID);
+        String orgStruct;
+        if (StringUtils.isBlank(unitId)) {
+            unitId = "";
+            orgStruct = "";
+        } else {
+            orgStruct = getOrganizationStructureName(unitId);
+        }
+
+        props.put(UNIT_PROP, unitId + (StringUtils.equals(unitId, orgStruct) ? "" : " " + orgStruct));
+        props.put(UNIT_NAME_PROP, orgStruct);
     }
 
     // public String getOrganizationStructureByUser(Map<QName, Serializable> userProps) {
@@ -374,6 +381,10 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
 
     public void setOrgStructPropertiesCache(SimpleCache<String, OrganizationStructure> orgStructPropertiesCache) {
         this.orgStructPropertiesCache = orgStructPropertiesCache;
+    }
+
+    public void setApplicationConstantsBean(ApplicationConstantsBean applicationConstantsBean) {
+        this.applicationConstantsBean = applicationConstantsBean;
     }
 
     // END: getters / setters

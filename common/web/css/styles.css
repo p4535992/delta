@@ -626,7 +626,8 @@ tr.row-highlight {
 	color: #666 !important;
 }
 
-.pager a {
+.pager a,
+.task-list-pager a{
 	color: #666;
 	text-decoration: none;
 }
@@ -1402,6 +1403,10 @@ table.expand19-200 {
 	display: block;
 }
 
+.borderless {
+	border-bottom: none;
+}
+
 .delegateBtn {
 	margin-top: 6px !important;
 	margin-bottom: 4px;
@@ -1473,7 +1478,7 @@ table.recipient td {
 }
 
 .overflow-wrapper {
-	overflow-y: scroll;
+	overflow-x: scroll;
 }
 
 .overflow-wrapper th, 
@@ -2070,18 +2075,8 @@ textarea.borderless{
 }
 
 .workflow-separator {
-	background-color: #fff;
+	border-top: #333 dotted 1px;
 }
-
-.workflow-separator-zebra {
-	padding: 0 !important;
-}
-
-.workflow-separator hr {
-	margin: 0;
-	border-color: #333;
-}
-
 
 .printTableHeadings {
 	text-align: left;

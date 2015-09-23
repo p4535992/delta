@@ -50,7 +50,7 @@ public class MyDocumentsMenuItemFilter implements MenuItemFilter {
 
     /**
      * Decides whether currently logged in users department is mentioned in series meta-data.
-     * 
+     *
      * @param nodeRef
      * @return
      */

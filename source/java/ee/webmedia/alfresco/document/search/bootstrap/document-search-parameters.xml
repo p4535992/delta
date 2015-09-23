@@ -7,6 +7,7 @@
    <param:intParameter view:childName="param:quickSearchWordsCount">
       <view:properties>
          <param:value>10</param:value>
+         <param:name>quickSearchWordsCount</param:name>
       </view:properties>
    </param:intParameter>
 

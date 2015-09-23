@@ -9,14 +9,19 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
+import org.alfresco.repo.cache.SimpleCache;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.EqualsHelper;
+import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.common.service.BulkLoadNodeService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean;
 import ee.webmedia.alfresco.parameters.model.Parameter;
@@ -29,9 +34,11 @@ import ee.webmedia.alfresco.parameters.model.ParametersModel.Repo;
  */
 public class ParametersServiceImpl implements ParametersService {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(ParametersServiceImpl.class);
+    private static NodeRef parametersRootRef;
 
     private GeneralService generalService;
     private NodeService nodeService;
+    private BulkLoadNodeService bulkLoadNodeService;
     private boolean jobsEnabled = true;
 
     private Boolean applicationStarted = false;
@@ -43,8 +50,10 @@ public class ParametersServiceImpl implements ParametersService {
      */
     private final Object syncLock = new Object();
 
-    private final Map<String /* parameterName */, List<ParameterChangedCallback>> parameterChangeListeners = new HashMap<String, List<ParameterChangedCallback>>();
-    private final List<ParameterRescheduledTriggerBean> reschedulableJobs = new ArrayList<ParameterRescheduledTriggerBean>();
+    private final Map<String /* parameterName */, List<ParameterChangedCallback>> parameterChangeListeners = new HashMap<>();
+    private final List<ParameterRescheduledTriggerBean> reschedulableJobs = new ArrayList<>();
+
+    private SimpleCache<String, Parameter<?>> parametersCache;
 
     @Override
     public void addParameterChangeListener(String paramName, ParameterChangedCallback callback) {
@@ -60,6 +69,7 @@ public class ParametersServiceImpl implements ParametersService {
     public void applicationStarted() {
         synchronized (syncLock) {
             if (!applicationStarted) {
+                initParametersCache();
                 for (ParameterRescheduledTriggerBean job : reschedulableJobs) {
                     job.resolvePropertyValueAndSchedule();
                 }
@@ -68,65 +78,96 @@ public class ParametersServiceImpl implements ParametersService {
         }
     }
 
-    @Override
-    public Parameter<?> getParameter(Parameters parameter) {
-        String xPath = parameter.toString();
-        final NodeRef nodeRef = generalService.getNodeRef(xPath);
-        if (nodeRef == null) {
-            throw new RuntimeException("Unable to get nodeRef for parameter with xPath: '" + xPath + "'");
+    private void initParametersCache() {
+        final NodeRef parametersRootNodeRef = generalService.getNodeRef(Repo.PARAMETERS_SPACE);
+        List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(parametersRootNodeRef);
+        for (ChildAssociationRef ref : childRefs) {
+            final QName qName = ref.getQName();
+            final String paramName = qName.getLocalName();
+            NodeRef paramNodeRef = ref.getChildRef();
+            final Serializable paramValue = nodeService.getProperty(paramNodeRef, ParametersModel.Props.Parameter.VALUE);
+            final String paramDescription = (String) nodeService.getProperty(paramNodeRef, ParametersModel.Props.Parameter.DESCRIPTION);
+            final QName nodeType = nodeService.getType(paramNodeRef);
+            final Parameter<? extends Serializable> parameter = Parameter.newInstance(paramNodeRef, paramName, paramValue, nodeType, paramDescription);
+            if (parameter != null) {
+                parametersCache.put(parameter.getParamName(), parameter);
+            }
         }
-
-        final Serializable paramValue = nodeService.getProperty(nodeRef, ParametersModel.Props.Parameter.VALUE);
-        final QName nodeType = nodeService.getType(nodeRef);
-
-        List<ChildAssociationRef> parentAssocs = nodeService.getParentAssocs(nodeRef);
-        if (parentAssocs.size() != 1) {
-            throw new RuntimeException("Parameter is expected to have only one parent, but got " + parentAssocs.size() + ".");
-        }
-        ChildAssociationRef parentRef = parentAssocs.get(0);
-
-        Parameter<?> par = Parameter.newInstance(parentRef.getQName().getLocalName(), paramValue, nodeType);
-        par.setNextFireTime((Date) nodeService.getProperty(nodeRef, ParametersModel.Props.Parameter.NEXT_FIRE_TIME));
-        return par;
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public <T> T getParameter(Parameters parameter, Class<T> requiredClazz) {
-        String xPath = parameter.toString();
-        final NodeRef nodeRef = generalService.getNodeRef(xPath);
-        if (nodeRef == null) {
-            throw new RuntimeException("Unable to get nodeRef for parameter with xPath: '" + xPath + "'");
+    public Parameter<? extends Serializable> getParameter(Parameters parameter) {
+        Parameter<? extends Serializable> param = getParameter(parameter.getParameterName(), null);
+        if (param == null) {
+            String xPath = parameter.toString();
+            final NodeRef nodeRef = generalService.getNodeRef(xPath);
+            if (nodeRef == null) {
+                throw new RuntimeException("Unable to get nodeRef for parameter with xPath: '" + xPath + "'");
+            }
+
+            final Serializable paramValue = nodeService.getProperty(nodeRef, ParametersModel.Props.Parameter.VALUE);
+            final QName nodeType = nodeService.getType(nodeRef);
+
+            List<ChildAssociationRef> parentAssocs = nodeService.getParentAssocs(nodeRef);
+            if (parentAssocs.size() != 1) {
+                throw new RuntimeException("Parameter is expected to have only one parent, but got " + parentAssocs.size() + ".");
+            }
+            ChildAssociationRef parentRef = parentAssocs.get(0);
+
+            Parameter<?> par = Parameter.newInstance(nodeRef, parentRef.getQName().getLocalName(), paramValue, nodeType);
+            par.setNextFireTime((Date) nodeService.getProperty(nodeRef, ParametersModel.Props.Parameter.NEXT_FIRE_TIME));
+            return par;
         }
-        final Serializable parameterValue = nodeService.getProperty(nodeRef, ParametersModel.Props.Parameter.VALUE);
-        if (requiredClazz != null) {
-            return DefaultTypeConverter.INSTANCE.convert(requiredClazz, parameterValue);
-        }
-        return (T) parameterValue;
+
+        return param;
     }
 
-    private <T extends Serializable> T getParameter(Parameter<? extends Serializable> parameter, Class<T> requiredClazz) {
-        return getParameter(Parameters.get(parameter), requiredClazz);
+    private Parameter<? extends Serializable> getParameter(String parameterName, NodeRef paramRef) {
+        Parameter<? extends Serializable> param = parametersCache.get(parameterName);
+        if (param == null) {
+            if (paramRef != null) {
+                final Serializable paramValue = nodeService.getProperty(paramRef, ParametersModel.Props.Parameter.VALUE);
+                final QName nodeType = nodeService.getType(paramRef);
+                List<ChildAssociationRef> parentAssocs = nodeService.getParentAssocs(paramRef);
+                if (parentAssocs.size() != 1) {
+                    throw new RuntimeException("Parameter is expected to have only one parent, but got " + parentAssocs.size() + ".");
+                }
+                ChildAssociationRef parentRef = parentAssocs.get(0);
+                param = Parameter.newInstance(paramRef, parentRef.getQName().getLocalName(), paramValue, nodeType);
+                param.setNextFireTime((Date) nodeService.getProperty(paramRef, ParametersModel.Props.Parameter.NEXT_FIRE_TIME));
+                parametersCache.put(param.getParamName(), param);
+            }
+        }
+        return param;
+    }
+
+    @Override
+    public <T> T getParameterValue(Parameters parameter, Class<T> requiredClazz) {
+        Parameter<?> param = getParameter(parameter);
+        if (param != null && requiredClazz != null) {
+            return DefaultTypeConverter.INSTANCE.convert(requiredClazz, param.getParamValue());
+        }
+        throw new RuntimeException("Unable to find paramter: '" + parameter.getParameterName() + "'");
     }
 
     @Override
     public String getStringParameter(Parameters parameter) {
-        return getParameter(parameter, String.class);
+        return getParameterValue(parameter, String.class);
     }
 
     @Override
     public Long getLongParameter(Parameters parameter) {
-        return getParameter(parameter, Long.class);
+        return getParameterValue(parameter, Long.class);
     }
 
     @Override
     public Double getDoubleParameter(Parameters parameter) {
-        return getParameter(parameter, Double.class);
+        return getParameterValue(parameter, Double.class);
     }
 
     @Override
     public Map<String, Set<Parameters>> getSwappedStringParameters(List<Parameters> parameters) {
-        Map<String, Set<Parameters>> result = new HashMap<String, Set<Parameters>>();
+        Map<String, Set<Parameters>> result = new HashMap<>();
         for (Parameters parameter : parameters) {
             String parameterStr = getStringParameter(parameter);
             Set<Parameters> stringParameters = result.get(parameterStr);
@@ -140,28 +181,14 @@ public class ParametersServiceImpl implements ParametersService {
     }
 
     @Override
-    public List<Parameter<?>> getAllParameters() {
-        String xPath = Repo.PARAMETERS_SPACE;
-        final NodeRef parametersRootNodeRef = generalService.getNodeRef(xPath);
-        List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(parametersRootNodeRef);
-        List<Parameter<?>> parameters = new ArrayList<Parameter<?>>(childRefs.size());
-        for (ChildAssociationRef ref : childRefs) {
-            final QName qName = ref.getQName();
-            final String paramName = qName.getLocalName();
-            NodeRef paramNodeRef = ref.getChildRef();
-            final Serializable paramValue = nodeService.getProperty(paramNodeRef, ParametersModel.Props.Parameter.VALUE);
-            final String paramDescription = (String) nodeService.getProperty(paramNodeRef, ParametersModel.Props.Parameter.DESCRIPTION);
-            final Parameter<? extends Serializable> parameter = getParameter(paramName, paramValue, paramNodeRef, paramDescription);
-            if (parameter != null) {
-                parameters.add(parameter);
-            }
+    public List<Parameter<? extends Serializable>> getAllParameters() {
+        Map<String, NodeRef> parametersWithNodeRefs = bulkLoadNodeService.loadChildElementsNodeRefs(getParametersRootNodeRef(),
+                ParametersModel.Props.Parameter.NAME, ParametersModel.Types.PARAMETER_DOUBLE, ParametersModel.Types.PARAMETER_INT, ParametersModel.Types.PARAMETER_STRING);
+        List<Parameter<? extends Serializable>> parameters = new ArrayList<>();
+        for (Entry<String, NodeRef> param : parametersWithNodeRefs.entrySet()) {
+            parameters.add(getParameter(param.getKey(), param.getValue()));
         }
         return parameters;
-    }
-
-    private Parameter<? extends Serializable> getParameter(final String paramName, Serializable paramValue, NodeRef paramNodeRef, String paramDescription) {
-        final QName nodeType = nodeService.getType(paramNodeRef);
-        return Parameter.newInstance(paramName, paramValue, nodeType, paramDescription);
     }
 
     @Override
@@ -172,19 +199,26 @@ public class ParametersServiceImpl implements ParametersService {
     }
 
     private void updateParameter(Parameter<? extends Serializable> parameter) {
-        final Parameters parameterEnum = Parameters.get(parameter);
-        final String xPath = parameterEnum.toString();
-        final NodeRef nodeRef = generalService.getNodeRef(xPath);
         if (log.isDebugEnabled()) {
             log.debug("updating parameter: " + parameter);
         }
-        Serializable previousValueInRepo = getParameter(parameter, parameter.getParamValue().getClass());
-        nodeService.setProperty(nodeRef, ParametersModel.Props.Parameter.VALUE, parameter.getParamValue());
-        nodeService.setProperty(nodeRef, ParametersModel.Props.Parameter.DESCRIPTION, parameter.getParamDescription());
-        nodeService.setProperty(nodeRef, ParametersModel.Props.Parameter.NEXT_FIRE_TIME, parameter.getNextFireTime());
+        Serializable previousParamValue = parameter.getPreviousParamValue();
+        boolean valueChanged = !EqualsHelper.nullSafeEquals(previousParamValue, parameter.getParamValue());
+        if (valueChanged || !StringUtils.equals(parameter.getPreviousParamDescription(), parameter.getParamDescription())) {
+            Map<QName, Serializable> newProps = new HashMap<>();
+            newProps.put(ParametersModel.Props.Parameter.VALUE, parameter.getParamValue());
+            newProps.put(ParametersModel.Props.Parameter.DESCRIPTION, parameter.getParamDescription());
+            newProps.put(ParametersModel.Props.Parameter.NEXT_FIRE_TIME, parameter.getNextFireTime());
+            parameter.setPreviousParamDescription();
+            parameter.setPreviousParamValue();
+            nodeService.addProperties(parameter.getNodeRef(), newProps);
+            parametersCache.remove(parameter.getParamName());
+            parametersCache.put(parameter.getParamName(), parameter);
+        }
+
         // only reschedule jobs if the parameter value actually changed
-        if (!previousValueInRepo.equals(parameter.getParamValue())) {
-            log.debug("Parameters value changed:\n\tin repo:" + previousValueInRepo + "'\n\tupdateable parameter: '" + parameter + "'");
+        if (valueChanged) {
+            log.debug("Parameters value changed:\n\tin repo:" + previousParamValue + "'\n\tupdateable parameter: '" + parameter + "'");
             List<ParameterChangedCallback> listeners = parameterChangeListeners.get(parameter.getParamName());
             if (listeners != null) {
                 for (ParameterChangedCallback callback : listeners) {
@@ -196,13 +230,12 @@ public class ParametersServiceImpl implements ParametersService {
 
     @Override
     public void setParameterNextFireTime(Parameter<? extends Serializable> parameter) {
-        final Parameters parameterEnum = Parameters.get(parameter);
-        final String xPath = parameterEnum.toString();
-        final NodeRef nodeRef = generalService.getNodeRef(xPath);
         if (log.isDebugEnabled()) {
             log.debug("updating parameter next fire time: " + parameter + "; nextFire=" + parameter.getNextFireTime());
         }
-        nodeService.setProperty(nodeRef, ParametersModel.Props.Parameter.NEXT_FIRE_TIME, parameter.getNextFireTime());
+        nodeService.setProperty(parameter.getNodeRef(), ParametersModel.Props.Parameter.NEXT_FIRE_TIME, parameter.getNextFireTime());
+        parametersCache.remove(parameter.getParamName());
+        parametersCache.put(parameter.getParamName(), parameter);
     }
 
     @Override
@@ -221,6 +254,21 @@ public class ParametersServiceImpl implements ParametersService {
 
     public void setNodeService(NodeService nodeService) {
         this.nodeService = nodeService;
+    }
+
+    public void setBulkLoadNodeService(BulkLoadNodeService bulkLoadNodeService) {
+        this.bulkLoadNodeService = bulkLoadNodeService;
+    }
+
+    public void setParametersCache(SimpleCache<String, Parameter<?>> parametersCache) {
+        this.parametersCache = parametersCache;
+    }
+
+    private NodeRef getParametersRootNodeRef() {
+        if (parametersRootRef == null) {
+            parametersRootRef = generalService.getNodeRef(Repo.PARAMETERS_SPACE);
+        }
+        return parametersRootRef;
     }
 
     @Override

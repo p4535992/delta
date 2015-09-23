@@ -10,6 +10,7 @@ import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.service.LinkedReviewTask;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Workflow;
+import ee.webmedia.alfresco.workflow.service.WorkflowConstantsBean;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 /**
@@ -22,11 +23,12 @@ public class LinkedReviewTaskType implements WorkflowType, InitializingBean {
     private int taskOutcomes = 0;
 
     protected WorkflowService workflowService;
+    protected WorkflowConstantsBean workflowConstantsBean;
     private NamespaceService namespaceService;
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        workflowService.registerWorkflowType(this);
+        workflowConstantsBean.registerWorkflowType(this);
     }
 
     @Override
@@ -88,6 +90,10 @@ public class LinkedReviewTaskType implements WorkflowType, InitializingBean {
 
     public void setWorkflowService(WorkflowService workflowService) {
         this.workflowService = workflowService;
+    }
+
+    public void setWorkflowConstantsBean(WorkflowConstantsBean workflowConstantsBean) {
+        this.workflowConstantsBean = workflowConstantsBean;
     }
 
     public void setNamespaceService(NamespaceService namespaceService) {

@@ -38,7 +38,7 @@ public class DocumentDynamicTypeMenuItemProcessor implements InitializingBean, M
 
         @Override
         public int compare(MenuItem o1, MenuItem o2) {
-            return AppConstants.DEFAULT_COLLATOR.compare(o1.getTitle(), o2.getTitle());
+            return AppConstants.getNewCollatorInstance().compare(o1.getTitle(), o2.getTitle());
         }
     };
 
@@ -72,7 +72,7 @@ public class DocumentDynamicTypeMenuItemProcessor implements InitializingBean, M
             Set<String> nodeIds = docTypeNodeRefs.keySet();
             createDocumentPrivileges = Privilege.CREATE_DOCUMENT.equals(permission) ? privilegeService.getCreateDocumentPrivileges(nodeIds)
                     : privilegeService.getCreateCaseFilePrivileges(nodeIds);
-            userAuthorities = new HashSet<String>(BeanHelper.getAuthorityService().getContainedAuthorities(null, userName, false));
+            userAuthorities = new HashSet<String>(BeanHelper.getAuthorityService().getContainingAuthorities(null, userName, false));
             userAuthorities.add(userName);
         }
         List<DynamicType> subitems;

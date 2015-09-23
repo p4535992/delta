@@ -1,20 +1,29 @@
 package ee.webmedia.alfresco.document.sendout.model;
 
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Map;
 
 import org.alfresco.service.namespace.QName;
-import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.WebUtil;
 
 public abstract class SendInfo {
 
     public static final String SENT = "saadetud";
-    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+    protected Map<QName, Serializable> properties;
+    protected String receivedDateTimeStr;
+    protected String openedDateTimeStr;
+    protected String formattedResolution;
 
-    public abstract Node getNode();
+    public Map<QName, Serializable> getProperties() {
+        return properties;
+    }
 
     public abstract String getRecipient();
 
@@ -24,11 +33,35 @@ public abstract class SendInfo {
 
     public abstract String getSendStatus();
 
-    public abstract String getResolution();
+    public String getReceivedDateTime() {
+        if (receivedDateTimeStr == null) {
+            receivedDateTimeStr = getFormattedDate(DocumentCommonModel.Props.SEND_INFO_RECEIVED_DATE_TIME);
+            if (receivedDateTimeStr == null) {
+                receivedDateTimeStr = "";
+            }
+        }
+        return receivedDateTimeStr;
+    }
 
-    public abstract String getReceivedDateTime();
+    public String getResolution() {
+        if (formattedResolution == null) {
+            formattedResolution = WebUtil.removeHtmlComments((String) getProperties().get(DocumentCommonModel.Props.SEND_INFO_RESOLUTION));
+            if (formattedResolution == null) {
+                formattedResolution = "";
+            }
+        }
+        return formattedResolution;
+    }
 
-    public abstract String getOpenedDateTime();
+    public String getOpenedDateTime() {
+        if (openedDateTimeStr == null) {
+            openedDateTimeStr = getFormattedDate(DocumentCommonModel.Props.SEND_INFO_OPENED_DATE_TIME);
+            if (openedDateTimeStr == null) {
+                openedDateTimeStr = "";
+            }
+        }
+        return openedDateTimeStr;
+    }
 
     public String getSendStatusWithReceivedDateTime() {
         String receivedDateTime = getReceivedDateTime();
@@ -36,7 +69,7 @@ public abstract class SendInfo {
     }
 
     protected String getFormattedDate(QName dateProp) {
-        Date date = (Date) getNode().getProperties().get(dateProp);
+        Date date = (Date) getProperties().get(dateProp);
         if (date == null) {
             return "";
         }

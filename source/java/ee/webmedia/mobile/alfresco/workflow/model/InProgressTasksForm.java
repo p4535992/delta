@@ -1,11 +1,14 @@
 package ee.webmedia.mobile.alfresco.workflow.model;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 
-public class InProgressTasksForm {
+public class InProgressTasksForm implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private Map<String, Task> inProgressTasks;
     private NodeRef compoundWorkflowRef;
@@ -15,6 +18,7 @@ public class InProgressTasksForm {
     private String signingFlowView;
     private String mobileIdChallengeId;
     private Map<String, String> actions;
+    private boolean defaultSigningNumber;
 
     public InProgressTasksForm() {
         inProgressTasks = new HashMap<String, Task>();
@@ -93,6 +97,14 @@ public class InProgressTasksForm {
 
     public void setMobileIdChallengeId(String mobileIdChallengeId) {
         this.mobileIdChallengeId = mobileIdChallengeId;
+    }
+
+    public boolean isDefaultSigningNumber() {
+        return defaultSigningNumber;
+    }
+
+    public void setDefaultSigningNumber(boolean defaultSigningNumber) {
+        this.defaultSigningNumber = defaultSigningNumber;
     }
 
 }

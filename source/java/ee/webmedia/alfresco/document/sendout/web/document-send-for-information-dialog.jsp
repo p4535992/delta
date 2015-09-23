@@ -15,7 +15,7 @@
 			<f:verbatim><span class="red">*&nbsp;</span></f:verbatim>
 			<h:outputText value="#{msg.document_send_for_information_users}" styleClass="no-wrap" />
 		</h:panelGroup>            
-        <wm:search id="searchSendForInformationUsers" pickerCallback="#{UserContactGroupSearchBean.searchAll}" 
+        <wm:search id="searchSendForInformationUsers" pickerCallback="#{UserContactGroupSearchBean.searchAllWithAdminsAndDocManagers}" 
            	dialogTitleId="users_usergroups_search_title" value="#{DialogManager.bean.authorities}" searchLinkTooltip="search"
            	showFilter="true" filters="#{UserContactGroupSearchBean.usersGroupsFilters}" dataMultiValued="true" 
            	converter="ee.webmedia.alfresco.user.web.AuthorityConverter" />

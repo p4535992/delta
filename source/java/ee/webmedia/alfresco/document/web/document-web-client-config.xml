@@ -392,6 +392,9 @@
             
          <dialog name="documentSendForInformationDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/sendout/web/document-send-for-information-dialog.jsp" managed-bean="DocumentSendForInformationDialog"
             icon="/images/icons/details_large.gif" title-id="document_send_for_information_dialog" />
+            
+         <dialog name="forwardDecDocumentDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/sendout/web/forward-dec-document-dialog.jsp" managed-bean="ForwardDecDocumentDialog"
+            icon="/images/icons/details_large.gif" title-id="document_forward_dec_document_title" />
                         
       </dialogs>
    </config>

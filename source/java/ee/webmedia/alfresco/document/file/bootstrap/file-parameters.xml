@@ -7,6 +7,7 @@
    <param:intParameter view:childName="param:uploadFileMaxSize">
       <view:properties>
          <param:value>5</param:value>
+         <param:name>uploadFileMaxSize</param:name>
          <param:description>Dokumendile lisatava faili maksimaalne lubatud suurus.</param:description>
       </view:properties>
    </param:intParameter>

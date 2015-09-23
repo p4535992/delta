@@ -15,7 +15,7 @@
       <tag:valueRow labelId="workflow.task.dueDate" value="${dueDate}" hideIfEmpty="true" />
       <tag:valueRow labelId="workflow.task.workflow" value="${item.workflowType }" hideIfEmpty="true" />
       <c:if test="${ item.groupBlockItem }" >
-   		<tag:valueRow labelId="workflow.task.ownerName" value="${item.groupName}" hideIfEmpty="true" href="/m/compound-workflow/task-group-details/${item.compoundWorkflowId}/${item.firstTaskId}" />
+   		<tag:valueRow labelId="workflow.task.ownerName" value="${item.groupName}" hideIfEmpty="true" href="/m/compound-workflow/task-group-details/${item.compoundWorkflowId}/${item.taskNodeRef.id}" />
       </c:if>
       <c:if test="${ !item.groupBlockItem }" >
       	<tag:valueRow labelId="workflow.task.ownerName" value="${item.taskOwnerName}" hideIfEmpty="true" />

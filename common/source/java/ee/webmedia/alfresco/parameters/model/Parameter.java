@@ -8,6 +8,7 @@ import static ee.webmedia.alfresco.parameters.model.Parameter.ImportStatus.PARAM
 import java.io.Serializable;
 import java.util.Date;
 
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
@@ -30,6 +31,7 @@ public abstract class Parameter<T extends Serializable> implements Serializable 
     private String previousParamDescription;
     private String validationFailedMsgId;
     private ImportStatus statusOfValueChange;
+    private NodeRef nodeRef;
 
     private Date nextFireTime;
 
@@ -39,19 +41,19 @@ public abstract class Parameter<T extends Serializable> implements Serializable 
         this.typeMsg = typeMsg;
     }
 
-    public static Parameter<? extends Serializable> newInstance(String paramName, Serializable property, QName nodeType) {
-        return newInstance(paramName, property, nodeType, null);
+    public static Parameter<? extends Serializable> newInstance(NodeRef nodeRef, String paramName, Serializable property, QName nodeType) {
+        return newInstance(nodeRef, paramName, property, nodeType, null);
     }
 
-    public static Parameter<? extends Serializable> newInstance(String paramName, Serializable property, QName nodeType, String paramDescription) {
+    public static Parameter<? extends Serializable> newInstance(NodeRef nodeRef, String paramName, Serializable property, QName nodeType, String paramDescription) {
         if (nodeType.equals(ParametersModel.Types.PARAMETER_STRING)) {
-            return newInstance(paramName, DefaultTypeConverter.INSTANCE.convert(String.class, property), paramDescription);
+            return newInstance(nodeRef, paramName, DefaultTypeConverter.INSTANCE.convert(String.class, property), paramDescription);
         }
         if (property instanceof String && StringUtils.isBlank((String) property)) {
             return null;
         }
         final Class<? extends Serializable> paramClass = getParamClass(nodeType);
-        return newInstance(paramName, DefaultTypeConverter.INSTANCE.convert(paramClass, property), paramDescription);
+        return newInstance(nodeRef, paramName, DefaultTypeConverter.INSTANCE.convert(paramClass, property), paramDescription);
     }
 
     public static Class<? extends Serializable> getParamClass(QName nodeType) {
@@ -70,8 +72,12 @@ public abstract class Parameter<T extends Serializable> implements Serializable 
     }
 
     public void setParamValue(T paramValue) {
+        setPreviousParamValue();
         this.paramValue = paramValue;
-        this.statusOfValueChange = null;
+    }
+
+    private void setParamValueWithoutChangingPreviousValue(T paramValue) {
+        this.paramValue = paramValue;
     }
 
     public String getParamDescription() {
@@ -79,6 +85,7 @@ public abstract class Parameter<T extends Serializable> implements Serializable 
     }
 
     public void setParamDescription(String paramDescription) {
+        setPreviousParamDescription();
         this.paramDescription = paramDescription;
     }
 
@@ -126,7 +133,7 @@ public abstract class Parameter<T extends Serializable> implements Serializable 
 
     @SuppressWarnings("unchecked")
     // can't put SuppressWarnings annotation to each place with reasonable amount of code
-    private static <G extends Serializable> Parameter<G> newInstance(String paramName, G paramValue, String paramDescription) {
+    private static <G extends Serializable> Parameter<G> newInstance(NodeRef nodeRef, String paramName, G paramValue, String paramDescription) {
         Parameter<G> parameter;
         if (paramValue instanceof String) {
             parameter = (Parameter<G>) new StringParameter(paramName);
@@ -139,6 +146,7 @@ public abstract class Parameter<T extends Serializable> implements Serializable 
         }
         parameter.setParamDescription(paramDescription);
         parameter.setParamValue(paramValue);
+        parameter.setNodeRef(nodeRef);
         return parameter;
     }
 
@@ -146,7 +154,7 @@ public abstract class Parameter<T extends Serializable> implements Serializable 
         Object paramValueObject = paramValue;
         if (paramValueObject instanceof String) {
             String paramValueString = (String) paramValueObject;
-            setParamValue(convertFromString(paramValueString.trim()));
+            setParamValueWithoutChangingPreviousValue(convertFromString(paramValueString.trim()));
         }
     }
 
@@ -166,7 +174,11 @@ public abstract class Parameter<T extends Serializable> implements Serializable 
     }
 
     public void setPreviousParamValue() {
-        this.previousParamValue = paramValue;
+        if (paramValue instanceof String) {
+            this.previousParamValue = convertFromString((String) paramValue);
+        } else {
+            this.previousParamValue = (paramValue);
+        }
         statusOfValueChange = null;
     }
 
@@ -177,6 +189,10 @@ public abstract class Parameter<T extends Serializable> implements Serializable 
 
     public T getPreviousParamValue() {
         return previousParamValue;
+    }
+
+    public String getPreviousParamDescription() {
+        return previousParamDescription;
     }
 
     public ImportStatus getStatus() {
@@ -202,6 +218,14 @@ public abstract class Parameter<T extends Serializable> implements Serializable 
 
     private String getNvlStringVal(final T val) {
         return val == null ? "" : val.toString().trim();
+    }
+
+    public NodeRef getNodeRef() {
+        return nodeRef;
+    }
+
+    public void setNodeRef(NodeRef nodeRef) {
+        this.nodeRef = nodeRef;
     }
     // END: getters / setters
 

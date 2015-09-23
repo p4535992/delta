@@ -15,11 +15,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
- * As a special exception to the terms and conditions of version 2.0 of 
- * the GPL, you may redistribute this Program in connection with Free/Libre 
- * and Open Source Software ("FLOSS") applications as described in Alfresco's 
- * FLOSS exception.  You should have recieved a copy of the text describing 
- * the FLOSS exception, and it is also available here: 
+ * As a special exception to the terms and conditions of version 2.0 of
+ * the GPL, you may redistribute this Program in connection with Free/Libre
+ * and Open Source Software ("FLOSS") applications as described in Alfresco's
+ * FLOSS exception.  You should have recieved a copy of the text describing
+ * the FLOSS exception, and it is also available here:
  * http://www.alfresco.com/legal/licensing"
  */
 package ee.webmedia.alfresco.common.propertysheet.component;
@@ -70,7 +70,6 @@ import org.springframework.web.jsf.FacesContextUtils;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
 import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.common.web.SessionContext;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
@@ -106,7 +105,6 @@ public class SubPropertySheetItem extends PropertySheetItem {
     private NamespaceService namespaceService;
     private NodeService nodeService;
     private GeneralService generalService;
-    private SessionContext sessionContext;
     private DictionaryService dictionaryService;
     private NodeAssocBrand associationBrand;
     private Integer subPropSheetCounter;
@@ -127,8 +125,6 @@ public class SubPropertySheetItem extends PropertySheetItem {
         } else {
             throw new RuntimeException("fetching related nodes for association with associationBrand='" + associationBrand + "' is unimplemented");
         }
-        // put parent parentPropSheetNode (parentPropSheetNode of the parent property sheet) into sessionContext, so it could be used by add/remove actions
-        getSessionContext().put(parentPropSheetNode.getNodeRefAsString(), parentPropSheetNode);
         subPropSheetCounter = null;
         if (childNodes == null || childNodes.size() == 0) {
             createSubPropertySheetWrapper(outerPropSheet, null, context);
@@ -429,14 +425,6 @@ public class SubPropertySheetItem extends PropertySheetItem {
         }
         throw new RuntimeException("Creating propertySheetVar for subPropertySheet associated to parent with associationBrand='" //
                 + associationBrand + "' is unimplemented");
-    }
-
-    protected SessionContext getSessionContext() {
-        if (sessionContext == null) {
-            sessionContext = (SessionContext) FacesContextUtils.getRequiredWebApplicationContext( //
-                    FacesContext.getCurrentInstance()).getBean(SessionContext.BEAN_NAME);
-        }
-        return sessionContext;
     }
 
     protected GeneralService getGeneralService() {

@@ -74,10 +74,6 @@ public abstract class AbstractSearchBlockBean implements DialogDataProvider {
         return new TransientNode(DocumentSearchModel.Types.OBJECT_FILTER, null, data);
     }
 
-    public boolean isDocumentVolumeColumnVisible() {
-        return getDocumentService().isVolumeColumnEnabled();
-    }
-
     protected abstract String getBeanName();
 
     public void reset() {

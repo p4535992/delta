@@ -12,7 +12,7 @@
       </property>
    </bean>
 
-   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
+   <bean id="userResourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee/webmedia/alfresco/user/web/user-webclient</value>

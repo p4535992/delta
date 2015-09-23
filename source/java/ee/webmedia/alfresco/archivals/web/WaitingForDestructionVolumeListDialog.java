@@ -4,10 +4,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.config.DialogsConfigElement.DialogButtonConfig;
@@ -43,7 +46,7 @@ public class WaitingForDestructionVolumeListDialog extends VolumeArchiveBaseDial
             public Comparable<String> tr(Volume volume) {
                 return volume.getRetaintionDescription();
             }
-        }, new NullComparator(AppConstants.DEFAULT_COLLATOR)));
+        }, new NullComparator(AppConstants.getNewCollatorInstance())));
         chain.addComparator(TransferringToUamVolumeListDialog.comparator);
         comparator = chain;
     }
@@ -89,23 +92,23 @@ public class WaitingForDestructionVolumeListDialog extends VolumeArchiveBaseDial
     }
 
     @Override
-    protected List<QName> getRenderedFilterFields() {
+    protected List<String> getRenderedFilterFields() {
         if (renderedFilterFields == null) {
-            renderedFilterFields = new ArrayList<QName>(Arrays.asList(
-                    VolumeSearchModel.Props.MARKED_FOR_DESTRUCTION,
-                    VolumeSearchModel.Props.DISPOSAL_ACT_CREATED,
-                    VolumeSearchModel.Props.EXPORTED_FOR_UAM_DATE_TIME,
-                    VolumeSearchModel.Props.EXPORTED_FOR_UAM_DATE_TIME_END_DATE,
-                    VolumeSearchModel.Props.NEXT_EVENT_DATE,
-                    VolumeSearchModel.Props.NEXT_EVENT_DATE_END_DATE,
-                    VolumeSearchModel.Props.HAS_ARCHIVAL_VALUE,
-                    VolumeSearchModel.Props.RETAIN_PERMANENT,
-                    VolumeSearchModel.Props.EVENT_PLAN));
+            renderedFilterFields = new ArrayList<String>(Arrays.asList(
+                    VolumeSearchModel.Props.MARKED_FOR_DESTRUCTION.toPrefixString(),
+                    VolumeSearchModel.Props.DISPOSAL_ACT_CREATED.toPrefixString(),
+                    VolumeSearchModel.Props.EXPORTED_FOR_UAM_DATE_TIME.toPrefixString(),
+                    VolumeSearchModel.Props.EXPORTED_FOR_UAM_DATE_TIME_END_DATE.toPrefixString(),
+                    VolumeSearchModel.Props.NEXT_EVENT_DATE.toPrefixString(),
+                    VolumeSearchModel.Props.NEXT_EVENT_DATE_END_DATE.toPrefixString(),
+                    VolumeSearchModel.Props.HAS_ARCHIVAL_VALUE.toPrefixString(),
+                    VolumeSearchModel.Props.RETAIN_PERMANENT.toPrefixString(),
+                    VolumeSearchModel.Props.EVENT_PLAN.toPrefixString()));
             if (showStoreFilterField()) {
-                renderedFilterFields.add(VolumeSearchModel.Props.STORE);
+                renderedFilterFields.add(VolumeSearchModel.Props.STORE.toPrefixString());
             }
             if (showNextEventFilterField()) {
-                renderedFilterFields.add(VolumeSearchModel.Props.NEXT_EVENT);
+                renderedFilterFields.add(VolumeSearchModel.Props.NEXT_EVENT.toPrefixString());
             }
         }
         return renderedFilterFields;
@@ -170,30 +173,39 @@ public class WaitingForDestructionVolumeListDialog extends VolumeArchiveBaseDial
                 "archivals_volume_destruction_with_disposition_act", "archivals_volume_start_destruction_success", "applog_archivals_volume_disposed");
     }
 
-    private void disposeVolumes(String template, String missingTemplateErrorMsgKey, ActivityType activityType, String docCommentMsgKey, String successMsgKey, String logMessageKey) {
-        Date destructionStartDate = new Date();
-        String templateName = MessageUtil.getMessage(template);
-        NodeRef templateRef = BeanHelper.getDocumentTemplateService().getArchivalReportTemplateByName(templateName);
-        if (templateRef == null) {
-            MessageUtil.addErrorMessage(missingTemplateErrorMsgKey, templateName);
-            return;
-        }
-        List<NodeRef> selectedVolumes = getSelectedVolumes();
-        if (!validateVolumesForDisposal(selectedVolumes, false)) {
-            return;
-        }
-        NodeRef activityRef = generateActivityAndWordFile(activityType, ActivityStatus.IN_PROGRESS, null, null);
-        if (activityRef != null) {
-            BeanHelper.getArchivalsService().disposeVolumes(selectedVolumes, destructionStartDate, MessageUtil.getMessage(docCommentMsgKey),
-                    activityRef, templateRef, MessageUtil.getMessage(logMessageKey));
-            MessageUtil.addInfoMessage(successMsgKey, selectedVolumes.size());
-        }
+    private void disposeVolumes(final String template, final String missingTemplateErrorMsgKey, final ActivityType activityType, final String docCommentMsgKey,
+            final String successMsgKey, final String logMessageKey) {
+        BeanHelper.getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
+
+            @Override
+            public Void execute() throws Throwable {
+                Date destructionStartDate = new Date();
+                String templateName = MessageUtil.getMessage(template);
+                NodeRef templateRef = BeanHelper.getDocumentTemplateService().getArchivalReportTemplateByName(templateName);
+                if (templateRef == null) {
+                    MessageUtil.addErrorMessage(missingTemplateErrorMsgKey, templateName);
+                    return null;
+                }
+                List<NodeRef> selectedVolumes = getSelectedVolumes();
+                if (!validateVolumesForDisposal(selectedVolumes, false)) {
+                    return null;
+                }
+                NodeRef activityRef = generateActivityAndWordFile(activityType, ActivityStatus.IN_PROGRESS, null, null);
+                if (activityRef != null) {
+                    BeanHelper.getArchivalsService().disposeVolumes(selectedVolumes, destructionStartDate, MessageUtil.getMessage(docCommentMsgKey),
+                            activityRef, templateRef, MessageUtil.getMessage(logMessageKey));
+                    MessageUtil.addInfoMessage(successMsgKey, selectedVolumes.size());
+                }
+                return null;
+            }
+        });
     }
 
     private boolean validateVolumesForDisposal(List<NodeRef> selectedVolumes, boolean simpleDestruction) {
         VolumeService volumeService = BeanHelper.getVolumeService();
+        Map<Long, QName> propertyTypes = new HashMap<Long, QName>();
         for (NodeRef volumeRef : selectedVolumes) {
-            Volume volume = volumeService.getVolumeByNodeRef(volumeRef);
+            Volume volume = volumeService.getVolumeByNodeRef(volumeRef, propertyTypes);
             if (!(volume.isAppraised() && StringUtils.isNotBlank(volume.getArchivingNote()))) {
                 MessageUtil.addErrorMessage("archivals_volume_start_destruction_error_no_appraise_or_arch_note");
                 return false;

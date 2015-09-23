@@ -8,8 +8,10 @@ import java.util.Set;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 
+import ee.webmedia.alfresco.common.model.Cacheable;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.user.model.Authority;
@@ -17,6 +19,7 @@ import ee.webmedia.alfresco.user.model.Authority;
 public interface UserService {
 
     String BEAN_NAME = "UserService";
+    String NON_TX_BEAN_NAME = "userService";
 
     String DOCUMENT_MANAGERS_GROUP = "DOCUMENT_MANAGERS";
     String ADMINISTRATORS_GROUP = "ALFRESCO_ADMINISTRATORS";
@@ -55,11 +58,12 @@ public interface UserService {
      *
      * @return true if has
      */
+    @Cacheable
     boolean isAdministrator();
 
     /**
      * Checks if user has archivist privileges
-     * 
+     *
      * @return true if has
      */
     boolean isArchivist();
@@ -72,6 +76,7 @@ public interface UserService {
 
     boolean isDocumentManager(String userName);
 
+    @Cacheable
     boolean isDocumentManager();
 
     /**
@@ -166,8 +171,6 @@ public interface UserService {
      */
     Set<String> getUsernamesByStructUnit(List<String> structUnits);
 
-    boolean isGroupsEditingAllowed();
-
     boolean isGroupDeleteAllowed(String group);
 
     String getAccountantsGroup();
@@ -219,11 +222,7 @@ public interface UserService {
 
     List<Node> searchUsers(String input, boolean returnAllUsers, String group, int limit, String exactGroup);
 
-    List<String> getUserNames(List<NodeRef> userNodes);
-
     Set<String> getSystematicGroups();
-
-    List<NodeRef> getAllUserRefs();
 
     boolean isCurrentStructUnitUser();
 
@@ -243,6 +242,18 @@ public interface UserService {
 
     void addUserToGroup(String group, String username);
 
-    String getUserMobilePhone(String userName);
+    String getDefaultTelephoneForSigning(String userName);
+
+    List<Node> getPersonsList();
+
+    boolean isAdministrator(String userName);
+
+    /** @return {@code List<Pair<userNameLabel, userId>>} */
+    List<Pair<String, String>> searchUserNamesAndIdsWithoutCurrentUser(String param, int limit);
+
+    /** @return {@code List<Pair<userNameLabel, userId>>} */
+    List<Pair<String, String>> searchUserNamesAndIds(String param, int limit);
+    
+    void setCurrentUserProperty(QName property, Serializable value);
 
 }

@@ -18,4 +18,9 @@ public class AddFollowUpAssocEvaluator extends BaseAddAssocEvaluator {
         return documentType.isAddFollowUpToUnregistratedDocEnabled();
     }
 
+    @Override
+    public boolean evaluate() {
+        return super.evaluate();
+    }
+
 }

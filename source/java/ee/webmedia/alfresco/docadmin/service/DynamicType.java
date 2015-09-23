@@ -1,6 +1,8 @@
 package ee.webmedia.alfresco.docadmin.service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
@@ -11,12 +13,15 @@ import ee.webmedia.alfresco.base.BaseServiceImpl;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
+import ee.webmedia.alfresco.utils.RepoUtil;
 
 /**
  * Common base class for {@link DocumentType} and {@link CaseFileType}
  */
 public class DynamicType extends BaseObject {
     private static final long serialVersionUID = 1L;
+
+    private static final Map<String, QName> TYPE_ID_TO_ASSOC_QNAME = new HashMap<>();
 
     public DynamicType(NodeRef parentRef, QName type) {
         super(parentRef, type);
@@ -42,7 +47,7 @@ public class DynamicType extends BaseObject {
     }
 
     protected static QName getAssocName(String documentTypeId) {
-        return QName.createQName(DocumentAdminModel.URI, documentTypeId);
+        return RepoUtil.getFromQNamePool(documentTypeId, DocumentAdminModel.URI, TYPE_ID_TO_ASSOC_QNAME);
     }
 
     @Override

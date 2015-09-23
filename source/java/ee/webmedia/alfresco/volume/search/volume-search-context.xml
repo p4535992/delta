@@ -24,15 +24,7 @@
       </property>
    </bean>
 
-   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
-      <property name="resourceBundles">
-         <list>
-            <value>ee/webmedia/alfresco/volume/search/web/volume-search-webclient</value>
-         </list>
-      </property>
-   </bean>
-   
-   <bean class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+   <bean id="volumeSearchResourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee/webmedia/alfresco/volume/search/web/volume-search-webclient</value>

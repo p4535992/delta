@@ -89,13 +89,18 @@ public class ReportListDialog extends BaseDialogBean {
 
     @Override
     public String cancel() {
-        reportResults = null;
+        clean();
         return super.cancel();
     }
 
     @Override
     public Object getActionsContext() {
         return null;
+    }
+
+    @Override
+    public void clean() {
+        reportResults = null;
     }
 
 }

@@ -21,16 +21,16 @@ public class LogAndDeleteNotExistingTasks extends AbstractModuleComponent {
 
     @Override
     protected void executeInternal() throws Throwable {
-
+        log.info("Executing LogAndDeleteNotExistingTasks updater.");
         List<List<String>> deletedTasks = BeanHelper.getWorkflowDbService().deleteNotExistingTasks();
         File resultsFile = new File(new File(inputFolderPath), getName() + ".csv");
-        log.info("Writing " + deletedTasks.size() + " tasks to file " + resultsFile.getAbsolutePath());
+        log.info("Writing " + (deletedTasks.size() - 1) + " tasks to file " + resultsFile.getAbsolutePath());
         List<String[]> records = new ArrayList<String[]>();
         for (List<String> taskData : deletedTasks) {
             records.add(taskData.toArray(new String[taskData.size()]));
         }
         AbstractNodeUpdater.writeRecordsToCsvFile(resultsFile, records);
-
+        log.info("Successfully finished LogAndDeleteNotExistingTasks updater.");
     }
 
     public void setInputFolderPath(String inputFolderPath) {

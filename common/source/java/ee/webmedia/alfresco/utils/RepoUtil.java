@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.utils;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDictionaryService;
 
 import java.io.Serializable;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -32,6 +33,7 @@ import org.alfresco.util.GUID;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.service.IClonable;
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -46,7 +48,8 @@ public class RepoUtil {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(RepoUtil.class);
     /** Namespace used for properties that shouldn't be saved to repository */
     public static final String TRANSIENT_PROPS_NAMESPACE = "temp";
-    private static final StoreRef NOT_SAVED_STORE = new StoreRef("NOT_SAVED", "NOT_SAVED");
+    public static final StoreRef NOT_SAVED_STORE = new StoreRef("NOT_SAVED", "NOT_SAVED");
+    private static final HashMap<String, QName> TRANSIENT_PROPS_POOL = new HashMap<String, QName>();
 
     public static boolean isSystemProperty(QName propName) {
         return isTransientProp(propName)
@@ -63,7 +66,12 @@ public class RepoUtil {
      * @return property name that can be used to store property, that must not be saved to repository
      */
     public static QName createTransientProp(String localName) {
-        return QName.createQName(TRANSIENT_PROPS_NAMESPACE, localName);
+        QName transientProp = TRANSIENT_PROPS_POOL.get(localName);
+        if (transientProp == null) {
+            transientProp = QName.createQName(TRANSIENT_PROPS_NAMESPACE, localName);
+            TRANSIENT_PROPS_POOL.put(localName, transientProp);
+        }
+        return transientProp;
     }
 
     public static boolean isTransientProp(QName propName) {
@@ -199,7 +207,7 @@ public class RepoUtil {
 
     /**
      * Gets a flattened list of all mandatory aspects for a given class
-     * 
+     *
      * @param classDef the class
      * @param aspects a list to hold the mandatory aspects
      */
@@ -283,6 +291,11 @@ public class RepoUtil {
     }
 
     public static Map<QName, Serializable> getPropertiesIgnoringSystem(Map<QName, Serializable> props, DictionaryService dictionaryService) {
+        return getPropertiesIgnoringSystem(props, new HashMap<QName, PropertyDefinition>(), dictionaryService);
+    }
+
+    public static Map<QName, Serializable> getPropertiesIgnoringSystem(Map<QName, Serializable> props, Map<QName, PropertyDefinition> propertyDefinitions,
+            DictionaryService dictionaryService) {
         Map<QName, Serializable> filteredProps = new HashMap<QName, Serializable>(props.size());
         for (QName qName : props.keySet()) {
             // ignore system and contentModel properties
@@ -293,13 +306,13 @@ public class RepoUtil {
             if (value == null) {
                 // problem: when null is set as a value to multivalued property and stored to repository, then after loading back instead of null value is list containing null
                 // workaround: replace null values with empty list
-                PropertyDefinition propDef = dictionaryService.getProperty(qName);
+                PropertyDefinition propDef = getPropDef(dictionaryService, propertyDefinitions, qName);
                 if (propDef != null && propDef.isMultiValued()) {
                     value = new ArrayList<Object>(0);
                 }
             } else if (value instanceof String && (value.toString().length() == 0)) {
                 // check for empty strings when using number types, set to null in this case
-                PropertyDefinition propDef = dictionaryService.getProperty(qName);
+                PropertyDefinition propDef = getPropDef(dictionaryService, propertyDefinitions, qName);
                 if (propDef != null) {
                     if (propDef.getDataType().getName().equals(DataTypeDefinition.DOUBLE) ||
                             propDef.getDataType().getName().equals(DataTypeDefinition.FLOAT) ||
@@ -312,6 +325,15 @@ public class RepoUtil {
             filteredProps.put(qName, value);
         }
         return filteredProps;
+    }
+
+    private static PropertyDefinition getPropDef(DictionaryService dictionaryService, Map<QName, PropertyDefinition> propertyDefinitions, QName qName) {
+        PropertyDefinition propDef = propertyDefinitions.get(qName);
+        if (propDef == null && !propertyDefinitions.containsKey(qName)) {
+            propDef = dictionaryService.getProperty(qName);
+            propertyDefinitions.put(qName, propDef);
+        }
+        return propDef;
     }
 
     public static boolean propsEqual(Map<String, Object> savedProps, Map<String, Object> unSavedPprops) {
@@ -442,6 +464,30 @@ public class RepoUtil {
         }
     }
 
+    @SuppressWarnings("null")
+    public static <T> List<List<T>> sliceList(List<T> list, int sliceSize) {
+        Assert.isTrue(sliceSize > 0);
+        if (list == null || list.isEmpty()) {
+            return new ArrayList<List<T>>();
+        }
+        List<List<T>> slicedList = new ArrayList<List<T>>();
+        int sliceElem = 0;
+        List<T> slice = null;
+        for (T obj : list) {
+            if (sliceElem == 0) {
+                slice = new ArrayList<T>();
+                slicedList.add(slice);
+            }
+            slice.add(obj);
+            if (slice.size() >= sliceSize) {
+                sliceElem = 0;
+            } else {
+                sliceElem++;
+            }
+        }
+        return slicedList;
+    }
+
     public static String getArchivedObjectName(QName type, Map<QName, Serializable> properties) {
         if (type == null) {
             return null;
@@ -452,4 +498,58 @@ public class RepoUtil {
         return (String) properties.get(ContentModel.PROP_NAME);
     }
 
+    public static boolean getPropBoolean(QName propName, Node node) {
+        Boolean prop = getProp(propName, node);
+        return convertNullToFalse(prop);
+    }
+
+    public static boolean convertNullToFalse(Boolean prop) {
+        return prop == null ? false : prop;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T extends Serializable> T getProp(QName propName, Node node) {
+        return (T) node.getProperties().get(propName);
+    }
+
+    public static QName getFromQNamePool(String key, String uri, Map<String, QName> qnameMap) {
+        QName assocQName = qnameMap.get(key);
+        if (assocQName == null) {
+            assocQName = QName.createQName(uri, key);
+            qnameMap.put(key, assocQName);
+        }
+        return assocQName;
+    }
+
+    public static List<NodeRef> getNodeRefsFromProps(Map<NodeRef, Map<QName, Serializable>> workflows) {
+        List<NodeRef> workflowRefs = new ArrayList<NodeRef>();
+        for (Map.Entry<NodeRef, Map<QName, Serializable>> entry : workflows.entrySet()) {
+            workflowRefs.add((NodeRef) entry.getValue().get(ContentModel.PROP_NODE_REF));
+        }
+        return workflowRefs;
+    }
+
+    public static <T> T getReferenceOrNull(WeakReference<T> weakReference) {
+        return weakReference != null ? weakReference.get() : null;
+    }
+
+    public static boolean isReferenceNull(WeakReference<?> weakReference) {
+        return weakReference == null || weakReference.get() == null;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static boolean isEmptyListOrString(Object listOrString) {
+        if (listOrString == null) {
+            return true;
+        }
+        if (listOrString instanceof String) {
+            return StringUtils.isBlank((String) listOrString);
+        }
+        for (String member : (List<String>) listOrString) {
+            if (StringUtils.isNotBlank(member)) {
+                return false;
+            }
+        }
+        return true;
+    }
 }

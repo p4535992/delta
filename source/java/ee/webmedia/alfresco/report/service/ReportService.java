@@ -1,12 +1,16 @@
 package ee.webmedia.alfresco.report.service;
 
+import java.io.Serializable;
 import java.util.List;
 
+import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.classificator.enums.TemplateReportType;
+import ee.webmedia.alfresco.common.service.BulkLoadNodeService;
 import ee.webmedia.alfresco.report.model.ReportDataCollector;
 
 public interface ReportService {
@@ -21,7 +25,9 @@ public interface ReportService {
 
     List<NodeRef> getAllRunningReports();
 
-    List<Node> getAllInQueueReports();
+    List<Pair<NodeRef, Serializable>> getAllInQueueReports();
+
+    List<Pair<NodeRef, Serializable>> getAllInQueueReportsWithOrderNumbers();
 
     void markReportRunning(NodeRef reportRef);
 
@@ -34,6 +40,8 @@ public interface ReportService {
     void markReportDownloaded(NodeRef fileRef);
 
     List<ReportResult> getReportResultsForUser(String username);
+
+    FileInfo getReportResultFileName(NodeRef reportResultRef);
 
     /**
      * Check if reportResult is still in general report queue (not under person's reports folder)
@@ -65,4 +73,7 @@ public interface ReportService {
 
     boolean isUsableByAdminDocManagerOnly();
 
+    NodeRef getReportsSpaceRef();
+
+    BulkLoadNodeService getBulkLoadNodeService();
 }

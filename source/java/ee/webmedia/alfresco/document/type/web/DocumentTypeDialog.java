@@ -66,7 +66,7 @@ public class DocumentTypeDialog extends BaseDialogBean {
      * Query callback method executed by the Generic Picker component.
      * This method is part of the contract to the Generic Picker, it is up to the backing bean
      * to execute whatever query is appropriate and return the results.
-     * 
+     *
      * @param params Search parameters
      * @return An array of SelectItem objects containing the results to display in the picker.
      */
@@ -109,7 +109,7 @@ public class DocumentTypeDialog extends BaseDialogBean {
         Arrays.sort(resultArray, new Comparator<SelectItem>() {
             @Override
             public int compare(SelectItem a, SelectItem b) {
-                return AppConstants.DEFAULT_COLLATOR.compare(a.getLabel(), b.getLabel());
+                return AppConstants.getNewCollatorInstance().compare(a.getLabel(), b.getLabel());
             }
         });
         return resultArray;

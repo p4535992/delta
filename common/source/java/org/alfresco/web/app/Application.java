@@ -40,6 +40,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import ee.webmedia.alfresco.utils.MessageUtil;
 import org.alfresco.config.Config;
 import org.alfresco.config.ConfigService;
 import org.alfresco.i18n.I18NUtil;
@@ -75,9 +76,7 @@ public class Application
    public static final String BEAN_CONFIG_SERVICE = "webClientConfigService";
    public static final String BEAN_DATA_DICTIONARY = "dataDictionary";
    public static final String BEAN_IMPORTER_BOOTSTRAP = "spacesBootstrap";
-   
-   public static final String MESSAGE_BUNDLE = "alfresco.messages.webclient";
-   
+
    private static boolean inPortalServer = false;
    private static StoreRef repoStoreRef;
    private static String rootPath;
@@ -591,10 +590,7 @@ public class Application
       
       // set locale for our framework usage
       context.getExternalContext().getSessionMap().put(LOCALE, locale);
-      
-      // clear the current message bundle - so it's reloaded with new locale
-      context.getExternalContext().getSessionMap().remove(MESSAGE_BUNDLE);
-      
+
       // Set the current locale in the server thread
       I18NUtil.setLocale(locale);
    }
@@ -611,8 +607,7 @@ public class Application
       Locale locale = I18NUtil.parseLocale(code);
       
       session.setAttribute(LOCALE, locale);
-      session.removeAttribute(MESSAGE_BUNDLE);
-      
+
       // Set the current locale in the server thread
       I18NUtil.setLocale(locale);
    }
@@ -620,7 +615,7 @@ public class Application
    /**
     * Return the language Locale for the current user context
     * 
-    * @param context        FacesContext for the current user
+    * @param fc        FacesContext for the current user
     * 
     * @return Current language Locale set or the VM default if none set - never null
     */
@@ -753,7 +748,7 @@ public class Application
     */
    public static String getMessage(FacesContext context, String msg)
    {
-      return getBundle(context).getString(msg);
+      return MessageUtil.getMessage(msg);
    }
    
    /**
@@ -766,40 +761,27 @@ public class Application
     */
    public static String getMessage(HttpSession session, String msg)
    {
-      return getBundle(session).getString(msg);
+      return MessageUtil.getMessage(msg);
    }
-   
+
    /**
     * Get the specified the default message bundle for this user
-    * 
+    *
     * @param session        HttpSession
-    * 
+    *
     * @return ResourceBundle for this user
     */
    public static ResourceBundle getBundle(HttpSession session)
    {
-      ResourceBundle bundle = (ResourceBundle)session.getAttribute(MESSAGE_BUNDLE);
-      if (bundle == null)
-      {
-         // get Locale from language selected by each user on login
-         Locale locale = (Locale)session.getAttribute(LOCALE);
-         if (locale == null)
-         {
-            locale = Locale.getDefault();
-         }
-         bundle = ResourceBundleWrapper.getResourceBundle(MESSAGE_BUNDLE, locale);
-         
-         session.setAttribute(MESSAGE_BUNDLE, bundle);
-      }
-      
-      return bundle;
+      // get Locale from language selected by each user on login
+      return getBundle((Locale) session.getAttribute(LOCALE));
    }
-   
-   /**
+
+    /**
     * Get the specified the default message bundle for this user
-    * 
+    *
     * @param context        FacesContext
-    * 
+    *
     * @return ResourceBundle for this user
     */
    @SuppressWarnings("unchecked")
@@ -809,26 +791,15 @@ public class Application
       // we store the bundle in the users session
       // this makes it easy to add a locale per user support later
       Map session = context.getExternalContext().getSessionMap();
-      ResourceBundle bundle = (ResourceBundle)session.get(MESSAGE_BUNDLE);
-      Locale locale = (Locale)session.get(LOCALE);
-      Locale bundleLocale = null;
-      if(bundle != null){
-          bundleLocale = (Locale)bundle.getLocale();
-      }
-      if (bundle == null || (locale != null && !locale.equals(bundleLocale)))
+      return getBundle((Locale) session.get(LOCALE));
+   }
+
+   private static ResourceBundle getBundle(Locale locale) {
+      if (locale == null)
       {
-         // get Locale from language selected by each user on login
-         
-         if (locale == null)
-         {
-            locale = Locale.getDefault();
-         }
-         bundle = ResourceBundleWrapper.getResourceBundle(MESSAGE_BUNDLE, locale);
-         
-         session.put(MESSAGE_BUNDLE, bundle);
+         locale = Locale.getDefault();
       }
-      
-      return bundle;
+      return I18NUtil.getAllMessagesBundle(locale);
    }
    
    /**

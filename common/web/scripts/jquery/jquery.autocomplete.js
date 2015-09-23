@@ -17,11 +17,24 @@ jQuery.autocomplete = function(input, options) {
    var results = document.createElement("div");
    // Create jQuery object for results
    var $results = jQuery(results);
+   var parentIsPopup = false;
    if($input.attr("id")) {
-      $results.attr("id", escapeId4JQ($input.attr("id"))+"_ac_"+nrOfAutoCompleteInputs);
+      var inputId = $input.attr("id");
+      parentIsPopup = inputId.indexOf("popup") > -1;
+      $results.attr("id", escapeId4JQ(inputId)+"_ac_"+nrOfAutoCompleteInputs);
+   }
+   if(!parentIsPopup) {
+      var parents = $input.parentsUntil("#container-content");
+      parents.each(function(index, element) {
+         var id = $jQ(element).attr("id");
+         if(id && id.indexOf("popup") > -1) {
+            parentIsPopup = true;
+            return false;
+         }
+      });
    }
    nrOfAutoCompleteInputs ++;
-   $results.hide().addClass(options.resultsClass).css("position", "absolute");
+   $results.hide().addClass(options.resultsClass).css("position", parentIsPopup ? "fixed" : "absolute");
    if( options.width > 0 ) $results.css("width", options.width);
 
    // Add to body element

@@ -17,11 +17,17 @@ import org.alfresco.web.ui.common.Utils;
 public class CustomChildrenContainer extends UIComponentBase {
 
     public static final String ATTR_CHILD_GENERATOR = "childGenerator";
-    public static final String ATTR_PARAM_LIST = "parameterList";
+    public static final String ATTR_PARAMETERS = "parameterList";
     public static final String ATTR_CHILDREN_RENDERED = "childrenRendered";
     public static final String CUSTOM_CHILDREN_CONTAINER_FAMILY = CustomChildrenContainer.class.getCanonicalName();
 
     private int rowCounter = 0;
+    private String customChildCreatorBinding;
+    private String parametersValueBinding;
+
+    public void setParametersValueBinding(String parametersValueBinding) {
+        this.parametersValueBinding = parametersValueBinding;
+    }
 
     @Override
     public boolean getRendersChildren() {
@@ -30,15 +36,17 @@ public class CustomChildrenContainer extends UIComponentBase {
 
     @Override
     public void encodeChildren(FacesContext context) throws IOException {
-        @SuppressWarnings("unchecked")
-        List<Object> parameterList = (List<Object>) getValueBinding(ATTR_PARAM_LIST).getValue(context);
-        CustomChildrenCreator childGenerator = (CustomChildrenCreator) getValueBinding(ATTR_CHILD_GENERATOR).getValue(context);
+        Object parameters = getParametersValue(context);
+        CustomChildrenCreator childGenerator = getCustomChildCreator(context);
         ValueBinding valueBinding = getValueBinding(ATTR_CHILDREN_RENDERED);
         Object rendered = valueBinding == null ? null : valueBinding.getValue(context);
         boolean childrenRendered = rendered == null || Boolean.parseBoolean(rendered.toString());
 
         if (childrenRendered) {
-            List<UIComponent> createdChildren = childGenerator.createChildren(parameterList, rowCounter++);
+            List<UIComponent> createdChildren = childGenerator.createChildren(parameters, rowCounter++);
+            if (createdChildren == null) {
+                return;
+            }
             for (UIComponent child : createdChildren) {
                 if (child.isRendered()) {
                     // If we set parent instead of adding to ChildrenList, we can still create form submit links but the child won't appear in CustomChildrenContainer children
@@ -56,6 +64,25 @@ public class CustomChildrenContainer extends UIComponentBase {
         }
     }
 
+    private Object getParametersValue(FacesContext context) {
+        if (parametersValueBinding != null) {
+            return context.getApplication().createValueBinding(parametersValueBinding).getValue(context);
+        }
+        ;
+        return getValueBinding(ATTR_PARAMETERS).getValue(context);
+    }
+
+    public void setCustomChildCreator(String customChildCreatorBinding) {
+        this.customChildCreatorBinding = customChildCreatorBinding;
+    }
+
+    private CustomChildrenCreator getCustomChildCreator(FacesContext context) {
+        if (customChildCreatorBinding != null) {
+            return (CustomChildrenCreator) context.getApplication().createValueBinding(customChildCreatorBinding).getValue(context);
+        }
+        return (CustomChildrenCreator) getValueBinding(ATTR_CHILD_GENERATOR).getValue(context);
+    }
+
     @Override
     public String getFamily() {
         return CUSTOM_CHILDREN_CONTAINER_FAMILY;
@@ -63,9 +90,11 @@ public class CustomChildrenContainer extends UIComponentBase {
 
     @Override
     public Object saveState(FacesContext context) {
-        Object[] values = new Object[2];
+        Object[] values = new Object[4];
         values[0] = super.saveState(context);
         values[1] = rowCounter;
+        values[2] = parametersValueBinding;
+        values[3] = customChildCreatorBinding;
         return values;
     }
 
@@ -74,6 +103,7 @@ public class CustomChildrenContainer extends UIComponentBase {
         Object values[] = (Object[]) state;
         super.restoreState(context, values[0]);
         rowCounter = (Integer) values[1];
+        parametersValueBinding = (String) values[2];
+        customChildCreatorBinding = (String) values[3];
     }
-
 }

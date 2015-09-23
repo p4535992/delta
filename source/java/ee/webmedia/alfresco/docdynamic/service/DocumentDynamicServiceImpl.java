@@ -92,7 +92,6 @@ import ee.webmedia.alfresco.docconfig.generator.SaveListener;
 import ee.webmedia.alfresco.docconfig.generator.systematic.AccessRestrictionGenerator;
 import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
 import ee.webmedia.alfresco.docconfig.service.ContractPartyField;
-import ee.webmedia.alfresco.docconfig.service.DocumentConfig;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
 import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.model.DocumentChildModel;
@@ -121,6 +120,7 @@ import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageDataWrapper;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.TreeNode;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
@@ -155,6 +155,26 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     private boolean showMessageIfUnregistered;
 
     private BeanFactory beanFactory;
+
+    private static final Set<String> UNCHANGEABLE_FIELD_IDS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+            DocumentCommonModel.Props.OWNER_NAME.getLocalName(),
+            DocumentCommonModel.Props.SIGNER_NAME.getLocalName(),
+            DocumentCommonModel.Props.OWNER_ID.getLocalName(),
+            DocumentCommonModel.Props.DOC_STATUS.getLocalName(),
+            DocumentCommonModel.Props.REG_NUMBER.getLocalName(),
+            DocumentCommonModel.Props.SHORT_REG_NUMBER.getLocalName(),
+            DocumentCommonModel.Props.REG_DATE_TIME.getLocalName(),
+            DocumentCommonModel.Props.INDIVIDUAL_NUMBER.getLocalName(),
+            DocumentDynamicModel.Props.SIGNER_ID.getLocalName(),
+            DocumentDynamicModel.Props.SUBSTITUTE_ID.getLocalName(),
+            DocumentSpecificModel.Props.SUBSTITUTE_NAME.getLocalName())));
+
+    private static final Set<FieldType> READ_ONLY_FIELD_TYPES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+            FieldType.COMBOBOX_AND_TEXT_NOT_EDITABLE,
+            FieldType.LISTBOX,
+            FieldType.CHECKBOX,
+            FieldType.INFORMATION_TEXT,
+            FieldType.STRUCT_UNIT)));
 
     @Override
     public void setOwner(NodeRef docRef, String ownerId, boolean retainPreviousOwnerId) {
@@ -300,6 +320,30 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     }
 
     @Override
+    public void moveNodeToForwardedDecDocuments(Node docNode, List<Pair<String, String>> recipients) {
+        NodeRef docRef = docNode.getNodeRef();
+        ChildAssociationRef ca = nodeService.moveNode(docRef, BeanHelper.getConstantNodeRefsBean().getForwardedDecDocumentsRoot(),
+                DocumentCommonModel.Assocs.DOCUMENT, DocumentCommonModel.Assocs.DOCUMENT);
+        docRef = ca.getChildRef();
+
+        Map<String, Object> docProps = docNode.getProperties();
+        String senderName = (String) docProps.get(DocumentSpecificModel.Props.SENDER_DETAILS_NAME.toString());
+        String senderRegNumber = (String) docProps.get(DocumentSpecificModel.Props.SENDER_REG_NUMBER.toString());
+        if (senderRegNumber == null) {
+            senderRegNumber = "";
+        }
+        String docName = (String) docProps.get(DocumentCommonModel.Props.DOC_NAME.toString());
+        String regNrWithName = senderRegNumber.concat(";").concat(docName);
+
+        List<String> formatted = new ArrayList<>(recipients.size());
+        for (Pair<String, String> recipient : recipients) {
+            formatted.add(recipient.getFirst() + " (" + recipient.getSecond() + ")");
+        }
+        documentLogService.addDocumentLog(docRef,
+                MessageUtil.getMessage("document_forward_dec_document_done", senderName, regNrWithName, TextUtil.joinNonBlankStringsWithComma(formatted)));
+    }
+
+    @Override
     public TreeNode<QName> getChildNodeQNameHierarchy(QName[] hierarchy, TreeNode<QName> root) {
         int i = 0;
         TreeNode<QName> current = root;
@@ -423,7 +467,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
     @Override
     public Pair<DocumentDynamic, DocumentTypeVersion> createNewDocumentInDrafts(String documentTypeId) {
-        NodeRef drafts = documentService.getDrafts();
+        NodeRef drafts = BeanHelper.getConstantNodeRefsBean().getDraftsRoot();
         return createNewDocument(documentTypeId, drafts);
     }
 
@@ -460,7 +504,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     public DocumentDynamic getDocumentWithInMemoryChangesForEditing(NodeRef docRef) {
         DocumentDynamic document = getDocument(docRef);
         if (document.isImapOrDvk() && !document.isFromWebService()) {
-            Pair<DocumentType, DocumentTypeVersion> documentTypeAndVersion = documentConfigService.getDocumentTypeAndVersion(document.getNode());
+            Pair<DocumentType, DocumentTypeVersion> documentTypeAndVersion = documentConfigService.getDocumentTypeAndVersion(document.getNode(), true);
             Collection<Field> ownerNameFields = documentTypeAndVersion.getSecond().getFieldsById(Collections.singleton(DocumentCommonModel.Props.OWNER_NAME.getLocalName()));
             if (ownerNameFields.size() == 1) {
                 Field ownerNameField = ownerNameFields.iterator().next();
@@ -649,13 +693,23 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         Collections.sort(associatedDocs, DOCUMENT_BY_REG_DATE_TIME_COMPARATOR);
         for (DocumentDynamic associatedDocument : associatedDocs) {
             if (!associatedDocument.getNodeRef().getId().equals(originalDocumentNodeRef.getId())) {
-                DocumentConfig cfg = documentConfigService.getConfig(associatedDocument.getNode());
+                List<String> saveListenerBeans = documentConfigService.getSaveListenerBeanNames(associatedDocument.getNode());
                 associatedDocument.setFunction(functionRef);
                 associatedDocument.setSeries(seriesRef);
                 associatedDocument.setVolume(volumeRef);
                 associatedDocument.setProp(DocumentLocationGenerator.CASE_LABEL_EDITABLE, caseLabel);
                 NodeRef oldNodeRef = associatedDocument.getNodeRef();
-                NodeRef newNodeRef = update(associatedDocument, cfg.getSaveListenerBeanNames(), updateGeneratedFiles).getNodeRef();
+
+                // Do not validate accessRestriction value when relocating associated documents because the value has not changed for associated documents
+                // but administrator might have changed the "active" property for accessRestriction values causing the validation to fail. In this case the
+                // entire relocation process would fail and user sees a confusing fault message.
+                // See DELTA-703
+                List<String> saveListeners = null;
+                if (saveListenerBeans != null) {
+                    saveListeners = new ArrayList<>(saveListenerBeans);
+                    saveListeners.remove(AccessRestrictionGenerator.BEAN_NAME);
+                }
+                NodeRef newNodeRef = update(associatedDocument, saveListeners, updateGeneratedFiles).getNodeRef();
                 originalNodeRefs.add(Pair.newInstance(oldNodeRef, newNodeRef));
             } else {
                 originalDocumentUpdated = update(associatedDocument, saveListenerBeanNames, updateGeneratedFiles);
@@ -789,10 +843,12 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         // Add case file owner and in progress task owners to document permissions
         String ownerId = (String) caseFile.getProperties().get(DocumentCommonModel.Props.OWNER_ID);
         privilegeService.setPermissions(docRef, ownerId, Privilege.EDIT_DOCUMENT);
+        Map<NodeRef, Pair<Boolean, Boolean>> digiDocStatuses = new HashMap<>();
         for (Task task : workflowService.getTasksInProgress(caseFile.getNodeRef())) {
             String taskOwnerId = task.getOwnerId();
             if (StringUtils.isNotBlank(taskOwnerId)) {
-                privilegeService.setPermissions(docRef, taskOwnerId, getPrivsWithDependencies(getRequiredPrivsForInprogressTask(task, docRef, fileService, false)));
+                privilegeService
+                .setPermissions(docRef, taskOwnerId, getPrivsWithDependencies(getRequiredPrivsForInprogressTask(task, docRef, fileService, false, digiDocStatuses)));
             }
         }
     }
@@ -900,41 +956,9 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
         Set<NodeRef> associatedDocs = new HashSet<NodeRef>();
         associatedDocs.add(docRef);
-        getAssociatedDocRefs(docRef, associatedDocs, new HashSet<NodeRef>(), currentAssociatedDocs);
-        return associatedDocs;
-    }
-
-    private void getAssociatedDocRefs(NodeRef docRef, Set<NodeRef> associatedDocs, Set<NodeRef> checkedDocs, Set<NodeRef> currentAssociatedDocs) {
-        if (checkedDocs.contains(docRef)) {
-            return;
-        }
-        checkedDocs.add(docRef);
-
-        if (currentAssociatedDocs == null) {
-            currentAssociatedDocs = new HashSet<NodeRef>();
-        }
-        if (docRef != null) {
-            List<AssociationRef> targetAssocs = nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_REPLY);
-            targetAssocs.addAll(nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP));
-            for (AssociationRef assoc : targetAssocs) {
-                NodeRef targetRef = assoc.getTargetRef();
-                if (!associatedDocs.contains(targetRef) && isSearchable(targetRef)) {
-                    currentAssociatedDocs.add(targetRef);
-                }
-            }
-            List<AssociationRef> sourceAssocs = nodeService.getSourceAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_REPLY);
-            sourceAssocs.addAll(nodeService.getSourceAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP));
-            for (AssociationRef assoc : sourceAssocs) {
-                NodeRef sourceRef = assoc.getSourceRef();
-                if (!associatedDocs.contains(sourceRef) && isSearchable(sourceRef)) {
-                    currentAssociatedDocs.add(sourceRef);
-                }
-            }
-        }
         associatedDocs.addAll(currentAssociatedDocs);
-        for (NodeRef associatedDoc : currentAssociatedDocs) {
-            getAssociatedDocRefs(associatedDoc, associatedDocs, checkedDocs, null);
-        }
+        associatedDocs.addAll(BeanHelper.getBulkLoadNodeService().getAssociatedDocRefs(docRef));
+        return associatedDocs;
     }
 
     private boolean isSearchable(NodeRef sourceRef) {
@@ -946,7 +970,17 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         document.setDraft(isDraft(docRef));
         document.setFromWebService(isFromWebService(docRef));
         document.setDraftOrImapOrDvk(isDraftOrImapOrDvk(docRef));
+        NodeRef parentRef = nodeService.getPrimaryParent(docRef).getParentRef();
+        document.setForwardedDecDocument(isDecendant(BeanHelper.getConstantNodeRefsBean().getForwardedDecDocumentsRoot(), parentRef));
+        document.setDvk(isDecendant(BeanHelper.getConstantNodeRefsBean().getReceivedDvkDocumentsRoot(), parentRef));
         document.setIncomingInvoice(documentService.isIncomingInvoice(docRef));
+    }
+
+    private boolean isDecendant(NodeRef expectedParentRef, NodeRef actualParentRef) {
+        if (expectedParentRef != null && expectedParentRef.equals(actualParentRef)) {
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -977,7 +1011,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
     private boolean isFromWebService(NodeRef docRef) {
         ChildAssociationRef parentAssoc = nodeService.getPrimaryParent(docRef);
-        return BeanHelper.getAddDocumentService().getWebServiceDocumentsRoot().equals(parentAssoc.getParentRef());
+        return BeanHelper.getConstantNodeRefsBean().getWebServiceDocumentsRoot().equals(parentAssoc.getParentRef());
     }
 
     @Override
@@ -993,10 +1027,9 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
     @Override
     public boolean isImapOrDvk(NodeRef docRef) {
-        ChildAssociationRef parentAssoc = nodeService.getPrimaryParent(docRef);
-        QName parentType = nodeService.getType(parentAssoc.getParentRef());
-        ChildAssociationRef grandParentAssoc = nodeService.getPrimaryParent(parentAssoc.getParentRef());
-        return isDraftOrImapOrDvk(parentType) && !isDraft(grandParentAssoc, parentType);
+        NodeRef parentAssocRef = nodeService.getPrimaryParent(docRef).getParentRef();
+        QName parentType = nodeService.getType(parentAssocRef);
+        return isDraftOrImapOrDvk(parentType) && !isDraft(nodeService.getPrimaryParent(parentAssocRef), parentType);
     }
 
     @Override
@@ -1233,23 +1266,11 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             return false;
         }
 
-        DocumentDynamicService documentDynamicService = BeanHelper.getDocumentDynamicService();
-        DocumentDynamic doc = documentDynamicService.getDocument(document);
-
+        DocumentDynamic doc = getDocument(document);
         Map<String, Pair<DynamicPropertyDefinition, Field>> propertyDefinitions = BeanHelper.getDocumentConfigService().getPropertyDefinitions(doc.getNode());
-
-        List<String> updateDisabled = Arrays.asList(
-                DocumentCommonModel.Props.OWNER_NAME.getLocalName(), DocumentCommonModel.Props.SIGNER_NAME.getLocalName()
-                , DocumentSpecificModel.Props.SUBSTITUTE_NAME.getLocalName(), DocumentCommonModel.Props.OWNER_ID.getLocalName()
-                , DocumentDynamicModel.Props.SIGNER_ID.getLocalName(), DocumentDynamicModel.Props.SUBSTITUTE_ID.getLocalName()
-                , DocumentCommonModel.Props.DOC_STATUS.getLocalName(), DocumentCommonModel.Props.REG_NUMBER.getLocalName()
-                , DocumentCommonModel.Props.SHORT_REG_NUMBER.getLocalName(), DocumentCommonModel.Props.REG_DATE_TIME.getLocalName()
-                , DocumentCommonModel.Props.INDIVIDUAL_NUMBER.getLocalName());
-        List<FieldType> readOnlyFields = Arrays.asList(FieldType.COMBOBOX_AND_TEXT_NOT_EDITABLE, FieldType.LISTBOX, FieldType.CHECKBOX, FieldType.INFORMATION_TEXT);
-        List<ContractPartyField> partyFields = new ArrayList<ContractPartyField>();
+        List<ContractPartyField> partyFields = new ArrayList<>();
+        List<String> blankMandatoryFields = new ArrayList<>();
         ClassificatorService classificatorService = BeanHelper.getClassificatorService();
-
-        List<String> blankMandatoryFields = new ArrayList<String>();
 
         for (Entry<String, String> entry : formulas.entrySet()) {
             String formulaKey = entry.getKey();
@@ -1287,7 +1308,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             Field field = propDefAndField.getSecond();
 
             // If field is not changeable, then don't allow it.
-            if (isFieldUnchangeable(doc, updateDisabled, readOnlyFields, field, classificatorService, formulaValue)) {
+            if (isFieldUnchangeable(doc, field, classificatorService, formulaValue)) {
                 continue;
             }
 
@@ -1340,7 +1361,8 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             String docName = doc.getDocName();
             LOG.warn("File \"" + fileName + "\" in document \"" + docName + "\" was not saved. User tried to save mandatory field(s) \"" + s + "\" as blank!");
             setSaveFailedLogMessage(document, fileName, s);
-            throw new UnableToPerformException("notification_document_saving_failed_due_to_blank_mandatory_fields", doc.getRegNumber(), docName, fileName, s);
+            String regNumber = StringUtils.trimToEmpty(doc.getRegNumber());
+            throw new UnableToPerformException("notification_document_saving_failed_due_to_blank_mandatory_fields", regNumber, docName, fileName, s);
         }
 
         // Update sub-nodes
@@ -1389,15 +1411,14 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         }
     }
 
-    private boolean isFieldUnchangeable(DocumentDynamic doc, List<String> updateDisabled, List<FieldType> readOnlyFields, Field field, ClassificatorService classificatorService,
-            String formulaValue) {
+    private boolean isFieldUnchangeable(DocumentDynamic doc, Field field, ClassificatorService classificatorService, String formulaValue) {
         return FieldChangeableIf.ALWAYS_NOT_CHANGEABLE == field.getChangeableIfEnum()
                 || FieldChangeableIf.CHANGEABLE_IF_WORKING_DOC == field.getChangeableIfEnum()
                 && !DocumentStatus.WORKING.getValueName().equals(doc.getProp(DocumentCommonModel.Props.DOC_STATUS))
-                || updateDisabled.contains(field.getFieldId()) || readOnlyFields.contains(field.getFieldTypeEnum())
+                || UNCHANGEABLE_FIELD_IDS.contains(field.getFieldId())
+                || READ_ONLY_FIELD_TYPES.contains(field.getFieldTypeEnum())
                 || DocumentDynamicModel.Props.FIRST_KEYWORD_LEVEL.getLocalName().equals(field.getOriginalFieldId())
                 || DocumentDynamicModel.Props.SECOND_KEYWORD_LEVEL.getLocalName().equals(field.getOriginalFieldId())
-                || FieldType.STRUCT_UNIT == field.getFieldTypeEnum()
                 || FieldType.COMBOBOX == field.getFieldTypeEnum() && field.isComboboxNotRelatedToClassificator()
                 || FieldType.COMBOBOX == field.getFieldTypeEnum() && !classificatorService.hasClassificatorValueName(field.getClassificator(), formulaValue);
     }

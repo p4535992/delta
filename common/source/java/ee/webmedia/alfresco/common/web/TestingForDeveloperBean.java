@@ -9,14 +9,12 @@ import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
-import ee.webmedia.xtee.client.dhl.DhlXTeeServiceImpl;
 import org.alfresco.repo.cache.EhCacheTracerJob;
 import org.alfresco.repo.search.Indexer;
 import org.alfresco.repo.search.impl.lucene.ADMLuceneTest;
@@ -45,11 +43,15 @@ import ee.webmedia.alfresco.classificator.enums.TemplateType;
 import ee.webmedia.alfresco.common.job.NightlyDataFixJob;
 import ee.webmedia.alfresco.common.service.CustomReindexComponent;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.docdynamic.bootstrap.DocumentUpdater;
+import ee.webmedia.alfresco.document.bootstrap.SearchableSendInfoUpdater;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.SearchUtil;
+import ee.webmedia.alfresco.workflow.bootstrap.CompoundWorkflowOwnerPropsUpdater;
+import ee.webmedia.alfresco.workflow.bootstrap.TaskUpdater;
 import ee.webmedia.xtee.client.dhl.DhlXTeeServiceImplFSStub;
 
 /**
@@ -121,8 +123,8 @@ public class TestingForDeveloperBean implements Serializable {
     }
 
     public void doStuff(ActionEvent event) {
-//        DhlXTeeServiceImpl dhlXTeeService = BeanHelper.getSpringBean(DhlXTeeServiceImpl.class, "dhlXTeeService");
-//        dhlXTeeService.markDocumentsReceived(Arrays.asList("10113"));
+        // DhlXTeeServiceImpl dhlXTeeService = BeanHelper.getSpringBean(DhlXTeeServiceImpl.class, "dhlXTeeService");
+        // dhlXTeeService.markDocumentsReceived(Arrays.asList("10113"));
 
         Collection<String> receiveDocuments = BeanHelper.getDvkService().receiveDocuments();
         LOG.info("Received following documents:" + receiveDocuments);
@@ -163,7 +165,7 @@ public class TestingForDeveloperBean implements Serializable {
 
     public void deleteTestTemplatesBootstrapAndTemplates(@SuppressWarnings("unused") ActionEvent event) {
         deleteBootstrap("simdhs", "testWorkflowTemplatesBootstrap");
-        List<FileInfo> templateFiles = BeanHelper.getFileFolderService().listFiles(BeanHelper.getDocumentTemplateService().getRoot());
+        List<FileInfo> templateFiles = BeanHelper.getFileFolderService().listFiles(BeanHelper.getConstantNodeRefsBean().getTemplateRoot());
         LOG.info("Found total " + templateFiles.size() + " templates");
         for (FileInfo fi : templateFiles) {
             if (getNodeService().hasAspect(fi.getNodeRef(), DocumentTemplateModel.Aspects.TEMPLATE_NOTIFICATION)
@@ -251,6 +253,27 @@ public class TestingForDeveloperBean implements Serializable {
         Field indexInfoField = AbstractLuceneBase.class.getDeclaredField("indexInfo");
         indexInfoField.setAccessible(true);
         return (IndexInfo) indexInfoField.get(indexer);
+    }
+
+    public void executeDocumentUpdater(ActionEvent event) throws Throwable {
+        final DocumentUpdater documentUpdater = BeanHelper.getSpringBean(DocumentUpdater.class, "documentUpdater9");
+        documentUpdater.executeUpdaterInBackground();
+    }
+
+    public void executeSearchableSendInfoUpdater(ActionEvent event) throws Throwable {
+        final SearchableSendInfoUpdater searchableSendInfoUpdater = BeanHelper.getSpringBean(SearchableSendInfoUpdater.class, "searchableSendInfoUpdater");
+        searchableSendInfoUpdater.executeUpdaterInBackground();
+    }
+
+    public void executeCompoundWorkflowOwnerPropsUpdater(ActionEvent event) throws Throwable {
+        final CompoundWorkflowOwnerPropsUpdater compoundWorkflowOwnerPropsUpdater = BeanHelper.getSpringBean(CompoundWorkflowOwnerPropsUpdater.class,
+                "compoundWorkflowOwnerPropsUpdater6");
+        compoundWorkflowOwnerPropsUpdater.executeUpdaterInBackground();
+    }
+
+    public void executeTaskUpdater(ActionEvent event) throws Throwable {
+        final TaskUpdater taskUpdater = BeanHelper.getSpringBean(TaskUpdater.class, "taskUpdater");
+        taskUpdater.executeUpdaterInBackground();
     }
 
     public void printIndexInfo(ActionEvent event) {

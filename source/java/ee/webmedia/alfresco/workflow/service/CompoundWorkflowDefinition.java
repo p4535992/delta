@@ -13,6 +13,7 @@ import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 public class CompoundWorkflowDefinition extends CompoundWorkflow {
     private static final long serialVersionUID = 1L;
     private static final QName USER_FULL_NAME = RepoUtil.createTransientProp("userFullName");
+    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(BaseWorkflowObject.class);
 
     protected CompoundWorkflowDefinition(WmNode node, NodeRef parent) {
         super(node, parent);
@@ -62,7 +63,10 @@ public class CompoundWorkflowDefinition extends CompoundWorkflow {
 
     @Override
     protected String additionalToString() {
-        return super.additionalToString() + "\n  name=" + getName() + "\n  documentTypes=" + WmNode.toString(getDocumentTypes());
+        if (LOG.isTraceEnabled()) {
+            return super.additionalToString() + "\n  name=" + getName() + "\n  documentTypes=" + WmNode.toString(getDocumentTypes());
+        }
+        return "";
     }
 
     public void setUserFullName(String userFullName) {

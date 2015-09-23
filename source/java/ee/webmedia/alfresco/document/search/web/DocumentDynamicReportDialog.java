@@ -12,6 +12,8 @@ import javax.faces.component.UIInput;
 import javax.faces.context.FacesContext;
 import javax.faces.model.SelectItem;
 
+import org.alfresco.repo.transaction.RetryingTransactionHelper;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
@@ -20,6 +22,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import ee.webmedia.alfresco.classificator.enums.TemplateReportOutputType;
 import ee.webmedia.alfresco.classificator.enums.TemplateReportType;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docconfig.generator.fieldtype.DateGenerator;
@@ -27,12 +30,15 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.search.model.DocumentReportModel;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchFilterService;
+import ee.webmedia.alfresco.report.job.ExecuteReportsJob;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 
 public class DocumentDynamicReportDialog extends DocumentDynamicSearchDialog {
 
     private static final long serialVersionUID = 1L;
+
+    public static final String BEAN_NAME = "DocumentDynamicReportDialog";
     private static final Log LOG = LogFactory.getLog(DocumentDynamicReportDialog.class);
 
     private final List<SelectItem> reportTemplates = new ArrayList<SelectItem>();
@@ -61,10 +67,21 @@ public class DocumentDynamicReportDialog extends DocumentDynamicSearchDialog {
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         if (isValidFilter()) {
             try {
-                BeanHelper.getReportService().createReportResult(filter, TemplateReportType.DOCUMENTS_REPORT, DocumentReportModel.Assocs.FILTER);
+                ExecuteReportsJob.REORDER_LOCK.lock();
+                RetryingTransactionHelper helper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
+                RetryingTransactionCallback<Void> cb = new RetryingTransactionCallback<Void>() {
+                    @Override
+                    public Void execute() throws Throwable {
+                        BeanHelper.getReportService().createReportResult(filter, TemplateReportType.DOCUMENTS_REPORT, DocumentReportModel.Assocs.FILTER);
+                        return null;
+                    }
+                };
+                helper.doInTransaction(cb, false, true, true);
                 MessageUtil.addInfoMessage("report_created_success");
             } catch (UnableToPerformException e) {
                 MessageUtil.addErrorMessage(e.getMessageKey());
+            } finally {
+                ExecuteReportsJob.REORDER_LOCK.unlock();
             }
         }
         isFinished = false;
@@ -87,7 +104,7 @@ public class DocumentDynamicReportDialog extends DocumentDynamicSearchDialog {
     }
 
     public List<SelectItem> getReportTemplates(FacesContext context, UIInput selectComponent) {
-        String selectedTemplateType = (String) filter.getProperties().get(DocumentReportModel.Props.REPORT_OUTPUT_TYPE.getLocalName());
+        String selectedTemplateType = (String) filter.getProperties().get(DocumentReportModel.Props.REPORT_OUTPUT_TYPE);
         if (!reportTemplates.isEmpty()) {
             reportTemplates.clear();
         }
@@ -105,10 +122,24 @@ public class DocumentDynamicReportDialog extends DocumentDynamicSearchDialog {
     }
 
     @Override
+    public String cancel() {
+        clean();
+        return super.cancel();
+    }
+
+    @Override
+    public void clean() {
+        setPropertySheet(null);
+        reportTemplates.clear();
+        reportTemplatesWithOutputTypes = null;
+    }
+
+    @Override
     protected Node getNewFilter() {
         long start = System.currentTimeMillis();
         try {
             Map<QName, Serializable> data = getMandatoryProps();
+            data.put(DocumentReportModel.Props.REPORT_OUTPUT_TYPE, TemplateReportOutputType.DOCS_ONLY.name());
             TransientNode transientNode = new TransientNode(getFilterType(), null, data);
             setFilterDefaultValues(transientNode, getDocumentAdminService().getSearchableDocumentFieldDefinitions(), null);
             return transientNode;

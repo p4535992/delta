@@ -187,7 +187,7 @@ public class UICommand
         }
         if (parent instanceof ActionInstanceEvaluator) {
             ActionInstanceEvaluator actionInstanceEvaluator = (ActionInstanceEvaluator) parent;
-            UIActions actionsComponent = ComponentUtil.findParentWithClass(getFacesContext(), actionInstanceEvaluator, UIActions.class);
+            UIActions actionsComponent = ComponentUtil.findParentWithClass(actionInstanceEvaluator, UIActions.class);
             if (actionsComponent != null) {
                 final Object context = reloadContext(actionsComponent.getContext(), nodeService);
                 if (!actionInstanceEvaluator.evaluate(context)) {

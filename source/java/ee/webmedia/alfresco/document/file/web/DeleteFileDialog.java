@@ -34,21 +34,16 @@ public class DeleteFileDialog extends DeleteContentDialog {
             document = getNodeService().getPrimaryParent(file.getNodeRef()).getParentRef();
         }
         if (getDocLockService().getLockStatus(document) == LockStatus.LOCKED) {
-            // lock owned by other user
-            MessageUtil.addErrorMessage("file_delete_error_locked",
-                    getUserService().getUserFullName((String) getNodeService().getProperty(document, ContentModel.PROP_LOCK_OWNER)));
-
+            addLockedMessage(document);
         } else if (getDocLockService().getLockStatus(file.getNodeRef()) == LockStatus.LOCKED) {
-            // lock owned by other user
-            MessageUtil.addErrorMessage("file_delete_error_locked",
-                    getUserService().getUserFullName((String) getNodeService().getProperty(file.getNodeRef(), ContentModel.PROP_LOCK_OWNER)));
-
+            addLockedMessage(file.getNodeRef());
         } else { // could be locked: LockStatus: LOCK_OWNER | NO_LOCK | LOCK_EXPIRED
             super.finishImpl(context, outcome);
 
             String fileName = file.getName();
             if (document != null && getDictionaryService().isSubClass(getNodeService().getType(document), DocumentCommonModel.Types.DOCUMENT)) {
                 String displayName = (String) file.getProperties().get(FileModel.Props.DISPLAY_NAME);
+                BeanHelper.getFileService().reorderFiles(document);
                 if (StringUtils.isNotBlank(displayName)) {
                     fileName = displayName;
                 }
@@ -63,10 +58,18 @@ public class DeleteFileDialog extends DeleteContentDialog {
             if (previouslyGeneratedPdf != null) {
                 getNodeService().setProperty(previouslyGeneratedPdf, FileModel.Props.PDF_GENERATED_FROM_FILE, null);
             }
+            if (document != null && BeanHelper.getConstantNodeRefsBean().getTemplateRoot().equals(document)) {
+                BeanHelper.getDocumentTemplateService().removeTemplateFromCache(file.getNodeRef());
+            }
             MessageUtil.addInfoMessage("file_delete_success", fileName);
         }
 
         return outcome;
+    }
+
+    private void addLockedMessage(NodeRef nodeRef) {
+        String lockOwner = getDocLockService().getLockOwnerIfLocked(nodeRef);
+        MessageUtil.addErrorMessage("file_delete_error_locked", getUserService().getUserFullName(lockOwner));
     }
 
     @Override

@@ -13,21 +13,18 @@ import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.classificator.enums.TemplateReportType;
 import ee.webmedia.alfresco.document.model.Document;
+import ee.webmedia.alfresco.notification.model.NotificationCache;
+import ee.webmedia.alfresco.notification.model.NotificationCache.Template;
 import ee.webmedia.alfresco.template.exception.ExistingFileFromTemplateException;
 import ee.webmedia.alfresco.template.model.DocumentTemplate;
 import ee.webmedia.alfresco.template.model.ProcessedEmailTemplate;
+import ee.webmedia.alfresco.template.model.UnmodifiableDocumentTemplate;
 import ee.webmedia.alfresco.volume.model.Volume;
+import ee.webmedia.alfresco.workflow.service.Task;
 
 public interface DocumentTemplateService {
 
     String BEAN_NAME = "DocumentTemplateService";
-
-    /**
-     * Returns list with all the templates
-     * 
-     * @return
-     */
-    List<DocumentTemplate> getTemplates();
 
     /**
      * Returns list with templates which match the given document type.
@@ -35,27 +32,20 @@ public interface DocumentTemplateService {
      * @param docType document type qname
      * @return
      */
-    List<DocumentTemplate> getDocumentTemplates(String docTypeId);
+    List<UnmodifiableDocumentTemplate> getDocumentTemplates(String docTypeId);
 
     /**
      * Returns list with templates which are not mapped to any document type and are considered to be email templates.
      * 
      * @return
      */
-    List<DocumentTemplate> getEmailTemplates();
-
-    /**
-     * Returns root folder for templates
-     * 
-     * @return
-     */
-    NodeRef getRoot();
+    List<UnmodifiableDocumentTemplate> getEmailTemplates();
 
     /**
      * Fills documents template file with metadata
      * 
      * @param documentNodeRef
-     * @return display name(that doesn't have OS-dependent filename length constraints) of generated word file
+     * @return display name(that doesn't have OS-dependent filename length constraints) of generated word file and NodeRef of generated/overwritten file
      * @throws FileNotFoundException throws when document has a template which has been deleted
      * @throws Exception
      */
@@ -84,17 +74,10 @@ public interface DocumentTemplateService {
      * @param additionalFormulas additional formulas that can be used. Can be null.
      * @return processed content and subject (if available), where formulas are replaced with their values (if formula has a non-empty value)
      */
-    ProcessedEmailTemplate getProcessedEmailTemplate(Map<String, NodeRef> dataNodeRefs, NodeRef template, Map<String, String> additionalFormulas);
+    ProcessedEmailTemplate getProcessedEmailTemplate(Map<String, NodeRef> dataNodeRefs, Template template, Map<String, String> additionalFormulas,
+            NotificationCache notificationCache, Task task);
 
-    /**
-     * Check if supplied document has a template that can be used
-     * 
-     * @param document node to check against
-     * @return found DocumentTemplate or null if none found
-     */
-    DocumentTemplate getDocumentsTemplate(NodeRef document);
-
-    boolean hasDocumentsTemplate(NodeRef document);
+    boolean hasDocumentsTemplate(String documentTypeId);
 
     /**
      * Scans generated Word documents and replaces patterns which are relevant to registration of the document
@@ -150,5 +133,9 @@ public interface DocumentTemplateService {
 
     NodeRef getArchivalReportTemplateByName(String templateName);
 
-    void populateVolumeArchiveTemplate(NodeRef parentRef, List<NodeRef> volumeRefs, NodeRef templateRef);
+    void populateVolumeArchiveTemplate(NodeRef parentRef, List<NodeRef> volumeRefs, NodeRef templateRef, String executingUser);
+
+    List<UnmodifiableDocumentTemplate> getUnmodifiableTemplates();
+
+    void removeTemplateFromCache(NodeRef templateRef);
 }

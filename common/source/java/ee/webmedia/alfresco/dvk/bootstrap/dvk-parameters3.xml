@@ -6,6 +6,7 @@
    <param:stringParameter view:childName="param:sapFinancialDimensionsFolderInDvk">
       <view:properties>
          <param:value>finantsdimensioonid</param:value>
+         <param:name>sapFinancialDimensionsFolderInDvk</param:name>
       </view:properties>
    </param:stringParameter>
    

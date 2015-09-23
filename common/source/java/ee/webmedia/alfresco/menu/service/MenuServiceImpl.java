@@ -37,10 +37,10 @@ import ee.webmedia.alfresco.menu.ui.component.UIMenuComponent;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.parameters.service.ParametersService.ParameterChangedCallback;
-import ee.webmedia.alfresco.series.model.Series;
+import ee.webmedia.alfresco.series.model.UnmodifiableSeries;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
-import ee.webmedia.alfresco.volume.model.Volume;
+import ee.webmedia.alfresco.volume.model.UnmodifiableVolume;
 
 public class MenuServiceImpl implements MenuService, InitializingBean {
     private static Logger log = Logger.getLogger(MenuServiceImpl.class);
@@ -57,7 +57,6 @@ public class MenuServiceImpl implements MenuService, InitializingBean {
     private Menu menu;
     // doesn't need to be synchronized, because it is not modified after spring initialization
     private final List<ProcessorWrapper> processors = new ArrayList<ProcessorWrapper>();
-    private final Map<String, MenuItemCountHandler> countHandlers = new HashMap<String, MenuItemCountHandler>();
     private TreeItemProcessor treeItemProcessor;
     private Map<String, MenuItemFilter> menuItemFilters;
 
@@ -178,8 +177,8 @@ public class MenuServiceImpl implements MenuService, InitializingBean {
     }
 
     @Override
-    public void setupTreeItem(DropdownMenuItem dd, NodeRef nodeRef) {
-        treeItemProcessor.setupTreeItem(dd, nodeRef);
+    public void setupTreeItem(DropdownMenuItem dd, NodeRef nodeRef, Map<Long, QName> propertyTypes) {
+        treeItemProcessor.setupTreeItem(dd, nodeRef, propertyTypes);
     }
 
     @Override
@@ -195,17 +194,6 @@ public class MenuServiceImpl implements MenuService, InitializingBean {
     @Override
     public void addProcessor(String menuItemId, MenuItemProcessor processor, boolean runOnce) {
         addProcessor(menuItemId, processor, runOnce, false);
-    }
-
-    @Override
-    public void setCountHandler(String menuItemId, MenuItemCountHandler countHandler) {
-        countHandlers.put(menuItemId, countHandler);
-        addProcessor(menuItemId, countHandler, false);
-    }
-
-    @Override
-    public MenuItemCountHandler getCountHandler(String menuItemId) {
-        return countHandlers.get(menuItemId);
     }
 
     @Override
@@ -367,14 +355,14 @@ public class MenuServiceImpl implements MenuService, InitializingBean {
 
     @Override
     public void addFunctionVolumeShortcuts(NodeRef functionNodeRef) {
-        addFunctionVolumeShortcutsForUsers(BeanHelper.getUserService().getAllUserRefs(), Collections.singletonList(functionNodeRef));
+        addFunctionVolumeShortcutsForUsers(BeanHelper.getPersonService().getAllUserRefs(), Collections.singletonList(functionNodeRef));
     }
 
     @Override
     public void addVolumeShortcuts(NodeRef volumeRef, boolean isCaseFile) {
         ShortcutMenuItemOutcome outcome = isCaseFile ? ShortcutMenuItemOutcome.CASE_FILE : ShortcutMenuItemOutcome.VOLUME;
         ShortcutMenuItem shortcutMenuItem = new ShortcutMenuItem(null, outcome, volumeRef);
-        for (NodeRef userRef : BeanHelper.getUserService().getAllUserRefs()) {
+        for (NodeRef userRef : BeanHelper.getPersonService().getAllUserRefs()) {
             List<ShortcutMenuItem> userOutcomeShortcuts = getOutcomeShortcuts(userRef);
             if (!MenuBean.isExistingShortcut(shortcutMenuItem, userOutcomeShortcuts)) {
                 addShortcut(shortcutMenuItem, userRef);
@@ -385,10 +373,10 @@ public class MenuServiceImpl implements MenuService, InitializingBean {
     private void addFunctionVolumeShortcutsForUsers(List<NodeRef> userRefs, List<NodeRef> functionRefs) {
         List<ShortcutMenuItem> shortcutMenuItems = new ArrayList<ShortcutMenuItem>();
         for (NodeRef functionRef : functionRefs) {
-            for (Series series : BeanHelper.getSeriesService().getAllSeriesByFunction(functionRef)) {
-                for (Volume volume : BeanHelper.getVolumeService().getAllVolumesBySeries(series.getNode().getNodeRef())) {
+            for (UnmodifiableSeries series : BeanHelper.getSeriesService().getAllSeriesByFunction(functionRef)) {
+                for (UnmodifiableVolume volume : BeanHelper.getVolumeService().getAllVolumesBySeries(series.getSeriesRef())) {
                     ShortcutMenuItemOutcome outcome = volume.isDynamic() ? ShortcutMenuItemOutcome.CASE_FILE : ShortcutMenuItemOutcome.VOLUME;
-                    shortcutMenuItems.add(new ShortcutMenuItem(null, outcome, volume.getNode().getNodeRef()));
+                    shortcutMenuItems.add(new ShortcutMenuItem(null, outcome, volume.getNodeRef()));
                 }
             }
         }

@@ -23,6 +23,7 @@
       <property name="authorityService" ref="AuthorityService" />
       <property name="permissionService" ref="PermissionService" />
       <property name="parametersService" ref="ParametersService" />
+      <property name="bulkLoadNodeService" ref="BulkLoadNodeService" />
       <property name="generalService" ref="GeneralService" />
       <property name="luceneConfig" ref="admLuceneIndexerAndSearcherFactory" />
       <property name="store" value="${spaces.store}" />
@@ -70,7 +71,7 @@
       </property>
    </bean>
 
-   <bean id="addressbookResourceBundleBootstrap" class="org.alfresco.web.app.ResourceBundleBootstrap">
+   <bean id="addressbookResourceBundleBootstrap" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee.webmedia.alfresco.addressbook.web.addressbook-webclient</value>
@@ -154,6 +155,16 @@
    </bean>
    
    <bean id="decTaskCapableUpdater" class="ee.webmedia.alfresco.addressbook.bootstrap.DecTaskCapableUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="addressbookRootBootstrap"/>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="forwardingDecDocumentAllowedUpdater" class="ee.webmedia.alfresco.addressbook.bootstrap.ForwardingDecDocumentAllowedUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="common" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">

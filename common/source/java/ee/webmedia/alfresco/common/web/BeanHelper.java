@@ -5,6 +5,7 @@ import javax.sql.DataSource;
 
 import org.alfresco.repo.node.db.NodeDaoService;
 import org.alfresco.repo.policy.BehaviourFilter;
+import org.alfresco.repo.webdav.WebDAVLockService;
 import org.alfresco.service.ServiceRegistry;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.model.FileFolderService;
@@ -25,8 +26,10 @@ import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.web.app.servlet.FacesHelper;
+import org.alfresco.web.bean.BrowseBean;
 import org.alfresco.web.bean.dialog.DialogManager;
 import org.alfresco.web.bean.groups.GroupsDialog;
+import org.alfresco.web.bean.users.UsersDialog;
 
 import ee.webmedia.alfresco.adddocument.service.AddDocumentService;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
@@ -51,7 +54,10 @@ import ee.webmedia.alfresco.cases.web.CaseDocumentListDialog;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.classificator.web.ClassificatorDetailsDialog;
 import ee.webmedia.alfresco.classificator.web.ClassificatorsImportDialog;
+import ee.webmedia.alfresco.common.service.ApplicationConstantsBean;
 import ee.webmedia.alfresco.common.service.ApplicationService;
+import ee.webmedia.alfresco.common.service.BulkLoadNodeService;
+import ee.webmedia.alfresco.common.service.ConstantNodeRefsBean;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.service.OpenOfficeService;
 import ee.webmedia.alfresco.docadmin.service.CaseFileType;
@@ -98,6 +104,7 @@ import ee.webmedia.alfresco.document.search.web.DocumentSearchResultsDialog;
 import ee.webmedia.alfresco.document.search.web.SearchBlockBean;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.sendout.web.DocumentSendOutDialog;
+import ee.webmedia.alfresco.document.sendout.web.ForwardDecDocumentDialog;
 import ee.webmedia.alfresco.document.sendout.web.SendOutBlockBean;
 import ee.webmedia.alfresco.document.service.DocumentFavoritesService;
 import ee.webmedia.alfresco.document.service.DocumentService;
@@ -157,6 +164,7 @@ import ee.webmedia.alfresco.workflow.search.service.TaskSearchFilterService;
 import ee.webmedia.alfresco.workflow.search.web.CompoundWorkflowSearchResultsDialog;
 import ee.webmedia.alfresco.workflow.search.web.TaskSearchResultsDialog;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflowFavoritesService;
+import ee.webmedia.alfresco.workflow.service.WorkflowConstantsBean;
 import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.web.CommentListBlock;
@@ -165,6 +173,7 @@ import ee.webmedia.alfresco.workflow.web.CompoundWorkflowAssocSearchBlock;
 import ee.webmedia.alfresco.workflow.web.CompoundWorkflowDialog;
 import ee.webmedia.alfresco.workflow.web.CompoundWorkflowLogBlockBean;
 import ee.webmedia.alfresco.workflow.web.DelegationBean;
+import ee.webmedia.alfresco.workflow.web.MyTasksBean;
 import ee.webmedia.alfresco.workflow.web.RelatedUrlListBlock;
 import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
 import ee.webmedia.xtee.client.dhl.DhlXTeeServiceImplFSStub;
@@ -346,6 +355,10 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
         return getJsfBean(UserDetailsDialog.class, UserDetailsDialog.BEAN_NAME);
     }
 
+    public static UsersDialog getUsersDialog() {
+        return getJsfBean(UsersDialog.class, UsersDialog.BEAN_NAME);
+    }
+
     public static DimensionDetailsDialog getDimensionDetailsDialog() {
         return getJsfBean(DimensionDetailsDialog.class, DimensionDetailsDialog.BEAN_NAME);
     }
@@ -446,6 +459,10 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
         return getSpringBean(UserConfirmHelper.class, UserConfirmHelper.BEAN_NAME);
     }
 
+    public static JsfBindingHelper getJsfBindingHelper() {
+        return getSpringBean(JsfBindingHelper.class, JsfBindingHelper.BEAN_NAME);
+    }
+
     public static RsAccessStatusBean getRsAccessStatusBean() {
         return getSpringBean(RsAccessStatusBean.class, RsAccessStatusBean.BEAN_NAME);
     }
@@ -478,6 +495,10 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
         return getJsfBean(CaseFileLogBlockBean.class, CaseFileLogBlockBean.BEAN_NAME);
     }
 
+    public static MyTasksBean getMyTasksBean() {
+        return getJsfBean(MyTasksBean.class, MyTasksBean.BEAN_NAME);
+    }
+
     public static DisableFocusingBean getDisableFocusingBean() {
         return getSpringBean(DisableFocusingBean.class, DisableFocusingBean.BEAN_NAME);
     }
@@ -496,6 +517,18 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
 
     public static MenuItemCountBean getMenuItemCountBean() {
         return getJsfBean(MenuItemCountBean.class, MenuItemCountBean.BEAN_NAME);
+    }
+
+    public static BeanCleanupHelper getBeanCleanupHelper() {
+        return getJsfBean(BeanCleanupHelper.class, BeanCleanupHelper.BEAN_NAME);
+    }
+
+    public static BrowseBean getBrowseBean() {
+        return getJsfBean(BrowseBean.class, BrowseBean.BEAN_NAME);
+    }
+
+    public static ForwardDecDocumentDialog getForwardDecDocumentDialog() {
+        return getJsfBean(ForwardDecDocumentDialog.class, ForwardDecDocumentDialog.BEAN_NAME);
     }
 
     // END: JSF web beans
@@ -576,6 +609,10 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
 
     public static CaseFileLogService getCaseFileLogService() {
         return getSpringBean(CaseFileLogService.class, CaseFileLogService.BEAN_NAME);
+    }
+
+    public static WebDAVLockService getWebDAVLockService() {
+        return getSpringBean(WebDAVLockService.class, WebDAVLockService.BEAN_NAME);
     }
 
     // END: alfresco services
@@ -852,6 +889,26 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
 
     public static EventPlanLogBlockBean getEventPlanLogBlock() {
         return getJsfBean(EventPlanLogBlockBean.class, EventPlanLogBlockBean.BEAN_NAME);
+    }
+
+    public static BulkLoadNodeService getBulkLoadNodeService() {
+        return getService(BulkLoadNodeService.class, BulkLoadNodeService.BEAN_NAME);
+    }
+
+    public static BulkLoadNodeService getNonTxBulkLoadNodeService() {
+        return getService(BulkLoadNodeService.class, BulkLoadNodeService.NON_TX_BEAN_NAME);
+    }
+
+    public static ApplicationConstantsBean getApplicationConstantsBean() {
+        return getService(ApplicationConstantsBean.class, ApplicationConstantsBean.BEAN_NAME);
+    }
+
+    public static WorkflowConstantsBean getWorkflowConstantsBean() {
+        return getService(WorkflowConstantsBean.class, WorkflowConstantsBean.BEAN_NAME);
+    }
+
+    public static ConstantNodeRefsBean getConstantNodeRefsBean() {
+        return getService(ConstantNodeRefsBean.class, ConstantNodeRefsBean.BEAN_NAME);
     }
 
     // END: delta services

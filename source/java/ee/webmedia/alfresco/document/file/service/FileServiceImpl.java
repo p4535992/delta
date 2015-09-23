@@ -2,7 +2,6 @@ package ee.webmedia.alfresco.document.file.service;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFileFolderService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getVersionsService;
 import static ee.webmedia.alfresco.utils.MimeUtil.isPdf;
 
@@ -13,7 +12,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -45,14 +43,18 @@ import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.Pair;
 import org.alfresco.util.URLEncoder;
 import org.alfresco.web.app.servlet.DownloadContentServlet;
-import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
+import ee.webmedia.alfresco.common.service.BulkLoadNodeService;
+import ee.webmedia.alfresco.common.service.CreateObjectCallback;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.docadmin.web.ListReorderHelper;
+import ee.webmedia.alfresco.docadmin.web.ListReorderHelper.OrderModifier;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.model.FileModel;
@@ -70,6 +72,7 @@ import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.MimeUtil;
+import ee.webmedia.alfresco.utils.Transformer;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 
 public class FileServiceImpl implements FileService {
@@ -84,10 +87,8 @@ public class FileServiceImpl implements FileService {
     private DocumentDynamicService _documentDynamicService;
     private DocumentTemplateService _documentTemplateService;
     private DocLockService _docLockService;
+    private BulkLoadNodeService bulkLoadNodeService;
     private Set<String> openOfficeFiles;
-    private String jumploaderPath;
-
-    private String scannedFilesPath;
 
     @Override
     public InputStream getFileContentInputStream(NodeRef fileRef) {
@@ -96,19 +97,144 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public boolean toggleActive(NodeRef nodeRef) {
+    public boolean toggleActive(NodeRef fileRef) {
         boolean active = true; // If file doesn't have the flag set, then it hasn't been toggled yet, thus active
-        if (!getNodeService().exists(nodeRef)) {
+        if (!nodeService.exists(fileRef)) {
             throw new UnableToPerformException("file_toggle_failed");
         }
-        if (getNodeService().getProperty(nodeRef, FileModel.Props.ACTIVE) != null) {
-            active = Boolean.parseBoolean(getNodeService().getProperty(nodeRef, FileModel.Props.ACTIVE).toString());
+        if (nodeService.getProperty(fileRef, FileModel.Props.ACTIVE) != null) {
+            active = Boolean.parseBoolean(nodeService.getProperty(fileRef, FileModel.Props.ACTIVE).toString());
         }
         active = !active;
-        getNodeService().setProperty(nodeRef, FileModel.Props.ACTIVE, active);
-        NodeRef documentRef = getNodeService().getPrimaryParent(nodeRef).getParentRef();
+        nodeService.setProperty(fileRef, FileModel.Props.ACTIVE, active);
+        NodeRef documentRef = nodeService.getPrimaryParent(fileRef).getParentRef();
         getGeneralService().setModifiedToNow(documentRef);
         return active;
+    }
+
+    @Override
+    public void reorderFiles(NodeRef documentRef) {
+        reorderFiles(documentRef, null, true);
+    }
+
+    @Override
+    public void reorderFiles(List<NodeRef> documentRefs) {
+        if (CollectionUtils.isEmpty(documentRefs)) {
+            return;
+        }
+        for (NodeRef docRef : documentRefs) {
+            reorderFiles(docRef);
+        }
+    }
+
+    @Override
+    public void reorderFiles(NodeRef documentRef, Map<NodeRef, Long> originalOrders) {
+        List<File> files = getAllFilesExcludingDigidocSubitems(documentRef);
+        List<File> activeFiles = new ArrayList<>();
+        List<File> inacvtiveFiles = new ArrayList<>();
+
+        for (File f : files) {
+            if (f.isActiveAndNotDigiDoc()) {
+                activeFiles.add(f);
+            } else if (f.isNotActiveAndNotDigiDoc()) {
+                inacvtiveFiles.add(f);
+            }
+        }
+
+        FileOrderModifier modifier = new FileOrderModifier(originalOrders);
+        ListReorderHelper.reorder(activeFiles, modifier);
+        ListReorderHelper.reorder(inacvtiveFiles, modifier);
+
+        updateOrder(activeFiles, originalOrders);
+        updateOrder(inacvtiveFiles, originalOrders);
+    }
+
+    @Override
+    public void reorderFiles(NodeRef documentRef, NodeRef fileRef, boolean active) {
+        List<File> files = getAllFilesExcludingDigidocSubitems(documentRef);
+        List<File> activeFiles = new ArrayList<>();
+        List<File> inacvtiveFiles = new ArrayList<>();
+
+        File toggledFile = null;
+        Map<NodeRef, Long> initialOrders = new HashMap<>();
+        for (File f : files) {
+            initialOrders.put(getFileNodeRef(f), f.getFileOrderInList());
+            if (toggledFile == null && fileRef != null && fileRef.equals(getFileNodeRef(f))) {
+                toggledFile = f;
+            }
+            if (f.isActiveAndNotDigiDoc()) {
+                activeFiles.add(f);
+            } else if (f.isNotActiveAndNotDigiDoc()) {
+                inacvtiveFiles.add(f);
+            }
+        }
+
+        if (toggledFile != null) {
+            Long newOrderNr = new Long(active ? inacvtiveFiles.size() + 1 : activeFiles.size() + 1);
+            toggledFile.setFileOrderInList(newOrderNr);
+        }
+
+        FileOrderModifier modifier = new FileOrderModifier(initialOrders);
+        ListReorderHelper.reorder(activeFiles, modifier);
+        ListReorderHelper.reorder(inacvtiveFiles, modifier);
+
+        updateOrder(activeFiles, initialOrders);
+        updateOrder(inacvtiveFiles, initialOrders);
+    }
+
+    private static class FileOrderModifier implements OrderModifier<File, Long> {
+
+        private final Map<NodeRef, Long> initialOrders;
+
+        private FileOrderModifier(Map<NodeRef, Long> initialOrders) {
+            this.initialOrders = initialOrders;
+        }
+
+        @Override
+        public Long getOrder(File object) {
+            return object.getFileOrderInList();
+        }
+
+        @Override
+        public void setOrder(File object, Long previousMaxField) {
+            object.setFileOrderInList(LONG_INCREMENT_STRATEGY.tr(previousMaxField));
+        }
+
+        @Override
+        public Long getOriginalOrder(File file) {
+            Long initialOrder = initialOrders != null ? initialOrders.get(getFileNodeRef(file)) : null;
+            if (initialOrder == null) {
+                initialOrder = file.getFileOrderInList();
+                if (initialOrder == null) {
+                    initialOrder = Long.MAX_VALUE;
+                }
+            }
+            return initialOrder;
+        }
+
+        private static final Transformer<Long, Long> LONG_INCREMENT_STRATEGY = new Transformer<Long, Long>() {
+            @Override
+            public Long tr(Long previousMaxField) {
+                return previousMaxField == null ? 1 : previousMaxField + 1;
+            }
+        };
+    }
+
+    private void updateOrder(List<File> files, Map<NodeRef, Long> initialOrders) {
+        for (File f : files) {
+            Long previousOrderNr = initialOrders.get(getFileNodeRef(f));
+            if (previousOrderNr == null || !previousOrderNr.equals(f.getFileOrderInList())) {
+                nodeService.setProperty(getFileNodeRef(f), FileModel.Props.FILE_ORDER_IN_LIST, f.getFileOrderInList());
+            }
+        }
+    }
+
+    private static NodeRef getFileNodeRef(File f) {
+        NodeRef ref = f.getNodeRef();
+        if (ref == null) {
+            ref = f.getNode() != null ? f.getNode().getNodeRef() : null;
+        }
+        return ref;
     }
 
     @Override
@@ -172,8 +298,10 @@ public class FileServiceImpl implements FileService {
                 continue;
             }
 
-            boolean isDdoc = signatureService.isDigiDocContainer(item.getNodeRef());
+            boolean isDdoc = FilenameUtil.isDigiDocContainerFile(fi);
+            final boolean isBdoc = FilenameUtil.isBdocFile(fi.getName());
             item.setDigiDocContainer(isDdoc);
+            item.setBdoc(isBdoc);
             ContentData contentData = fi.getContentData();
             item.setTransformableToPdf(contentData != null && isTransformableToPdf(contentData.getMimetype()));
             item.setPdf(contentData != null && isPdf(contentData.getMimetype()));
@@ -188,12 +316,13 @@ public class FileServiceImpl implements FileService {
                     SignatureItemsAndDataItems ddocItems = AuthenticationUtil.runAs(new RunAsWork<SignatureItemsAndDataItems>() {
                         @Override
                         public SignatureItemsAndDataItems doWork() throws Exception {
-                            return signatureService.getDataItemsAndSignatureItems(item.getNodeRef(), false);
+                            return signatureService.getDataItemsAndSignatureItems(item.getNodeRef(), false, isBdoc);
                         }
                     }, AuthenticationUtil.getSystemUserName());
                     item2.setNode(item.getNode()); // Digidoc item uses node of its container for permission evaluations
                     item2.setDdocItems(ddocItems);
                     item2.setDigiDocItem(true);
+                    item2.setFileOrderInList(item.getFileOrderInList()); // needed to place "item2" after "item" after sorting
                     item2.setActive(item.isActive());
                     if (item.isActive() || !onlyActive) {
                         files.add(item2);
@@ -223,11 +352,24 @@ public class FileServiceImpl implements FileService {
         if (activeFilesOnly && CollectionUtils.isNotEmpty(fileRefs)) {
             List<NodeRef> activeFileRefs = new ArrayList<NodeRef>(fileRefs.size());
             for (NodeRef fileRef : fileRefs) {
-                if (!Boolean.FALSE.equals(getNodeService().getProperty(fileRef, FileModel.Props.ACTIVE)) && getNodeService().getProperty(fileRef, DvkModel.Props.DVK_ID) == null) {
+                if (!Boolean.FALSE.equals(nodeService.getProperty(fileRef, FileModel.Props.ACTIVE)) && nodeService.getProperty(fileRef, DvkModel.Props.DVK_ID) == null) {
                     activeFileRefs.add(fileRef);
                 }
             }
             return activeFileRefs;
+        }
+        return fileRefs;
+    }
+
+    @Override
+    public List<NodeRef> getAllFileRefsExcludingDecContainer(NodeRef nodeRef) {
+        List<NodeRef> fileRefs = getFileFolderService().listFileRefs(nodeRef);
+        if (CollectionUtils.isNotEmpty(fileRefs)) {
+            NodeRef decContainer = getDecContainer(nodeRef);
+            if (decContainer == null) {
+                return fileRefs;
+            }
+            fileRefs.remove(decContainer);
         }
         return fileRefs;
     }
@@ -259,6 +401,7 @@ public class FileServiceImpl implements FileService {
                 toggleActive(file.getNodeRef());
             }
         }
+        reorderFiles(parent);
     }
 
     @Override
@@ -278,8 +421,8 @@ public class FileServiceImpl implements FileService {
             }
             NodeRef generatedFileRef = file.getGeneratedFileRef();
             if (generatedFileRef != null) {
-                if (getNodeService().exists(generatedFileRef)) {
-                    getNodeService().deleteNode(generatedFileRef);
+                if (nodeService.exists(generatedFileRef)) {
+                    nodeService.deleteNode(generatedFileRef);
                     deletedFiles.add(generatedFileRef);
                     if (log.isDebugEnabled()) {
                         log.debug("deleted generated file, nodeRef=" + generatedFileRef);
@@ -287,7 +430,7 @@ public class FileServiceImpl implements FileService {
                 }
                 // note that file is not deleted completely, but moves to trashcan,
                 // so we cannot count on Alfresco functionality that sets nodeRef properties to null when node is deleted
-                getNodeService().setProperty(file.getNodeRef(), FileModel.Props.GENERATED_FILE, null);
+                nodeService.setProperty(file.getNodeRef(), FileModel.Props.GENERATED_FILE, null);
                 if (log.isDebugEnabled()) {
                     log.debug("set generated fileRef=null");
                 }
@@ -295,9 +438,9 @@ public class FileServiceImpl implements FileService {
             FileInfo generatePdf = file.getConvertToPdfIfSignedFromProps() ? transformToPdf(document, fileRef, false) : null;
             if (generatePdf != null) {
                 NodeRef pdfNodeRef = generatePdf.getNodeRef();
-                getNodeService().setProperty(pdfNodeRef
+                nodeService.setProperty(pdfNodeRef
                         , FileModel.Props.GENERATION_TYPE, GeneratedFileType.SIGNED_PDF.name());
-                getNodeService().setProperty(file.getNodeRef(), FileModel.Props.GENERATED_FILE, pdfNodeRef);
+                nodeService.setProperty(file.getNodeRef(), FileModel.Props.GENERATED_FILE, pdfNodeRef);
                 if (log.isDebugEnabled()) {
                     log.debug("added generated file reference, generatedNodeRef=" + pdfNodeRef + ", active=" + generatePdf.getProperties().get(FileModel.Props.ACTIVE)
                             + ", properties=\n" + generatePdf.getProperties());
@@ -310,6 +453,7 @@ public class FileServiceImpl implements FileService {
                 }
             }
         }
+        reorderFiles(document);
     }
 
     @Override
@@ -326,13 +470,13 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public FileInfo transformToPdf(NodeRef docRef, NodeRef file, boolean createVersion) {
-        if (!getNodeService().exists(file)) {
+        if (!nodeService.exists(file)) {
             throw new UnableToPerformException("file_generate_pdf_error_deleted");
         }
         NodeRef previouslyGeneratedPdf = getPreviouslyGeneratedPdf(file);
 
-        String filename = (String) getNodeService().getProperty(previouslyGeneratedPdf == null ? file : previouslyGeneratedPdf, ContentModel.PROP_NAME);
-        String displayName = (String) getNodeService().getProperty(previouslyGeneratedPdf == null ? file : previouslyGeneratedPdf, FileModel.Props.DISPLAY_NAME);
+        String filename = (String) nodeService.getProperty(previouslyGeneratedPdf == null ? file : previouslyGeneratedPdf, ContentModel.PROP_NAME);
+        String displayName = (String) nodeService.getProperty(previouslyGeneratedPdf == null ? file : previouslyGeneratedPdf, FileModel.Props.DISPLAY_NAME);
         displayName = (displayName == null) ? filename : displayName;
 
         if (createVersion && previouslyGeneratedPdf != null) {
@@ -348,7 +492,7 @@ public class FileServiceImpl implements FileService {
             return null;
         }
 
-        return transformToPdf(getNodeService().getPrimaryParent(file).getParentRef(), file, reader, filename, displayName, previouslyGeneratedPdf);
+        return transformToPdf(nodeService.getPrimaryParent(file).getParentRef(), file, reader, filename, displayName, previouslyGeneratedPdf);
     }
 
     @Override
@@ -379,14 +523,14 @@ public class FileServiceImpl implements FileService {
         if (overwritableNodeRef == null) {
             String name = getGeneralService().getUniqueFileName(parent, FilenameUtils.removeExtension(filename) + ".pdf");
             result = getFileFolderService().create(parent, name, ContentModel.TYPE_CONTENT);
-            getNodeService().setProperty(result.getNodeRef(), ContentModel.PROP_CONTENT, writer.getContentData());
+            nodeService.setProperty(result.getNodeRef(), ContentModel.PROP_CONTENT, writer.getContentData());
             displayName = FilenameUtils.removeExtension(displayName);
             displayName += ".pdf";
-            getNodeService().setProperty(result.getNodeRef(), FileModel.Props.DISPLAY_NAME, getUniqueFileDisplayName(parent, displayName));
+            nodeService.setProperty(result.getNodeRef(), FileModel.Props.DISPLAY_NAME, getUniqueFileDisplayName(parent, displayName));
         } else {
             result = getFileFolderService().getFileInfo(overwritableNodeRef);
         }
-        getNodeService().setProperty(result.getNodeRef(), FileModel.Props.PDF_GENERATED_FROM_FILE, fileRef);
+        nodeService.setProperty(result.getNodeRef(), FileModel.Props.PDF_GENERATED_FROM_FILE, fileRef);
         getGeneralService().setModifiedToNow(parent);
         return result;
     }
@@ -423,8 +567,8 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public boolean addExistingFileToDocument(final String name, final String displayName, final NodeRef documentNodeRef, final NodeRef fileNodeRef, boolean active,
-            boolean associatedWithMetaData) {
+    public Pair<Boolean, NodeRef> addExistingFileToDocument(final String name, final String displayName, final NodeRef documentNodeRef, final NodeRef fileNodeRef, boolean active,
+            boolean associatedWithMetaData, final Long fileOrderInList) {
         // Moving is executed with System user rights, because this is not appropriate to implement in permissions model
         NodeRef movedFileNodeRef = AuthenticationUtil.runAs(new RunAsWork<NodeRef>() {
             @Override
@@ -436,29 +580,32 @@ public class FileServiceImpl implements FileService {
                     props.put(FileModel.Props.DISPLAY_NAME, displayName);
                 }
                 // Store current location (as string!) (in case where user decides to abort document creation)
-                props.put(FileModel.Props.PREVIOUS_FILE_PARENT, getNodeService().getPrimaryParent(fileNodeRef).getParentRef().toString());
-                getNodeService().addProperties(fileNodeRef, props);
+                props.put(FileModel.Props.PREVIOUS_FILE_PARENT, nodeService.getPrimaryParent(fileNodeRef).getParentRef().toString());
+                props.put(FileModel.Props.FILE_ORDER_IN_LIST, fileOrderInList);
+                nodeService.addProperties(fileNodeRef, props);
 
                 // move file
-                return getNodeService().moveNode(fileNodeRef, documentNodeRef,
+                return nodeService.moveNode(fileNodeRef, documentNodeRef,
                         ContentModel.ASSOC_CONTAINS, ContentModel.ASSOC_CONTAINS).getChildRef();
             }
         }, AuthenticationUtil.getSystemUserName());
 
-        associatedWithMetaData = addFilePropsAndUpdateDocumentMetadata(documentNodeRef, fileNodeRef, associatedWithMetaData, active,
+        associatedWithMetaData = addFilePropsAndUpdateDocumentMetadata(documentNodeRef, movedFileNodeRef, associatedWithMetaData, active,
                 getFileFolderService().getWriter(movedFileNodeRef)
                 .getMimetype(), null, name);
 
         addDocumentFileVersionAndLog(displayName, documentNodeRef, movedFileNodeRef);
-        return associatedWithMetaData;
+        return Pair.newInstance(associatedWithMetaData, movedFileNodeRef);
     }
 
     @Override
-    public boolean addUploadedFileToDocument(String name, String displayName, NodeRef documentNodeRef, java.io.File file, String mimeType, boolean active,
-            boolean associatedWithMetaData) {
+    public Pair<Boolean, NodeRef> addUploadedFileToDocument(String name, String displayName, NodeRef documentNodeRef, java.io.File file, String mimeType, boolean active,
+            boolean associatedWithMetaData, Long fileOrderInList) {
         Pair<NodeRef, Boolean> fileNodeRefAndHasFormulae = addFile(name, displayName, documentNodeRef, file, mimeType, active, associatedWithMetaData);
+        NodeRef fileRef = fileNodeRefAndHasFormulae.getFirst();
+        nodeService.setProperty(fileRef, FileModel.Props.FILE_ORDER_IN_LIST, fileOrderInList);
         addDocumentFileVersionAndLog(displayName, documentNodeRef, fileNodeRefAndHasFormulae.getFirst());
-        return fileNodeRefAndHasFormulae.getSecond();
+        return Pair.newInstance(fileNodeRefAndHasFormulae.getSecond(), fileRef);
     }
 
     @Override
@@ -469,7 +616,7 @@ public class FileServiceImpl implements FileService {
     private boolean addFilePropsAndUpdateDocumentMetadata(final NodeRef documentNodeRef, final NodeRef fileNodeRef, boolean associatedWithMetaData, boolean active,
             String mimetype, Map<QName, Serializable> props, String filename) {
         if (props == null) {
-            props = new HashMap<QName, Serializable>(3);
+            props = new HashMap<>(7);
         }
         props.put(FileModel.Props.ACTIVE, active);
         props.put(FileModel.Props.CONVERT_TO_PDF_IF_SIGNED, isTransformableToPdf(mimetype));
@@ -486,12 +633,12 @@ public class FileServiceImpl implements FileService {
             props.put(FileModel.Props.GENERATED_FROM_TEMPLATE, MessageUtil.getMessage("file_uploaded_by_user"));
             props.put(FileModel.Props.UPDATE_METADATA_IN_FILES, Boolean.TRUE);
         }
-        getNodeService().addProperties(fileNodeRef, props);
+        nodeService.addProperties(fileNodeRef, props);
         if (associatedWithMetaData) {
             associatedWithMetaData = getDocumentDynamicService().updateDocumentAndGeneratedFiles(fileNodeRef, documentNodeRef, false);
             // if document contained no Delta formulae, remove association between document metadata and file
             if (!associatedWithMetaData) {
-                getNodeService().setProperty(fileNodeRef, FileModel.Props.UPDATE_METADATA_IN_FILES, Boolean.FALSE);
+                nodeService.setProperty(fileNodeRef, FileModel.Props.UPDATE_METADATA_IN_FILES, Boolean.FALSE);
             }
         }
         return associatedWithMetaData;
@@ -525,7 +672,7 @@ public class FileServiceImpl implements FileService {
         writer.setEncoding(reader.getEncoding());
         writer.setMimetype(reader.getMimetype());
         writer.putContent(reader.getContentInputStream());
-        getNodeService().setProperty(fileNodeRef, FileModel.Props.DISPLAY_NAME, displayName);
+        nodeService.setProperty(fileNodeRef, FileModel.Props.DISPLAY_NAME, displayName);
         return fileNodeRef;
     }
 
@@ -538,6 +685,7 @@ public class FileServiceImpl implements FileService {
     @Override
     public void removePreviousParentReference(NodeRef docRef, boolean moveToPreviousParent) {
         List<FileInfo> listFiles = getFileFolderService().listFiles(docRef);
+        boolean moveFileToPreviousParent = moveToPreviousParent && CollectionUtils.isNotEmpty(listFiles) && BeanHelper.getDocumentDynamicService().isDraft(docRef);
         for (FileInfo fileInfo : listFiles) {
             String parentRefString = (String) fileInfo.getProperties().get(FileModel.Props.PREVIOUS_FILE_PARENT);
             if (StringUtils.isBlank(parentRefString)) {
@@ -545,16 +693,16 @@ public class FileServiceImpl implements FileService {
             }
 
             NodeRef previousParent = new NodeRef(parentRefString);
-            if (!getNodeService().exists(previousParent)) {
+            if (!nodeService.exists(previousParent)) {
                 continue;
             }
 
             NodeRef fileRef = fileInfo.getNodeRef();
             // Move node back to previous parent and remove property if still present.
-            if (moveToPreviousParent) {
-                fileRef = getNodeService().moveNode(fileRef, previousParent, ContentModel.ASSOC_CONTAINS, ContentModel.ASSOC_CONTAINS).getChildRef();
+            if (moveFileToPreviousParent) {
+                fileRef = nodeService.moveNode(fileRef, previousParent, ContentModel.ASSOC_CONTAINS, ContentModel.ASSOC_CONTAINS).getChildRef();
             }
-            getNodeService().removeProperty(fileRef, FileModel.Props.PREVIOUS_FILE_PARENT);
+            nodeService.removeProperty(fileRef, FileModel.Props.PREVIOUS_FILE_PARENT);
         }
     }
 
@@ -563,14 +711,14 @@ public class FileServiceImpl implements FileService {
         if (log.isDebugEnabled()) {
             log.debug("Getting scanned files");
         }
-        NodeRef scannedNodeRef = getGeneralService().getNodeRef(scannedFilesPath);
+        NodeRef scannedNodeRef = BeanHelper.getConstantNodeRefsBean().getScannedFilesRoot();
         Assert.notNull(scannedNodeRef, "Scanned files node reference not found");
         List<FileInfo> fileInfos = getFileFolderService().listFolders(scannedNodeRef);
         List<File> files = new ArrayList<File>(fileInfos.size());
         for (FileInfo fileInfo : fileInfos) {
             final File file = createFile(fileInfo);
             file.setName(userService.getUserFullName(file.getName())); // real folder names are userNames - replace them with user full name
-            final int nrOfChildren = getNodeService().getChildAssocs(file.getNodeRef(), ContentModel.ASSOC_CONTAINS, RegexQNamePattern.MATCH_ALL).size();
+            final int nrOfChildren = nodeService.getChildAssocs(file.getNodeRef(), ContentModel.ASSOC_CONTAINS, RegexQNamePattern.MATCH_ALL).size();
             file.setNrOfChildren(nrOfChildren);
             files.add(file);
         }
@@ -595,7 +743,7 @@ public class FileServiceImpl implements FileService {
         item.setReadOnlyUrl(DownloadContentServlet.generateDownloadURL(nodeRef, item.getDisplayName()));
 
         String lockOwnerIfLocked = getDocLockService().getLockOwnerIfLocked(nodeRef);
-        if (lockOwnerIfLocked != null && Boolean.TRUE.equals(getNodeService().getProperty(nodeRef, FileModel.Props.MANUAL_LOCK))) {
+        if (lockOwnerIfLocked != null && Boolean.TRUE.equals(nodeService.getProperty(nodeRef, FileModel.Props.MANUAL_LOCK))) {
             item.setActiveLockOwner(StringUtils.substringBefore(lockOwnerIfLocked, "_")); // Store only user name part, to enable actions in different sessions.
         }
 
@@ -615,8 +763,8 @@ public class FileServiceImpl implements FileService {
     public String generateURL(NodeRef nodeRef) {
         String runAsUser = AuthenticationUtil.getRunAsUser();
         String name = getFileFolderService().getFileInfo(nodeRef).getName();
-        NodeRef primaryParentRef = getNodeService().getPrimaryParent(nodeRef).getParentRef();
-        boolean isUnderDocument = DocumentCommonModel.Types.DOCUMENT.equals(getNodeService().getType(primaryParentRef));
+        NodeRef primaryParentRef = nodeService.getPrimaryParent(nodeRef).getParentRef();
+        boolean isUnderDocument = DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(primaryParentRef));
         if (!nodeRef.getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE) || StringUtils.isBlank(runAsUser) || AuthenticationUtil.isRunAsUserTheSystemUser()
                 || !isUnderDocument) {
             return DownloadContentServlet.generateDownloadURL(nodeRef, name);
@@ -624,7 +772,7 @@ public class FileServiceImpl implements FileService {
 
         StringBuilder path = new StringBuilder();
         if (isOpenOfficeFile(name)) {
-            path.append("vnd.sun.star.webdav://").append(getDocumentTemplateService().getServerUrl().replaceFirst(".*://", ""));
+            path.append("vnd.sun.star.webdav://").append(getDocumentTemplateService().getServerUrl().replaceFirst(".*://", "").replace("6443", "6080")); // FIXME
         }
         // calculate a WebDAV URL for the given node
         path.append("/").append(WebDAVServlet.WEBDAV_PREFIX);
@@ -636,7 +784,7 @@ public class FileServiceImpl implements FileService {
         }
         path.append("/").append(URLEncoder.encode(ticket));
 
-        path.append("/").append(URLEncoder.encode(AuthenticationUtil.getRunAsUser())); // maybe substituting
+        path.append("/").append(URLEncoder.encode(runAsUser)); // maybe substituting
 
         NodeRef parent = primaryParentRef;
         path.append("/").append(URLEncoder.encode(parent.getId()));
@@ -648,7 +796,14 @@ public class FileServiceImpl implements FileService {
     }
 
     private boolean isOpenOfficeFile(String name) {
-        return openOfficeFiles.contains(FilenameUtils.getExtension(name));
+        String fileExtension = FilenameUtils.getExtension(name);
+        String userSettings = (String) userService.getUserProperties(AuthenticationUtil.getFullyAuthenticatedUser()).get(ContentModel.PROP_OPEN_OFFICE_CLIENT_EXTENSIONS);
+
+        if (StringUtils.isBlank(userSettings)) {
+            return openOfficeFiles.contains(fileExtension);
+        }
+
+        return FilenameUtil.getFileExtensionsFromCommaSeparated(userSettings).contains(fileExtension);
     }
 
     @Override
@@ -659,11 +814,11 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public List<String> getDocumentFileDisplayNames(NodeRef folder) {
-        List<ChildAssociationRef> childAssocs = getNodeService().getChildAssocs(folder);
+        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(folder);
         List<String> childDisplayNames = new ArrayList<String>(childAssocs.size());
 
         for (ChildAssociationRef caRef : childAssocs) {
-            Serializable property = getNodeService().getProperty(caRef.getChildRef(), FileModel.Props.DISPLAY_NAME);
+            Serializable property = nodeService.getProperty(caRef.getChildRef(), FileModel.Props.DISPLAY_NAME);
             if (property != null) {
                 childDisplayNames.add(property.toString());
             }
@@ -683,24 +838,43 @@ public class FileServiceImpl implements FileService {
                 }
             }
         }
+        reorderFiles(parentRef);
     }
 
     @Override
-    public List<Subfolder> getSubfolders(NodeRef parentRef, QName childNodeType, QName countableChildNodeType) {
-        List<Subfolder> subfolders = new ArrayList<Subfolder>();
-        List<ChildAssociationRef> childAssocs = getNodeService().getChildAssocs(parentRef, Collections.singleton(childNodeType));
-        for (ChildAssociationRef childAssocRef : childAssocs) {
-            NodeRef childRef = childAssocRef.getChildRef();
-            Node folder = new Node(childRef);
-            List<ChildAssociationRef> documents = getNodeService().getChildAssocs(childRef, Collections.singleton(countableChildNodeType));
-            subfolders.add(new Subfolder(folder, documents == null ? 0 : documents.size()));
+    public List<Subfolder> getSubfolders(NodeRef parentRef, final QName childNodeType, QName countableChildNodeType, boolean countChildren) {
+        Map<Long, QName> propertyTypes = new HashMap<Long, QName>();
+        Map<NodeRef, List<WmNode>> allSubfolders = bulkLoadNodeService.loadChildNodes(Collections.singletonList(parentRef), null, childNodeType, propertyTypes,
+                new CreateObjectCallback<WmNode>() {
+
+                    @Override
+                    public WmNode create(NodeRef nodeRef, Map<QName, Serializable> properties) {
+                        return new WmNode(nodeRef, childNodeType, null, properties);
+                    }
+                });
+        if (allSubfolders == null || allSubfolders.isEmpty()) {
+            return new ArrayList<>();
+        }
+        List<WmNode> subfolderNodes = allSubfolders.get(parentRef);
+        List<NodeRef> subfolderRefs = new ArrayList<>();
+        for (WmNode subfolder : subfolderNodes) {
+            subfolderRefs.add(subfolder.getNodeRef());
+        }
+        Map<NodeRef, Integer> childCounts = new HashMap<>();
+        if (countChildren) {
+            childCounts = bulkLoadNodeService.countChildNodes(subfolderRefs, countableChildNodeType);
+        }
+        List<Subfolder> subfolders = new ArrayList<>();
+        for (WmNode subfolderNode : subfolderNodes) {
+            Integer count = childCounts.get(subfolderNode.getNodeRef());
+            subfolders.add(new Subfolder(subfolderNode, count != null ? count.intValue() : 0));
         }
         return subfolders;
     }
 
     @Override
     public NodeRef findSubfolderWithName(NodeRef parentNodeRef, String folderName, QName subfolderType) {
-        List<ChildAssociationRef> childAssocs = getNodeService().getChildAssocs(parentNodeRef, Collections.singleton(subfolderType));
+        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(parentNodeRef, Collections.singleton(subfolderType));
         for (ChildAssociationRef childAssoc : childAssocs) {
             if (childAssoc.getQName().getLocalName().equals(folderName)) {
                 return childAssoc.getChildRef();
@@ -711,21 +885,21 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public boolean isFileGenerated(NodeRef fileRef) {
-        return fileRef != null && (isFileGeneratedFromTemplate(fileRef) || getNodeService().getProperty(fileRef, FileModel.Props.GENERATION_TYPE) != null);
+        return fileRef != null && (isFileGeneratedFromTemplate(fileRef) || nodeService.getProperty(fileRef, FileModel.Props.GENERATION_TYPE) != null);
     }
 
     @Override
     public boolean isFileGeneratedFromTemplate(NodeRef fileRef) {
-        return fileRef != null && getNodeService().getProperty(fileRef, FileModel.Props.GENERATED_FROM_TEMPLATE) != null;
+        return fileRef != null && nodeService.getProperty(fileRef, FileModel.Props.GENERATED_FROM_TEMPLATE) != null;
     }
 
     @Override
     public NodeRef getPreviouslyGeneratedPdf(NodeRef sourceFileRef) {
-        if (!getNodeService().exists(sourceFileRef)) {
+        if (!nodeService.exists(sourceFileRef)) {
             return null;
         }
 
-        NodeRef parentRef = getNodeService().getPrimaryParent(sourceFileRef).getParentRef();
+        NodeRef parentRef = nodeService.getPrimaryParent(sourceFileRef).getParentRef();
         List<FileInfo> listFiles = getFileFolderService().listFiles(parentRef);
         for (FileInfo fi : listFiles) {
             NodeRef fromNodeRef = (NodeRef) fi.getProperties().get(FileModel.Props.PDF_GENERATED_FROM_FILE);
@@ -743,14 +917,14 @@ public class FileServiceImpl implements FileService {
             return false;
         }
 
-        Date sourceModified = (Date) getNodeService().getProperty(sourceFileRef, ContentModel.PROP_MODIFIED);
-        Date pdfModified = (Date) getNodeService().getProperty(pdfFileRef, ContentModel.PROP_MODIFIED);
+        Date sourceModified = (Date) nodeService.getProperty(sourceFileRef, ContentModel.PROP_MODIFIED);
+        Date pdfModified = (Date) nodeService.getProperty(pdfFileRef, ContentModel.PROP_MODIFIED);
         return sourceModified != null && pdfModified != null && sourceModified.before(pdfModified);
     }
 
     @Override
     public boolean isFileAssociatedWithDocMetadata(NodeRef fileRef) {
-        return fileRef != null && Boolean.TRUE.equals(getNodeService().getProperty(fileRef, FileModel.Props.UPDATE_METADATA_IN_FILES));
+        return fileRef != null && Boolean.TRUE.equals(nodeService.getProperty(fileRef, FileModel.Props.UPDATE_METADATA_IN_FILES));
     }
 
     // START: getters / setters
@@ -775,10 +949,6 @@ public class FileServiceImpl implements FileService {
         this.documentLogService = documentLogService;
     }
 
-    public void setScannedFilesPath(String scannedDocumentsPath) {
-        scannedFilesPath = scannedDocumentsPath;
-    }
-
     public DocLockService getDocLockService() {
         if (_docLockService == null) {
             _docLockService = BeanHelper.getDocLockService();
@@ -801,28 +971,15 @@ public class FileServiceImpl implements FileService {
     }
 
     public void setOpenOfficeFiles(String openOfficeFiles) {
-        if (StringUtils.isBlank(openOfficeFiles)) {
-            this.openOfficeFiles = Collections.emptySet();
-        }
-        String[] extensions = openOfficeFiles.split(",");
-        Set<String> extSet = new HashSet<String>();
-        for (String ext : extensions) {
-            extSet.add(ext);
-        }
-        this.openOfficeFiles = extSet;
-    }
-
-    @Override
-    public String getJumploaderPath() {
-        return jumploaderPath;
-    }
-
-    public void setJumploaderPath(String jumploaderPath) {
-        this.jumploaderPath = jumploaderPath;
+        this.openOfficeFiles = FilenameUtil.getFileExtensionsFromCommaSeparated(openOfficeFiles);
     }
 
     public void setNodeService(NodeService nodeService) {
         this.nodeService = nodeService;
+    }
+
+    public void setBulkLoadNodeService(BulkLoadNodeService bulkLoadNodeService) {
+        this.bulkLoadNodeService = bulkLoadNodeService;
     }
 
     // END: getters / setters

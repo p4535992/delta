@@ -56,8 +56,8 @@ public class StatInterceptor implements MethodInterceptor {
 
     private void STAT(MethodInvocation method, long start, boolean succeeded) { // NOPMD - method name: in the interest of noticing it from log
         long millis = System.currentTimeMillis() - start;
-        boolean readOnly = isReadOnlyInvocation(method.getMethod().getName());
         if (millis >= thresholdMillis) {
+            boolean readOnly = isReadOnlyInvocation(method.getMethod().getName());
             StringBuilder stat = new StringBuilder();
             if (!readOnly) {
                 stat.append("[RW] ");

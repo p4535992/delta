@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.alfresco.repo.search.impl.lucene.LuceneQueryParser;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -131,12 +132,25 @@ public class SearchUtil {
      * Generates "VALUE:xxx" query where VALUE is a custom indexed Field with document property values. So this clause can only be used in document search.
      * <p>
      * Only String and date (in format: dd.MM.yyyy) values are indexed there. File contents are not indexed there.
-     * 
+     *
      * @param value The document property value to search for.
      * @return The generated clause as string.
      */
     public static String generateValuesWildcardQuery(String value) {
         return "VALUES:\"" + QueryParser.escape(stripCustom(value)) + "*\"";
+    }
+
+    /** Generates a query that searches all nodes in any depth below the specified path */
+    public static String generateParentPathQuery(String path) {
+        return "PATH:\"" + QueryParser.escape(path) + "//*\"";
+    }
+
+    public static String generateIdExactQuery(List<NodeRef> documentsForPermissionCheck) {
+        List<String> queryParts = new ArrayList<>();
+        for (NodeRef nodeRef : documentsForPermissionCheck) {
+            queryParts.add("ID:\"" + QueryParser.escape(stripCustom(nodeRef.toString())) + "\"");
+        }
+        return joinQueryPartsOr(queryParts);
     }
 
     public static String generatePropertyWildcardQuery(QName documentPropName, String value, boolean leftWildcard, boolean rightWildcard) {
@@ -202,6 +216,13 @@ public class SearchUtil {
             queryParts.add("ASPECT:" + Repository.escapeQName(documentType));
         }
         return joinQueryPartsOr(queryParts, false);
+    }
+
+    public static String generateAspectMissingQuery(QName aspect) {
+        if (aspect == null) {
+            return null;
+        }
+        return "-ASPECT:" + Repository.escapeQName(aspect);
     }
 
     public static String generateStringWordsWildcardQuery(List<String> words, boolean leftWildcard, boolean rightWildcard, QName... documentPropNames) {
@@ -456,9 +477,40 @@ public class SearchUtil {
     }
 
     /**
+     * @param userId - if null, use current user
+     */
+    public static String generateSearchableDocListAccess(List<NodeRef> docRef, String userId) {
+        if (docRef.isEmpty() || getUserService().isAdministrator()) {
+            return null;
+        }
+
+        if (userId == null) {
+            userId = AuthenticationUtil.getRunAsUser();
+        }
+
+        Set<String> userGroups = new HashSet<String>();
+        userGroups.add(userId);
+        userGroups.addAll(getUserService().getUsersGroups(userId));
+
+        List<String> query = new ArrayList<String>(userGroups.size() + 2);
+        query.add(generateStringExactQuery(userId, DocumentCommonModel.Props.OWNER_ID));
+        for (String group : userGroups) {
+            if (StringUtils.isNotBlank(group)) {
+                query.add("DOC_VISIBLE_TO:\"" + QueryParser.escape(group) + "\"");
+            }
+        }
+
+        return joinQueryPartsAnd(joinQueryPartsOr(query), generateAspectQuery(DocumentCommonModel.Aspects.SEARCHABLE));
+    }
+
+    public static String generateUnsentDocQuery() {
+        return LuceneQueryParser.IS_UNSENT_DOC_FIELD + ":\"" + QueryParser.escape(Boolean.TRUE.toString()) + "\"";
+    }
+
+    /**
      * Extracts dates (as 'dd.MM.yyyy' from given text) and stores them in given list in format 'ddMMyyyy'.
      * Duplicate formatted date values won't be added to the list.
-     * 
+     *
      * @param text A not null String value.
      * @param list A not null list where found dates will be stored.
      */

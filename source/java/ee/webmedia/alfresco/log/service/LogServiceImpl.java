@@ -26,8 +26,9 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.simple.ParameterizedRowMapper;
-import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.search.DbSearchUtil;
@@ -46,7 +47,7 @@ public class LogServiceImpl implements LogService, InitializingBean {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(LogServiceImpl.class);
     private static final FastDateFormat LOG_DATE_FORMAT = FastDateFormat.getInstance("yyyyMMdd");
 
-    private SimpleJdbcTemplate jdbcTemplate;
+    private JdbcTemplate jdbcTemplate;
 
     private boolean useClientIpFromXForwardedForHttpHeader;
 
@@ -58,13 +59,12 @@ public class LogServiceImpl implements LogService, InitializingBean {
     @Override
     public void saveLogSetup(LogSetup logSetup) {
         jdbcTemplate.update("TRUNCATE delta_log_level");
-        jdbcTemplate.getJdbcOperations().batchUpdate("INSERT INTO delta_log_level VALUES (?)", new LogSetupSqlParamSetter(logSetup.toLogLevels()));
+        jdbcTemplate.batchUpdate("INSERT INTO delta_log_level VALUES (?)", new LogSetupSqlParamSetter(logSetup.toLogLevels()));
     }
 
     @Override
-    @SuppressWarnings("rawtypes")
     public LogSetup getCurrentLogSetup() {
-        List result = jdbcTemplate.query("SELECT * FROM delta_log_level", new LogLevelRowMapper());
+        List<LogLevel> result = jdbcTemplate.query("SELECT * FROM delta_log_level", new LogLevelRowMapper());
         Set<LogLevel> levels = new HashSet<LogLevel>(result.size());
         for (Object level : result) {
             levels.add((LogLevel) level);
@@ -231,14 +231,35 @@ public class LogServiceImpl implements LogService, InitializingBean {
 
     @Override
     public List<LogEntry> getLogEntries(LogFilter filter) {
-        StringBuilder q = new StringBuilder("SELECT log_entry_id, level, created_date_time, creator_id, creator_name, computer_ip, computer_name, " +
-                "object_id, object_name, description FROM delta_log");
+        return getLogEntries(filter, null, true, -1, -1);
+    }
+
+    @Override
+    public List<LogEntry> getLogEntries(LogFilter filter, String orderbyColumn, boolean descending, int limit, int offset) {
+        return queryLogEntries("SELECT log_entry_id, level, created_date_time, creator_id, creator_name, computer_ip, computer_name, object_id, object_name, description FROM delta_log",
+                new LogRowMapper(), filter, orderbyColumn, descending, limit, offset);
+    }
+
+    @Override
+    public List<String> getLogEntryOrder(LogFilter filter, String orderByColumn, boolean descending, int limit, int offset) {
+        return queryLogEntries("SELECT log_entry_id FROM delta_log", new LogIdRowMapper(), filter, orderByColumn, descending, limit, offset);
+    }
+
+    private <E> List<E> queryLogEntries(String baseQuery, RowMapper<E> rowMapper, LogFilter filter, String orderByColumn, boolean descending, int limit, int offset) {
+        Assert.hasLength(baseQuery);
+        Assert.notNull(rowMapper);
+        StringBuilder q = new StringBuilder(baseQuery);
 
         Object[] values = {};
 
         if (filter != null) {
-            List<String> queryParts = new ArrayList<String>();
-            List<Object> parameters = new ArrayList<Object>();
+            List<String> queryParts = new ArrayList<>();
+            List<Object> parameters = new ArrayList<>();
+
+            if (filter.getSpecificLogEntries() != null && !filter.getSpecificLogEntries().isEmpty()) {
+                queryParts.add("log_entry_id IN (" + DbSearchUtil.getQuestionMarks(filter.getSpecificLogEntries().size()) + ") ");
+                parameters.addAll(filter.getSpecificLogEntries());
+            }
             if (hasLength(filter.getLogEntryId())) {
                 queryParts.add("log_entry_id LIKE ?");
                 parameters.add(filter.getLogEntryId() + "%");
@@ -329,10 +350,23 @@ public class LogServiceImpl implements LogService, InitializingBean {
             }
         }
 
-        q.append(" ORDER BY created_date_time ASC");
+        q.append(" ORDER BY ");
+        q.append(StringUtils.defaultString(orderByColumn, "created_date_time"));
+        if (descending) {
+            q.append(" DESC");
+        } else {
+            q.append(" ASC");
+        }
+        if (limit > 0) {
+            q.append(" LIMIT ").append(limit);
+        }
+        if (offset > 0) {
+            q.append(" OFFSET ").append(offset);
+        }
+
         String query = q.toString();
         Long logQueryStart = System.currentTimeMillis();
-        List<LogEntry> results = jdbcTemplate.query(query, new LogRowMapper(), values);
+        List<E> results = jdbcTemplate.query(query, rowMapper, values);
         LOG.info("Log entry query duration: " + (System.currentTimeMillis() - logQueryStart));
         explainQuery(query, values);
         return results;
@@ -390,7 +424,7 @@ public class LogServiceImpl implements LogService, InitializingBean {
         return Collections.emptyList();
     }
 
-    public void setJdbcTemplate(SimpleJdbcTemplate jdbcTemplate) {
+    public void setJdbcTemplate(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 
@@ -420,6 +454,14 @@ public class LogServiceImpl implements LogService, InitializingBean {
         @Override
         public LogLevel mapRow(ResultSet rs, int i) throws SQLException {
             return LogLevel.valueOf(rs.getString(1));
+        }
+    }
+
+    private class LogIdRowMapper implements RowMapper<String> {
+
+        @Override
+        public String mapRow(ResultSet rs, int rowNum) throws SQLException {
+            return rs.getString(1);
         }
     }
 

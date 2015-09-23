@@ -1,12 +1,12 @@
 package ee.webmedia.alfresco.document.web.evaluator;
 
 import org.alfresco.service.cmr.repository.StoreRef;
-import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.bean.repository.Node;
 
+import ee.webmedia.alfresco.common.evaluator.SharedResourceEvaluator;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 
-public class AddFavoritesDocumentEvaluator extends BaseActionEvaluator {
+public class AddFavoritesDocumentEvaluator extends SharedResourceEvaluator {
     private static final long serialVersionUID = 1L;
 
     @Override
@@ -14,11 +14,17 @@ public class AddFavoritesDocumentEvaluator extends BaseActionEvaluator {
         if (!docNode.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)) {
             return false;
         }
-        ViewStateActionEvaluator viewStateEval = new ViewStateActionEvaluator();
-        if (!viewStateEval.evaluate(docNode)) {
+        if (BeanHelper.getDocumentDialogHelperBean().isInEditMode()) {
             return false;
         }
         return BeanHelper.getDocumentFavoritesService().isFavoriteAddable(docNode.getNodeRef());
+    }
+
+    @Override
+    public boolean evaluate() {
+        DocumentDynamicActionsGroupResources resource = (DocumentDynamicActionsGroupResources) sharedResource;
+        return resource.isWorkspaceNode() && !resource.isInEditMode()
+                && !resource.isFavourite() && !BeanHelper.getDocumentService().isDraft(resource.getObject().getNodeRef());
     }
 
 }

@@ -14,7 +14,9 @@ import java.util.List;
 import java.util.Map;
 
 import javax.faces.context.FacesContext;
+import javax.servlet.http.HttpSession;
 
+import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.model.FileExistsException;
@@ -31,6 +33,7 @@ import ee.webmedia.alfresco.signature.exception.SignatureRuntimeException;
 import ee.webmedia.alfresco.signature.model.SignatureChallenge;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
 import ee.webmedia.alfresco.signature.web.SignatureBlockBean;
+import ee.webmedia.alfresco.user.service.Cas20ProxyReceivingRedirectingTicketValidationFilter;
 import ee.webmedia.alfresco.utils.MessageData;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
@@ -59,14 +62,24 @@ public class SigningFlowContainer implements Serializable {
     protected MessageData signatureError;
     private SigningFlowView signingFlowView;
     protected InProgressTasksForm inProgressTasksForm;
+    private final boolean signTogether;
+    private boolean defaultTelephoneForSigning;
 
-    public SigningFlowContainer(SignatureTask signatureTask, InProgressTasksForm inProgressTasksForm, NodeRef compoundWorkflowRef, NodeRef containerRef) {
-        Assert.isTrue(signatureTask.getParent() != null || inProgressTasksForm != null);
-        signingQueue = new ArrayList<NodeRef>();
+    public static final String EE_COUNTRY_CODE = "+372";
+    public static final String LAST_USED_MOBILE_ID_NUMBER = "lastUsedMobileIdNumber";
+
+    public SigningFlowContainer(SignatureTask signatureTask, boolean signTogether, InProgressTasksForm inProgressTasksForm, NodeRef compoundWorkflowRef, NodeRef containerRef) {
+        this(signatureTask, signTogether, compoundWorkflowRef, containerRef);
+        Assert.isTrue(inProgressTasksForm != null);
+        this.inProgressTasksForm = inProgressTasksForm;
+    }
+
+    public SigningFlowContainer(SignatureTask signatureTask, boolean signTogether, NodeRef compoundWorkflowRef, NodeRef containerRef) {
+        signingQueue = new ArrayList<>();
         this.signatureTask = signatureTask;
         this.compoundWorkflowRef = compoundWorkflowRef;
         this.containerRef = containerRef;
-        this.inProgressTasksForm = inProgressTasksForm;
+        this.signTogether = signTogether;
     }
 
     public boolean prepareSigning() {
@@ -90,7 +103,7 @@ public class SigningFlowContainer implements Serializable {
             mainDocumentRef = null;
             originalStatuses = new HashMap<NodeRef, String>();
             boolean signSeparately = true;
-            boolean existingDigiDoc = false;
+            boolean existingBdoc = false;
             List<NodeRef> signingDocumentRefs = null;
             if (compoundWorkflowRef == null) {
                 addSigningDocument(containerRef);
@@ -103,7 +116,7 @@ public class SigningFlowContainer implements Serializable {
                     if (mainDocumentRef == null || !getNodeService().exists(mainDocumentRef)) {
                         throw new UnableToPerformException("compoundWorkflow_main_document_missing");
                     }
-                    existingDigiDoc = getDocumentService().checkExistingDdoc(mainDocumentRef, compoundWorkflowRef) != null;
+                    existingBdoc = getDocumentService().checkExistingBdoc(mainDocumentRef, compoundWorkflowRef) != null;
                     signSeparately = false;
                     addSigningDocument(mainDocumentRef);
                     Map<NodeRef, List<File>> tmpFileMap = new HashMap<NodeRef, List<File>>();
@@ -125,7 +138,7 @@ public class SigningFlowContainer implements Serializable {
             }
             signingFiles = signingFilesMap;
 
-            getDocumentService().prepareDocumentSigning(signSeparately ? signingQueue : signingDocumentRefs, !existingDigiDoc, signSeparately);
+            getDocumentService().prepareDocumentSigning(signSeparately ? signingQueue : signingDocumentRefs, !existingBdoc, signSeparately);
             long step2 = System.currentTimeMillis();
             doAfterPrepareSigning();
             long step3 = System.currentTimeMillis();
@@ -145,16 +158,35 @@ public class SigningFlowContainer implements Serializable {
         return true;
     }
 
+    public void resolveUserPhoneNr(HttpSession session) {
+        String phoneNumber = null;
+        String signInPhoneNumber = (String) session.getAttribute(Cas20ProxyReceivingRedirectingTicketValidationFilter.PHONE_NUMBER);
+        String lastUsedPhoneNumber = (String) session.getAttribute(LAST_USED_MOBILE_ID_NUMBER);
+        if (StringUtils.isNotBlank(signInPhoneNumber)) {
+            phoneNumber = signInPhoneNumber;
+        } else if (StringUtils.isNotBlank(lastUsedPhoneNumber)) {
+            phoneNumber = lastUsedPhoneNumber;
+        } else {
+            phoneNumber = BeanHelper.getUserService().getDefaultTelephoneForSigning(AuthenticationUtil.getFullyAuthenticatedUser());
+            setDefaultTelephoneForSigning(StringUtils.isNotBlank(phoneNumber));
+        }
+        setPhoneNumber(StringUtils.isNotBlank(phoneNumber) ? phoneNumber : EE_COUNTRY_CODE);
+    }
+
     public boolean startMobileIdSigning() {
         try {
             // Strip all whitespace
-            phoneNumber = StringUtils.stripToEmpty(phoneNumber).replaceAll("\\s+", "");
+            phoneNumber = StringUtils.stripToEmpty(phoneNumber);
             if (phoneNumber.startsWith("372")) {
                 phoneNumber = "+" + phoneNumber;
             }
             if (!phoneNumber.startsWith("+")) {
-                phoneNumber = "+372" + phoneNumber;
+                phoneNumber = EE_COUNTRY_CODE + phoneNumber;
             }
+            if (defaultTelephoneForSigning) {
+                BeanHelper.getUserService().setCurrentUserProperty(ContentModel.DEFAULT_TELEPHONE_FOR_SIGNING, phoneNumber);
+            }
+            phoneNumber = phoneNumber.replaceAll("\\s+", "");
             long step0 = System.currentTimeMillis();
             if (!collectAndCheckSigningFiles()) {
                 return false;
@@ -315,7 +347,7 @@ public class SigningFlowContainer implements Serializable {
     }
 
     protected boolean isSignTogether() {
-        return signatureTask.getParent().isSignTogether();
+        return signTogether;
     }
 
     private void addDocumentStatuses(List<NodeRef> docRefs) {
@@ -463,6 +495,14 @@ public class SigningFlowContainer implements Serializable {
 
     public boolean isFinishTaskStep() {
         return signingQueue != null && signingQueue.size() == 1;
+    }
+
+    public boolean isDefaultTelephoneForSigning() {
+        return defaultTelephoneForSigning;
+    }
+
+    public void setDefaultTelephoneForSigning(boolean defaultTelephoneForSigning) {
+        this.defaultTelephoneForSigning = defaultTelephoneForSigning;
     }
 
 }

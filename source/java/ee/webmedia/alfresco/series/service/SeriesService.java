@@ -1,19 +1,23 @@
 package ee.webmedia.alfresco.series.service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.series.model.Series;
+import ee.webmedia.alfresco.series.model.UnmodifiableSeries;
 
 /**
  * Service class for series
  */
 public interface SeriesService {
     String BEAN_NAME = "SeriesService";
+    String NON_TX_BEAN_NAME = "seriesService";
 
     void saveOrUpdate(Series series);
 
@@ -22,15 +26,13 @@ public interface SeriesService {
      */
     void saveOrUpdateWithoutReorder(Series series);
 
-    List<Series> getAllSeriesByFunction(NodeRef functionNodeRef);
+    List<UnmodifiableSeries> getAllSeriesByFunction(NodeRef functionNodeRef);
 
-    List<Series> getAllCaseFileSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status);
+    List<UnmodifiableSeries> getAllCaseFileSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status);
 
-    List<Series> getAllSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status, Set<String> docTypeIds);
+    List<UnmodifiableSeries> getAllSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status, Set<String> docTypeIds);
 
-    List<Series> getAllSeriesByFunctionForStructUnit(NodeRef functionNodeRef, String structUnitId);
-
-    Series getSeriesByNodeRef(String seriesNodeRef);
+    List<UnmodifiableSeries> getAllSeriesByFunctionForStructUnit(NodeRef functionNodeRef, String structUnitId);
 
     Node getSeriesNodeByRef(NodeRef seriesNodeRef);
 
@@ -60,5 +62,15 @@ public interface SeriesService {
     void setSeriesDefaultPermissionsOnCreate(NodeRef seriesRef);
 
     void delete(Series series);
+
+    boolean hasSelectableSeries(NodeRef functionRef, boolean isSearchFilter, Set<String> idList, boolean forDocumentType);
+
+    UnmodifiableSeries getUnmodifiableSeries(NodeRef nodeRef, Map<Long, QName> propertyTypes);
+
+    String getSeriesLabel(NodeRef seriesRef);
+
+    boolean hasSeries(NodeRef functionNodeRef);
+
+    void removeFromCache(NodeRef seriesNodeRef);
 
 }

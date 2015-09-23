@@ -16,18 +16,4 @@
         <function-signature>String byteCountToDisplaySize(long)</function-signature>
     </function>
 
-    <function>
-        <description>Checks if permission is allowed on ancestor document node.</description>
-        <name>documentAllowPermission</name>
-        <function-class>ee.webmedia.mobile.alfresco.util.Util</function-class>
-        <function-signature>boolean documentAllowPermission(org.alfresco.service.cmr.repository.NodeRef, java.lang.String)</function-signature>
-    </function>
-
-    <function>
-        <description>Checks if permission is denied on ancestor document node.</description>
-        <name>documentDenyPermission</name>
-        <function-class>ee.webmedia.mobile.alfresco.util.Util</function-class>
-        <function-signature>boolean documentDenyPermission(org.alfresco.service.cmr.repository.NodeRef, java.lang.String)</function-signature>
-    </function>
-
 </taglib>

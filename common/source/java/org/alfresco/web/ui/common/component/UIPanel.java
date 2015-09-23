@@ -284,8 +284,8 @@ public class UIPanel extends UICommand
       if (this.hasAdornments)
       {
           out.write("<div id='"+hideableDivId+"' class='panel-border'");
-          isExpanded(); // call this out to refresh the expanded variable, but do not use it because it returns always true
-          if (!expanded) {
+          evaluateExpanded();
+          if (!isExpanded()) {
               out.write(" style=\"display:none;\"");
           }
           out.write(">");
@@ -391,6 +391,7 @@ public class UIPanel extends UICommand
       this.expandedTitleBorder = (String)values[8];
       this.expandedActionListener = (MethodBinding)restoreAttachedState(context, values[9]);
       this.facetsId = (String)values[10];
+      this.expandedState = (Boolean)values[11];
    }
 
    /**
@@ -409,7 +410,8 @@ public class UIPanel extends UICommand
          this.titleBorder,
          this.expandedTitleBorder,
          saveAttachedState(context, this.expandedActionListener),
-         this.facetsId};
+         this.facetsId,
+         this.expandedState};
       return values;
    }
 
@@ -595,19 +597,24 @@ public class UIPanel extends UICommand
       this.progressive = Boolean.valueOf(progressive);
    }
 
-   /**
-    * Returns whether the component show allow rendering of its child components.
-    */
-   public boolean isExpanded()
+   public void evaluateExpanded()
    {
+       if(isAttributesInitialized()) {
+           if(expandedState != null) {
+               this.expanded = expandedState;
+               return;
+           }
+           Boolean expanded = (Boolean) getAttributes().get("expanded");
+           if(expanded != null) {
+               this.expanded = expanded;
+               return;
+           }
+       }
        ValueBinding vb = getValueBinding("expanded");
        if (vb != null)
        {
           this.expanded = (Boolean)vb.getValue(getFacesContext());
        }
-
-      // Child components are always rendered, their expansion are handled in browser using javascript. 
-      return true; // return always true, because otherwise child components will not be rendered
    }
 
    /**
@@ -618,9 +625,10 @@ public class UIPanel extends UICommand
    public void setExpanded(boolean expanded)
    {
       this.expanded = Boolean.valueOf(expanded);
+      expandedState = this.expanded;
    }
    
-   public Boolean getExpandedState(){
+   public Boolean isExpanded(){
        return expanded;
    }
 
@@ -669,6 +677,7 @@ public class UIPanel extends UICommand
    private boolean hasAdornments = false;
    private boolean hasBorderedTitleArea = false;
    private Boolean expanded = Boolean.TRUE;
+   private Boolean expandedState = null;
    
    // ------------------------------------------------------------------------------
    // Inner classes

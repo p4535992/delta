@@ -9,9 +9,9 @@ import java.util.Map;
 
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.security.PermissionService;
 import org.springframework.beans.factory.InitializingBean;
 
+import ee.webmedia.alfresco.common.service.ApplicationConstantsBean;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.CaseFileType;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
@@ -22,6 +22,8 @@ import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.menu.service.MenuService.MenuItemProcessor;
 import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.volume.service.VolumeService;
+import ee.webmedia.alfresco.workflow.web.CompoundWorkflowDialog;
+import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
 
 public class CaseFileAndWorkflowMenuItemProcessor implements InitializingBean, MenuItemProcessor {
 
@@ -29,7 +31,8 @@ public class CaseFileAndWorkflowMenuItemProcessor implements InitializingBean, M
     private WorkflowService workflowService;
     private VolumeService volumeService;
     private DocumentAdminService documentAdminService;
-    private PermissionService permissionService;
+    private WorkflowConstantsBean workflowConstantsBean;
+    private ApplicationConstantsBean applicationConstantsBean;
 
     @Override
     public void doWithMenuItem(MenuItem menuItem) {
@@ -40,7 +43,7 @@ public class CaseFileAndWorkflowMenuItemProcessor implements InitializingBean, M
             }
             DropdownMenuItem dropdownItem = (DropdownMenuItem) item;
             if ("caseFile-submenu".equals(dropdownItem.getSubmenuId())) {
-                if (!volumeService.isCaseVolumeEnabled()) {
+                if (!applicationConstantsBean.isCaseVolumeEnabled()) {
                     i.remove();
                     continue;
                 }
@@ -49,7 +52,7 @@ public class CaseFileAndWorkflowMenuItemProcessor implements InitializingBean, M
                 }
             }
             if ("workflow-submenu".equals(dropdownItem.getSubmenuId())) {
-                if (!workflowService.isIndependentWorkflowEnabled()) {
+                if (!workflowConstantsBean.isIndependentWorkflowEnabled()) {
                     i.remove();
                     continue;
                 }
@@ -86,14 +89,14 @@ public class CaseFileAndWorkflowMenuItemProcessor implements InitializingBean, M
         List<MenuItem> children = dropdownItem.getSubItems();
         children.clear();
         List<CompoundWorkflowDefinition> compoundWorkflowDefinitions = workflowService.getIndependentCompoundWorkflowDefinitions(AuthenticationUtil.getRunAsUser());
-        NodeRef parentRef = workflowService.getIndependentWorkflowsRoot();
+        NodeRef parentRef = BeanHelper.getConstantNodeRefsBean().getIndependentWorkflowsRoot();
         for (CompoundWorkflowDefinition compoundWorkflowDefinition : compoundWorkflowDefinitions) {
             MenuItem item = new MenuItem();
             item.setTitle(compoundWorkflowDefinition.getName());
-            item.setOutcome("dialog:compoundWorkflowDialog");
+            item.setOutcome(CompoundWorkflowDialog.DIALOG_NAME);
             item.setActionListener("#{CompoundWorkflowDialog.setupNewWorkflow}");
             Map<String, String> params = item.getParams();
-            params.put("compoundWorkflowDefinitionNodeRef", compoundWorkflowDefinition.getNodeRef().toString());
+            params.put(WorkflowBlockBean.PARAM_COMPOUND_WORKFLOF_DEFINITION_NODEREF, compoundWorkflowDefinition.getNodeRef().toString());
             params.put("parentNodeRef", parentRef.toString());
             children.add(item);
         }
@@ -124,8 +127,12 @@ public class CaseFileAndWorkflowMenuItemProcessor implements InitializingBean, M
         this.documentAdminService = documentAdminService;
     }
 
-    public void setPermissionService(PermissionService permissionService) {
-        this.permissionService = permissionService;
+    public void setWorkflowConstantsBean(WorkflowConstantsBean workflowConstantsBean) {
+        this.workflowConstantsBean = workflowConstantsBean;
+    }
+
+    public void setApplicationConstantsBean(ApplicationConstantsBean applicationConstantsBean) {
+        this.applicationConstantsBean = applicationConstantsBean;
     }
 
     // END: getters / setters

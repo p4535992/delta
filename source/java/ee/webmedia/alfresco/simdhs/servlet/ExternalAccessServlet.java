@@ -64,17 +64,6 @@ public class ExternalAccessServlet extends BaseServlet {
             return;
         }
 
-        if (isJumploaderUri(uri)) {
-            Pair<byte[], String> applet = getApplicationService().getJumploaderApplet();
-            if (applet != null) {
-                res.setHeader("Content-Length", Integer.toString(applet.getFirst().length));
-                res.setContentType(applet.getSecond());
-                ServletOutputStream os = res.getOutputStream();
-                FileCopyUtils.copy(applet.getFirst(), os); // closes both streams
-            }
-            return;
-        }
-
         setNoCacheHeaders(res);
         @SuppressWarnings("unchecked")
         Pair<String, String[]> outcomeAndArgs = (Pair<String, String[]>) req.getAttribute(ExternalAccessPhaseListener.OUTCOME_AND_ARGS_ATTR);
@@ -82,10 +71,6 @@ public class ExternalAccessServlet extends BaseServlet {
 
         // Now handleNavigation puts this as the first item in the view stack
         getServletContext().getRequestDispatcher(FACES_SERVLET + "/jsp/dashboards/container.jsp").forward(req, res);
-    }
-
-    public static boolean isJumploaderUri(String uri) {
-        return "/jumploader".equals(uri);
     }
 
     public static boolean isLogoUri(String uri) {

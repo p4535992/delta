@@ -1,6 +1,6 @@
 package ee.webmedia.alfresco.workflow.search.web;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowConstantsBean;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -21,7 +21,6 @@ import org.alfresco.web.bean.repository.TransientNode;
 import org.alfresco.web.ui.common.component.PickerSearchParams;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
-import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
@@ -36,10 +35,11 @@ import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.search.model.TaskSearchModel;
 import ee.webmedia.alfresco.workflow.search.service.TaskSearchFilterService;
-import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
 public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFilterService> {
+
+    public static final String BEAN_NAME = "TaskSearchDialog";
 
     private static final long serialVersionUID = 1L;
 
@@ -54,7 +54,7 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
         super.init(params);
         // Task types
         if (taskTypes == null) {
-            Map<QName, WorkflowType> workflowTypes = BeanHelper.getWorkflowService().getWorkflowTypesByTask();
+            Map<QName, WorkflowType> workflowTypes = BeanHelper.getWorkflowConstantsBean().getWorkflowTypesByTask();
             taskTypes = new ArrayList<SelectItem>(workflowTypes.size());
             for (WorkflowType workflowType : workflowTypes.values()) {
                 QName taskType = workflowType.getTaskType();
@@ -81,6 +81,14 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
                     new SelectItem(UserContactGroupSearchBean.CONTACTS_FILTER, MessageUtil.getMessage("task_owner_contacts")), };
         }
         loadAllFilters();
+    }
+
+    @Override
+    public void clean() {
+        taskTypes = null;
+        taskStatuses = null;
+        ownerSearchFilters = null;
+        super.clean();
     }
 
     @Override
@@ -230,15 +238,15 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
 
     private boolean taskTypeEnabled(QName taskType) {
         if (WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK.equals(taskType)) {
-            return getWorkflowService().isOrderAssignmentWorkflowEnabled();
+            return getWorkflowConstantsBean().isOrderAssignmentWorkflowEnabled();
         } else if (WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK.equals(taskType)) {
-            return getWorkflowService().externalReviewWorkflowEnabled();
+            return getWorkflowConstantsBean().isExternalReviewWorkflowEnabled();
         } else if (WorkflowSpecificModel.Types.CONFIRMATION_TASK.equals(taskType)) {
-            return getWorkflowService().isOrderAssignmentWorkflowEnabled();
+            return getWorkflowConstantsBean().isConfirmationWorkflowEnabled();
         } else if (WorkflowSpecificModel.Types.GROUP_ASSIGNMENT_TASK.equals(taskType)) {
-            return getWorkflowService().isGroupAssignmentWorkflowEnabled();
+            return getWorkflowConstantsBean().isGroupAssignmentWorkflowEnabled();
         } else if (WorkflowSpecificModel.Types.LINKED_REVIEW_TASK.equals(taskType)) {
-            return getWorkflowService().isReviewToOtherOrgEnabled();
+            return getWorkflowConstantsBean().isReviewToOtherOrgEnabled();
         }
         return true;
     }
@@ -248,8 +256,7 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
     @Override
     protected TaskSearchFilterService getFilterService() {
         if (filterService == null) {
-            filterService = (TaskSearchFilterService) FacesContextUtils.getRequiredWebApplicationContext( //
-                    FacesContext.getCurrentInstance()).getBean(TaskSearchFilterService.BEAN_NAME);
+            filterService = BeanHelper.getTaskSearchFilterService();
         }
         return filterService;
     }

@@ -139,6 +139,10 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
       return getDefaultCancelOutcome();
    }
    
+    public void clean() {
+        // do nothing
+    }
+   
    public String finish()
    {
       final FacesContext context = FacesContext.getCurrentInstance();
@@ -530,6 +534,30 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
            e.setFallbackMessage(new MessageDataImpl("action_failed_missingPermission", messageDataHolders));
            throw e;
        }
+   }
+   
+   protected String getBindingName(String name) {
+       return getBindingName(name, this);
+   }
+
+   protected static String getBindingName(String name, Object classInstance) {
+       return classInstance.getClass().getSimpleName() + "." + name;
+   }
+
+   protected String getRichListBindingName() {
+       return getBindingName("richList");
+   }
+
+   protected String getModalComponentBindingName() {
+       return getBindingName("modalComponent");
+   }
+
+   protected String getPropertySheetBindingName() {
+       return getBindingName("propertySheet");
+   }
+
+   public static String getModalContainerBindingName(Object classInstance) {
+       return getBindingName("modalContainer", classInstance);
    }
 
 }

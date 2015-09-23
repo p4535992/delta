@@ -1789,7 +1789,7 @@ insert into tmp_content_node_ids (
 	select node.id, 
 	case when (local_name = 'document' and uri = 'http://alfresco.webmedia.ee/model/document/common/1.0')
 		or (local_name = 'reportResult' and uri = 'http://alfresco.webmedia.ee/model/report/1.0')
-		or (local_name = 'workflow' and uri = 'http://alfresco.webmedia.ee/model/workflow/common/1.0')
+		or (uri = 'http://alfresco.webmedia.ee/model/workflow/specific/1.0') -- tasks and/or workflows
 		then true
 	else false end
 	from (

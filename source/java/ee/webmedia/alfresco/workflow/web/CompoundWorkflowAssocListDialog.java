@@ -28,6 +28,7 @@ public class CompoundWorkflowAssocListDialog extends BaseDocumentListDialog {
     // this list is used only for not saved compound workflow
     private List<NodeRef> newAssocs;
     private boolean resetNewAssocs = true;
+    private List<Document> documents;
 
     @Override
     public void init(Map<String, String> params) {
@@ -86,6 +87,10 @@ public class CompoundWorkflowAssocListDialog extends BaseDocumentListDialog {
         } else {
             documents = new ArrayList<Document>();
         }
+    }
+
+    public List<Document> getDocumentList() {
+        return documents;
     }
 
     public void updateDocumentMarking(List<Document> currentDocuments, Document document) {

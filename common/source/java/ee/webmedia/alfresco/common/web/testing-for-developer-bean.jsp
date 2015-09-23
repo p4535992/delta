@@ -154,6 +154,48 @@
    disabled="#{archivedSeriesVolTypeAndVolNumberPatternUpdater.updaterStopping == true}" />
 
 <f:verbatim><hr/></f:verbatim>
+<h:outputText value="Sarja elukäigu alusel toimiku elukäigu uuendamine"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Ruum: "/>
+<h:inputText id="volumeEventPlanUpdaterStoreString" value="#{volumeEventPlanUpdater.storeString}" size="50" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="startVolumeEventPlanUpdater" value="Käivita" type="submit"
+   actionListener="#{volumeEventPlanUpdater.executeUpdaterInBackground}"
+   rendered="#{volumeEventPlanUpdater.updaterRunning == false}" />
+<h:commandButton id="stopVolumeEventPlanUpdater" value="Peata" type="submit"
+   actionListener="#{volumeEventPlanUpdater.stopUpdater}"
+   rendered="#{volumeEventPlanUpdater.updaterRunning == true}"
+   disabled="#{volumeEventPlanUpdater.updaterStopping == true}" />
+<f:verbatim><br/></f:verbatim>
+
+<f:verbatim><hr/></f:verbatim>
+<h:outputText value="Dokumendi ADR peakirjaks dokumendi liigi nimetuse määramine"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Kuupäev (k.a., kujul pp.kk.aaaa), millest varem loodud dokumentidel määratakse välja 'ADR pealkiri' tühja väärtuse asemel väärtuseks dokumendi liigi pealkiri: "/>
+<h:inputText id="endDateStr" value="#{adrDocNameUpdater.endDateStr}" size="12" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="startAdrDocNameUpdater" value="Käivita" type="submit"
+   actionListener="#{adrDocNameUpdater.executeUpdaterInBackground}"
+   rendered="#{adrDocNameUpdater.updaterRunning == false}" />
+<h:commandButton id="stopAdrDocNameUpdater" value="Peata" type="submit"
+   actionListener="#{adrDocNameUpdater.stopUpdater}"
+   rendered="#{adrDocNameUpdater.updaterRunning == true}"
+   disabled="#{adrDocNameUpdater.updaterStopping == true}" />
+<f:verbatim><br/></f:verbatim>
+
+<f:verbatim><hr/></f:verbatim>
+<h:outputText value="Paranda .ddoc failide mimetype"/>
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="startFixDdocMimetypeUpdater" value="Käivita" type="submit"
+   actionListener="#{fixDdocMimetypeUpdater.executeUpdaterInBackground}"
+   rendered="#{fixDdocMimetypeUpdater.updaterRunning == false}" />
+<h:commandButton id="stopFixDdocMimetypeUpdater" value="Peata" type="submit"
+   actionListener="#{fixDdocMimetypeUpdater.stopUpdater}"
+   rendered="#{fixDdocMimetypeUpdater.updaterRunning == true}"
+   disabled="#{fixDdocMimetypeUpdater.updaterStopping == true}" />
+<f:verbatim><br/></f:verbatim>
+
+<f:verbatim><hr/></f:verbatim>
 <h:outputText value="Versioonide lahtilukustamine"/>
 <f:verbatim><br/></f:verbatim>
 <h:outputText value="Mitu objekti ühes transaktsioonis töödelda: "/>
@@ -424,6 +466,10 @@
 <h:commandButton id="updateOrganisationStructureBasedGroups" value="updateOrganisationStructureBasedGroups" type="submit"
    actionListener="#{OrganizationStructureService.updateOrganisationStructureBasedGroups}" />
    <f:verbatim><br/></f:verbatim>
+   
+<h:commandButton id="repairDuplicateSubstituteRoots" value="Paranda dubleeritud asendajate asukohad" type="submit"
+   actionListener="#{RepairSubstitutesAfterMerge.executeUpdaterInBackground}" />
+<f:verbatim><br/></f:verbatim>
 
 <h:outputText id="reportGenerationTitle" value="Aruannete genereerimine: " />
 <f:verbatim><br/></f:verbatim>
@@ -976,6 +1022,19 @@
 <a:actionLink value="TestingForDeveloper" actionListener="#{TestingForDeveloperBean.handleTestEvent}" rendered="#{ApplicationService.test}">
      <f:param name="testP" value="11" />
 </a:actionLink>
+
+<f:verbatim><br/></f:verbatim>
+<a:actionLink value="executeDocumentUpdater" actionListener="#{TestingForDeveloperBean.executeDocumentUpdater}" rendered="#{ApplicationService.test}" />
+
+<f:verbatim><br/></f:verbatim>
+<a:actionLink value="executeSearchableSendInfoUpdater" actionListener="#{TestingForDeveloperBean.executeSearchableSendInfoUpdater}" rendered="#{ApplicationService.test}" />
+
+<f:verbatim><br/></f:verbatim>
+<a:actionLink value="executeCompoundWorkflowOwnerPropsUpdater" actionListener="#{TestingForDeveloperBean.executeCompoundWorkflowOwnerPropsUpdater}" rendered="#{ApplicationService.test}" />
+
+<f:verbatim><br/></f:verbatim>
+<a:actionLink value="executeTaskUpdater" actionListener="#{TestingForDeveloperBean.executeTaskUpdater}" rendered="#{ApplicationService.test}" />
+
 <f:verbatim><br/></f:verbatim>
 
 <a:actionLink value="deleteTestSystemTemplatesBootstrapAndSystemTemplates" actionListener="#{TestingForDeveloperBean.deleteTestTemplatesBootstrapAndTemplates}" rendered="#{ApplicationService.test}" />

@@ -7,6 +7,7 @@
    <param:intParameter view:childName="param:dimensionDeletionPeriod">
       <view:properties>
          <param:value>30</param:value>
+         <param:name>dimensionDeletionPeriod</param:name>
          <param:description>Aegunud dimensioonide väärtuste kustutamise periood päevades</param:description>
       </view:properties>
    </param:intParameter>
@@ -14,6 +15,7 @@
    <param:stringParameter view:childName="param:dimensionDeletionTime">
       <view:properties>
          <param:value>23:00</param:value>
+         <param:name>dimensionDeletionTime</param:name>
          <param:description>Aegunud dimensioonide väärtuste kustutamise kellaaeg (kujul hh:mm)</param:description>
       </view:properties>
    </param:stringParameter>   

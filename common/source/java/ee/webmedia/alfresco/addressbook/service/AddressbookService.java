@@ -36,6 +36,8 @@ public interface AddressbookService {
 
     List<AddressbookEntry> listAddressbookEntries(QName type);
 
+    List<AddressbookEntry> listOrganizationPeople(NodeRef organizationRef);
+
     /**
      * @return list of nodes of type ab:contactGroups
      */
@@ -90,7 +92,7 @@ public interface AddressbookService {
      * @param usersForGroup
      * @return feedback about items that already existed in the group
      */
-    MessageDataWrapper addToGroup(NodeRef groupNodeRef, List<UserDetails> usersForGroup);
+    MessageDataWrapper addToGroup(NodeRef groupNodeRef, List<UserDetails> usersForGroup, boolean createAddedToGroupInfo);
 
     /**
      * Remove a member from the group by deleting the association from groupNodeRef to memberNodeRef.
@@ -169,14 +171,9 @@ public interface AddressbookService {
      */
     List<Node> getContacts(NodeRef nodeRef);
 
-    /**
-     * Returns the NodeRef of the addressbook
-     * 
-     * @return
-     */
-    NodeRef getAddressbookRoot();
-
     List<Node> searchTaskCapableContacts(String searchCriteria, boolean orgOnly, boolean dvkCapableOnly, String institutionToRemove, int limit);
+
+    List<Node> searchDecDocumentForwardCapableContacts(String searchCriteria, int limit);
 
     List<Node> getDvkCapableOrgs();
 
@@ -214,4 +211,9 @@ public interface AddressbookService {
 
     List<NodeRef> getContactGroupContents(NodeRef contactGroupRef);
 
+    List<Pair<String, String>> searchTaskCapableContacts(String param, int limit);
+
+    List<Pair<String, String>> searchTaskCapableContactGroups(String param, int limit);
+
+    List<Pair<String, String>> listAllGroupMembers(NodeRef groupRef);
 }

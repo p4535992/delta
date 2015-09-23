@@ -39,7 +39,7 @@
       </a:column>      
 
       <%-- Institution regCode --%>
-      <a:column id="col4" rendered="#{not userService.groupsEditingAllowed}">
+      <a:column id="col4" rendered="#{not applicationConstantsBean.groupsEditingAllowed}">
          <f:facet name="header">
             <a:sortLink id="col4-sort" label="#{msg.orgstruct_institutionRegCode}" value="institutionRegCode" styleClass="header" />
          </f:facet>

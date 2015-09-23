@@ -258,7 +258,7 @@
             <action>#{DocumentDynamicDialog.removeNotification}</action>
          </action>                   
 
-         <action-group id="document_dynamic_actions">
+         <action-group id="document_dynamic_actions" shared-resource="ee.webmedia.alfresco.document.web.evaluator.DocumentDynamicActionsGroupResources">
             <action idref="document_copy" />
             <action idref="word_file_from_document" />
             <action idref="document_registerDoc" />

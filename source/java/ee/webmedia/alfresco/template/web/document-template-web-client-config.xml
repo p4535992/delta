@@ -43,9 +43,6 @@
          </action>
 
          <action id="template_add_new_archival_report">
-            <permissions>
-               <permission allow="true">CreateChildren</permission>
-            </permissions>
             <label-id>template_add_new_archival_report_template</label-id>
             <image>/images/icons/template_add.gif</image>
             <action>dialog:addDocumentTemplate</action>

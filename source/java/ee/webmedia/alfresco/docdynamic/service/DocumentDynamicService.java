@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.docdynamic.service;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -25,9 +26,11 @@ public interface DocumentDynamicService {
 
     String BEAN_NAME = "DocumentDynamicService";
 
+    Map<String, QName> DOC_DYNAMIC_URI_PROPS_POOL = new HashMap<>();
+
     /**
      * Create a new document and set default property values according to fully authenticated user.
-     * 
+     *
      * @param documentTypeId
      * @param parent
      * @return
@@ -38,7 +41,7 @@ public interface DocumentDynamicService {
 
     /**
      * Create a new document in drafts and set default property values according to fully authenticated user.
-     * 
+     *
      * @see #createNewDocument(String, NodeRef)
      */
     Pair<DocumentDynamic, DocumentTypeVersion> createNewDocumentInDrafts(String documentTypeId);
@@ -60,7 +63,7 @@ public interface DocumentDynamicService {
      * <li>updates searchable properties</li>
      * <li>updates generated files</li>
      * </ul>
-     * 
+     *
      * @param document document to save; document object is cloned in this service, so that argument object is preserved.
      * @param saveListenerBeanNames save and validation listener bean names; can be {@code null}
      * @return cloned document, possibly modified by save listeners
@@ -111,7 +114,7 @@ public interface DocumentDynamicService {
 
     /**
      * Reads contents from provided contentNode and tries to resolve metadata differences between the content node and specified document.
-     * 
+     *
      * @param fileRef file should be a MS Word or OpenOffice writer file
      * @param document document to update
      * @param updateGeneratedFiles if true, then other generated files are also updated
@@ -126,5 +129,7 @@ public interface DocumentDynamicService {
     DocumentDynamic createNewDocumentForArchivalActivity(NodeRef archivalActivityNodeRef, String documentTypeId);
 
     TreeNode<QName> getChildNodeQNameHierarchy(QName[] hierarchy, TreeNode<QName> root);
+
+    void moveNodeToForwardedDecDocuments(Node docNode, List<Pair<String, String>> recipients);
 
 }

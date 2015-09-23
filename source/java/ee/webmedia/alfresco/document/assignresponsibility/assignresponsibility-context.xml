@@ -39,7 +39,7 @@
       </property>
    </bean>
 
-   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
+   <bean id="assignResponsibilityResourceBundle" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee/webmedia/alfresco/document/assignresponsibility/web/assign-responsibility-webclient</value>

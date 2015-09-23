@@ -7,6 +7,7 @@
 <script type="text/javascript">
 
 $jQ(document).ready(function(){
+   $jQ(".selectAllHeader").prop('checked', false);
    $jQ(".selectAllHeader").change(function() {
       $jQ(".headerSelectable").prop('checked',$jQ(this).prop('checked'));
    });

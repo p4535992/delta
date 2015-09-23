@@ -25,6 +25,11 @@ function isEmptyInput(inputId) {
    return isEmptyValue(inputValue);
 }
 
+function isEmptyInputOr(inputId, valueToCheck) {
+   var inputValue = document.getElementById(inputId).value;
+   return isEmptyValue(inputValue) || inputValue == valueToCheck;
+}
+
 function isEmptyValue(inputValue) {
    return inputValue == null || (!(inputValue instanceof Array) && inputValue.replace(/^\\s+|\\s+$/g, '').length == 0);
 }
@@ -34,19 +39,33 @@ function isEmptyValue(inputValue) {
  * @return true if value has been set
  */
 function validateSearchMandatory(control, message, showMessage) {
+   var valid = false;
    if (control != null && (control.value == null || control.value.length == 0)) {
-      var hiddenIn = $jQ(control);
-      var inputs = hiddenIn.prev().find("tbody tr td input");
-      if(null != inputs.get(0)) {
-         var manualValue = inputs.val().trim();
-         if (manualValue != null && manualValue.length != 0) {
-            return true; // value set manually
-         }
+      valid = isValid(control, "tbody tr td input");
+   } else { // value set using picker
+      if(control != null && "notEmpty" == control.value) {
+         valid = isValid(control, "tbody tr td input[type='text']:visible");
+      } else {
+         valid = true;
       }
-   } else {
-      return true; // value set using picker
    }
-   informUser(control, message, showMessage);
+   if(!valid) {
+      informUser(control, message, showMessage);
+   }
+   return valid;
+}
+
+function isValid(control, selector) {
+   var hiddenIn = $jQ(control);
+   var inputs = hiddenIn.prev().find(selector);
+   if(null != inputs.get(0)) {
+      var manualValue = inputs.val().trim();
+      if (manualValue != null && manualValue.length != 0) {
+         return true;
+      }
+   } else if (inputs.length == 0){
+      return true;
+   }
    return false;
 }
 /**

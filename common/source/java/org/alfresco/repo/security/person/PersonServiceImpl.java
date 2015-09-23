@@ -15,16 +15,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
- * As a special exception to the terms and conditions of version 2.0 of 
- * the GPL, you may redistribute this Program in connection with Free/Libre 
- * and Open Source Software ("FLOSS") applications as described in Alfresco's 
- * FLOSS exception.  You should have recieved a copy of the text describing 
- * the FLOSS exception, and it is also available here: 
+ * As a special exception to the terms and conditions of version 2.0 of
+ * the GPL, you may redistribute this Program in connection with Free/Libre
+ * and Open Source Software ("FLOSS") applications as described in Alfresco's
+ * FLOSS exception.  You should have recieved a copy of the text describing
+ * the FLOSS exception, and it is also available here:
  * http://www.alfresco.com/legal/licensing"
  */
 package org.alfresco.repo.security.person;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -33,6 +34,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.alfresco.error.AlfrescoRuntimeException;
@@ -69,10 +71,12 @@ import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.util.GUID;
 import org.alfresco.util.PropertyCheck;
+import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import ee.webmedia.alfresco.common.service.BulkLoadNodeService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 
 public class PersonServiceImpl extends TransactionListenerAdapter implements PersonService, NodeServicePolicies.OnCreateNodePolicy, NodeServicePolicies.BeforeDeleteNodePolicy
@@ -129,20 +133,22 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
 
     private PersonDao personDao;
 
-    private PermissionsManager permissionsManager;
+    private BulkLoadNodeService bulkLoadNodeService;
 
     /** a transactionally-safe cache to be injected */
     private SimpleCache<String, NodeRef> personCache;
 
-    /** 
+    /**
      * A transactionally-safe cache to be injected.
-     * NB! Currently it is assumed that when querying this cache, 
+     * NB! Currently it is assumed that when querying this cache,
      * it has been verified that person exists (for example search has returned user nodeRef).
-     * It may occur in concurrent transactions that personPropertiesCache contains data for person that doesn't exist any more. 
+     * It may occur in concurrent transactions that personPropertiesCache contains data for person that doesn't exist any more.
      */
-    private SimpleCache<String, Map<QName, Serializable>> personPropertiesCache;
+    private SimpleCache<String, CachedUser> personNodesCache;
 
     private UserNameMatcher userNameMatcher;
+
+    private static NodeRef peopleContainerNodeRef;
 
     static
     {
@@ -184,12 +190,12 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
         PropertyCheck.mandatory(this, "namespacePrefixResolver", namespacePrefixResolver);
         PropertyCheck.mandatory(this, "policyComponent", policyComponent);
         PropertyCheck.mandatory(this, "personCache", personCache);
-        PropertyCheck.mandatory(this, "personPropertiesCache", personPropertiesCache);
+        PropertyCheck.mandatory(this, "personNodesCache", personNodesCache);
         PropertyCheck.mandatory(this, "personDao", personDao);
 
-        this.policyComponent
+        policyComponent
                 .bindClassBehaviour(QName.createQName(NamespaceService.ALFRESCO_URI, "onCreateNode"), ContentModel.TYPE_PERSON, new JavaBehaviour(this, "onCreateNode"));
-        this.policyComponent.bindClassBehaviour(QName.createQName(NamespaceService.ALFRESCO_URI, "beforeDeleteNode"), ContentModel.TYPE_PERSON, new JavaBehaviour(this,
+        policyComponent.bindClassBehaviour(QName.createQName(NamespaceService.ALFRESCO_URI, "beforeDeleteNode"), ContentModel.TYPE_PERSON, new JavaBehaviour(this,
                 "beforeDeleteNode"));
 
     }
@@ -239,14 +245,9 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
         this.personDao = personDao;
     }
 
-    public void setPermissionsManager(PermissionsManager permissionsManager)
-    {
-        this.permissionsManager = permissionsManager;
-    }
-
     /**
      * Set the username to person cache.
-     * 
+     *
      * @param personCache
      *            a transactionally safe cache
      */
@@ -256,26 +257,26 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
     }
 
     /**
-     * Set the username to person properties cache.
-     * 
-     * @param personPropertiesCache
+     * Set the username to person nodes cache.
+     *
+     * @param personNodesCache
      *            a transactionally safe cache
      */
-    public void setPersonPropertiesCache(SimpleCache<String, Map<QName, Serializable>> personPropertiesCache)
+    public void setPersonNodesCache(SimpleCache<String, CachedUser> personNodesCache)
     {
-        this.personPropertiesCache = personPropertiesCache;
+        this.personNodesCache = personNodesCache;
     }
 
     /**
      * Retrieve the person NodeRef for a username key. Depending on configuration missing people will be created if not
      * found, else a NoSuchPersonException exception will be thrown.
-     * 
+     *
      * @param userName
      *            of the person NodeRef to retrieve
      * @return NodeRef of the person as specified by the username
      * @throws NoSuchPersonException
      */
-    public NodeRef getPerson(final String userName)
+    private NodeRef getPersonInternal(final String userName)
     {
         // MT share - for activity service system callback
         if (tenantService.isEnabled() && (AuthenticationUtil.SYSTEM_USER_NAME.equals(AuthenticationUtil.getRunAsUser())) && tenantService.isTenantUser(userName))
@@ -284,6 +285,7 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
 
             return AuthenticationUtil.runAs(new AuthenticationUtil.RunAsWork<NodeRef>()
             {
+                @Override
                 public NodeRef doWork() throws Exception
                 {
                     return getPersonImpl(userName);
@@ -318,27 +320,95 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
         }
     }
 
+    @Override
     public boolean personExists(String caseSensitiveUserName)
     {
         return getPersonOrNull(caseSensitiveUserName) != null;
     }
 
+    @Override
+    public List<Node> getPersonNodeList(int limit) {
+        Map<String, NodeRef> people = getBulkLoadNodeService().loadChildElementsNodeRefs(BeanHelper.getPersonService().getPeopleContainer(), ContentModel.PROP_USERNAME,
+                ContentModel.TYPE_PERSON);
+        List<Node> users = new ArrayList<>();
+
+        for (Entry<String, NodeRef> person : people.entrySet()) {
+            String userName = person.getKey();
+            Node personNode = getPersonNode(userName);
+            if (personNode == null) {
+                continue;
+            }
+            users.add(personNode);
+            if (limit > -1 && users.size() == limit) {
+                break;
+            }
+        }
+        return users;
+    }
+
+    @Override
+    public List<NodeRef> getAllUserRefs() {
+        Map<String, NodeRef> people = getBulkLoadNodeService().loadChildElementsNodeRefs(BeanHelper.getPersonService().getPeopleContainer(), ContentModel.PROP_USERNAME,
+                ContentModel.TYPE_PERSON);
+        return new ArrayList<NodeRef>(people.values());
+    }
+
+    @Override
+    public Set<String> getAllUserNames() {
+        Map<String, NodeRef> people = getBulkLoadNodeService().loadChildElementsNodeRefs(BeanHelper.getPersonService().getPeopleContainer(), ContentModel.PROP_USERNAME,
+                ContentModel.TYPE_PERSON);
+        return people.keySet();
+    }
+
+    @Override
+    public Node getPersonNode(String userName) {
+        CachedUser person = personNodesCache.get(userName);
+        if (person == null) {
+            NodeRef personRef = getPersonRef(userName);
+            if (personRef != null) {
+                person = new CachedUser(new Node(personRef));
+            }
+            if (person != null) {
+                personCache.put(userName, personRef);
+                personNodesCache.put(userName, person);
+            }
+        }
+        return person != null ? person.getNode() : null;
+    }
+
+    @Override
+    public NodeRef getPerson(String userName) {
+        NodeRef personRef = personCache.get(userName);
+        if (personRef == null) {
+            personRef = getPersonInternal(userName);
+            addToCache(userName, personRef);
+        }
+        return personRef;
+    }
+
+    @Override
+    public NodeRef getPersonFromRepo(String userName) {
+        removeFromCache(userName);
+        return getPerson(userName);
+    }
+
     private NodeRef getPersonOrNull(String searchUserName)
     {
-        NodeRef returnRef = this.personCache.get(searchUserName);
+        NodeRef returnRef = personCache.get(searchUserName);
         if (returnRef == null)
         {
             returnRef = getPersonRef(searchUserName);
 
-            // add to cache
-            this.personCache.put(searchUserName, returnRef);
+            if (returnRef != null) {
+                makeHomeFolderIfRequired(returnRef, searchUserName);
+                addToCache(searchUserName, returnRef);
+            }
         }
-        makeHomeFolderIfRequired(returnRef);
         return returnRef;
     }
 
     private NodeRef getPersonRef(String searchUserName) {
-        List<NodeRef> refs = personDao.getPersonOrNull(searchUserName, userNameMatcher);
+        List<NodeRef> refs = new ArrayList<>(new HashSet<>(personDao.getPersonOrNull(searchUserName, userNameMatcher)));
         if (refs.size() > 1)
         {
             return handleDuplicates(refs, searchUserName);
@@ -379,21 +449,46 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
         if (StringUtils.isBlank(userName)) {
             return null;
         }
-        Map<QName, Serializable> properties = personPropertiesCache.get(userName);
-        if (properties == null) {
-            // Don't use cache for getting person ref, because 
+        CachedUser person = personNodesCache.get(userName);
+        if (person == null) {
+            // Don't use cache for getting person ref, because
             // 1) it seems that personCache is not updated when deleting person and thus
-            // querying this cache may result in erroneous data or RuntimeException when calling 
-            //  getPerson -> getPersonImpl -> getPersonOrNull -> makeHomeFolderIfRequired
+            // querying this cache may result in erroneous data or RuntimeException when calling
+            // getPerson -> getPersonImpl -> getPersonOrNull -> makeHomeFolderIfRequired
             // 2) to avoid updating personCache by getPersonOrNull call, because at the same time
             // other transaction may be updating personCache.
             NodeRef personRef = getPersonRef(userName);
             if (personRef != null) {
-                properties = nodeService.getProperties(personRef);
-                personPropertiesCache.put(userName, properties);
+                person = new CachedUser(new Node(personRef));
+                personCache.put(userName, personRef);
+                personNodesCache.put(userName, person);
             }
         }
-        return properties;
+        return person != null ? person.getProps() : null;
+    }
+
+    @Override
+    public Object getPersonProperty(String userName, QName property) {
+        Node personNode = getPersonNode(userName);
+        return personNode == null ? null : personNode.getProperties().get(property);
+    }
+
+    @Override
+    public void updateCache(Node personNode) {
+        String userName = (String) personNode.getProperties().get(ContentModel.PROP_USERNAME);
+        removeFromCache(userName);
+        updateCache(userName);
+    }
+
+    @Override
+    public void updateCache(String userName) {
+        NodeRef personRef;
+        personRef = personCache.get(userName);
+        removeFromCache(userName);
+        if (personRef == null) {
+            personRef = getPersonInternal(userName);
+        }
+        addToCache(userName, personRef);
     }
 
     private static final String KEY_POST_TXN_DUPLICATES = "PersonServiceImpl.KEY_POST_TXN_DUPLICATES";
@@ -436,6 +531,7 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
 
         RetryingTransactionCallback<Object> processDuplicateWork = new RetryingTransactionCallback<Object>()
         {
+            @Override
             public Object execute() throws Throwable
             {
 
@@ -469,6 +565,12 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
         for (NodeRef nodeRef : toDelete)
         {
             nodeService.deleteNode(nodeRef);
+            for (String userName : personCache.getKeys()) {
+                if (nodeRef.equals(personCache.get(userName))) {
+                    removeFromCache(userName);
+                    break;
+                }
+            }
         }
     }
 
@@ -477,7 +579,10 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
         for (NodeRef nodeRef : toSplit)
         {
             String userName = DefaultTypeConverter.INSTANCE.convert(String.class, nodeService.getProperty(nodeRef, ContentModel.PROP_USERNAME));
-            nodeService.setProperty(nodeRef, ContentModel.PROP_USERNAME, userName + GUID.generate());
+            removeFromCache(userName);
+            String newName = userName + GUID.generate();
+            nodeService.setProperty(nodeRef, ContentModel.PROP_USERNAME, newName);
+            addToCache(newName, nodeRef);
         }
     }
 
@@ -547,24 +652,27 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
         return true;
     }
 
+    @Override
     public boolean createMissingPeople()
     {
         return createMissingPeople;
     }
 
+    @Override
     public Set<QName> getMutableProperties()
     {
         return mutableProperties;
     }
 
+    @Override
     public void setPersonProperties(String userName, Map<QName, Serializable> properties)
     {
-        NodeRef personNode = getPersonOrNull(userName);
-        if (personNode == null)
+        NodeRef personRef = getPersonOrNull(userName);
+        if (personRef == null)
         {
             if (createMissingPeople())
             {
-                personNode = createMissingPerson(userName);
+                personRef = createMissingPerson(userName);
             }
             else
             {
@@ -574,21 +682,27 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
         }
         else
         {
-            String realUserName = DefaultTypeConverter.INSTANCE.convert(String.class, nodeService.getProperty(personNode, ContentModel.PROP_USERNAME));
+            String realUserName = DefaultTypeConverter.INSTANCE.convert(String.class, nodeService.getProperty(personRef, ContentModel.PROP_USERNAME));
             properties.put(ContentModel.PROP_USERNAME, realUserName);
         }
-        Map<QName, Serializable> update = nodeService.getProperties(personNode);
+        Map<QName, Serializable> update = nodeService.getProperties(personRef);
         update.putAll(properties);
 
-        nodeService.setProperties(personNode, update);
-        personPropertiesCache.put(userName, nodeService.getProperties(personNode));
-    }
-    
-    @Override
-    public void removeFromPersonPropertiesCache(String username) {
-        personPropertiesCache.remove(username);
+        nodeService.setProperties(personRef, update);
+        removeFromCache(userName);
     }
 
+    @Override
+    public void setPersonProperty(String username, QName property, Serializable value) {
+        NodeRef personRef = getPerson(username);
+        if (personRef == null) {
+            return;
+        }
+        nodeService.setProperty(personRef, property, value);
+        removeFromCache(username);
+    }
+
+    @Override
     public boolean isMutable()
     {
         return true;
@@ -598,26 +712,30 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
     {
         HashMap<QName, Serializable> properties = getDefaultProperties(userName);
         NodeRef person = createPerson(properties);
-        makeHomeFolderIfRequired(person);
+        makeHomeFolderIfRequired(person, userName);
         return person;
     }
 
-    private void makeHomeFolderIfRequired(NodeRef person)
+    private void makeHomeFolderIfRequired(NodeRef person, String userName)
     {
         if (person != null)
         {
+            if (personNodesCache.contains(userName) && personNodesCache.get(userName).getProps().get(ContentModel.PROP_HOMEFOLDER) != null) {
+                return;
+            }
             NodeRef homeFolder = DefaultTypeConverter.INSTANCE.convert(NodeRef.class, nodeService.getProperty(person, ContentModel.PROP_HOMEFOLDER));
             if (homeFolder == null)
             {
                 final ChildAssociationRef ref = nodeService.getPrimaryParent(person);
                 transactionService.getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Object>()
                 {
+                    @Override
                     public Object execute() throws Throwable
                     {
                         homeFolderManager.onCreateNode(ref);
                         return null;
                     }
-                }, transactionService.isReadOnly(), false);
+                }, false, transactionService.isReadOnly());
             }
         }
     }
@@ -638,11 +756,13 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
         return properties;
     }
 
+    @Override
     public NodeRef createPerson(Map<QName, Serializable> properties)
     {
         return createPerson(properties, authorityService.getDefaultZones());
     }
 
+    @Override
     public NodeRef createPerson(Map<QName, Serializable> properties, Set<String> zones)
     {
         String userName = DefaultTypeConverter.INSTANCE.convert(String.class, properties.get(ContentModel.PROP_USERNAME));
@@ -658,7 +778,7 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
         properties.put(ContentModel.PROP_SIZE_CURRENT, 0L);
 
         NodeRef personRef = nodeService.createNode(getPeopleContainer(), ContentModel.ASSOC_CHILDREN, QName.createQName("cm", userName.toLowerCase(), namespacePrefixResolver), // Lowercase:
-                                                                                                                                                                                // ETHREEOH-1431
+                // ETHREEOH-1431
                 ContentModel.TYPE_PERSON, properties).getChildRef();
 
         if (zones != null)
@@ -680,40 +800,44 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
             try
             {
                 throw new RuntimeException();
-            }
-            catch (RuntimeException e)
+            } catch (RuntimeException e)
             {
                 s_logger.warn("Creating person (INVALID service call) '" + userName + "'", e);
             }
         }
-
+        addToCache(userName, personRef);
         return personRef;
     }
 
+    @Override
     public NodeRef getPeopleContainer()
     {
-        NodeRef rootNodeRef = nodeService.getRootNode(tenantService.getName(storeRef));
-        List<ChildAssociationRef> children = nodeService.getChildAssocs(rootNodeRef, RegexQNamePattern.MATCH_ALL, QName.createQName(SYSTEM_FOLDER_SHORT_QNAME,
-                namespacePrefixResolver));
+        if (peopleContainerNodeRef == null) {
 
-        if (children.size() == 0)
-        {
-            throw new AlfrescoRuntimeException("Required people system path not found: " + SYSTEM_FOLDER_SHORT_QNAME);
+            NodeRef rootNodeRef = nodeService.getRootNode(tenantService.getName(storeRef));
+            List<ChildAssociationRef> children = nodeService.getChildAssocs(rootNodeRef, RegexQNamePattern.MATCH_ALL, QName.createQName(SYSTEM_FOLDER_SHORT_QNAME,
+                    namespacePrefixResolver));
+
+            if (children.size() == 0)
+            {
+                throw new AlfrescoRuntimeException("Required people system path not found: " + SYSTEM_FOLDER_SHORT_QNAME);
+            }
+
+            NodeRef systemNodeRef = children.get(0).getChildRef();
+
+            children = nodeService.getChildAssocs(systemNodeRef, RegexQNamePattern.MATCH_ALL, QName.createQName(PEOPLE_FOLDER_SHORT_QNAME, namespacePrefixResolver));
+
+            if (children.size() == 0)
+            {
+                throw new AlfrescoRuntimeException("Required people system path not found: " + PEOPLE_FOLDER_SHORT_QNAME);
+            }
+
+            peopleContainerNodeRef = children.get(0).getChildRef();
         }
-
-        NodeRef systemNodeRef = children.get(0).getChildRef();
-
-        children = nodeService.getChildAssocs(systemNodeRef, RegexQNamePattern.MATCH_ALL, QName.createQName(PEOPLE_FOLDER_SHORT_QNAME, namespacePrefixResolver));
-
-        if (children.size() == 0)
-        {
-            throw new AlfrescoRuntimeException("Required people system path not found: " + PEOPLE_FOLDER_SHORT_QNAME);
-        }
-
-        NodeRef peopleNodeRef = children.get(0).getChildRef();
-        return peopleNodeRef;
+        return peopleContainerNodeRef;
     }
 
+    @Override
     public void deletePerson(String userName)
     {
         // remove user from any containing authorities
@@ -730,21 +854,23 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
         NodeRef personNodeRef = getPersonOrNull(userName);
         if (personNodeRef != null)
         {
-            personPropertiesCache.remove(userName);
             nodeService.deleteNode(personNodeRef);
+            removeFromCache(userName);
         }
     }
 
+    @Override
     public Set<NodeRef> getAllPeople()
     {
-        return personDao.getAllPeople();
+        return new HashSet<NodeRef>(getAllUserRefs());
     }
 
+    @Override
     public Set<NodeRef> getPeopleFilteredByProperty(QName propertyKey, Serializable propertyValue)
     {
         // check that given property key is defined for content model type 'cm:person'
         // and throw exception if it isn't
-        if (this.dictionaryService.getProperty(ContentModel.TYPE_PERSON, propertyKey) == null)
+        if (dictionaryService.getProperty(ContentModel.TYPE_PERSON, propertyKey) == null)
         {
             throw new AlfrescoRuntimeException("Property '" + propertyKey + "' is not defined " + "for content model type cm:person");
         }
@@ -775,8 +901,7 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
                     people.add(nodeRef);
                 }
             }
-        }
-        finally
+        } finally
         {
             if (rs != null)
             {
@@ -791,31 +916,42 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
 
     /*
      * (non-Javadoc)
-     * 
      * @see org.alfresco.repo.node.NodeServicePolicies.OnCreateNodePolicy#onCreateNode(org.alfresco.service.cmr.repository.ChildAssociationRef)
      */
+    @Override
     public void onCreateNode(ChildAssociationRef childAssocRef)
     {
         NodeRef personRef = childAssocRef.getChildRef();
-        Map<QName, Serializable> properties = nodeService.getProperties(personRef);
-        String username = (String) properties.get(ContentModel.PROP_USERNAME);
-        this.personCache.put(username, personRef);
-        personPropertiesCache.put(username, properties);
+        CachedUser person = new CachedUser(new Node(personRef));
+        String username = (String) person.getProps().get(ContentModel.PROP_USERNAME);
+        personCache.put(username, personRef);
+        personNodesCache.put(username, person);
     }
 
     /*
      * (non-Javadoc)
      * @see org.alfresco.repo.node.NodeServicePolicies.BeforeDeleteNodePolicy#beforeDeleteNode(org.alfresco.service.cmr.repository.NodeRef)
      */
+    @Override
     public void beforeDeleteNode(NodeRef nodeRef)
     {
-        String username = (String) this.nodeService.getProperty(nodeRef, ContentModel.PROP_USERNAME);
-        this.personCache.remove(username);
-        personPropertiesCache.remove(username);
+        String username = (String) nodeService.getProperty(nodeRef, ContentModel.PROP_USERNAME);
+        removeFromCache(username);
+    }
+
+    private void addToCache(String userName, NodeRef personRef) {
+        personCache.put(userName, personRef);
+        personNodesCache.put(userName, new CachedUser(new Node(personRef)));
+    }
+
+    private void removeFromCache(String username) {
+        personCache.remove(username);
+        personNodesCache.remove(username);
     }
 
     // IOC Setters
 
+    @Override
     public void setCreateMissingPeople(boolean createMissingPeople)
     {
         this.createMissingPeople = createMissingPeople;
@@ -868,9 +1004,10 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
 
     public void setStoreUrl(String storeUrl)
     {
-        this.storeRef = new StoreRef(storeUrl);
+        storeRef = new StoreRef(storeUrl);
     }
 
+    @Override
     public String getUserIdentifier(String caseSensitiveUserName)
     {
         NodeRef nodeRef = getPersonOrNull(caseSensitiveUserName);
@@ -884,7 +1021,7 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
 
     public static class CreationDateComparator implements Comparator<NodeRef>
     {
-        private NodeService nodeService;
+        private final NodeService nodeService;
 
         boolean ascending;
 
@@ -894,6 +1031,7 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
             this.ascending = ascending;
         }
 
+        @Override
         public int compare(NodeRef first, NodeRef second)
         {
             Date firstDate = DefaultTypeConverter.INSTANCE.convert(Date.class, nodeService.getProperty(first, ContentModel.PROP_CREATED));
@@ -925,9 +1063,17 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
         }
     }
 
+    @Override
     public boolean getUserNamesAreCaseSensitive()
     {
         return userNameMatcher.getUserNamesAreCaseSensitive();
+    }
+
+    private BulkLoadNodeService getBulkLoadNodeService() {
+        if (bulkLoadNodeService == null) {
+            bulkLoadNodeService = BeanHelper.getBulkLoadNodeService();
+        }
+        return bulkLoadNodeService;
     }
 
 }

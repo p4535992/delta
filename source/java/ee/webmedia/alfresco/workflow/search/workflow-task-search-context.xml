@@ -29,16 +29,7 @@
       </property>
    </bean>
 
-   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
-      <property name="resourceBundles">
-         <list>
-            <value>ee/webmedia/alfresco/workflow/search/web/task-search-webclient</value>
-            <value>ee/webmedia/alfresco/workflow/search/web/compound-workflow-search-webclient</value>
-         </list>
-      </property>
-   </bean>
-   
-   <bean class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+   <bean id="workflowSearchResourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee/webmedia/alfresco/workflow/search/web/task-search-webclient</value>

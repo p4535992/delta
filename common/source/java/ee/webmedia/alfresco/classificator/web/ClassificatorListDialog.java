@@ -28,6 +28,8 @@ import ee.webmedia.alfresco.utils.WebUtil;
 
 public class ClassificatorListDialog extends BaseDialogBean {
 
+    public static final String BEAN_NAME = "ClassificatorListDialog";
+
     private static final long serialVersionUID = 1L;
 
     private List<Classificator> classificators;
@@ -90,9 +92,14 @@ public class ClassificatorListDialog extends BaseDialogBean {
 
     @Override
     public String cancel() {
+        clean();
+        return super.cancel();
+    }
+
+    @Override
+    public void clean() {
         classificators = null;
         searchCriteria = "";
-        return super.cancel();
     }
 
     public void search() {
@@ -132,7 +139,7 @@ public class ClassificatorListDialog extends BaseDialogBean {
      * Query callBack method executed by the Generic Picker component.
      * This method is part of the contract to the Generic Picker, it is up to the backing bean
      * to execute whatever query is appropriate and return the results.
-     * 
+     *
      * @param params Search parameters
      * @return An array of SelectItem objects containing the results to display in the picker.
      */

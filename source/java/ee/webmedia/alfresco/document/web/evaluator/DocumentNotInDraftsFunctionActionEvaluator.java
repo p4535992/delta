@@ -18,8 +18,13 @@ public class DocumentNotInDraftsFunctionActionEvaluator extends BaseActionEvalua
         NodeRef functionRef = (NodeRef) docNode.getProperties().get(DocumentCommonModel.Props.FUNCTION);
         if (functionRef == null || !nodeService.exists(functionRef)) { // Check if this even exists, since imported document types may have falsely set parent function
             functionRef = nodeService.getPrimaryParent(docNode.getNodeRef()).getParentRef();
+            NodeRef forwardedDecDocsRoot = BeanHelper.getConstantNodeRefsBean().getForwardedDecDocumentsRoot();
+            if (forwardedDecDocsRoot != null && forwardedDecDocsRoot.equals(functionRef)) {
+                return false;
+            }
         }
 
         return !BeanHelper.getFunctionsService().isDraftsFunction(functionRef);
     }
+
 }

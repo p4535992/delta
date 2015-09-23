@@ -25,9 +25,6 @@
 
          <action id="addFile">
             <evaluator>ee.webmedia.alfresco.document.file.web.AddFilesEvaluator</evaluator>
-            <permissions>
-               <permission allow="true">editDocument</permission>
-            </permissions>
             <label-id>file_add_file</label-id>
             <image>/images/icons/add_item.gif</image>
             <action-listener>#{DocumentDynamicDialog.addFile}</action-listener>
@@ -35,9 +32,6 @@
          
          <action id="addInactiveFile">
             <evaluator>ee.webmedia.alfresco.document.file.web.AddFilesEvaluator</evaluator>
-            <permissions>
-               <permission allow="true">editDocument</permission>
-            </permissions>
             <label-id>file_add_inactive_file</label-id>
             <image>/images/icons/add_item.gif</image>
             <action-listener>#{DocumentDynamicDialog.addInactiveFile}</action-listener>

@@ -2,12 +2,14 @@ package ee.webmedia.alfresco.document.file.service;
 
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.model.FileNotFoundException;
 import org.alfresco.service.cmr.repository.ContentReader;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.model.GeneratedFileType;
@@ -19,7 +21,7 @@ public interface FileService {
 
     /**
      * Marks the file as active/inactive
-     * 
+     *
      * @param nodeRef
      * @return true, if new status is active, false otherwise
      */
@@ -30,7 +32,6 @@ public interface FileService {
      *
      * @param documentNodeRef document that contains the container file
      * @return container node ref or null
-     *
      * @see {@link ee.webmedia.alfresco.dvk.service.DvkService#DEC_CONTAINER_FILE_NAME}
      */
     NodeRef getDecContainer(NodeRef documentNodeRef);
@@ -45,7 +46,7 @@ public interface FileService {
 
     /**
      * Returns all children of this nodeRef as file items.
-     * 
+     *
      * @return
      */
     List<File> getAllFiles(NodeRef nodeRef);
@@ -70,7 +71,7 @@ public interface FileService {
 
     /**
      * Calculatees WebDAV URL for given node
-     * 
+     *
      * @param nodeRef
      * @return
      */
@@ -78,16 +79,18 @@ public interface FileService {
 
     /**
      * Move all files under fromRef to (under) toRef.
-     * 
+     *
      * @param fromRef
      * @param toRef
      * @throws FileNotFoundException
      */
     void moveAllFiles(NodeRef fromRef, NodeRef toRef) throws FileNotFoundException;
 
-    boolean addExistingFileToDocument(String name, String displayName, NodeRef documentNodeRef, NodeRef fileNodeRef, boolean active, boolean associatedWithMetaData);
+    Pair<Boolean, NodeRef> addExistingFileToDocument(String name, String displayName, NodeRef documentNodeRef, NodeRef fileNodeRef, boolean active, boolean associatedWithMetaData,
+            Long fileOrderInList);
 
-    boolean addUploadedFileToDocument(String name, String displayName, NodeRef documentNodeRef, java.io.File file, String mimeType, boolean active, boolean associatedWithMetaData);
+    Pair<Boolean, NodeRef> addUploadedFileToDocument(String name, String displayName, NodeRef documentNodeRef, java.io.File file, String mimeType, boolean active,
+            boolean associatedWithMetaData, Long fileOrderInList);
 
     NodeRef addFileToTask(String name, String displayName, NodeRef taskNodeRef, java.io.File file, String mimeType);
 
@@ -97,7 +100,7 @@ public interface FileService {
 
     /**
      * Gets list of scanned files.
-     * 
+     *
      * @param folderRef
      * @return list of scanned files
      */
@@ -107,7 +110,7 @@ public interface FileService {
      * Transforms all the active files under nodeRef into PDF.
      * The created PDF-files are saved under the same nodeRef and are active.
      * The original files, when transformed successfully, become inactive.
-     * 
+     *
      * @param nodeRef
      */
     void transformActiveFilesToPdf(NodeRef nodeRef, boolean inactivateOriginalFiles);
@@ -116,7 +119,7 @@ public interface FileService {
 
     /**
      * Transform a source file to PDF. Original source file is preserved and a new PDF file is created.
-     * 
+     *
      * @param parent folder where PDF file is created
      * @param reader source file that is converted to PDF
      * @param filename the name that the created PDF file will have
@@ -133,6 +136,8 @@ public interface FileService {
     List<File> getAllActiveFiles(NodeRef nodeRef);
 
     List<NodeRef> getAllFileRefs(NodeRef nodeRef, boolean activeFilesOnly);
+
+    List<NodeRef> getAllFileRefsExcludingDecContainer(NodeRef nodeRef);
 
     List<File> getAllActiveAndInactiveFiles(NodeRef nodeRef);
 
@@ -157,9 +162,10 @@ public interface FileService {
      * @param parentRef
      * @param subfolderNodeType - type to get as subfolder
      * @param countableChildNodeType - type for counting non-subfolder children
+     * @param countChildren
      * @return
      */
-    List<Subfolder> getSubfolders(NodeRef parentRef, QName subfolderNodeType, QName countableChildNodeType);
+    List<Subfolder> getSubfolders(NodeRef parentRef, QName subfolderNodeType, QName countableChildNodeType, boolean countChildren);
 
     NodeRef findSubfolderWithName(NodeRef parentNodeRef, String folderName, QName subfolderType);
 
@@ -175,6 +181,17 @@ public interface FileService {
 
     void removePreviousParentReference(NodeRef docRef, boolean moveToPreviousParent);
 
-    String getJumploaderPath();
+    void reorderFiles(NodeRef documentRef);
+
+    void reorderFiles(List<NodeRef> documentRefs);
+
+    void reorderFiles(NodeRef doocumentRef, Map<NodeRef, Long> originalOrders);
+
+    /**
+     * @param documentRef
+     * @param fileRef - ref of file that must be added to the end of the list
+     * @param active - previous state of the file
+     */
+    void reorderFiles(NodeRef documentRef, NodeRef fileRef, boolean active);
 
 }

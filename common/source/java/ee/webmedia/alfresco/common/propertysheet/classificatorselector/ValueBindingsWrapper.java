@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.common.propertysheet.classificatorselector;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.faces.component.StateHolder;
@@ -18,9 +19,9 @@ public class ValueBindingsWrapper extends ValueBindingImpl {
 
     private List<ValueBinding> valueBindings;
 
-    public ValueBindingsWrapper(List<ValueBinding> valueBindings) {
-        Assert.assertTrue(valueBindings != null && valueBindings.size() > 0);
-        this.valueBindings = valueBindings;
+    public ValueBindingsWrapper(ValueBinding... valueBinding) {
+        Assert.assertTrue(valueBinding != null && valueBinding.length > 0);
+        this.valueBindings = Arrays.asList(valueBinding);
     }
 
     public ValueBindingsWrapper() {

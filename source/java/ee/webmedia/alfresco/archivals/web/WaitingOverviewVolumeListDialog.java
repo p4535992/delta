@@ -10,7 +10,6 @@ import java.util.List;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.config.DialogsConfigElement.DialogButtonConfig;
@@ -85,14 +84,14 @@ public class WaitingOverviewVolumeListDialog extends VolumeArchiveBaseDialog {
     }
 
     @Override
-    protected List<QName> getRenderedFilterFields() {
+    protected List<String> getRenderedFilterFields() {
         if (renderedFilterFields == null) {
-            renderedFilterFields = new ArrayList<QName>(Arrays.asList(
-                    VolumeSearchModel.Props.NEXT_EVENT_DATE,
-                    VolumeSearchModel.Props.NEXT_EVENT_DATE_END_DATE,
-                    VolumeSearchModel.Props.RETAIN_UNTIL_DATE,
-                    VolumeSearchModel.Props.RETAIN_UNTIL_DATE_END_DATE,
-                    VolumeSearchModel.Props.EVENT_PLAN));
+            renderedFilterFields = new ArrayList<String>(Arrays.asList(
+                    VolumeSearchModel.Props.NEXT_EVENT_DATE.toPrefixString(),
+                    VolumeSearchModel.Props.NEXT_EVENT_DATE_END_DATE.toPrefixString(),
+                    VolumeSearchModel.Props.RETAIN_UNTIL_DATE.toPrefixString(),
+                    VolumeSearchModel.Props.RETAIN_UNTIL_DATE_END_DATE.toPrefixString(),
+                    VolumeSearchModel.Props.EVENT_PLAN.toPrefixString()));
         }
         return renderedFilterFields;
     }

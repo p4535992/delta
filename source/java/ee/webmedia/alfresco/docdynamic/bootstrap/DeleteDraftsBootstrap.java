@@ -29,6 +29,8 @@ public class DeleteDraftsBootstrap extends AbstractModuleComponent {
     private DocumentService documentService;
     private TransactionService transactionService;
 
+    private boolean disabled;
+
     @Override
     public boolean isRequiresNewTransaction() {
         return false;
@@ -46,11 +48,15 @@ public class DeleteDraftsBootstrap extends AbstractModuleComponent {
      */
     @Override
     protected void executeInternal() throws Throwable {
+        if (disabled) {
+            LOG.info("DeleteDraftsBootstrap is disabled, skipping.");
+            return;
+        }
         executeInternal(true);
     }
 
     public void executeInternal(final boolean deleteAll) {
-        final NodeRef drafts = documentService.getDrafts();
+        final NodeRef drafts = BeanHelper.getConstantNodeRefsBean().getDraftsRoot();
         List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(drafts);
         LOG.info("Found " + childAssocs.size() + " nodes under drafts" + (childAssocs.isEmpty() ? "" : ", deleting"));
         if (childAssocs.isEmpty()) {
@@ -127,6 +133,10 @@ public class DeleteDraftsBootstrap extends AbstractModuleComponent {
 
     public void setTransactionService(TransactionService transactionService) {
         this.transactionService = transactionService;
+    }
+
+    public void setDisabled(boolean disabled) {
+        this.disabled = disabled;
     }
 
 }

@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.document.search.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getJsfBindingHelper;
+
 import java.util.Map;
 
 import javax.faces.component.UIPanel;
@@ -12,7 +14,8 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 public class TodayRegisteredDocumentsSearchResultsDialog extends BaseDocumentListDialog {
     private static final long serialVersionUID = 1L;
-    private transient UIPanel panel;
+
+    public static final String BEAN_NAME = "TodayRegisteredDocumentsSearchResultsDialog";
     private String searchValue;
     private boolean quickSearch;
 
@@ -47,11 +50,18 @@ public class TodayRegisteredDocumentsSearchResultsDialog extends BaseDocumentLis
 
     @Override
     public void restored() {
-        BeanHelper.getVisitedDocumentsBean().resetVisitedDocuments(documents);
+        BeanHelper.getVisitedDocumentsBean().resetVisitedDocuments(documentProvider);
+    }
+
+    @Override
+    public void clean() {
+        super.clean();
+        searchValue = null;
     }
 
     private void doInitialSearch() {
-        documents = setLimited(getDocumentSearchService().searchTodayRegisteredDocuments(quickSearch ? searchValue : null, getLimit()));
+        documentProvider = new DocumentListDataProvider(setLimited(getDocumentSearchService().searchTodayRegisteredDocuments(quickSearch ? searchValue : null, getLimit())), true,
+                DOC_PROPS_TO_LOAD);
     }
 
     @Override
@@ -61,15 +71,17 @@ public class TodayRegisteredDocumentsSearchResultsDialog extends BaseDocumentLis
 
     @Override
     public void setPanel(UIPanel panel) {
-        this.panel = panel;
+        getJsfBindingHelper().addBinding(getPanelBindingName(), panel);
     }
 
     @Override
     public UIPanel getPanel() {
-        if (panel == null) {
-            panel = new UIPanel();
+        UIPanel panelComponent = (UIPanel) getJsfBindingHelper().getComponentBinding(getPanelBindingName());
+        if (panelComponent == null) {
+            panelComponent = new UIPanel();
+            getJsfBindingHelper().addBinding(getPanelBindingName(), panelComponent);
         }
-        return panel;
+        return panelComponent;
     }
 
     public void setSearchValue(String searchValue) {

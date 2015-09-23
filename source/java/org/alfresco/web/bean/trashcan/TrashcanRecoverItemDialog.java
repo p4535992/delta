@@ -128,6 +128,7 @@ public class TrashcanRecoverItemDialog extends TrashcanDialog
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Exception
     {
+        doNotLoadDataWhenReturningToTrashcanDialog();
         return recoverItem(context, outcome);
 
     }

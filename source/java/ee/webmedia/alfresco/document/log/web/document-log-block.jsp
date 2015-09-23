@@ -16,7 +16,7 @@
    </f:facet>
 </h:panelGroup>
 
-<a:panel id="document-block-block-panel" label="#{DialogManager.bean.log.listTitle}" styleClass="panel-100 with-pager" progressive="true" rendered="#{DialogManager.bean.log.rendered}"
+<a:panel id="document-log-block-panel" label="#{DialogManager.bean.log.listTitle}" styleClass="panel-100 with-pager" progressive="true" rendered="#{DialogManager.bean.log.rendered}"
    expanded="false" facetsId="dialog:dialog-body:log-panel-facets">
 
    <a:richList id="logList" viewMode="details" value="#{DialogManager.bean.log.logs}" var="r" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"

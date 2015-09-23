@@ -24,7 +24,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
       </property>
    </bean>
 
-   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
+   <bean id="documentTypeResourceBundle" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee/webmedia/alfresco/document/type/web/document-type-webclient</value>

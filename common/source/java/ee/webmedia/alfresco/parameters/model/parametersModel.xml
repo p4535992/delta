@@ -36,6 +36,10 @@
       <type name="param:parameter">
          <parent>sys:base</parent>
          <properties>
+            <property name="param:name">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
             <property name="param:value">
                <type>d:any</type>
                <mandatory>true</mandatory>

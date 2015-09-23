@@ -10,6 +10,9 @@ import ee.webmedia.alfresco.register.model.Register;
 public interface RegisterService {
     public static final String BEAN_NAME = "RegisterService";
 
+    String SEQ_REGISTER_PREFIX = "register_";
+    String SEQ_REGISTER_SUFFIX = "_seq";
+
     /**
      * Gets all registers
      * 
@@ -31,6 +34,11 @@ public interface RegisterService {
      * @see #getRegisterNode(int);
      */
     Register getRegister(Integer registerId);
+
+    /**
+     * @return instance of register containing only register {@code id} and {@code counter} values
+     */
+    Register getSimpleRegister(Integer registerId);
 
     /**
      * Returns the registers root space NodeRef
@@ -76,8 +84,16 @@ public interface RegisterService {
      */
     void resetCounter(Node register);
 
-    void resetAllAutoResetCounters();
+    int resetAllAutoResetCounters();
 
     boolean isValueEditable();
+
+    /**
+     * Updates old sequences. sets MINVALUE to 0. called once in updater class.
+     *
+     * @param registerId
+     * @param regCounterValue
+     */
+    void updateRegisterSequence(int registerId, int regCounterValue);
 
 }

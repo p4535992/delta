@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.common.ajax;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getPrivilegeService;
 import static org.apache.myfaces.shared_impl.renderkit.ViewSequenceUtils.getCurrentSequence;
 
 import java.io.IOException;
@@ -23,9 +24,10 @@ import javax.faces.context.ResponseWriter;
 import javax.faces.el.ValueBinding;
 import javax.faces.event.PhaseId;
 
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import org.alfresco.repo.content.MimetypeMap;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.webdav.WebDAVHelper;
-import org.alfresco.service.cmr.lock.UnableToAquireLockException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.app.servlet.DownloadContentServlet;
 import org.alfresco.web.app.servlet.ajax.InvokeCommand.ResponseMimetype;
@@ -58,33 +60,6 @@ public class AjaxBean implements Serializable {
     // AJAX handler methods
 
     @ResponseMimetype(MimetypeMap.MIMETYPE_HTML)
-    public void lockFileManually() throws IOException {
-        FacesContext context = FacesContext.getCurrentInstance();
-        ResponseWriter out = context.getResponseWriter();
-        DocLockService docLockService = BeanHelper.getDocLockService();
-
-        NodeRef fileRef = checkFileLock(context, out, docLockService);
-        if (fileRef == null) {
-            return;
-        }
-
-        try {
-            docLockService.lockFile(fileRef, 3600 * 12, true);
-            BeanHelper.getVersionsService().addVersionLockableAspect(fileRef);
-            BeanHelper.getVersionsService().setVersionLockableAspect(fileRef, false);
-        } catch (UnableToAquireLockException e) {
-            LOG.info("Failed to lock file during AJAX request", e);
-            out.write("LOCKING_FAILED");
-            return;
-        }
-
-        // Update file block state
-        BeanHelper.getFileBlockBean().refresh();
-        // Report success!
-        out.write("LOCKING_SUCCESSFUL");
-    }
-
-    @ResponseMimetype(MimetypeMap.MIMETYPE_HTML)
     public void isFileLocked() throws IOException {
         FacesContext context = FacesContext.getCurrentInstance();
         ResponseWriter out = context.getResponseWriter();
@@ -107,7 +82,7 @@ public class AjaxBean implements Serializable {
         String path = params.get("url");
 
         if (StringUtils.isBlank(path)) {
-            // FIXME: this may happen, when session has expired, but why? 
+            // FIXME: this may happen, when session has expired, but why?
             return;
         }
 
@@ -337,7 +312,9 @@ public class AjaxBean implements Serializable {
         }
 
         // If user cannot edit the document, then output nothing
-        if (Boolean.FALSE.equals(PrivilegeUtil.additionalDocumentFileWritePermission(docRef, BeanHelper.getNodeService()))) {
+        boolean insufficientUserPermissions = !getPrivilegeService().hasPermission(docRef, AuthenticationUtil.getRunAsUser(), Privilege.EDIT_DOCUMENT);
+        boolean insufficientDocumentPermissions = Boolean.FALSE.equals(PrivilegeUtil.additionalDocumentFileWritePermission(docRef, BeanHelper.getNodeService()));
+        if (insufficientUserPermissions || insufficientDocumentPermissions) {
             return null;
         }
 
@@ -408,7 +385,10 @@ public class AjaxBean implements Serializable {
 
     private static void writeViewStateError(FacesContext fc, AjaxIllegalViewStateException e) throws IOException {
         ResponseWriter out = fc.getResponseWriter();
-        String currentViewId = e.getCurrentViewId();
+        String currentViewId = null;
+        if (e != null) {
+            currentViewId = e.getCurrentViewId();
+        }
         String currentUrl = BeanHelper.getDocumentTemplateService().getServerUrl() + "/faces" + (currentViewId != null ? currentViewId : "");
         fc.getResponseWriter().write("ERROR_VIEW_STATE_CHANGED:" + new JSONSerializer().serialize(currentUrl));
     }

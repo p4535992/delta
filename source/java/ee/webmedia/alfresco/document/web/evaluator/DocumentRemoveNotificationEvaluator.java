@@ -10,4 +10,9 @@ public class DocumentRemoveNotificationEvaluator extends DocumentAddNotification
     protected boolean evaluateAssocs(Node docNode) {
         return !super.evaluateAssocs(docNode);
     }
+
+    @Override
+    public boolean evaluate() {
+        return ((DocumentDynamicActionsGroupResources) sharedResource).isNotificationAssocExists();
+    }
 }

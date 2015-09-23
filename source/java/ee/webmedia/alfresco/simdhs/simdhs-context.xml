@@ -53,6 +53,7 @@
    <import resource="classpath:ee/webmedia/alfresco/doclist/doclist-context.xml"/>
    <import resource="classpath:ee/webmedia/alfresco/report/report-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/document/lock/lock-context.xml" />
+   <import resource="classpath:org/alfresco/repo/security/authority/authority-services-context.xml" />
    <import resource="classpath:org/alfresco/web/bean/trashcan/trashcan-context.xml" />
 
    <bean class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
@@ -92,6 +93,19 @@
          <set>
             <value>Collaborator</value>
          </set>
+      </property>
+   </bean>
+
+   <bean id="loadApplicationCommonDataBootstrap" class="ee.webmedia.alfresco.common.bootstrap.LoadApplicationCommonDataBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="false" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="systematicDocumentTypesBootstrap" />
+            <ref bean="caseFileTypeSpacesBootstrap" />
+            <ref bean="independentWorkflowRootBootstrap" />
+            <ref bean="workflowRootBootstrap" />
+         </list>
       </property>
    </bean>
 

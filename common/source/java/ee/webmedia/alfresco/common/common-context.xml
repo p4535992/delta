@@ -1,11 +1,36 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+<beans xmlns="http://www.springframework.org/schema/beans"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xmlns:aop="http://www.springframework.org/schema/aop"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans 
+   http://www.springframework.org/schema/beans/spring-beans-2.0.xsd 
+   http://www.springframework.org/schema/aop
+   http://www.springframework.org/schema/aop/spring-aop-3.0.xsd">
 
    <import resource="classpath:ee/webmedia/alfresco/common/propertysheet/common-propertysheet-context.xml"/>
    
-   <bean id="sessionContext" class="ee.webmedia.alfresco.common.web.SessionContext" scope="session">
+   <bean id="applicationConstantsBean" class="ee.webmedia.alfresco.common.service.ApplicationConstantsBean" depends-on="resourceBundles">
+      <property name="internalTesting" value="${project.test}" />
+      <property name="caseVolumeEnabled" value="${conf.casefile.enabled}" />
+      <property name="defaultVolumeSortingField" value="${conf.volumesList.orderedBy}" />
+      <property name="groupsEditingAllowed" value="${groups.editingAllowed}" />
+      <property name="substitutionTaskEndDateRestricted" value="${conf.notifications.substitutionTaskEndDateRestricted}" />
+      <property name="generateNewRegNumberInReregistration" value="${conf.document-regnumber.generate-new-in-reregistration.enabled}" />
+      <property name="finishUnregisteredDocumentEnabled" value="${conf.document.finish-unregistered-document.enabled}" />
+      <property name="volumeColumnEnabled" value="${conf.documents-list.volume-column.enabled}" />
+      <property name="myTasksAndDocumentsMenuClosed" value="${conf.myTasksAndDocuments.menu.closed}" />
+   </bean>
    
+   <bean id="constantNodeRefsBean" class="ee.webmedia.alfresco.common.service.ConstantNodeRefsBean" scope="application" 
+   depends-on="imapModelBootstrap,documentModelBootstrap,imapModelBootstrap,addressbookModelBootstrap,thesaurusModelBootstrap,documentTemplateModelBootstrap,dvkSpacesBootstrap2">
+      <property name="receivedDvkDocumentsPath" value="${dvk.received.parent.folder.xpath}${dvk.received.folder.name}" />
+      <property name="corruptDvkDocumentsPath" value="${dvk.received.parent.folder.xpath}${dvk.corrupt.folder.name}" />
+      <property name="scannedFilesRootPath" value="${scannedFiles.rootPath}${scannedFiles.folder.name}" />
+      <property name="fromDvkRootPath" value="${dvk.received.parent.folder.xpath}${dvk.received.folder.name}" />
+      <property name="incomingEmailRootPath" value="${imap.config.home.rootPath}/imap-ext:incoming" />
+      <property name="receivedInvoiceRootPath" value="${imap.config.home.rootPath}/imap-ext:receivedInvoices" />
+      <property name="sentEmailRootPath" value="${imap.config.home.rootPath}/imap-ext:sent" />
+      <property name="forwardedDecDocumentsRootPath" value="${dvk.received.parent.folder.xpath}doccom:forwardedDecDocuments"/>
    </bean>
 
    <bean class="ee.webmedia.alfresco.common.bootstrap.EhCacheJmxBootstrap">
@@ -96,18 +121,11 @@
       </property>
    </bean>
 
-   <bean id="commonWebResourceBundles" class="org.alfresco.web.app.ResourceBundleBootstrap">
-      <property name="resourceBundles">
-         <list>
-            <value>ee.webmedia.alfresco.common.web.common-webclient</value>
-         </list>
-      </property>
-   </bean>
-
    <bean id="commonResourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee.webmedia.alfresco.common.system-messages</value>
+            <value>ee.webmedia.alfresco.common.web.common-webclient</value>
          </list>
       </property>
    </bean>
@@ -138,6 +156,14 @@
 
    <bean id="statInterceptor" class="ee.webmedia.alfresco.utils.StatInterceptor">
       <property name="thresholdMillis" value="1000" /><!-- XXX after optimizing, this value should be much closer to default (50ms) -->
+   </bean>
+   
+   <bean id="repeatingServiceCallInterceptor" class="ee.webmedia.alfresco.common.service.RepeatingServiceCallInterceptor" scope="application" >
+      <property name="requestCache" ref="requestCacheBean"></property>
+   </bean>
+   
+   <bean id="requestCacheBean" class="ee.webmedia.alfresco.common.service.RequestCacheBean" scope="request">
+      <aop:scoped-proxy/>
    </bean>
 
    <bean id="commonInterceptorsList" class="org.springframework.beans.factory.config.ListFactoryBean">
@@ -178,7 +204,6 @@
       <property name="logoutRedirectUrl" value="${cas.casServerUrl}logout" />
       <property name="serverUrl" value="${server.url}" />
       <property name="logoFile" value="${logo.file}" />
-      <property name="jumploaderFile" value="${jumploader.applet.file}" />
    </bean>
 
    <bean id="generalService" class="ee.webmedia.alfresco.common.service.GeneralServiceImpl" depends-on="spacesBootstrap">
@@ -212,6 +237,35 @@
          </list>
       </property>
    </bean>
+   
+
+   <bean id="bulkLoadNodeService" class="ee.webmedia.alfresco.common.service.BulkLoadNodeServiceImpl">
+      <property name="generalService" ref="GeneralService" />
+      <property name="qnameDAO" ref="qnameDAO" />
+      <property name="contentDataDAO" ref="contentDataDAO" />
+      <property name="localeDAO" ref="localeDAO" />
+      <property name="dictionaryService" ref="dictionaryService" />
+      <property name="workflowConstantsBean" ref="workflowConstantsBean" />
+      <property name="jdbcTemplate">
+         <bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
+            <constructor-arg ref="dataSource" />
+         </bean>
+      </property>
+   </bean>
+
+   <bean id="BulkLoadNodeService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.common.service.BulkLoadNodeService</value>
+         </list>
+      </property>
+      <property name="target" ref="bulkLoadNodeService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>   
 
    <bean id="SearchExtensionService" class="ee.webmedia.alfresco.common.search.SearchExtensionServiceImpl" />
 
@@ -299,6 +353,8 @@
       <property name="inputFolderPath" value="${dir.root.shared}/updater" />
    </bean>
 
+   <bean id="abstractParallelNodeUpdater" abstract="true" parent="abstractNodeUpdater" />
+
    <bean id="abstractDeleteNodeByXPathBootstrap" abstract="true" class="ee.webmedia.alfresco.common.bootstrap.DeleteNodeByXPathBootstrap" parent="module.baseComponent">
       <property name="executeOnceOnly" value="true" />
       <property name="generalService" ref="GeneralService" />
@@ -338,7 +394,7 @@
       <property name="maxTransactionsPerLuceneCommit" value="${index.tracking.maxTransactionsPerLuceneCommit}" />
       <property name="dataSource" ref="dataSource" />
    </bean>
-
+   
    <bean id="classpathResourceResolver" class="ee.webmedia.alfresco.common.ClasspathResourceResolver" />
 
    <bean id="nightlyDataFixJobDetail" class="org.springframework.scheduling.quartz.JobDetailBean">
@@ -369,6 +425,11 @@
       <property name="executeOnceOnly" value="true" />
       <property name="invalidNodeFixerBootstrap" ref="invalidNodeFixerBootstrap" />
       <property name="indexIntegrityCheckerBootstrap" ref="indexIntegrityCheckerBootstrap" />
+<!--       <property name="dependsOn"> -->
+<!--          <list> -->
+<!--             <ref bean="createOrMoveRootDirBootstrap"/> -->
+<!--          </list> -->
+<!--       </property>       -->
    </bean>   
 
    <!-- START: web beans: -->
@@ -380,7 +441,9 @@
    <bean id="UserConfirmHelper" class="ee.webmedia.alfresco.common.web.UserConfirmHelper" scope="session" />
 
    <bean id="DisableFocusingBean" class="ee.webmedia.alfresco.common.web.DisableFocusingBean" scope="request" />
-
+   
+   <bean id="JsfBindingHelper" class="ee.webmedia.alfresco.common.web.JsfBindingHelper" scope="request" />
+   
    <!-- END: web beans: -->
 
 </beans>

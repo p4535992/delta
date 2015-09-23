@@ -115,9 +115,8 @@ public class DocAdminUtil {
         return docTypeIdAndVersionNr;
     }
 
-    public static PropDefCacheKey getPropDefCacheKey(Node documentDynamicNode) {
-        Pair<String, Integer> docTypeIdAndVersionNr = getDocTypeIdAndVersionNr(documentDynamicNode);
-        return new PropDefCacheKey(getDynamicTypeClass(documentDynamicNode), docTypeIdAndVersionNr.getFirst(), docTypeIdAndVersionNr.getSecond());
+    public static PropDefCacheKey getPropDefCacheKey(Map<String, Object> props, Class<? extends DynamicType> dynamicTypeClass) {
+        return new PropDefCacheKey(dynamicTypeClass, (String) props.get(Props.OBJECT_TYPE_ID), (Integer) props.get(Props.OBJECT_TYPE_VERSION_NR));
     }
 
     public static PropDefCacheKey getPropDefCacheKey(Class<? extends DynamicType> typeClass, DocumentTypeVersion docVer) {

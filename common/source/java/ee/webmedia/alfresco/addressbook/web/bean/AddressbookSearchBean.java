@@ -58,7 +58,7 @@ public class AddressbookSearchBean {
      */
     public SelectItem[] searchContactGroups(PickerSearchParams params) {
         Integer filter = params.isIncludeFilterIndex() ? UserContactGroupSearchBean.CONTACT_GROUPS_FILTER : null;
-        return transformAddressbookNodesToSelectItems(getAddressbookService().searchContactGroups(params.getSearchString(), false, false, params.getLimit()), filter);
+        return transformAddressbookNodesToSelectItems(getAddressbookService().searchContactGroups(params.getSearchString(), true, false, params.getLimit()), filter);
     }
 
     public List<String> getContactData(String nodeRef) {

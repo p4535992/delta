@@ -9,7 +9,7 @@ import org.apache.commons.lang.ArrayUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
-import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
+import ee.webmedia.alfresco.docadmin.service.UnmodifiableFieldDefinition;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.TreeNode;
 
@@ -30,7 +30,7 @@ public class TypeInfo {
     }
 
     public TypeInfo(QName qname, Map<QName, PropertyDefinition> propDefs, DocumentTypeVersion docVer, TreeNode<QName> childAssocTypeQNameTree,
-                    QName[] hierarchy) {
+            QName[] hierarchy) {
         this.qname = qname;
         this.docVer = docVer;
         this.propDefs = propDefs;
@@ -68,7 +68,7 @@ public class TypeInfo {
         }
 
         if (DocumentCommonModel.Types.DOCUMENT.equals(qname)) {
-            FieldDefinition fieldDefinition = BeanHelper.getDocumentAdminService().getFieldDefinition(property);
+            UnmodifiableFieldDefinition fieldDefinition = BeanHelper.getDocumentAdminService().getFieldDefinition(property);
             if (fieldDefinition != null) {
                 return BeanHelper.getDocumentConfigService().createPropertyDefinition(fieldDefinition);
             }

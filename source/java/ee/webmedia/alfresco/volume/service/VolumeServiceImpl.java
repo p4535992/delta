@@ -14,6 +14,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.alfresco.repo.cache.SimpleCache;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -25,10 +26,11 @@ import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.time.DateUtils;
 
 import ee.webmedia.alfresco.casefile.model.CaseFileModel;
-import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
+import ee.webmedia.alfresco.common.service.BulkLoadNodeService;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.service.NodeBasedObjectCallback;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
@@ -47,6 +49,7 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
 import ee.webmedia.alfresco.volume.model.DeletedDocument;
+import ee.webmedia.alfresco.volume.model.UnmodifiableVolume;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
@@ -64,42 +67,64 @@ public class VolumeServiceImpl implements VolumeService {
     private LogService logService;
     private DocumentAdminService _documentAdminService;
     private EventPlanService eventPlanService;
-    private boolean caseVolumeEnabled;
-    private String defaultVolumeSortingField;
+    private BulkLoadNodeService bulkLoadNodeService;
+    private SimpleCache<NodeRef, UnmodifiableVolume> volumeCache;
 
     @Override
-    public List<ChildAssociationRef> getAllVolumeRefsBySeries(NodeRef seriesNodeRef) {
-        List<ChildAssociationRef> childAssocs = new ArrayList<ChildAssociationRef>(nodeService.getChildAssocs(seriesNodeRef, RegexQNamePattern.MATCH_ALL,
-                VolumeModel.Associations.VOLUME));
-        childAssocs.addAll(nodeService.getChildAssocs(seriesNodeRef, RegexQNamePattern.MATCH_ALL, CaseFileModel.Assocs.CASE_FILE));
-        return childAssocs;
+    public List<NodeRef> getAllVolumeRefsBySeries(NodeRef seriesNodeRef) {
+        List<NodeRef> childRefs = getVolumeRefs(seriesNodeRef);
+        childRefs.addAll(getCaseFileRefs(seriesNodeRef));
+        return childRefs;
+    }
+
+    private List<NodeRef> getCaseFileRefs(NodeRef seriesNodeRef) {
+        return bulkLoadNodeService.loadChildRefs(seriesNodeRef, CaseFileModel.Assocs.CASE_FILE);
+    }
+
+    private List<NodeRef> getVolumeRefs(NodeRef seriesNodeRef) {
+        return bulkLoadNodeService.loadChildRefs(seriesNodeRef, VolumeModel.Types.VOLUME);
     }
 
     @Override
-    public List<Volume> getAllVolumesBySeries(NodeRef seriesNodeRef) {
-        return getAllVolumesBySeries(seriesNodeRef, null);
+    public List<UnmodifiableVolume> getAllVolumesBySeries(NodeRef seriesNodeRef) {
+        List<NodeRef> volumeChildRefs = getVolumeRefs(seriesNodeRef);
+        List<NodeRef> caseFileChildRefs = getCaseFileRefs(seriesNodeRef);
+        List<UnmodifiableVolume> volumeList = new ArrayList<>(volumeChildRefs.size() + caseFileChildRefs.size());
+        Map<Long, QName> propertyTypes = new HashMap<>();
+        getVolumeFromChildAssoc(volumeChildRefs, volumeList, false, propertyTypes);
+        getVolumeFromChildAssoc(caseFileChildRefs, volumeList, true, propertyTypes);
+        Collections.sort(volumeList);
+        return volumeList;
     }
 
-    @Override
-    public List<Volume> getAllVolumesBySeries(NodeRef seriesNodeRef, DocListUnitStatus status) {
-        List<ChildAssociationRef> volumeAssocs = getAllVolumeRefsBySeries(seriesNodeRef);
-        List<Volume> volumeOfSeries = new ArrayList<Volume>(volumeAssocs.size());
-        for (ChildAssociationRef volumeCaRef : volumeAssocs) {
-            NodeRef volumeNodeRef = volumeCaRef.getChildRef();
-            Volume volume = getVolumeByNoderef(volumeNodeRef, seriesNodeRef);
-            if (status == null || status.getValueName().equals(volume.getStatus())) {
-                volumeOfSeries.add(volume);
-            }
+    private void getVolumeFromChildAssoc(List<NodeRef> volumeChildRefs, List<UnmodifiableVolume> volumeList, boolean isDynamic, Map<Long, QName> propertyTypes) {
+        for (NodeRef seriesRef : volumeChildRefs) {
+            UnmodifiableVolume volume = getUnmodifiableVolume(seriesRef, isDynamic, propertyTypes);
+            volumeList.add(volume);
         }
-        Collections.sort(volumeOfSeries);
-        return volumeOfSeries;
+    }
+
+    private UnmodifiableVolume getUnmodifiableVolume(NodeRef volumeRef, final boolean isDynamic, Map<Long, QName> propertyTypes) {
+        UnmodifiableVolume volume = volumeCache.get(volumeRef);
+        if (volume == null) {
+            // beanPropertyMapper is not used here because this method is very heavily used and direct method call should be faster than using reflection
+            volume = generalService.fetchObject(volumeRef, null, new NodeBasedObjectCallback<UnmodifiableVolume>() {
+
+                @Override
+                public UnmodifiableVolume create(Node node) {
+                    return new UnmodifiableVolume(node, isDynamic);
+                }
+            }, propertyTypes);
+            volumeCache.put(volumeRef, volume);
+        }
+        return volume;
     }
 
     @Override
-    public List<Volume> getAllValidVolumesBySeries(NodeRef seriesNodeRef, DocListUnitStatus status) {
-        List<Volume> volumes = getAllValidVolumesBySeries(seriesNodeRef);
-        for (Iterator<Volume> i = volumes.iterator(); i.hasNext();) {
-            Volume volume = i.next();
+    public List<UnmodifiableVolume> getAllValidVolumesBySeries(NodeRef seriesNodeRef, DocListUnitStatus status) {
+        List<UnmodifiableVolume> volumes = getAllValidVolumesBySeries(seriesNodeRef);
+        for (Iterator<UnmodifiableVolume> i = volumes.iterator(); i.hasNext();) {
+            UnmodifiableVolume volume = i.next();
             if (!status.getValueName().equals(volume.getStatus())) {
                 i.remove();
             }
@@ -108,11 +133,11 @@ public class VolumeServiceImpl implements VolumeService {
     }
 
     @Override
-    public List<Volume> getAllValidVolumesBySeries(NodeRef seriesNodeRef) {
-        List<Volume> volumes = getAllVolumesBySeries(seriesNodeRef);
+    public List<UnmodifiableVolume> getAllValidVolumesBySeries(NodeRef seriesNodeRef) {
+        List<UnmodifiableVolume> volumes = getAllVolumesBySeries(seriesNodeRef);
         final Calendar cal = Calendar.getInstance();
-        for (Iterator<Volume> i = volumes.iterator(); i.hasNext();) {
-            Volume volume = i.next();
+        for (Iterator<UnmodifiableVolume> i = volumes.iterator(); i.hasNext();) {
+            UnmodifiableVolume volume = i.next();
 
             Date validFrom = volume.getValidFrom();
             if (validFrom != null && cal.getTime().before(validFrom)) {
@@ -140,11 +165,11 @@ public class VolumeServiceImpl implements VolumeService {
     }
 
     @Override
-    public List<Volume> getAllOpenExpiredVolumesBySeries(NodeRef seriesNodeRef) {
-        List<Volume> volumes = getAllVolumesBySeries(seriesNodeRef);
+    public List<UnmodifiableVolume> getAllOpenExpiredVolumesBySeries(NodeRef seriesNodeRef) {
+        List<UnmodifiableVolume> volumes = getAllVolumesBySeries(seriesNodeRef);
         final Calendar cal = Calendar.getInstance();
-        for (Iterator<Volume> i = volumes.iterator(); i.hasNext();) {
-            Volume volume = i.next();
+        for (Iterator<UnmodifiableVolume> i = volumes.iterator(); i.hasNext();) {
+            UnmodifiableVolume volume = i.next();
 
             if (!DocListUnitStatus.OPEN.equals(volume.getStatus())) {
                 i.remove();
@@ -173,13 +198,31 @@ public class VolumeServiceImpl implements VolumeService {
     }
 
     @Override
-    public Volume getVolumeByNodeRef(String volumeNodeRef) {
-        return getVolumeByNodeRef(new NodeRef(volumeNodeRef));
+    public UnmodifiableVolume getUnmodifiableVolume(NodeRef volumeRef, Map<Long, QName> propertyTypes) {
+        UnmodifiableVolume volume = volumeCache.get(volumeRef);
+        if (volume == null) {
+            // beanPropertyMapper is not used here because this method is very heavily used and direct method call should be faster than using reflection
+            volume = generalService.fetchObject(volumeRef, null, new NodeBasedObjectCallback<UnmodifiableVolume>() {
+
+                @Override
+                public UnmodifiableVolume create(Node node) {
+                    return new UnmodifiableVolume(node, CaseFileModel.Types.CASE_FILE.equals(node.getType()));
+                }
+            }, propertyTypes);
+            volumeCache.put(volumeRef, volume);
+        }
+        return volume;
     }
 
     @Override
-    public Volume getVolumeByNodeRef(NodeRef volumeRef) {
-        return getVolumeByNoderef(volumeRef, null);
+    public String getVolumeLabel(NodeRef volumeRef) {
+        UnmodifiableVolume volume = getUnmodifiableVolume(volumeRef, null);
+        return volume != null ? volume.getVolumeLabel() : "";
+    }
+
+    @Override
+    public Volume getVolumeByNodeRef(NodeRef volumeRef, Map<Long, QName> propertyTypes) {
+        return getVolumeByNoderef(volumeRef, null, propertyTypes);
     }
 
     @Override
@@ -188,7 +231,7 @@ public class VolumeServiceImpl implements VolumeService {
     }
 
     @Override
-    public void saveOrUpdate(Volume volume, boolean fromNodeProps) {
+    public NodeRef saveOrUpdate(Volume volume, boolean fromNodeProps) {
         WmNode volumeNode = volume.getNode();
         boolean isNew = volumeNode.isUnsaved();
         Node series = isNew ? new Node(volume.getSeriesNodeRef()) : generalService.getPrimaryParent(volumeNode.getNodeRef());
@@ -214,10 +257,11 @@ public class VolumeServiceImpl implements VolumeService {
             volume.setNode(createVolumeNode(volume.getSeriesNodeRef(), qNameProperties));
 
             Map<String, Object> props = volume.getNode().getProperties();
-            logService.addLogEntry(LogEntry.create(LogObject.VOLUME, userService, volume.getNode().getNodeRef(), "applog_space_add",
+            NodeRef volRef = volume.getNode().getNodeRef();
+            logService.addLogEntry(LogEntry.create(LogObject.VOLUME, userService, volRef, "applog_space_add",
                     props.get(VolumeModel.Props.VOLUME_MARK.toString()), props.get(VolumeModel.Props.TITLE.toString())));
 
-            eventPlanService.initVolumeOrCaseFileFromSeriesEventPlan(volume.getNode().getNodeRef());
+            eventPlanService.initVolumeOrCaseFileFromSeriesEventPlan(volRef);
 
         } else { // update
             if (!checkContainsCasesValue(volume)) {
@@ -226,15 +270,15 @@ public class VolumeServiceImpl implements VolumeService {
 
             Map<QName, Serializable> repoProps = nodeService.getProperties(volumeNode.getNodeRef());
             String propDiff = new PropDiffHelper()
-            .label(VolumeModel.Props.STATUS, "volume_status")
-            .label(VolumeModel.Props.VOLUME_TYPE, "volume_volumeType")
-            .label(VolumeModel.Props.VOLUME_MARK, "volume_volumeMark")
-            .label(VolumeModel.Props.TITLE, "volume_title")
-            .label(VolumeModel.Props.DESCRIPTION, "volume_description")
-            .label(VolumeModel.Props.VALID_FROM, "volume_validFrom")
-            .label(VolumeModel.Props.VALID_TO, "volume_validTo")
-            .label(VolumeModel.Props.CASES_CREATABLE_BY_USER, "volume_casesCreatableByUser")
-            .diff(repoProps, newProps);
+                    .label(VolumeModel.Props.STATUS, "volume_status")
+                    .label(VolumeModel.Props.VOLUME_TYPE, "volume_volumeType")
+                    .label(VolumeModel.Props.VOLUME_MARK, "volume_volumeMark")
+                    .label(VolumeModel.Props.TITLE, "volume_title")
+                    .label(VolumeModel.Props.DESCRIPTION, "volume_description")
+                    .label(VolumeModel.Props.VALID_FROM, "volume_validFrom")
+                    .label(VolumeModel.Props.VALID_TO, "volume_validTo")
+                    .label(VolumeModel.Props.CASES_CREATABLE_BY_USER, "volume_casesCreatableByUser")
+                    .diff(repoProps, newProps);
             if (propDiff != null) {
                 logService.addLogEntry(LogEntry.create(LogObject.VOLUME, userService, volumeNode.getNodeRef(), "applog_space_edit",
                         volume.getVolumeMark(), volume.getTitle(), propDiff));
@@ -250,6 +294,7 @@ public class VolumeServiceImpl implements VolumeService {
             }
 
         }
+        generalService.refreshMaterializedViews(VolumeModel.Types.VOLUME);
         final NodeRef volumeRef = volume.getNode().getNodeRef();
         if (needUpdateVolumeShortcuts) {
             getGeneralService().runOnBackground(new RunAsWork<Void>() {
@@ -260,6 +305,13 @@ public class VolumeServiceImpl implements VolumeService {
                 }
             }, "addVolumeShortcuts", true);
         }
+        removeFromCache(volumeRef);
+        return volumeRef;
+    }
+
+    @Override
+    public void removeFromCache(NodeRef volRef) {
+        volumeCache.remove(volRef);
     }
 
     private boolean isInClosedSeries(Volume volume) {
@@ -268,7 +320,7 @@ public class VolumeServiceImpl implements VolumeService {
     }
 
     private boolean checkContainsCasesValue(Volume volume) {
-        Volume repoVolume = getVolumeByNodeRef(volume.getNode().getNodeRef());
+        Volume repoVolume = getVolumeByNodeRef(volume.getNode().getNodeRef(), null);
         Boolean containsCasesValue = (Boolean) volume.getNode().getProperties().get(VolumeModel.Props.CONTAINS_CASES);
         Boolean origContainsCasesValue = (Boolean) repoVolume.getNode().getProperties().get(VolumeModel.Props.CONTAINS_CASES);
         if (origContainsCasesValue != null && !origContainsCasesValue.equals(containsCasesValue)) {
@@ -355,7 +407,7 @@ public class VolumeServiceImpl implements VolumeService {
         NodeRef volumeNodeRef = nodeService.createNode(seriesNodeRef,
                 VolumeModel.Associations.VOLUME, VolumeModel.Associations.VOLUME, VolumeModel.Types.VOLUME,
                 props).getChildRef();
-        return getVolumeNodeByRef(volumeNodeRef);
+        return getVolumeNodeByRef(volumeNodeRef, null);
     }
 
     @Override
@@ -388,22 +440,22 @@ public class VolumeServiceImpl implements VolumeService {
 
     @Override
     public void delete(Volume volume) {
-        List<NodeRef> documents = documentService.getAllDocumentRefsByParentRef(volume.getNode().getNodeRef());
-        List<Case> cases = caseService.getAllCasesByVolume(volume.getNode().getNodeRef());
-        if (!documents.isEmpty() || !cases.isEmpty()) {
+        List<NodeRef> documents = documentService.getAllDocumentRefsByParentRefWithoutRestrictedAccess(volume.getNode().getNodeRef());
+        int casesCount = caseService.getCasesCountByVolume(volume.getNode().getNodeRef());
+        if (!documents.isEmpty() || casesCount > 0) {
             throw new UnableToPerformException("volume_delete_not_empty");
         }
         nodeService.deleteNode(volume.getNode().getNodeRef());
     }
 
     @Override
-    public Pair<String, Object[]> closeVolume(NodeRef volumeRef) {
+    public Pair<String, Object[]> closeVolume(NodeRef volumeRef, Map<Long, QName> propertyTypes) {
         Pair<Boolean, Date> closeResult = getEventPlanService().closeVolumeOrCaseFile(volumeRef);
         if (!closeResult.getFirst()) {
             return null;
         }
 
-        Volume volume = getVolumeByNodeRef(volumeRef);
+        Volume volume = getVolumeByNodeRef(volumeRef, propertyTypes);
         Map<String, Object> props = volume.getNode().getProperties();
         props.put(VolumeModel.Props.STATUS.toString(), DocListUnitStatus.CLOSED.getValueName());
         if (closeResult.getSecond() != null) {
@@ -421,18 +473,8 @@ public class VolumeServiceImpl implements VolumeService {
     }
 
     @Override
-    public WmNode getVolumeNodeByRef(NodeRef volumeNodeRef) {
-        return generalService.fetchObjectNode(volumeNodeRef, VolumeModel.Types.VOLUME);
-    }
-
-    @Override
-    public boolean isCaseVolumeEnabled() {
-        return caseVolumeEnabled;
-    }
-
-    @Override
-    public String getDefaultVolumeSortingField() {
-        return defaultVolumeSortingField;
+    public WmNode getVolumeNodeByRef(NodeRef volumeNodeRef, Map<Long, QName> propertyTypes) {
+        return generalService.fetchObjectNode(volumeNodeRef, VolumeModel.Types.VOLUME, propertyTypes);
     }
 
     /**
@@ -440,7 +482,7 @@ public class VolumeServiceImpl implements VolumeService {
      * @param seriesNodeRef if null, then volume.seriesNodeRef is set using association of given volumeNodeRef
      * @return Volume object with reference to corresponding seriesNodeRef
      */
-    private Volume getVolumeByNoderef(NodeRef volumeNodeRef, NodeRef seriesNodeRef) {
+    private Volume getVolumeByNoderef(NodeRef volumeNodeRef, NodeRef seriesNodeRef, Map<Long, QName> propertyTypes) {
         if (!nodeService.exists(volumeNodeRef)) {
             return null;
         }
@@ -452,7 +494,7 @@ public class VolumeServiceImpl implements VolumeService {
         }
 
         Volume volume = new Volume();
-        WmNode node = getVolumeNodeByRef(volumeNodeRef);
+        WmNode node = getVolumeNodeByRef(volumeNodeRef, propertyTypes);
         volume.setNode(node);
         volumeBeanPropertyMapper.toObject(nodeService.getProperties(volumeNodeRef), volume);
         if (seriesNodeRef == null) {
@@ -548,10 +590,6 @@ public class VolumeServiceImpl implements VolumeService {
         this.eventPlanService = eventPlanService;
     }
 
-    public void setCaseVolumeEnabled(boolean caseVolumeEnabled) {
-        this.caseVolumeEnabled = caseVolumeEnabled;
-    }
-
     public DocumentAdminService getDocumentAdminService() {
         if (_documentAdminService == null) {
             _documentAdminService = BeanHelper.getDocumentAdminService();
@@ -559,8 +597,12 @@ public class VolumeServiceImpl implements VolumeService {
         return _documentAdminService;
     }
 
-    public void setDefaultVolumeSortingField(String defaultVolumeSortingField) {
-        this.defaultVolumeSortingField = defaultVolumeSortingField;
+    public void setVolumeCache(SimpleCache<NodeRef, UnmodifiableVolume> volumeCache) {
+        this.volumeCache = volumeCache;
+    }
+
+    public void setBulkLoadNodeService(BulkLoadNodeService bulkLoadNodeService) {
+        this.bulkLoadNodeService = bulkLoadNodeService;
     }
 
     // END: getters / setters

@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.document.search.model;
 
+import java.util.Map;
+
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
 
@@ -16,6 +18,10 @@ public class FakeDocument extends Document {
 
     public FakeDocument(NodeRef nodeRef) {
         super(nodeRef);
+    }
+
+    public FakeDocument(NodeRef nodeRef, Map<String, Object> properties) {
+        super(nodeRef, properties);
     }
 
     @Override
@@ -40,9 +46,6 @@ public class FakeDocument extends Document {
 
     @Override
     public String getDocName() {
-        // XXX: kui muid properteid ei vajata(vaja järgi uurida), võiks lazyInit asemel konkreetse property tagastada
-        // return (String) getServiceRegistry().getNodeService().getProperty(nodeRef, CaseModel.Props.TITLE);
-        lazyInit();
         return (String) getProperties().get(CaseModel.Props.TITLE);
     }
 

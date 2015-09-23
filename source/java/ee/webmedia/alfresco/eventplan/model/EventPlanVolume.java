@@ -164,25 +164,32 @@ public class EventPlanVolume extends EventPlanCommon {
     }
 
     public boolean validate() {
+        String msg = validateAndGetValidationMessage();
+        if (msg != null) {
+            MessageUtil.addErrorMessage(msg);
+            return false;
+        }
+        return true;
+    }
+
+    public String validateAndGetValidationMessage() {
         if (isAppraised() && !isRetainPermanent() && StringUtils.isBlank(getRetaintionStart())) {
-            MessageUtil.addErrorMessage("eventplan_volume_error_retaintionStart");
+            return "eventplan_volume_error_retaintionStart";
         } else if (isAppraised() && !isRetainPermanent() && !isHasArchivalValue() && !RetaintionStart.FIXED_DATE.name().equals(getRetaintionStart())
                 && getRetaintionPeriod() == null) {
-            MessageUtil.addErrorMessage("eventplan_volume_error_retaintionPeriod");
+            return "eventplan_volume_error_retaintionPeriod";
         } else if (isAppraised() && !isRetainPermanent() && RetaintionStart.FIXED_DATE.name().equals(getRetaintionStart()) && getRetainUntilDate() == null) {
-            MessageUtil.addErrorMessage("eventplan_volume_error_retainUntilDate1");
+            return "eventplan_volume_error_retainUntilDate1";
         } else if (isAppraised() && StringUtils.isBlank(getArchivingNote())) {
-            MessageUtil.addErrorMessage("eventplan_volume_error_archivingNote");
+            return "eventplan_volume_error_archivingNote";
         } else if (getRetainUntilDate() != null &&
-                (getValidFrom() != null && CalendarUtil.getDaysBetweenSigned(getValidFrom(), getRetainUntilDate()) < 0)
-                || (getValidTo() != null && CalendarUtil.getDaysBetweenSigned(getValidTo(), getRetainUntilDate()) < 0)) {
-            MessageUtil.addErrorMessage("eventplan_volume_error_retainUntilDate2");
+                ((getValidFrom() != null && CalendarUtil.getDaysBetweenSigned(getValidFrom(), getRetainUntilDate()) < 0)
+                || (getValidTo() != null && CalendarUtil.getDaysBetweenSigned(getValidTo(), getRetainUntilDate()) < 0))) {
+            return "eventplan_volume_error_retainUntilDate2";
         } else if (getRetaintionPeriod() != null && (getRetaintionPeriod() <= 0 || getRetaintionPeriod() >= 999)) {
-            MessageUtil.addErrorMessage("eventplan_error_retaintionPeriod2");
-        } else {
-            return true;
+            return "eventplan_error_retaintionPeriod2";
         }
-        return false;
+        return null;
     }
 
 }

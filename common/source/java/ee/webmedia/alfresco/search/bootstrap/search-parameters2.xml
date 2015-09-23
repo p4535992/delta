@@ -5,6 +5,7 @@ xmlns:param="http://alfresco.webmedia.ee/model/parameters/1.0">
    <param:intParameter view:childName="param:maxSearchShowAllResultRows">
       <view:properties>
          <param:value>1000</param:value>
+         <param:name>maxSearchShowAllResultRows</param:name>
          <param:description>Maksimaalne ridade arv, kui otsingu tulemuste nimekirjades valida &quot;Näita kõiki&quot;</param:description>
       </view:properties>
    </param:intParameter>

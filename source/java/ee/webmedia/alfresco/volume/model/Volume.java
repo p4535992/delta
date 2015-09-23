@@ -16,14 +16,12 @@ import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.PropsConvertedMap;
 import ee.webmedia.alfresco.eventplan.model.EventPlan;
 import ee.webmedia.alfresco.eventplan.model.EventPlanVolume;
-import ee.webmedia.alfresco.functions.model.Function;
-import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelProperty;
@@ -164,7 +162,7 @@ public class Volume extends EventPlanVolume implements VolumeOrCaseFile {
 
     public String getVolumeType() {
         if (volumeType == null && isDynamic()) {
-            volumeType = BeanHelper.getDocumentAdminService().getCaseFileTypeName(node);
+            volumeType = BeanHelper.getDocumentAdminService().getCaseFileTypeName((String) getNode().getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID));
         }
         return volumeType;
     }
@@ -229,22 +227,18 @@ public class Volume extends EventPlanVolume implements VolumeOrCaseFile {
 
     @Override
     public String getFunctionLabel() {
-        if (getFunctionNodeRef() != null) {
-            Function function = BeanHelper.getFunctionsService().getFunctionByNodeRef(getFunctionNodeRef());
-            if (function != null) {
-                return DocumentLocationGenerator.getFunctionLabel(function);
-            }
+        NodeRef functionNodeRef = getFunctionNodeRef();
+        if (functionNodeRef != null) {
+            return BeanHelper.getFunctionsService().getFunctionLabel(functionNodeRef);
         }
         return null;
     }
 
     @Override
     public String getSeriesLabel() {
-        if (getSeriesNodeRef() != null) {
-            Series series = BeanHelper.getSeriesService().getSeriesByNodeRef(getSeriesNodeRef());
-            if (series != null) {
-                return DocumentLocationGenerator.getSeriesLabel(series);
-            }
+        NodeRef seriesNodeRef2 = getSeriesNodeRef();
+        if (seriesNodeRef2 != null) {
+            return BeanHelper.getSeriesService().getSeriesLabel(seriesNodeRef2);
         }
         return null;
     }
@@ -308,7 +302,7 @@ public class Volume extends EventPlanVolume implements VolumeOrCaseFile {
         final Comparator<String> stringComparator = new NullComparator(new Comparator<String>() {
             @Override
             public int compare(String o1, String o2) {
-                return AppConstants.DEFAULT_COLLATOR.compare(o1, o2);
+                return AppConstants.getNewCollatorInstance().compare(o1, o2);
             }
         });
         if (StringUtils.equalsIgnoreCase(getVolumeMark(), other.getVolumeMark())) {

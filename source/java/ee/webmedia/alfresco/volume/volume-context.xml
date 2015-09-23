@@ -12,7 +12,7 @@
       </property>
    </bean>
 
-   <bean id="volumeBundleBootstrap" class="org.alfresco.web.app.ResourceBundleBootstrap">
+   <bean id="volumeResourceBundle" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee.webmedia.alfresco.volume.web.volume-webclient</value>
@@ -37,8 +37,8 @@
       <property name="logService" ref="LogService" />
       <property name="userService" ref="UserService" />
       <property name="eventPlanService" ref="EventPlanService" />
-      <property name="caseVolumeEnabled" value="${conf.casefile.enabled}" />
-      <property name="defaultVolumeSortingField" value="${conf.volumesList.orderedBy}" />
+      <property name="bulkLoadNodeService" ref="BulkLoadNodeService" />
+      <property name="volumeCache" ref="volumeCache" />
    </bean>
 
    <bean id="VolumeService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -130,6 +130,29 @@
             <ref bean="archivalsStoresBootstrap" />
          </list>
       </property>
+   </bean>
+
+   <bean id="volumeAssociationsAspectUpdater" class="ee.webmedia.alfresco.volume.bootstrap.VolumeAssociationsAspectUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="enabled" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
+   </bean>
+   
+   <bean id="volumeEventPlanUpdater" class="ee.webmedia.alfresco.volume.bootstrap.VolumeEventPlanUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="false" />
+      <property name="enabled" value="false" /> <!-- Executed from node-browser -->
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
+      <property name="eventPlanService" ref="EventPlanService" />
    </bean>
 
    <!-- START: web beans: -->

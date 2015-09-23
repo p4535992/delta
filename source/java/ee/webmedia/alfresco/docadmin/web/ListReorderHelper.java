@@ -21,11 +21,9 @@ import ee.webmedia.alfresco.utils.ComparableTransformer;
  */
 public class ListReorderHelper {
 
-    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(ListReorderHelper.class);
-
     /**
      * Accessor and mutator for order property/field of the object
-     * 
+     *
      * @param <O> - type of objects to be sorted
      * @param <F> - type of field that is used to order
      */
@@ -41,7 +39,7 @@ public class ListReorderHelper {
      * Reorder/reinitialize order of items in given <code>reorderableItems</code> collection. <br>
      * If in addition to reinitializing order properties the of items in collection you need items in collection to be reIndexed based on new order, then you could use
      * returned list, otherwise use collection that was given as a parameter.
-     * 
+     *
      * @param <O> - type of objects to be sorted
      * @param <F> - type of field/property that contains order
      * @param reorderableItems
@@ -62,7 +60,6 @@ public class ListReorderHelper {
             sortedMap.put(field, object);
         }
 
-        LOG.debug("Reordered items: " + sortedMap.values());
         return new ArrayList<O>(sortedMap.values()); // return list that contains elements in the new order - sometimes it might be needed
     }
 

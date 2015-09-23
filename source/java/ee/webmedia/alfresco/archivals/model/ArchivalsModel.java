@@ -53,6 +53,10 @@ public interface ArchivalsModel {
         QName ARCHIVING_JOB_STATUS = QName.createQName(URI, "archivingJobStatus");
         QName ARCHIVE_NOTE = QName.createQName(URI, "archiveNote");
         QName ERROR_MESSAGE = QName.createQName(URI, "errorMessage");
+        QName FAILED_NODE_COUNT = QName.createQName(URI, "failedNodeCount");
+        QName FAILED_DOCUMENTS_COUNT = QName.createQName(URI, "failedDocumentsCount");
+        QName TOTAL_ARCHIVED_DOCUMENTS_COUNT = QName.createQName(URI, "totalArchivedDocumentsCount");
+        QName ARCHIVED_NODE_COUNT = QName.createQName(URI, "archivedNodeCount");
     }
 
 }

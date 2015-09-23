@@ -50,7 +50,7 @@ public class PersonAndOrgStructPropertiesCacheUpdater extends AbstractModuleComp
                 }
             }
 
-        }, "loadPersonPropertiesCache", true);
+        }, "loadPersonNodesCache", true);
     }
 
     private void updatePersonCache() {

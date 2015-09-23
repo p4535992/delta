@@ -65,6 +65,7 @@ import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.report.model.ReportModel;
 import ee.webmedia.alfresco.substitute.model.Substitute;
 import ee.webmedia.alfresco.substitute.model.SubstituteModel;
+import ee.webmedia.alfresco.substitute.model.UnmodifiableSubstitute;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.workflow.search.model.TaskSearchModel;
 
@@ -143,9 +144,9 @@ public class UserDataRestoreService {
                 log.warn("Person '" + userName + "' substitution=" + WmNode.toString(props, getNamespaceService()) + "\n - skipped, person does not exist");
                 continue;
             }
-            List<Substitute> mySubstitutes = getSubstituteService().getSubstitutes(myPersonRef); // TODO cache?
+            List<UnmodifiableSubstitute> mySubstitutes = getSubstituteService().getUnmodifiableSubstitutes(myPersonRef);
             boolean found = false;
-            for (Substitute mySubstitute : mySubstitutes) {
+            for (UnmodifiableSubstitute mySubstitute : mySubstitutes) {
                 if (ObjectUtils.equals(mySubstitute.getSubstituteId(), props.get(SubstituteModel.Props.SUBSTITUTE_ID))
                         && ObjectUtils.equals(mySubstitute.getSubstitutionStartDate(), props.get(SubstituteModel.Props.SUBSTITUTION_START_DATE))
                         && ObjectUtils.equals(mySubstitute.getSubstitutionEndDate(), props.get(SubstituteModel.Props.SUBSTITUTION_END_DATE))) {

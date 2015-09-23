@@ -1,6 +1,9 @@
 package ee.webmedia.alfresco.classificator.model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 
@@ -25,6 +28,10 @@ public class Classificator implements Serializable {
 
     private String description;
     private Boolean alfabeticOrder;
+
+    @AlfrescoModelProperty(isMappable = false)
+    @XStreamOmitField
+    private final List<ClassificatorValue> values = new ArrayList<>();
 
     public String getName() {
         return name;
@@ -81,5 +88,28 @@ public class Classificator implements Serializable {
 
     public boolean isDeleteEnabled() {
         return deleteEnabled;
+    }
+
+    public List<ClassificatorValue> getValues() {
+        return Collections.unmodifiableList(values);
+    }
+
+    public void addClassificatorValue(ClassificatorValue classificatorValue) {
+        addClassificatorValues(Collections.singletonList(classificatorValue));
+    }
+
+    public void addClassificatorValues(List<ClassificatorValue> classificatorValues) {
+        for (ClassificatorValue value : classificatorValues) {
+            values.add(value);
+        }
+    }
+
+    public void removeClassificatorValue(NodeRef valueRef) {
+        for (ClassificatorValue value : values) {
+            if (valueRef.equals(value.getNodeRef())) {
+                values.remove(value);
+                break;
+            }
+        }
     }
 }

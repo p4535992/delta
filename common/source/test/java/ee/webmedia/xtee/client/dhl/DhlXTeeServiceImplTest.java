@@ -420,7 +420,7 @@ public class DhlXTeeServiceImplTest extends TestCase {
             contentsToSend.add(getContentFromTestFile("document1.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"));
             contentsToSend.add(getContentFromTestFile("tekstifail-iso-8859-1.txt", mimeTypeTextPlain));
             contentsToSend.add(getContentFromTestFile("tekstifail-utf-8.txt", mimeTypeTextPlain));
-            contentsToSend.add(getContentFromTestFile("digidocSigned.ddoc", "application/digidoc"));
+            contentsToSend.add(getContentFromTestFile("digidocSigned.bdoc", "application/digidoc"));
             final File file = new File("/tmp/dvkTest.rar");
             if (file.exists()) {
                 contentsToSend.add(getContentFromFile(null, null, file));

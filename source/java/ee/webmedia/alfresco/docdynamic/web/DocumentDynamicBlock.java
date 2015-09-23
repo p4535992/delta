@@ -12,4 +12,6 @@ public interface DocumentDynamicBlock extends DialogBlockBean<DialogDataProvider
     @Override
     void resetOrInit(DialogDataProvider provider);
 
+    void clean();
+
 }

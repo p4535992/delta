@@ -11,6 +11,11 @@
 		<h1><c:out value="${ compoundWorkflowTitle }" /></h1>
 	</c:if>
       
+      <%-- Delegation history block --%>
+      <tag:expanderBlock blockId="workflow-delegation-history-block" titleId="delegation.history.block.title" titleDetails="${delegationHistoryTaskCount}" expanded="false" independent="true" rendered="${not empty delegationHistoryTaskCount}">
+         <jsp:include page="/WEB-INF/jsp/mobile/compound-workflow/delegation-history-block-content.jsp" />
+      </tag:expanderBlock>
+      
    	  <jsp:include page="/WEB-INF/jsp/mobile/compound-workflow/in-progress-tasks.jsp" />
       
       <%-- START: General block --%>
@@ -46,6 +51,21 @@
          <tag:fileBlock files="${loop.current.inactiveFiles}" titleId="site.document.inactiveFiles" />
       </tag:pagedList>
       <%-- END: Objects block --%>
+      
+      <%-- START: Opinions block --%>
+      <tag:pagedList listId="workflow-opinions" titleId="site.workflow.opinions" items="${opinions}" expanded="true" independent="true" rendered="${not empty opinions}">
+         <h3>
+            <c:out value="${loop.current.ownerNameWithSubstitute}" />
+            <c:out value="&nbsp;" escapeXml="false" />
+            <fmt:formatDate value="${loop.current.completedDateTime}" pattern="dd.MM.yyyy" />
+         </h3>
+         <tag:fileBlock files="${loop.current.files}" />
+            
+         <tag:readMore content="${loop.current.commentAndLinks}" threshold="200" useTagContent="true" >
+            <tag:text value="${loop.current.commentAndLinks}"></tag:text>
+         </tag:readMore>
+      </tag:pagedList>
+      <%-- END: Opinions block --%>
 
       <%-- START: Information block --%>
       <tag:pagedList listId="workflow-information" titleId="site.workflow.information" items="${relatedUrls}" expanded="true" rendered="${not empty relatedUrls}" independent="true">

@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.help.web;
 
+import static ee.webmedia.alfresco.app.AppConstants.CHARSET;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getHelpTextService;
 
 import java.io.IOException;
@@ -31,8 +32,8 @@ public class HelpTextServlet extends HttpServlet {
             String title = "Abiinfo";
             content = String.format(CONTENT_HTML, title, content);
 
-            resp.setContentType("text/html;charset=UTF-8");
-            resp.setContentLength(content.length());
+            resp.setContentType("text/html;charset=" + CHARSET);
+            resp.setContentLength(content.getBytes(CHARSET).length);
             resp.getWriter().write(content);
         } else if (helpTextInfo.length == 2) {
             resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Help resource was not found.");

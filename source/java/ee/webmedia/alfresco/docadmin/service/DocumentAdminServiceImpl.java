@@ -27,6 +27,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.cache.SimpleCache;
 import org.alfresco.repo.importer.ImportTimerProgress;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
@@ -60,7 +61,7 @@ import ee.webmedia.alfresco.base.BaseService;
 import ee.webmedia.alfresco.base.BaseServiceImpl;
 import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.classificator.constant.DocTypeAssocType;
-import ee.webmedia.alfresco.common.model.NodeBaseVO;
+import ee.webmedia.alfresco.common.service.BulkLoadNodeService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
@@ -98,6 +99,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     private UserService userService;
     private DocumentSearchService documentSearchService;
     private ImporterService importerService;
+    private BulkLoadNodeService bulkLoadNodeService;
 
     private NodeRef fieldDefinitionsRoot;
     private NodeRef fieldGroupDefinitionsRoot;
@@ -106,6 +108,11 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     private final Set<String> groupShowShowInTwoColumnsOriginalFieldIds = new HashSet<String>();
     private final Set<String> groupNamesLimitSingle = new HashSet<String>();
     private final Map<String, DocumentTypeValidator> documentTypeValidators = new HashMap<String, DocumentTypeValidator>();
+    private SimpleCache<String, UnmodifiableFieldDefinition> fieldDefinitionCache;
+    private SimpleCache<String, UnmodifiableDynamicType> caseFileTypeCache;
+    private SimpleCache<String, UnmodifiableDynamicType> documentTypeCache;
+    /** Contains DocumentTypeVersion objects <b>with</b> children */
+    private SimpleCache<String, Pair<DynamicType, DocumentTypeVersion>> dynamicTypeAndVersionCache;
 
     /**
      * Get nodeRef lazily.
@@ -272,7 +279,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     public <T> T getTypeProperty(NodeRef typeRef, QName property, Class<T> returnClass) {
         Serializable value = nodeService.getProperty(typeRef, property);
         if (Boolean.class.equals(returnClass)) {
-            value = NodeBaseVO.convertNullToFalse((Boolean) value);
+            value = RepoUtil.convertNullToFalse((Boolean) value);
         }
         return DefaultTypeConverter.INSTANCE.convert(returnClass, value);
     }
@@ -288,21 +295,28 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
-    public Pair<DocumentType, DocumentTypeVersion> getDocumentTypeAndVersion(String docTypeId, Integer docTypeVersionNr) {
-        return getDynamicTypeAndVersion(DocumentType.class, getDocumentTypeRef(docTypeId), docTypeVersionNr);
+    public Pair<DocumentType, DocumentTypeVersion> getDocumentTypeAndVersion(String docTypeId, Integer docTypeVersionNr, boolean cloneResult) {
+        return getDynamicTypeAndVersion(DocumentType.class, getDocumentTypeRef(docTypeId), docTypeVersionNr, cloneResult);
     }
 
     @Override
-    public Pair<CaseFileType, DocumentTypeVersion> getCaseFileTypeAndVersion(String caseFileTypeId, Integer docTypeVersionNr) {
-        return getDynamicTypeAndVersion(CaseFileType.class, getCaseFileTypeRef(caseFileTypeId), docTypeVersionNr);
+    public Pair<CaseFileType, DocumentTypeVersion> getCaseFileTypeAndVersion(String caseFileTypeId, Integer docTypeVersionNr, boolean cloneResult) {
+        return getDynamicTypeAndVersion(CaseFileType.class, getCaseFileTypeRef(caseFileTypeId), docTypeVersionNr, cloneResult);
     }
 
-    public <D extends DynamicType> Pair<D, DocumentTypeVersion> getDynamicTypeAndVersion(Class<D> typeClass, NodeRef typeRef, Integer docTypeVersionNr) {
+    @SuppressWarnings("unchecked")
+    private <D extends DynamicType> Pair<D, DocumentTypeVersion> getDynamicTypeAndVersion(Class<D> typeClass, NodeRef typeRef, Integer docTypeVersionNr, boolean cloneResult) {
+        String cacheKey = getCacheKey(typeRef, docTypeVersionNr);
+        Pair<DynamicType, DocumentTypeVersion> typeAndVer = dynamicTypeAndVersionCache.get(cacheKey);
+        if (typeAndVer != null) {
+            return cloneResult ? cloneResult((Pair<D, DocumentTypeVersion>) typeAndVer) : (Pair<D, DocumentTypeVersion>) typeAndVer;
+        }
         D dynType = getDynamicType(typeClass, typeRef, DocumentAdminService.DOC_TYPE_WITH_OUT_GRAND_CHILDREN);
         if (dynType == null) {
             return null;
         }
         DocumentTypeVersion docVersion = null;
+
         for (DocumentTypeVersion version : dynType.getDocumentTypeVersions()) {
             if (docTypeVersionNr.equals(version.getVersionNr())) {
                 baseService.loadChildren(version, null);
@@ -313,7 +327,27 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         if (docVersion == null) {
             return null;
         }
-        return new Pair<D, DocumentTypeVersion>(dynType, docVersion);
+        Pair<D, DocumentTypeVersion> dynamicTypeAndVersion = new Pair<D, DocumentTypeVersion>(dynType, docVersion);
+
+        if (cacheKey != null) {
+            dynamicTypeAndVersionCache.put(cacheKey, (Pair<DynamicType, DocumentTypeVersion>) cloneResult(dynamicTypeAndVersion));
+        }
+        return dynamicTypeAndVersion;
+    }
+
+    private String getCacheKey(NodeRef typeRef, Integer dynTypeVersionNr) {
+        if (typeRef == null) {
+            return null;
+        }
+        return typeRef.toString() + "-" + dynTypeVersionNr;
+    }
+
+    @SuppressWarnings("unchecked")
+    private <D extends DynamicType> Pair<D, DocumentTypeVersion> cloneResult(Pair<D, DocumentTypeVersion> original) {
+        DocumentTypeVersion originalDocTypeVersion = original.getSecond();
+        DocumentTypeVersion clonedDocTypeVersion = originalDocTypeVersion.clone();
+        clonedDocTypeVersion.setParent(originalDocTypeVersion.getParent() != null ? originalDocTypeVersion.getParent().clone() : null);
+        return (Pair<D, DocumentTypeVersion>) new Pair<>(original.getFirst().clone(), clonedDocTypeVersion);
     }
 
     private DocumentType getDocumentType(NodeRef docTypeRef, DynTypeLoadEffort effort) {
@@ -340,15 +374,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
     @Override
     public String getDocumentTypeName(String documentTypeId) {
-        if (StringUtils.isBlank(documentTypeId)) {
-            return null;
-        }
-        NodeRef documentTypeRef = getDocumentTypeRef(documentTypeId);
-        if (documentTypeRef == null) {
-            // Should not usually happen
-            return null;
-        }
-        return (String) nodeService.getProperty(documentTypeRef, DocumentAdminModel.Props.NAME);
+        return getDynamicTypeName(documentTypeId, documentTypeCache, true);
     }
 
     @Override
@@ -358,37 +384,67 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
-    public String getCaseFileTypeName(Node caseFile) {
-        String typeId = (String) caseFile.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID);
-        return getCaseFileType(getCaseFileTypeRef(typeId), DONT_INCLUDE_CHILDREN).getName();
+    public String getCaseFileTypeName(String caseFileTypeId) {
+        return getDynamicTypeName(caseFileTypeId, caseFileTypeCache, false);
+    }
+
+    private String getDynamicTypeName(String caseFileTypeId, SimpleCache<String, UnmodifiableDynamicType> caseFileTypeNameCache, boolean documentType) {
+        UnmodifiableDynamicType caseFileType = caseFileTypeNameCache.get(caseFileTypeId);
+        if (caseFileType == null) {
+            caseFileType = getUnmodifableDynamicType(caseFileTypeId, documentType);
+            caseFileTypeNameCache.put(caseFileTypeId, caseFileType);
+        }
+        return caseFileType != null ? caseFileType.getTypeName() : caseFileTypeId;
+    }
+
+    private UnmodifiableDynamicType getUnmodifableDynamicType(String dynamicTypeId, boolean documentType) {
+        NodeRef dynamicTypeRef = documentType ? getDocumentTypeRef(dynamicTypeId) : getCaseFileTypeRef(dynamicTypeId);
+        return (dynamicTypeRef == null) ? getDeletedUnmodifiableDynamicType(dynamicTypeId) : getUnmodifiableDynamicType(dynamicTypeRef, null);
+    }
+
+    private UnmodifiableDynamicType getDeletedUnmodifiableDynamicType(String dynamicTypeId) {
+        return new UnmodifiableDynamicType(dynamicTypeId, dynamicTypeId, Boolean.FALSE);
+    }
+
+    private UnmodifiableDynamicType getUnmodifiableDynamicType(NodeRef typeRef, Map<QName, Pair<Long, QName>> propertyTypes) {
+        return new UnmodifiableDynamicType((String) nodeService.getProperty(typeRef, DocumentAdminModel.Props.ID, propertyTypes),
+                (String) nodeService.getProperty(typeRef, DocumentAdminModel.Props.NAME, propertyTypes),
+                (Boolean) nodeService.getProperty(typeRef, DocumentAdminModel.Props.USED, propertyTypes));
     }
 
     @Override
     public Pair<String, String> getDocumentTypeNameAndId(Node document) {
         String documentTypeId = (String) document.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID);
-        return new Pair<String, String>(getDocumentTypeName(documentTypeId), documentTypeId);
+        return new Pair<>(getDocumentTypeName(documentTypeId), documentTypeId);
     }
 
     @Override
     public Map<String/* docTypeId */, String/* docTypeName */> getDocumentTypeNames(Boolean used) {
-        return getDynamicTypeNames(used, getDocumentTypesRoot());
+        return getDynamicTypeNames(used, getDocumentTypesRoot(), documentTypeCache);
     }
 
     @Override
     public Map<String/* docTypeId */, String/* docTypeName */> getCaseFileTypeNames(Boolean used) {
-        return getDynamicTypeNames(used, getCaseFileTypesRoot());
+        return getDynamicTypeNames(used, getCaseFileTypesRoot(), caseFileTypeCache);
     }
 
-    private Map<String, String> getDynamicTypeNames(Boolean used, NodeRef dynamicTypesRoot) {
+    private Map<String, String> getDynamicTypeNames(Boolean used, NodeRef dynamicTypesRoot, SimpleCache<String, UnmodifiableDynamicType> cache) {
         Map<String, String> dynamicTypesByTypeId = new HashMap<String, String>();
+        Map<QName, Pair<Long, QName>> propertyTypes = new HashMap<QName, Pair<Long, QName>>();
+
         for (ChildAssociationRef childAssoc : nodeService.getChildAssocs(dynamicTypesRoot)) {
-            Map<QName, Serializable> props = nodeService.getProperties(childAssoc.getChildRef());
-            Boolean documentTypeUsed = (Boolean) props.get(DocumentAdminModel.Props.USED);
-            if (used == null || documentTypeUsed == used) {
-                String documentTypeId = (String) props.get(DocumentAdminModel.Props.ID);
-                String documentTypeName = (String) props.get(DocumentAdminModel.Props.NAME);
-                dynamicTypesByTypeId.put(documentTypeId, documentTypeName);
+            String typeId = childAssoc.getQName().getLocalName();
+            UnmodifiableDynamicType dynamicType = cache.get(typeId);
+            if (dynamicType == null) {
+                dynamicType = getUnmodifiableDynamicType(childAssoc.getChildRef(), propertyTypes);
+                if (dynamicType != null) {
+                    cache.put(typeId, dynamicType);
+                }
             }
+            if (dynamicType != null && (used == null || dynamicType.getUsed() == used)) {
+                dynamicTypesByTypeId.put(typeId, dynamicType.getTypeName());
+            }
+
         }
         return dynamicTypesByTypeId;
     }
@@ -528,6 +584,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     @Override
     public void deleteDynamicType(NodeRef docTypeRef) {
         DynamicType dynType = getDynamicType(null, docTypeRef, DOC_TYPE_WITHOUT_OLDER_DT_VERSION_CHILDREN);
+        boolean isCaseFileType = false;
         if (dynType instanceof DocumentType) {
             DocumentType docType = (DocumentType) dynType;
             if (docType.isSystematic()) {
@@ -537,7 +594,8 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                 throw new UnableToPerformException("docType_delete_failed_inUse");
             }
         } else {
-            Assert.isTrue(CaseFileType.class.equals(dynType.getClass()), "expected that deletable node is CaseFileType (if it is not DocumentType)");
+            isCaseFileType = CaseFileType.class.equals(dynType.getClass());
+            Assert.isTrue(isCaseFileType, "expected that deletable node is CaseFileType (if it is not DocumentType)");
             if (isCaseFileTypeUsed(dynType.getId())) {
                 throw new UnableToPerformException("caseFileType_delete_failed_inUse");
             }
@@ -555,6 +613,9 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
             }
             saveOrUpdateFieldDefinitions(fieldsToSave.values(), false);
         }
+        if (isCaseFileType) {
+            BeanHelper.getWorkflowService().removeCaseFileTypeFromCompoundWorklfowDefinitions(dynType.getId());
+        }
         DocumentConfigService documentConfigService = BeanHelper.getDocumentConfigService();
         String typeId = dynType.getId();
         for (DocumentTypeVersion docTypeVersion : dynType.getDocumentTypeVersions()) {
@@ -564,6 +625,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
             documentConfigService.removeFromPropertyDefinitionCache(cacheKey);
         }
         nodeService.deleteNode(docTypeRef);
+        removeAllVersionsOfDynamicTypeFormCache(dynType);
         if (dynType.isUsed()) {
             menuService.menuUpdated();
         }
@@ -589,12 +651,18 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         if (docType != null) {
             updatePublicAdr(docType, wasUnsaved);
         }
+        removeAllVersionsOfDynamicTypeFormCache(dynType);
         baseService.saveObject(dynType);
         if (wasUnsaved || dynTypeOriginal.isPropertyChanged(DocumentAdminModel.Props.USED, DocumentAdminModel.Props.NAME, DocumentAdminModel.Props.MENU_GROUP_NAME)) {
             menuService.menuUpdated();
         }
         if (wasUnsaved) {
             BeanHelper.getPrivilegeService().setInheritParentPermissions(dynType.getNodeRef(), false);
+        }
+        if (docType != null) {
+            documentTypeCache.remove(docType.getId());
+        } else {
+            caseFileTypeCache.remove(dynType.getId());
         }
         return Pair.newInstance(dynType, message);
     }
@@ -611,11 +679,12 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         return fieldOrFeildDef;
     }
 
-    private <F extends Field> F saveOrUpdateFieldInternal(F originalFieldOrFeildDef) {
+    private <F extends Field> F saveOrUpdateFieldInternal(F originalFieldOrFieldDef) {
         @SuppressWarnings("unchecked")
-        F fieldOrFeildDef = (F) originalFieldOrFeildDef.clone();
-        baseService.saveObject(fieldOrFeildDef);
-        return fieldOrFeildDef;
+        F fieldOrFieldDef = (F) originalFieldOrFieldDef.clone();
+        baseService.saveObject(fieldOrFieldDef);
+        fieldDefinitionCache.remove(fieldOrFieldDef.getFieldId());
+        return fieldOrFieldDef;
     }
 
     private FieldDefinition reorderFieldDefinitions(FieldDefinition fieldDef) {
@@ -633,8 +702,26 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     @Override
     public AssociationModel saveOrUpdateAssocToDocType(AssociationModel associationModel) {
         AssociationModel clone = associationModel.clone();
+        removeAllVersionsOfDynamicTypeFormCache(associationModel.getParent());
         baseService.saveObject(clone);
         return clone;
+    }
+
+    private void removeAllVersionsOfDynamicTypeFormCache(DynamicType dynType) {
+        if (dynType == null) {
+            return;
+        }
+        Integer latestVersion = dynType.getLatestVersion();
+        NodeRef nodeRef = dynType.getNodeRef();
+        for (int i = latestVersion; i > 0; i--) {
+            String cacheKey = getCacheKey(nodeRef, i);
+            dynamicTypeAndVersionCache.remove(cacheKey);
+        }
+    }
+
+    @Override
+    public void clearDynamicTypesCache() {
+        dynamicTypeAndVersionCache.clear();
     }
 
     private List<AssociationModel> getAssocsToDocType(List<NodeRef> assocRefs) {
@@ -728,24 +815,22 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
-    public List<FieldDefinition> getSearchableDocumentFieldDefinitions() {
-        List<FieldDefinition> searchable = new ArrayList<FieldDefinition>();
-        for (FieldDefinition fieldDefinition : baseService.getChildren(getFieldDefinitionsRoot(), FieldDefinition.class)) {
-            if (fieldDefinition.isParameterInDocSearch()) {
-                searchable.add(fieldDefinition);
-            }
+    public List<UnmodifiableFieldDefinition> getSearchableDocumentFieldDefinitions() {
+        List<String> searchableFieldDefinitions = bulkLoadNodeService.loadChildSearchableDocFieldNodeRefs(getFieldDefinitionsRoot());
+        List<UnmodifiableFieldDefinition> searchable = new ArrayList<UnmodifiableFieldDefinition>();
+        for (String fieldDefinitionId : searchableFieldDefinitions) {
+            searchable.add(getFieldDefinition(fieldDefinitionId));
         }
         Collections.sort(searchable, DOC_SEARCH_FIELD_COMPARATOR);
         return searchable;
     }
 
     @Override
-    public List<FieldDefinition> getSearchableVolumeFieldDefinitions() {
-        List<FieldDefinition> searchable = new ArrayList<FieldDefinition>();
-        for (FieldDefinition fieldDefinition : baseService.getChildren(getFieldDefinitionsRoot(), FieldDefinition.class)) {
-            if (fieldDefinition.isParameterInVolSearch()) {
-                searchable.add(fieldDefinition);
-            }
+    public List<UnmodifiableFieldDefinition> getSearchableVolumeFieldDefinitions() {
+        List<String> searchableFieldDefinitions = bulkLoadNodeService.loadChildSearchableVolFieldNodeRefs(getFieldDefinitionsRoot());
+        List<UnmodifiableFieldDefinition> searchable = new ArrayList<UnmodifiableFieldDefinition>();
+        for (String fieldDefinitionId : searchableFieldDefinitions) {
+            searchable.add(getFieldDefinition(fieldDefinitionId));
         }
         Collections.sort(searchable, CASE_SEARCH_FIELD_COMPARATOR);
         return searchable;
@@ -764,17 +849,17 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @SuppressWarnings("unchecked")
-    public static final Comparator<FieldDefinition> DOC_SEARCH_FIELD_COMPARATOR = new TransformingComparator(new ComparableTransformer<FieldDefinition>() {
+    public static final Comparator<UnmodifiableFieldDefinition> DOC_SEARCH_FIELD_COMPARATOR = new TransformingComparator(new ComparableTransformer<UnmodifiableFieldDefinition>() {
         @Override
-        public Comparable<?> tr(FieldDefinition input) {
+        public Comparable<?> tr(UnmodifiableFieldDefinition input) {
             return input.getParameterOrderInDocSearch();
         }
     }, new NullComparator(true));
 
     @SuppressWarnings("unchecked")
-    public static final Comparator<FieldDefinition> CASE_SEARCH_FIELD_COMPARATOR = new TransformingComparator(new ComparableTransformer<FieldDefinition>() {
+    public static final Comparator<UnmodifiableFieldDefinition> CASE_SEARCH_FIELD_COMPARATOR = new TransformingComparator(new ComparableTransformer<UnmodifiableFieldDefinition>() {
         @Override
-        public Comparable<?> tr(FieldDefinition input) {
+        public Comparable<?> tr(UnmodifiableFieldDefinition input) {
             return input.getParameterOrderInVolSearch();
         }
     }, new NullComparator(true));
@@ -817,8 +902,16 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
-    public FieldDefinition getFieldDefinition(String fieldId) {
-        return baseService.getChild(getFieldDefinitionsRoot(), new QNameLocalnameMatcher(fieldId), FieldDefinition.class);
+    public UnmodifiableFieldDefinition getFieldDefinition(String fieldId) {
+        UnmodifiableFieldDefinition unmodifiableFieldDefinition = fieldDefinitionCache.get(fieldId);
+        if (unmodifiableFieldDefinition == null) {
+            FieldDefinition fieldDefinition = baseService.getChild(getFieldDefinitionsRoot(), new QNameLocalnameMatcher(fieldId), FieldDefinition.class);
+            if (fieldDefinition != null) {
+                unmodifiableFieldDefinition = new UnmodifiableFieldDefinition(fieldDefinition);
+                fieldDefinitionCache.put(fieldId, unmodifiableFieldDefinition);
+            }
+        }
+        return unmodifiableFieldDefinition;
     }
 
     @Override
@@ -876,7 +969,9 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     @Override
     public void deleteFieldDefinition(Field field) {
         nodeService.deleteNode(field.getNodeRef());
-        BeanHelper.getDocumentConfigService().removeFrompPopertyDefinitionForSearchCache(field.getFieldId());
+        final String fieldId = field.getFieldId();
+        fieldDefinitionCache.remove(fieldId);
+        BeanHelper.getDocumentConfigService().removeFrompPopertyDefinitionForSearchCache(fieldId);
     }
 
     @Override
@@ -886,7 +981,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
     @Override
     public boolean isFieldDefintionUsed(String fieldId) {
-        FieldDefinition fieldDefinition = getFieldDefinition(fieldId);
+        UnmodifiableFieldDefinition fieldDefinition = getFieldDefinition(fieldId);
         if (fieldDefinition == null) {
             return false;
         }
@@ -1147,7 +1242,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
             for (String removedFieldId : removedFieldIds) {
                 FieldDefinition removedFieldFD = fieldsToSave.get(removedFieldId);
                 if (removedFieldFD == null) {
-                    removedFieldFD = getFieldDefinition(removedFieldId);
+                    removedFieldFD = getFieldDefinition(removedFieldId).getCopyOfFieldDefinition();
                     fieldsToSave.put(removedFieldId, removedFieldFD);
                 }
                 removedFieldFD.getUsedTypes(dynType.getClass()).remove(documentTypeId);
@@ -1756,6 +1851,26 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
             }
         }
         return typeIds;
+    }
+
+    public void setBulkLoadNodeService(BulkLoadNodeService bulkLoadNodeService) {
+        this.bulkLoadNodeService = bulkLoadNodeService;
+    }
+
+    public void setFieldDefinitionCache(SimpleCache<String, UnmodifiableFieldDefinition> fieldDefinitionCache) {
+        this.fieldDefinitionCache = fieldDefinitionCache;
+    }
+
+    public void setCaseFileTypeCache(SimpleCache<String, UnmodifiableDynamicType> caseFileTypeCache) {
+        this.caseFileTypeCache = caseFileTypeCache;
+    }
+
+    public void setDocumentTypeCache(SimpleCache<String, UnmodifiableDynamicType> documentTypeCache) {
+        this.documentTypeCache = documentTypeCache;
+    }
+
+    public void setDynamicTypeAndVersionCache(SimpleCache<String, Pair<DynamicType, DocumentTypeVersion>> dynamicTypeAndVersionCache) {
+        this.dynamicTypeAndVersionCache = dynamicTypeAndVersionCache;
     }
 
 }

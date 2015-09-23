@@ -5,6 +5,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 
 import ee.webmedia.alfresco.casefile.model.CaseFileModel;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.service.DocumentService;
 
 /**
@@ -20,7 +21,7 @@ public class AddCaseFileContainerAspectToDrafts extends AbstractModuleComponent 
     protected void executeInternal() throws Throwable {
         LOG.info("Executing " + getName());
 
-        NodeRef draftsNodeRef = documentService.getDrafts();
+        NodeRef draftsNodeRef = BeanHelper.getConstantNodeRefsBean().getDraftsRoot();
         LOG.info("Adding " + CaseFileModel.Aspects.CASE_FILE_CONTAINER + " aspect to " + draftsNodeRef);
         nodeService.addAspect(draftsNodeRef, CaseFileModel.Aspects.CASE_FILE_CONTAINER, null);
     }

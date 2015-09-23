@@ -1,12 +1,10 @@
 package ee.webmedia.alfresco.cases.model;
 
-import static ee.webmedia.alfresco.app.AppConstants.DEFAULT_COLLATOR;
-
 import java.io.Serializable;
+import java.text.Collator;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.repository.Node;
-import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
@@ -21,6 +19,8 @@ import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
 public class Case implements Serializable, Comparable<Case> {
 
     private static final long serialVersionUID = 1L;
+    @AlfrescoModelProperty(isMappable = false)
+    private final static Collator collator = AppConstants.getNewCollatorInstance();
 
     private String title;
     private String status;
@@ -84,14 +84,7 @@ public class Case implements Serializable, Comparable<Case> {
 
     @Override
     public int compareTo(Case other) {
-        if (StringUtils.equals(getTitle(), other.getTitle())) {
-            int cmpMark;
-            if ((cmpMark = DEFAULT_COLLATOR.compare(getTitle(), other.getTitle())) == 0) {
-                return 0;
-            }
-            return cmpMark;
-        }
-        return AppConstants.DEFAULT_COLLATOR.compare(getTitle(), other.getTitle());
+        return collator.compare(getTitle(), other.getTitle());
     }
 
     @Override

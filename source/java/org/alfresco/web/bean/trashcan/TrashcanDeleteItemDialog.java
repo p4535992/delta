@@ -26,7 +26,6 @@ package org.alfresco.web.bean.trashcan;
 
 import java.text.MessageFormat;
 
-import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
 
 import org.alfresco.web.app.Application;
@@ -74,6 +73,7 @@ public class TrashcanDeleteItemDialog extends TrashcanDialog
     protected String finishImpl(FacesContext context, String outcome) throws Exception
     {
         deleteItem(context, outcome);
+        doNotLoadDataWhenReturningToTrashcanDialog();
         return "dialog:close";
 
     }

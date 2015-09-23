@@ -6,8 +6,6 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -21,7 +19,9 @@ import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
 import javax.servlet.http.HttpServletResponse;
 
+import org.alfresco.util.Pair;
 import org.alfresco.web.app.Application;
+import org.alfresco.web.ui.common.component.data.IGridDataModel;
 import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.apache.commons.lang.CharUtils;
 import org.apache.commons.lang.StringUtils;
@@ -29,6 +29,7 @@ import org.apache.log4j.Logger;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.app.AppConstants;
+import ee.webmedia.alfresco.common.richlist.GridLazyDataModel;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
@@ -42,6 +43,7 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  * File is written in UTF-8 encoding with BOM, ; is used as separator.-
  */
 public class CSVExporter {
+
     private static Logger log = Logger.getLogger(CSVExporter.class);
 
     private static final String LINE_SEPARATOR = System.getProperty("line.separator");
@@ -52,10 +54,6 @@ public class CSVExporter {
     private static final char[] CSV_SEARCH_CHARS = new char[] { SEPARATOR, CSV_QUOTE, CharUtils.CR, CharUtils.LF };
 
     protected DataReader dataReader;
-
-    protected boolean doOrdering = false;
-    private int sortColumnNr = 0;
-    private boolean isDescending = false;
 
     public CSVExporter(DataReader dataReader) {
         this.dataReader = dataReader;
@@ -76,7 +74,6 @@ public class CSVExporter {
                 throw new RuntimeException("Wrong component type for export.");
             }
             UIRichList richList = (UIRichList) table;
-            richList.bind();
 
             // set message bundle (needed for header labels)
             ResourceBundle bundle = Application.getBundle(facesContext);
@@ -94,15 +91,12 @@ public class CSVExporter {
 
             OutputStream outputStream = response.getOutputStream();
             OutputStreamWriter writer = new OutputStreamWriter(outputStream, CHARSET);
-            // the Unicode value for UTF-8 BOM, is needed so that Excel would recognise the file in correct encoding
+            // the Unicode value for UTF-8 BOM, is needed so that Excel would recognize the file in correct encoding
             writer.write("\ufeff");
 
             writeRow(writer, dataReader.getHeaderRow(richList, facesContext));
-            List<List<String>> dataRows = dataReader.getDataRows(richList, facesContext);
-            if (doOrdering) {
-                orderRows(dataRows);
-            }
-            writeData(writer, dataRows);
+
+            writeRows(richList, writer, facesContext);
 
             writer.flush();
             writer.close();
@@ -117,20 +111,45 @@ public class CSVExporter {
         }
     }
 
-    public void setOrderInfo(int sortColumnNr, boolean isDescending) {
-        doOrdering = true;
-        this.sortColumnNr = sortColumnNr;
-        this.isDescending = isDescending;
+    protected void writeRows(UIRichList richList, Object writer, FacesContext facesContext) throws IOException {
+        int currentPageSize = richList.getPageSize();
+        int currentPage = richList.getCurrentPage();
+        int exportPageSize = 500;
+        int startIndex = 0;
+        int exportPageCount;
+        IGridDataModel dataModel = richList.getDataModel();
+        boolean isLazyList = dataModel instanceof GridLazyDataModel;
+        boolean isAllLoaded = !isLazyList || ((GridLazyDataModel) dataModel).isAllLoaded();
+        Pair<Integer, Integer> currentSlice = null;
+        if (!isAllLoaded) {
+            currentSlice = dataModel.getCurrentSlice();
+            int size = ((GridLazyDataModel) dataModel).size();
+            exportPageCount = size % exportPageSize != 0 ? (size / exportPageSize + 1) : (size / exportPageSize);
+        } else {
+            exportPageCount = 1;
+            richList.bind();
+        }
+        richList.setRowIndex(-1);
+        for (int i = 0; i < exportPageCount; i++) {
+            List<List<String>> dataRows;
+            if (isAllLoaded) {
+                dataRows = dataReader.getDataRows(richList, facesContext, DataReader.UNLIMITED_SLICE);
+            } else {
+                dataModel.loadSlice(startIndex, startIndex + exportPageSize - 1);
+                dataRows = dataReader.getDataRows(richList, facesContext, exportPageSize);
+            }
+            writeRows(writer, dataRows);
+            startIndex += exportPageSize;
+        }
+        if (currentSlice != null && !isAllLoaded) {
+            dataModel.loadSlice(currentSlice.getFirst(), currentSlice.getSecond());
+        }
+        richList.setPageSize(currentPageSize);
+        richList.setCurrentPage(currentPage);
     }
 
-    protected void orderRows(List<List<String>> rows) {
-        // sort according to first column
-        Collections.sort(rows, new Comparator<List<String>>() {
-            @Override
-            public int compare(List<String> o1, List<String> o2) {
-                return AppConstants.DEFAULT_COLLATOR.compare(o1.get(sortColumnNr), o2.get(sortColumnNr)) * (isDescending ? -1 : 1);
-            }
-        });
+    protected void writeRows(Object writer, List<List<String>> dataRows) throws IOException {
+        writeData((OutputStreamWriter) writer, dataRows);
     }
 
     private void writeData(Writer writer, List<List<String>> data) throws IOException {

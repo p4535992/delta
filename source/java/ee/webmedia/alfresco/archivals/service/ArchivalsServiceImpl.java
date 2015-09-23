@@ -9,9 +9,11 @@ import java.io.Serializable;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -19,6 +21,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.faces.event.ActionEvent;
 
@@ -39,18 +42,19 @@ import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.CopyService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
-import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
-import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeConstants;
 import org.springframework.util.Assert;
 
 import com.ociweb.xml.Version;
@@ -70,6 +74,7 @@ import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
+import ee.webmedia.alfresco.common.service.BulkLoadNodeService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
@@ -87,16 +92,19 @@ import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.eventplan.model.EventPlanModel;
 import ee.webmedia.alfresco.eventplan.model.FirstEvent;
-import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
+import ee.webmedia.alfresco.functions.model.UnmodifiableFunction;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogFilter;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
+import ee.webmedia.alfresco.parameters.model.Parameters;
+import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.series.service.SeriesService;
@@ -110,6 +118,8 @@ import ee.webmedia.alfresco.volume.model.DeletionType;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.volume.service.VolumeService;
+import ee.webmedia.alfresco.workflow.model.CompoundWorkflowType;
+import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
 public class ArchivalsServiceImpl implements ArchivalsService {
 
@@ -121,7 +131,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
     private VolumeService volumeService;
     private SeriesService seriesService;
     private FunctionsService functionsService;
-    private SearchService searchService;
+    private DocumentSearchService documentSearchService;
     private DictionaryService dictionaryService;
     private AdrService adrService;
     private DocumentService documentService;
@@ -136,15 +146,18 @@ public class ArchivalsServiceImpl implements ArchivalsService {
     private DocumentTemplateService documentTemplateService;
     private UserService userService;
     private ContentService contentService;
+    private ParametersService parametersService;
+    private BulkLoadNodeService bulkLoadNodeService;
 
-    private StoreRef archivalsStore;
-    private boolean archivingPaused;
+    private final AtomicBoolean archivingPaused = new AtomicBoolean(false);
+    private final AtomicBoolean archivingContinuedManually = new AtomicBoolean(false);
     private boolean simpleDestructionEnabled;
 
     private static final FastDateFormat DATE_FORMAT = FastDateFormat.getInstance("yyyy-MM-dd");
     private static final FastDateFormat DATE_SHORT_FORMAT = FastDateFormat.getInstance("yyyyMMdd");
     private static final FastDateFormat DATE_TIME_FORMAT = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss");
-    private static final FastDateFormat DATE_TIME_SHORT_FORMAT = FastDateFormat.getInstance("dd.MM.yyyy HH:mm");
+
+    private static final Set<QName> CWF_PROPS_TO_LOAD = new HashSet<>(Arrays.asList(WorkflowCommonModel.Props.TYPE, WorkflowCommonModel.Props.MAIN_DOCUMENT));
 
     @Override
     public void exportToUam(final List<NodeRef> volumes, final Date exportStartDate, final NodeRef activityRef) {
@@ -186,6 +199,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
                         Map<QName, Serializable> fileProps = new HashMap<QName, Serializable>(2);
                         fileProps.put(FileModel.Props.ACTIVITY_FILE_TYPE, ActivityFileType.UAM_XML.name());
                         fileProps.put(ContentModel.PROP_CONTENT, writer.getContentData());
+                        fileProps.put(ContentModel.PROP_CONTENT_NOT_INDEXED, true);
                         nodeService.addProperties(fileRef, fileProps);
                         nodeService.setProperty(activityRef, ArchivalsModel.Props.STATUS, ActivityStatus.FINISHED.getValue());
 
@@ -231,7 +245,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
             out = new OutputStreamWriter(writer.getContentOutputStream(), "UTF-8");
             WAX x = new WAX(out, Version.V1_0);
             x.start("UAM_import").defaultNamespace("http://www.ra.ee/schemas/EDHS/import_v0.1").namespace("dul", "http://www.nortal.com/schemas/delta/delta_uam_lisaandmed")
-                    .start("Arhiivikirjeldus");
+            .start("Arhiivikirjeldus");
 
             writeVolumes(x, volumeRefs, ignoredFields, ignoredGroups);
 
@@ -239,7 +253,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
 
             for (NodeRef volumeRef : volumeRefs) {
                 // Export volume documents
-                List<NodeRef> documents = documentService.getAllDocumentRefsByParentRef(volumeRef);
+                List<NodeRef> documents = documentSearchService.searchAllDocumentRefsByParentRef(volumeRef);
                 writeDocuments(x, documents, ignoredFields, ignoredGroups);
             }
             x.close(); // UAM_import
@@ -264,28 +278,28 @@ public class ArchivalsServiceImpl implements ArchivalsService {
             Serializable volValidFrom = vol.get(VolumeModel.Props.VALID_FROM);
             Serializable volValidTo = vol.get(VolumeModel.Props.VALID_TO);
             x.start("Kirjeldusyksus")
-                    .child("KyTasand", "toimik")
-                    .start("KyIdentiteediala")
-                    .child("KyViit", (String) vol.get(VolumeModel.Props.VOLUME_MARK))
-                    .child("KyIdEDHS", volumeRef.getId())
-                    .child("KyVanemViit", (String) ser.get(SeriesModel.Props.SERIES_IDENTIFIER))
-                    .child("KyVanemIdEDHS", seriesRef.getId())
-                    .child("KyPealkiri", (String) vol.get(VolumeModel.Props.TITLE))
-                    .start("KyAeg")
-                    .start("Algus")
-                    .child("Tyyp", "kuupäev")
-                    .child("Tapsus", "true")
-                    .child("Vaartus", (volValidFrom == null ? "" : DATE_FORMAT.format(volValidFrom)))
-                    .end() // Algus
-                    .start("Lopp")
-                    .child("Tyyp", "kuupäev")
-                    .child("Tapsus", "true")
-                    .child("Vaartus", (volValidTo == null ? "" : DATE_FORMAT.format(volValidTo)))
-                    .end() // Lopp
-                    .end() // KyAeg
-                    .end() // KyIdentiteediala
+            .child("KyTasand", "toimik")
+            .start("KyIdentiteediala")
+            .child("KyViit", (String) vol.get(VolumeModel.Props.VOLUME_MARK))
+            .child("KyIdEDHS", volumeRef.getId())
+            .child("KyVanemViit", (String) ser.get(SeriesModel.Props.SERIES_IDENTIFIER))
+            .child("KyVanemIdEDHS", seriesRef.getId())
+            .child("KyPealkiri", (String) vol.get(VolumeModel.Props.TITLE))
+            .start("KyAeg")
+            .start("Algus")
+            .child("Tyyp", "kuupäev")
+            .child("Tapsus", "true")
+            .child("Vaartus", (volValidFrom == null ? "" : DATE_FORMAT.format(volValidFrom)))
+            .end() // Algus
+            .start("Lopp")
+            .child("Tyyp", "kuupäev")
+            .child("Tapsus", "true")
+            .child("Vaartus", (volValidTo == null ? "" : DATE_FORMAT.format(volValidTo)))
+            .end() // Lopp
+            .end() // KyAeg
+            .end() // KyIdentiteediala
 
-                    .start("KySisuStruktAla");
+            .start("KySisuStruktAla");
             if (isCaseFile) {
                 writeKeywords(x, vol);
                 writeAdditionalProperties(x, new Node(volumeRef), vol, ignoredFields, ignoredGroups);
@@ -342,31 +356,31 @@ public class ArchivalsServiceImpl implements ArchivalsService {
 
             Serializable serValidFrom = ser.get(SeriesModel.Props.VALID_FROM_DATE);
             x.start("Kirjeldusyksus").child("KyTasand", (String) ser.get(SeriesModel.Props.TYPE))
-                    .start("KyIdentiteediala")
-                    .child("KyViit", (String) ser.get(SeriesModel.Props.SERIES_IDENTIFIER))
-                    .child("KyIdEDHS", seriesRef.getId())
-                    .child("KyVanemViit", (String) fun.get(FunctionsModel.Props.MARK))
-                    .child("KyVanemIdEDHS", functionRef.getId())
-                    .child("KyPealkiri", (String) ser.get(SeriesModel.Props.TITLE))
-                    .start("KyAeg")
-                    .start("Algus")
-                    .child("Tyyp", "kuupäev")
-                    .child("Tapsus", "true")
-                    .child("Vaartus", (serValidFrom == null ? "" : DATE_FORMAT.format(serValidFrom)))
-                    .end(); // Algus
+            .start("KyIdentiteediala")
+            .child("KyViit", (String) ser.get(SeriesModel.Props.SERIES_IDENTIFIER))
+            .child("KyIdEDHS", seriesRef.getId())
+            .child("KyVanemViit", (String) fun.get(FunctionsModel.Props.MARK))
+            .child("KyVanemIdEDHS", functionRef.getId())
+            .child("KyPealkiri", (String) ser.get(SeriesModel.Props.TITLE))
+            .start("KyAeg")
+            .start("Algus")
+            .child("Tyyp", "kuupäev")
+            .child("Tapsus", "true")
+            .child("Vaartus", (serValidFrom == null ? "" : DATE_FORMAT.format(serValidFrom)))
+            .end(); // Algus
             Date end = (Date) ser.get(SeriesModel.Props.VALID_TO_DATE);
             if (end != null) {
                 x.start("Lopp")
-                        .child("Tyyp", "kuupäev")
-                        .child("Tapsus", "true")
-                        .child("Vaartus", DATE_FORMAT.format(end))
-                        .end(); // Lopp
+                .child("Tyyp", "kuupäev")
+                .child("Tapsus", "true")
+                .child("Vaartus", DATE_FORMAT.format(end))
+                .end(); // Lopp
             }
             x.end() // KyAeg
-                    .end() // KyIdentiteediAla
-                    .start("KySisuStruktAla")
-                    .child("KyTaienemine", (DocListUnitStatus.OPEN.getValueName().equals(ser.get(SeriesModel.Props.STATUS)) ? "true" : "false"))
-                    .end(); // KySisuStruktAla
+            .end() // KyIdentiteediAla
+            .start("KySisuStruktAla")
+            .child("KyTaienemine", (DocListUnitStatus.OPEN.getValueName().equals(ser.get(SeriesModel.Props.STATUS)) ? "true" : "false"))
+            .end(); // KySisuStruktAla
 
             LogFilter filter = new LogFilter();
             filter.setObjectId(Arrays.asList(seriesRef.toString()));
@@ -401,8 +415,8 @@ public class ArchivalsServiceImpl implements ArchivalsService {
     private void writeLogEntry(WAX x, LogEntry entry) {
         x.start("KyTegevus");
         x.child("TegevusNimetus", entry.getEventDescription())
-                .child("TeostajaNimi", entry.getCreatorName())
-                .child("TegevusAeg", DATE_TIME_FORMAT.format(entry.getCreatedDateTime()));
+        .child("TeostajaNimi", entry.getCreatorName())
+        .child("TegevusAeg", DATE_TIME_FORMAT.format(entry.getCreatedDateTime()));
         x.end(); // KyTegevus
     }
 
@@ -410,12 +424,12 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         for (NodeRef nodeRef : functionRefs) {
             Map<QName, Serializable> fun = nodeService.getProperties(nodeRef);
             x.start("Funktsioon")
-                    .child("FunktsioonNimi", (String) fun.get(FunctionsModel.Props.TITLE))
-                    .child("FunktsioonViit", (String) fun.get(FunctionsModel.Props.MARK))
-                    .child("FunktsioonIdEDHS", nodeRef.getId())
-                    .child("Kirjeldus", (String) fun.get(FunctionsModel.Props.DESCRIPTION))
-                    .child("Volitus")
-                    .end(); // Funktsioon
+            .child("FunktsioonNimi", (String) fun.get(FunctionsModel.Props.TITLE))
+            .child("FunktsioonViit", (String) fun.get(FunctionsModel.Props.MARK))
+            .child("FunktsioonIdEDHS", nodeRef.getId())
+            .child("Kirjeldus", (String) fun.get(FunctionsModel.Props.DESCRIPTION))
+            .child("Volitus")
+            .end(); // Funktsioon
         }
     }
 
@@ -426,27 +440,27 @@ public class ArchivalsServiceImpl implements ArchivalsService {
             NodeRef volumeRef = generalService.getAncestorNodeRefWithType(doc.getNodeRef(), SeriesModel.Types.SERIES);
 
             x.start("Arhivaal")
-                    .start("KyMeta")
+            .start("KyMeta")
 
-                    .start("KyIdentiteediala")
-                    .child("KyViit", doc.getRegNumber())
-                    .child("KyIdEDHS", doc.getNodeRef().getId())
-                    .child("KyVanemViit", (String) nodeService.getProperty(volumeRef, VolumeModel.Props.VOLUME_MARK))
-                    .child("KyVanemIdEDHS", volumeRef.getId())
-                    .child("KyPealkiri", doc.getDocName())
+            .start("KyIdentiteediala")
+            .child("KyViit", doc.getRegNumber())
+            .child("KyIdEDHS", doc.getNodeRef().getId())
+            .child("KyVanemViit", (String) nodeService.getProperty(volumeRef, VolumeModel.Props.VOLUME_MARK))
+            .child("KyVanemIdEDHS", volumeRef.getId())
+            .child("KyPealkiri", doc.getDocName())
 
-                    .start("KyAeg")
-                    .child("Tyyp", "kuupäev")
-                    .child("Tapsus", "true")
-                    .child("Vaartus", DATE_TIME_FORMAT.format((doc.getRegDateTime() != null ? doc.getRegDateTime() : doc.getProp(ContentModel.PROP_CREATED))))
-                    .end() // KyAeg
+            .start("KyAeg")
+            .child("Tyyp", "kuupäev")
+            .child("Tapsus", "true")
+            .child("Vaartus", DATE_TIME_FORMAT.format((doc.getRegDateTime() != null ? doc.getRegDateTime() : doc.getProp(ContentModel.PROP_CREATED))))
+            .end() // KyAeg
 
-                    .child("KyMuutmiseAeg", DATE_TIME_FORMAT.format(doc.getNode().getProperties().get(ContentModel.PROP_MODIFIED)))
+            .child("KyMuutmiseAeg", DATE_TIME_FORMAT.format(doc.getNode().getProperties().get(ContentModel.PROP_MODIFIED)))
 
-                    .end() // KyIdentiteediala
+            .end() // KyIdentiteediala
 
-                    .start("KySisuStruktAla")
-                    .child("KyLiik", documentDynamicService.getDocumentTypeName(doc.getNodeRef()));
+            .start("KySisuStruktAla")
+            .child("KyLiik", documentDynamicService.getDocumentTypeName(doc.getNodeRef()));
             writeKeywords(x, docProps);
             x.end(); // KySisuStruktAla
 
@@ -500,10 +514,10 @@ public class ArchivalsServiceImpl implements ArchivalsService {
             try {
                 MessageDigest md5 = MessageDigest.getInstance("MD5");
                 x.start("Fail")
-                        .child("FailIdent", file.getNodeRef().getId())
-                        .child("FailNimi", file.getDisplayName())
-                        .child("FailSuurus", Long.toString(file.getSize()))
-                        .start("FailBase64");
+                .child("FailIdent", file.getNodeRef().getId())
+                .child("FailNimi", file.getDisplayName())
+                .child("FailSuurus", Long.toString(file.getSize()))
+                .start("FailBase64");
                 is = new DigestInputStream(fileService.getFileContentInputStream(file.getNodeRef()), md5);
                 x.unescapedText("<![CDATA[");
                 reader = new InputStreamReader(new org.apache.commons.codec.binary.Base64InputStream(is, true, 0, null), "UTF-8");
@@ -515,16 +529,16 @@ public class ArchivalsServiceImpl implements ArchivalsService {
                 }
                 x.unescapedText("]]>");
                 x.end() // FailBase64
-                        .child("FailViide")
-                        .child("FailLoplik", "true")
-                        .child("FailOriginaal", "true")
-                        .child("FailArhiivivormingus", (file.isPdf() ? "true" : "false"))
-                        .child("FailKasutuskoopia", "false")
-                        .start("Rasi")
-                        .child("RasiVaartus", Hex.encodeHexString(md5.digest()))
-                        .child("RasiAlgoritm", md5.getAlgorithm())
-                        .child("RasiAeg", DATE_TIME_FORMAT.format(new Date()))
-                        .end().end(); // Rasi and Fail
+                .child("FailViide")
+                .child("FailLoplik", "true")
+                .child("FailOriginaal", "true")
+                .child("FailArhiivivormingus", (file.isPdf() ? "true" : "false"))
+                .child("FailKasutuskoopia", "false")
+                .start("Rasi")
+                .child("RasiVaartus", Hex.encodeHexString(md5.digest()))
+                .child("RasiAlgoritm", md5.getAlgorithm())
+                .child("RasiAeg", DATE_TIME_FORMAT.format(new Date()))
+                .end().end(); // Rasi and Fail
             } catch (Exception e) {
                 LOG.error("Error occurred when exporting file " + file.getNodeRef(), e);
                 throw e;
@@ -616,7 +630,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         List<DocAssocInfo> assocInfos = documentAssociationsService.getAssocInfos(node);
         for (DocAssocInfo assocInfo : assocInfos) {
             wax.child("SeotudOsaIdent", assocInfo.getOtherNodeRef().getId())
-                    .child("SeotudOsaSelgitus", assocInfo.getAssocType().getValueName());
+            .child("SeotudOsaSelgitus", assocInfo.getAssocType().getValueName());
         }
         wax.end(); // KySeonduvAines
     }
@@ -627,25 +641,25 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         if (access != null && !AccessRestriction.OPEN.getValueName().equals(access)) {
             Serializable restrictionBeginDate = properties.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE);
             wax.start("JuurdepaasPiirang")
-                    .child("Piirang", (AccessRestriction.AK.getValueName().equals(access) ? "AK" : "UleandjaPiirang"))
-                    .start("PiirangAeg")
-                    .start("Algus")
-                    .child("Tyyp", "kuupäev")
-                    .child("Tapsus", "true")
-                    .child("Vaartus", (restrictionBeginDate != null ? DATE_FORMAT.format(restrictionBeginDate) : null))
-                    .end(); // Algus
+            .child("Piirang", (AccessRestriction.AK.getValueName().equals(access) ? "AK" : "UleandjaPiirang"))
+            .start("PiirangAeg")
+            .start("Algus")
+            .child("Tyyp", "kuupäev")
+            .child("Tapsus", "true")
+            .child("Vaartus", (restrictionBeginDate != null ? DATE_FORMAT.format(restrictionBeginDate) : null))
+            .end(); // Algus
             Date end = (Date) properties.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE);
             if (end != null) {
                 wax.start("Lopp")
-                        .child("Tyyp", "kuupäev")
-                        .child("Tapsus", "true")
-                        .child("Vaartus", DATE_FORMAT.format(end))
-                        .end(); // Lopp
+                .child("Tyyp", "kuupäev")
+                .child("Tapsus", "true")
+                .child("Vaartus", DATE_FORMAT.format(end))
+                .end(); // Lopp
             }
             wax.end() // PiirangAeg
-                    .child("PiirangKestus", (String) properties.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DESC))
-                    .child("PiirangAlus", (String) properties.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON))
-                    .end(); // JuurdepaasPiirang
+            .child("PiirangKestus", (String) properties.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DESC))
+            .child("PiirangAlus", (String) properties.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON))
+            .end(); // JuurdepaasPiirang
         }
         wax.end(); // KyJuurdepaasuala
     }
@@ -670,16 +684,24 @@ public class ArchivalsServiceImpl implements ArchivalsService {
     }
 
     @Override
-    public void archiveVolumeOrCaseFile(final NodeRef archivingJobRef) {
+    public void archiveVolumeOrCaseFile(final NodeRef archivingJobRef, final boolean resumingPaused) {
         final RetryingTransactionHelper transactionHelper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
         try {
-            archiveVolumeOrCaseFileImpl(archivingJobRef);
+            final ArchiveJobStatus status = archiveVolumeOrCaseFileImpl(archivingJobRef, resumingPaused);
             transactionHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
                 @Override
                 public Void execute() throws Throwable {
                     Map<QName, Serializable> props = new HashMap<QName, Serializable>();
-                    props.put(ArchivalsModel.Props.ARCHIVING_JOB_STATUS, ArchiveJobStatus.FINISHED);
-                    props.put(ArchivalsModel.Props.ARCHIVING_END_TIME, new Date());
+                    props.put(ArchivalsModel.Props.ARCHIVING_JOB_STATUS, status);
+                    if (ArchiveJobStatus.FINISHED.equals(status)) {
+                        props.put(ArchivalsModel.Props.ARCHIVING_END_TIME, new Date());
+                        if (resumingPaused) {
+                            nodeService.removeProperty(archivingJobRef, ArchivalsModel.Props.FAILED_NODE_COUNT);
+                            nodeService.removeProperty(archivingJobRef, ArchivalsModel.Props.FAILED_DOCUMENTS_COUNT);
+                            nodeService.removeProperty(archivingJobRef, ArchivalsModel.Props.TOTAL_ARCHIVED_DOCUMENTS_COUNT);
+                            nodeService.removeProperty(archivingJobRef, ArchivalsModel.Props.ARCHIVED_NODE_COUNT);
+                        }
+                    }
                     nodeService.addProperties(archivingJobRef, props);
                     return null;
                 }
@@ -713,7 +735,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
     }
 
     private void setArchivingProperty(NodeRef volumeRef, Boolean value) {
-        Volume volume = getVolumeService().getVolumeByNodeRef(volumeRef);
+        Volume volume = getVolumeService().getVolumeByNodeRef(volumeRef, null);
         volume.setProperty(VolumeModel.Props.MARKED_FOR_ARCHIVING.toString(), value);
         getVolumeService().saveOrUpdate(volume);
     }
@@ -748,17 +770,18 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         return nodeService.getChildAssocs(getArchivalsSpaceRef(), Collections.singleton(ArchivalsModel.Types.ARCHIVING_JOB));
     }
 
-    private NodeRef archiveVolumeOrCaseFileImpl(final NodeRef archivingJobRef) {
-        final NodeRef volumeNodeRef = (NodeRef) nodeService.getProperty(archivingJobRef, ArchivalsModel.Props.VOLUME_REF);
+    private ArchiveJobStatus archiveVolumeOrCaseFileImpl(final NodeRef archivingJobRef, boolean resumingPaused) {
+        final Map<QName, Serializable> jobProps = nodeService.getProperties(archivingJobRef);
+        final NodeRef volumeNodeRef = (NodeRef) jobProps.get(ArchivalsModel.Props.VOLUME_REF);
         Assert.notNull(volumeNodeRef, "Reference to volume node must be provided");
-        final String archivingNote = (String) nodeService.getProperty(archivingJobRef, ArchivalsModel.Props.ARCHIVE_NOTE);
+        final String archivingNote = (String) jobProps.get(ArchivalsModel.Props.ARCHIVE_NOTE);
 
         final RetryingTransactionHelper transactionHelper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
 
-        final Volume volume = volumeService.getVolumeByNodeRef(volumeNodeRef);
+        final Volume volume = volumeService.getVolumeByNodeRef(volumeNodeRef, null);
         final Series series = seriesService.getSeriesByNodeRef(volume.getSeriesNodeRef());
         final NodeRef originalSeriesRef = series.getNode().getNodeRef();
-        final Map<NodeRef, NodeRef> originalToArchivedCaseNodeRef = new HashMap<NodeRef, NodeRef>();
+        final Map<NodeRef, NodeRef> originalToArchivedCaseNodeRef = new HashMap<>();
 
         // do in separate transaction, must be visible in following transactions
         NodeRef[] archivedParentRefs = transactionHelper.doInTransaction(new RetryingTransactionCallback<NodeRef[]>() {
@@ -777,23 +800,29 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         Assert.notNull(archivedSeriesRef, "Series was not archived");
         Assert.notNull(archivedVolumeRef, "Volume was not archived");
 
-        Set<ChildAssociationRef> notCaseNodeRefs = new HashSet<ChildAssociationRef>();
-        final Set<NodeRef> caseNodeRefs = new HashSet<NodeRef>();
-        Map<NodeRef, Set<ChildAssociationRef>> archiveNodeRefs = new HashMap<NodeRef, Set<ChildAssociationRef>>();
-        // TODO: seems that no separate transaction is needed, read-only operations are performed here?
+        Set<ChildAssociationRef> notCaseNodeRefs = new HashSet<>();
+        final Set<NodeRef> caseNodeRefs = new HashSet<>();
+        Map<NodeRef, Set<ChildAssociationRef>> archiveNodeRefs = new HashMap<>();
         collectNodeRefsToArchive(volumeNodeRef, notCaseNodeRefs, caseNodeRefs, archiveNodeRefs);
 
-        int failedNodeCount = 0;
-        int failedDocumentsCount = 0;
-        int totalArchivedDocumentsCount = 0;
-        int archivedNodesCount = 0;
+        int failedNodeCount = getCount(jobProps, ArchivalsModel.Props.FAILED_NODE_COUNT);
+        int failedDocumentsCount = getCount(jobProps, ArchivalsModel.Props.FAILED_DOCUMENTS_COUNT);
+        int totalArchivedDocumentsCount = getCount(jobProps, ArchivalsModel.Props.TOTAL_ARCHIVED_DOCUMENTS_COUNT);
+        int archivedNodesCount = getCount(jobProps, ArchivalsModel.Props.ARCHIVED_NODE_COUNT);
 
-        final Map<NodeRef, Integer> caseDocsUpdated = new HashMap<NodeRef, Integer>();
-        int childCount = 0;
+        final boolean independentWorkflowEnabled = BeanHelper.getWorkflowConstantsBean().isIndependentWorkflowEnabled();
+
+        final Map<NodeRef, Integer> caseDocsUpdated = new HashMap<>();
+        long childCount = archivedNodesCount;
         for (Set<ChildAssociationRef> childNodes : archiveNodeRefs.values()) {
             childCount += childNodes.size();
         }
-        ProgressTracker progress = new ProgressTracker(childCount, 0);
+        if (resumingPaused) {
+            LOG.info(String.format("Resuming paused archiving: %d nodes archived previously, starting to archive remaining %d nodes",
+                    archivedNodesCount, (childCount - archivedNodesCount)));
+        }
+        SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm");
+        ProgressTracker progress = new ProgressTracker(childCount, archivedNodesCount);
         int count = 0;
         for (Map.Entry<NodeRef, Set<ChildAssociationRef>> entry : archiveNodeRefs.entrySet()) {
 
@@ -803,7 +832,8 @@ public class ArchivalsServiceImpl implements ArchivalsService {
             if (!isInCase) {
                 archivedParentRef = archivedVolumeRef;
             } else {
-                archivedParentRef = getOrCreateArchiveCase(originalParentRef, archivedVolumeRef, copiedVolumeRef, originalToArchivedCaseNodeRef, transactionHelper);
+                archivedParentRef = getOrCreateArchiveCase(originalParentRef, archivedVolumeRef, copiedVolumeRef, originalToArchivedCaseNodeRef, transactionHelper,
+                        archivedSeriesRef, archivedFunctionRef);
             }
             final NodeRef archivedParentRefFinal = archivedParentRef;
             for (final ChildAssociationRef childAssocRef : entry.getValue()) {
@@ -819,16 +849,29 @@ public class ArchivalsServiceImpl implements ArchivalsService {
 
                         @Override
                         public Void execute() throws Throwable {
+                            Set<NodeRef> cwfRefs = null;
                             if (isDocument) {
                                 String existingRegNr = (String) nodeService.getProperty(childRef, REG_NUMBER);
                                 if (StringUtils.isNotBlank(existingRegNr)) {
                                     BeanHelper.getAdrService().addDeletedDocument(childRef);
+                                }
+                                // This approach would now work if institutions would change independent workflow enabled/disabled status
+                                // but in practice institutions don't do that.
+                                if (independentWorkflowEnabled) {
+                                    cwfRefs = new HashSet<>();
+                                    List<AssociationRef> assocRefs = nodeService.getTargetAssocs(childRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT);
+                                    for (AssociationRef assocRef : assocRefs) {
+                                        cwfRefs.add(assocRef.getTargetRef());
+                                    }
                                 }
                             }
                             NodeRef archivedNodeRef = nodeService.moveNode(childRef, archivedParentRefFinal, childAssocRef.getTypeQName(),
                                     childAssocRef.getQName()).getChildRef();
                             updateDocumentLocationProps(archivedFunctionRef, archivedSeriesRef, archivedVolumeRef, isInCase ? archivedParentRefFinal : null,
                                     archivedNodeRef);
+                            if (isDocument && independentWorkflowEnabled) {
+                                updateCompoundWorkflowProps(cwfRefs, childRef, archivedNodeRef);
+                            }
                             return null;
                         }
                     }, false, true);
@@ -857,6 +900,25 @@ public class ArchivalsServiceImpl implements ArchivalsService {
                     if (info != null) {
                         LOG.info("Archiving volume: " + info);
                     }
+                    if (isArchivingPaused() || !isArchivingAllowed(dateFormat)) {
+                        final Map<QName, Serializable> props = new HashMap<>();
+                        props.put(ArchivalsModel.Props.FAILED_NODE_COUNT, failedNodeCount);
+                        props.put(ArchivalsModel.Props.FAILED_DOCUMENTS_COUNT, failedDocumentsCount);
+                        props.put(ArchivalsModel.Props.TOTAL_ARCHIVED_DOCUMENTS_COUNT, totalArchivedDocumentsCount);
+                        props.put(ArchivalsModel.Props.ARCHIVED_NODE_COUNT, archivedNodesCount);
+                        LOG.info("Pausing archiving");
+                        transactionHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
+
+                            @Override
+                            public Void execute() throws Throwable {
+                                nodeService.addProperties(archivingJobRef, props);
+                                return null;
+                            }
+                        }, false, true);
+                        updateCounters(volumeNodeRef, archivedVolumeRef, originalSeriesRef, archivedSeriesRef, originalToArchivedCaseNodeRef, totalArchivedDocumentsCount,
+                                caseDocsUpdated, transactionHelper);
+                        return ArchiveJobStatus.PAUSED;
+                    }
                 }
             }
         }
@@ -868,7 +930,11 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         transactionHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
             @Override
             public Void execute() {
-                nodeService.setProperty(archivedVolumeRef, EventPlanModel.Props.ARCHIVING_NOTE, archivingNote);
+                Map<QName, Serializable> props = new HashMap<>();
+                props.put(EventPlanModel.Props.ARCHIVING_NOTE, archivingNote);
+                props.put(DocumentCommonModel.Props.SERIES, archivedSeriesRef);
+                props.put(DocumentCommonModel.Props.FUNCTION, archivedFunctionRef);
+                nodeService.addProperties(archivedVolumeRef, props);
                 return null;
             }
         }, false, true);
@@ -896,8 +962,72 @@ public class ArchivalsServiceImpl implements ArchivalsService {
             }
         }, false, true);
 
-        return archivedVolumeRef;
+        return ArchiveJobStatus.FINISHED;
 
+    }
+
+    private int getCount(final Map<QName, Serializable> jobProps, QName prop) {
+        Integer count = (Integer) jobProps.get(prop);
+        return (count != null) ? count : 0;
+    }
+
+    private boolean isArchivingAllowed(SimpleDateFormat dateFormat) {
+        boolean allowedNow = isArchivingAllowedAtThisTime(dateFormat);
+
+        if (allowedNow) {
+            resetManualActions();
+            return true;
+        }
+
+        if (!allowedNow && isArchivingContinuedManually()) {
+            return true;
+        }
+
+        return allowedNow;
+    }
+
+    @Override
+    public boolean isArchivingAllowed() {
+        return isArchivingAllowed(new SimpleDateFormat("HH:mm"));
+    }
+
+    private boolean isArchivingAllowedAtThisTime(SimpleDateFormat dateFormat) {
+        DateTime now = new DateTime();
+        if (Boolean.valueOf(parametersService.getStringParameter(Parameters.CONTINUE_ARCIVING_OVER_WEEKEND))) {
+            int weekDay = now.getDayOfWeek();
+            if (DateTimeConstants.SATURDAY == weekDay || DateTimeConstants.SUNDAY == weekDay) {
+                return true;
+            }
+        }
+        String beginTimeStr = StringUtils.deleteWhitespace(parametersService.getStringParameter(Parameters.ARCHIVING_BEGIN_TIME));
+        String endTimeStr = StringUtils.deleteWhitespace(parametersService.getStringParameter(Parameters.ARCHIVING_END_TIME));
+        if (StringUtils.isBlank(beginTimeStr) || StringUtils.isBlank(endTimeStr)) {
+            return true;
+        }
+        DateTime beginTime;
+        DateTime endTime;
+        try {
+            beginTime = getDateTime(now, beginTimeStr, dateFormat);
+            endTime = getDateTime(now, endTimeStr, dateFormat);
+            if (beginTime.isAfter(endTime)) {
+                endTime = endTime.plusDays(1);
+            }
+        } catch (ParseException e) {
+            LOG.warn("Unable to parse " + Parameters.ARCHIVING_BEGIN_TIME.getParameterName() + " (value=" + beginTimeStr + ") or "
+                    + Parameters.ARCHIVING_END_TIME.getParameterName() + " (value=" + endTimeStr + "), continuing archiving. " +
+                    "Required format is " + dateFormat.toPattern());
+            return true;
+        }
+        if (beginTime.isBefore(now) && endTime.isAfter(now)) {
+            return true;
+        }
+        return false;
+    }
+
+    private DateTime getDateTime(DateTime now, String timeString, DateFormat dateFormat) throws ParseException {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(dateFormat.parse(timeString));
+        return new DateTime(now.getYear(), now.getMonthOfYear(), now.getDayOfMonth(), calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), 0, 0);
     }
 
     private void deleteEmptyVolumeAndCases(final NodeRef volumeNodeRef, final Set<NodeRef> caseNodeRefs, final RetryingTransactionHelper transactionHelper) {
@@ -935,7 +1065,8 @@ public class ArchivalsServiceImpl implements ArchivalsService {
     }
 
     private NodeRef getOrCreateArchiveCase(final NodeRef originalCaseRef, final NodeRef archivedVolumeRef, final NodeRef copiedVolumeRef,
-            final Map<NodeRef, NodeRef> originalToArchivedCaseNodeRef, final RetryingTransactionHelper transactionHelper) {
+            final Map<NodeRef, NodeRef> originalToArchivedCaseNodeRef, final RetryingTransactionHelper transactionHelper, final NodeRef archivedSeriesRef,
+            final NodeRef archivedFunctionRef) {
         NodeRef archivedCaseRef = originalToArchivedCaseNodeRef.get(originalCaseRef);
         if (archivedCaseRef == null) {
             final NodeRef originalCaseRefFinal = originalCaseRef;
@@ -948,6 +1079,9 @@ public class ArchivalsServiceImpl implements ArchivalsService {
                     Map<QName, Serializable> caseProps = new HashMap<QName, Serializable>();
                     caseProps.put(CaseModel.Props.CONTAINING_DOCS_COUNT, 0);
                     caseProps.put(CaseModel.Props.ORIGINAL_CASE, originalCaseRefFinal);
+                    caseProps.put(DocumentCommonModel.Props.VOLUME, archivedVolumeRef);
+                    caseProps.put(DocumentCommonModel.Props.SERIES, archivedSeriesRef);
+                    caseProps.put(DocumentCommonModel.Props.FUNCTION, archivedFunctionRef);
                     nodeService.addProperties(archCaseRef, caseProps);
                     return archCaseRef;
                 }
@@ -961,15 +1095,21 @@ public class ArchivalsServiceImpl implements ArchivalsService {
             final NodeRef archivedSeriesRef, final Map<NodeRef, NodeRef> originalToArchivedCaseNodeRef, final int archivedDocumentsCount,
             final Map<NodeRef, Integer> caseDocsUpdated, final RetryingTransactionHelper transactionHelper) {
         updateCounter(archivedVolumeRef, VolumeModel.Props.CONTAINING_DOCS_COUNT, true, archivedDocumentsCount, transactionHelper, false);
+        volumeService.removeFromCache(archivedVolumeRef);
         updateCounter(originalVolumeRef, VolumeModel.Props.CONTAINING_DOCS_COUNT, false, archivedDocumentsCount, transactionHelper, true);
+        volumeService.removeFromCache(originalVolumeRef);
         updateCounter(archivedSeriesRef, SeriesModel.Props.CONTAINING_DOCS_COUNT, true, archivedDocumentsCount, transactionHelper, false);
+        seriesService.removeFromCache(archivedSeriesRef);
         updateCounter(originalSeriesRef, SeriesModel.Props.CONTAINING_DOCS_COUNT, false, archivedDocumentsCount, transactionHelper, true);
+        seriesService.removeFromCache(originalSeriesRef);
         for (Map.Entry<NodeRef, Integer> entry : caseDocsUpdated.entrySet()) {
             NodeRef originalCaseRef = entry.getKey();
             NodeRef archivedCaseRef = originalToArchivedCaseNodeRef.get(originalCaseRef);
             int archivedDocCount = entry.getValue();
             updateCounter(archivedCaseRef, CaseModel.Props.CONTAINING_DOCS_COUNT, true, archivedDocCount, transactionHelper, false);
+            caseService.removeFromCache(archivedCaseRef);
             updateCounter(originalCaseRef, CaseModel.Props.CONTAINING_DOCS_COUNT, false, archivedDocCount, transactionHelper, true);
+            caseService.removeFromCache(originalCaseRef);
         }
 
     }
@@ -1008,7 +1148,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         }
         archiveNodeRefs.put(volumeNodeRef, notCaseNodeRefs);
         for (NodeRef caseNodeRef : caseNodeRefs) {
-            archiveNodeRefs.put(caseNodeRef, new HashSet<ChildAssociationRef>(nodeService.getChildAssocs(caseNodeRef)));
+            archiveNodeRefs.put(caseNodeRef, new HashSet<>(nodeService.getChildAssocs(caseNodeRef)));
         }
     }
 
@@ -1078,6 +1218,20 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         props.put(DocumentCommonModel.Props.VOLUME, archivedVolumeRef);
         props.put(DocumentCommonModel.Props.CASE, archivedCaseRef);
         nodeService.addProperties(docRef, props);
+    }
+
+    private void updateCompoundWorkflowProps(Set<NodeRef> compoundWorkflowRefs, NodeRef mainDocRef, NodeRef archivedDocRef) {
+        if (CollectionUtils.isEmpty(compoundWorkflowRefs)) {
+            return;
+        }
+        Map<NodeRef, Node> nodes = bulkLoadNodeService.loadNodes(compoundWorkflowRefs, CWF_PROPS_TO_LOAD);
+        for (Map.Entry<NodeRef, Node> entry : nodes.entrySet()) {
+            Map<String, Object> cwfProps = entry.getValue().getProperties();
+            CompoundWorkflowType type = CompoundWorkflowType.valueOf((String) cwfProps.get(WorkflowCommonModel.Props.TYPE));
+            if (CompoundWorkflowType.INDEPENDENT_WORKFLOW.equals(type) && mainDocRef.equals(cwfProps.get(WorkflowCommonModel.Props.MAIN_DOCUMENT))) {
+                nodeService.setProperty(entry.getKey(), WorkflowCommonModel.Props.MAIN_DOCUMENT, archivedDocRef);
+            }
+        }
     }
 
     @Override
@@ -1200,7 +1354,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
             @Override
             public Void doWork() throws Exception {
                 disposeVolumes(volumes, destructionStartDate, docDeletingComment, logMessage, executingUser);
-                BeanHelper.getDocumentTemplateService().populateVolumeArchiveTemplate(activityRef, volumes, templateRef);
+                BeanHelper.getDocumentTemplateService().populateVolumeArchiveTemplate(activityRef, volumes, templateRef, executingUser);
                 setActivityStatusFinished(activityRef);
                 return null;
             }
@@ -1208,40 +1362,9 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         }, "volumeDispose", true);
     }
 
-    private void updateDocListUnitLocations(NodeRef archivedFunRef, NodeRef archivedSeriesRef, NodeRef archivedVolumeRef, boolean containsCases) {
-        updateDocListUnitLocationProps(archivedFunRef, archivedSeriesRef, archivedVolumeRef, null, Collections.singletonList(archivedVolumeRef), false, false);
-        if (containsCases) {
-            List<NodeRef> caseRefs = caseService.getCaseRefsByVolume(archivedVolumeRef);
-            updateDocListUnitLocationProps(archivedFunRef, archivedSeriesRef, archivedVolumeRef, null, caseRefs, true, false);
-            for (NodeRef caseRef : caseRefs) {
-                List<NodeRef> documents = documentService.getAllDocumentRefsByParentRefWithoutRestrictedAccess(caseRef);
-                updateDocListUnitLocationProps(archivedFunRef, archivedSeriesRef, archivedVolumeRef, caseRef, documents, true, true);
-            }
-        }
-
-        // Also process documents found directly under the volume
-        List<NodeRef> documents = documentService.getAllDocumentRefsByParentRefWithoutRestrictedAccess(archivedVolumeRef);
-        updateDocListUnitLocationProps(archivedFunRef, archivedSeriesRef, archivedVolumeRef, null, documents, true, true);
-    }
-
-    private void updateDocListUnitLocationProps(NodeRef archivedFunRef, NodeRef archivedSeriesRef, NodeRef archivedVolumeRef, NodeRef archivedCaseRef, List<NodeRef> docRefs,
-            boolean addVolume, boolean addCase) {
-        for (NodeRef docRef : docRefs) {
-            Map<QName, Serializable> props = new HashMap<QName, Serializable>();
-            props.put(DocumentCommonModel.Props.FUNCTION, archivedFunRef);
-            props.put(DocumentCommonModel.Props.SERIES, archivedSeriesRef);
-            if (addVolume) {
-                props.put(DocumentCommonModel.Props.VOLUME, archivedVolumeRef);
-            }
-            if (addCase) {
-                props.put(DocumentCommonModel.Props.CASE, archivedCaseRef);
-            }
-            nodeService.addProperties(docRef, props);
-        }
-    }
-
     private void disposeVolumes(List<NodeRef> volumesToDestroy, final Date disposalDate, final String docDeletingComment, final String logMessage, String executingUser) {
         RetryingTransactionHelper retryingTransactionHelper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
+        final Map<Long, QName> propertyTypes = new HashMap<Long, QName>();
         for (final NodeRef volumeNodeRef : volumesToDestroy) {
             // remove all childs
             deleteDocuments(docDeletingComment, retryingTransactionHelper, volumeNodeRef, executingUser);
@@ -1254,7 +1377,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
 
                 @Override
                 public Void execute() throws Throwable {
-                    seriesService.updateContainingDocsCountByVolume(volumeService.getVolumeByNodeRef(volumeNodeRef).getSeriesNodeRef(), volumeNodeRef, false);
+                    seriesService.updateContainingDocsCountByVolume(volumeService.getVolumeByNodeRef(volumeNodeRef, propertyTypes).getSeriesNodeRef(), volumeNodeRef, false);
                     HashMap<QName, Serializable> props = new HashMap<QName, Serializable>();
                     props.put(VolumeModel.Props.STATUS, DocListUnitStatus.DESTROYED.getValueName());
                     props.put(EventPlanModel.Props.DISPOSAL_DATE_TIME, disposalDate);
@@ -1263,6 +1386,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
                         props.put(DocumentCommonModel.Props.DOCUMENT_REG_NUMBERS, null);
                     }
                     nodeService.addProperties(volumeNodeRef, props);
+                    volumeService.removeFromCache(volumeNodeRef);
                     logService.addLogEntry(LogEntry.create(isCaseFile(volumeNodeRef) ? LogObject.CASE_FILE : LogObject.VOLUME, userService, volumeNodeRef, logMessage));
                     return null;
                 }
@@ -1295,7 +1419,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
     }
 
     @Override
-    public List<Function> getArchivedFunctions() {
+    public List<UnmodifiableFunction> getArchivedFunctions() {
         return functionsService.getFunctions(getArchivalRoot());
     }
 
@@ -1317,7 +1441,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
                 ArchivalsModel.Types.ARCHIVAL_ACTIVITY, properties);
         NodeRef activityRef = childAssoc.getChildRef();
         if (templateRef != null) {
-            documentTemplateService.populateVolumeArchiveTemplate(activityRef, volumeRefs, templateRef);
+            documentTemplateService.populateVolumeArchiveTemplate(activityRef, volumeRefs, templateRef, username);
         }
         return activityRef;
     }
@@ -1422,8 +1546,8 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         this.seriesService = seriesService;
     }
 
-    public void setSearchService(SearchService searchService) {
-        this.searchService = searchService;
+    public void setDocumentSearchService(DocumentSearchService documentSearchService) {
+        this.documentSearchService = documentSearchService;
     }
 
     public void setDictionaryService(DictionaryService dictionaryService) {
@@ -1440,10 +1564,6 @@ public class ArchivalsServiceImpl implements ArchivalsService {
 
     public void setCaseService(CaseService caseService) {
         this.caseService = caseService;
-    }
-
-    public void setArchivalsStore(String archivalsStore) {
-        this.archivalsStore = new StoreRef(archivalsStore);
     }
 
     public void setDocumentAssociationsService(DocumentAssociationsService documentAssociationsService) {
@@ -1486,6 +1606,10 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         this.contentService = contentService;
     }
 
+    public void setBulkLoadNodeService(BulkLoadNodeService bulkLoadNodeService) {
+        this.bulkLoadNodeService = bulkLoadNodeService;
+    }
+
     @Override
     public boolean isSimpleDestructionEnabled() {
         return simpleDestructionEnabled;
@@ -1493,6 +1617,10 @@ public class ArchivalsServiceImpl implements ArchivalsService {
 
     public void setSimpleDestructionEnabled(boolean simpleDestructionEnabled) {
         this.simpleDestructionEnabled = simpleDestructionEnabled;
+    }
+
+    public void setParametersService(ParametersService parametersService) {
+        this.parametersService = parametersService;
     }
 
     @Override
@@ -1534,24 +1662,36 @@ public class ArchivalsServiceImpl implements ArchivalsService {
 
     @Override
     public void pauseArchiving(ActionEvent event) {
-        archivingPaused = true;
+        archivingPaused.set(true);
+        archivingContinuedManually.set(false);
         LOG.info("Volume archiving was paused");
     }
 
     @Override
     public void continueArchiving(ActionEvent event) {
-        archivingPaused = false;
+        archivingPaused.set(false);
+        archivingContinuedManually.set(true);
         LOG.info("Volume archiving was resumed");
     }
 
     @Override
     public boolean isArchivingPaused() {
-        return archivingPaused;
+        return archivingPaused.get();
+    }
+
+    @Override
+    public boolean isArchivingContinuedManually() {
+        return archivingContinuedManually.get();
+    }
+
+    @Override
+    public void resetManualActions() {
+        archivingContinuedManually.set(false);
     }
 
     @Override
     public void doPauseArchiving() {
-        while (archivingPaused) {
+        while (archivingPaused.get()) {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {

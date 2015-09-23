@@ -97,7 +97,7 @@ public abstract class PrivilegesHandler implements Serializable {
     protected static Collection<Privilege> getDocumentCaseFilePrivs() {
         if (DOCUMENT_CASEFILE_MANAGEABLE_PERMISSIONS == null) {
             ArrayList<Privilege> privs = new ArrayList<Privilege>();
-            if (BeanHelper.getVolumeService().isCaseVolumeEnabled()) {
+            if (BeanHelper.getApplicationConstantsBean().isCaseVolumeEnabled()) {
                 privs.add(Privilege.VIEW_CASE_FILE);
                 privs.add(Privilege.EDIT_CASE_FILE);
             }

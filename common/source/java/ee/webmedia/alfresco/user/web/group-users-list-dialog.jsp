@@ -32,9 +32,9 @@
          <%-- Actions column --%>
          <a:column actions="true" style="text-align:left">
             <f:facet name="header">
-               <h:outputText value="#{msg.actions}" rendered="#{UserService.groupsEditingAllowed && !GroupUsersListDialog.disableActions}" />
+               <h:outputText value="#{msg.actions}" rendered="#{applicationConstantsBean.groupsEditingAllowed && !GroupUsersListDialog.disableActions}" />
             </f:facet>
-            <a:actionLink value="#{msg.remove}" image="/images/icons/remove_user.gif" showLink="false" styleClass="inlineAction" actionListener="#{DialogManager.bean.removeUser}"  rendered="#{UserService.groupsEditingAllowed  && !GroupUsersListDialog.disableActions && r.structUnitBased == 'false'}">
+            <a:actionLink value="#{msg.remove}" image="/images/icons/remove_user.gif" showLink="false" styleClass="inlineAction" actionListener="#{DialogManager.bean.removeUser}"  rendered="#{applicationConstantsBean.groupsEditingAllowed  && !GroupUsersListDialog.disableActions && r.structUnitBased == 'false'}">
                <f:param name="id" value="#{r.id}" />
             </a:actionLink>
          </a:column>

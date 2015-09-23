@@ -54,12 +54,12 @@ public class SignatureBlockBean implements Serializable {
     private void load() {
         dataItems = null;
         signatureItems = null;
-        if (!getSignatureService().isDigiDocContainer(file)) {
+        if (!getSignatureService().isBDocContainer(file)) {
             return;
         }
 
         try {
-            SignatureItemsAndDataItems values = getSignatureService().getDataItemsAndSignatureItems(file, false);
+            SignatureItemsAndDataItems values = getSignatureService().getDataItemsAndSignatureItems(file, false, true);
             signatureItems = values.getSignatureItems();
             dataItems = values.getDataItems();
         } catch (SignatureException e) {

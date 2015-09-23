@@ -7,6 +7,7 @@ import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import javax.activation.DataHandler;
 import javax.xml.datatype.DatatypeConfigurationException;
@@ -44,7 +45,7 @@ public abstract class BaseAdrServiceImpl implements AdrService {
     @SuppressWarnings("unchecked")
     private final List<NodeRef> tempFiles = SynchronizedList.decorate(new ArrayList<NodeRef>());
     private static DatatypeFactory datatypeFactory; // JAXP RI implements DatatypeFactory in a thread-safe way
-    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(BaseAdrServiceImpl.class);
+    private static final Pattern ILLEGAL_XML_CHARACTERS = Pattern.compile("[^\u0009\r\n\u0020-\uD7FF\uE000-\uFFFD\ud800\udc00-\udbff\udfff]");
 
     public BaseAdrServiceImpl() {
         try {
@@ -109,7 +110,7 @@ public abstract class BaseAdrServiceImpl implements AdrService {
             return null;
         }
         NodeRef root = generalService.getNodeRef(AdrModel.Repo.ADR_DELETED_DOCUMENTS);
-        Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+        Map<QName, Serializable> props = new HashMap<>();
         props.put(AdrModel.Props.NODEREF, nodeRef.toString());
         props.put(AdrModel.Props.REG_NUMBER, regNumber);
         props.put(AdrModel.Props.REG_DATE_TIME, regDateTime);
@@ -120,7 +121,7 @@ public abstract class BaseAdrServiceImpl implements AdrService {
     @Override
     public void deleteDocumentType(QName documentType) {
         NodeRef root = generalService.getNodeRef(AdrModel.Repo.ADR_DELETED_DOCUMENT_TYPES);
-        Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+        Map<QName, Serializable> props = new HashMap<>();
         props.put(AdrModel.Props.DOCUMENT_TYPE, documentType);
         props.put(AdrModel.Props.DELETED_DATE_TIME, new Date());
         nodeService.createNode(root, AdrModel.Types.ADR_DELETED_DOCUMENT_TYPE, AdrModel.Types.ADR_DELETED_DOCUMENT_TYPE, AdrModel.Types.ADR_DELETED_DOCUMENT_TYPE, props);
@@ -129,7 +130,7 @@ public abstract class BaseAdrServiceImpl implements AdrService {
     @Override
     public void addDocumentType(QName documentType) {
         NodeRef root = generalService.getNodeRef(AdrModel.Repo.ADR_ADDED_DOCUMENT_TYPES);
-        Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+        Map<QName, Serializable> props = new HashMap<>();
         props.put(AdrModel.Props.DOCUMENT_TYPE, documentType);
         props.put(AdrModel.Props.DELETED_DATE_TIME, new Date());
         nodeService.createNode(root, AdrModel.Types.ADR_ADDED_DOCUMENT_TYPE, AdrModel.Types.ADR_ADDED_DOCUMENT_TYPE, AdrModel.Types.ADR_ADDED_DOCUMENT_TYPE, props);
@@ -183,15 +184,23 @@ public abstract class BaseAdrServiceImpl implements AdrService {
         return datatypeFactory.newXMLGregorianCalendar(cal);
     }
 
+    /** Also removes all illegal xml characters */
     protected static String getNullIfEmpty(String input) {
         if (StringUtils.isEmpty(input)) {
             return null;
         }
-        return input;
+        return removeIllegalXmlChars(input);
+    }
+
+    protected static String removeIllegalXmlChars(String input) {
+        if (input == null) {
+            return input;
+        }
+        return ILLEGAL_XML_CHARACTERS.matcher(input).replaceAll("");
     }
 
     protected void cleanTempFiles() {
-        List<NodeRef> files = new ArrayList<NodeRef>(tempFiles);
+        List<NodeRef> files = new ArrayList<>(tempFiles);
         tempFiles.clear();
 
         for (NodeRef nodeRef : files) {

@@ -147,7 +147,7 @@ public class LogEntry implements Serializable, LogListItem {
 
     /**
      * Log entry factory method.
-     * 
+     *
      * @param object Category for object being logged.
      * @param service User service for retrieving current user data.
      * @param nodeRef Reference to the node being logged about (optional).
@@ -221,7 +221,7 @@ public class LogEntry implements Serializable, LogListItem {
         String runAsSystemOverlay = AuthenticationUtil.getOriginalRunAsAuthenticationForSystemOverlay();
         // If code is run as system user, lets get the real user behind the action
         String runAsUser = runAsSystemOverlay != null ? runAsSystemOverlay : AuthenticationUtil.getRunAsUser();
-        if (runAsUser == null || runAsUser.equals(getUserService().getCurrentUserName())) {
+        if (runAsUser == null || AuthenticationUtil.SYSTEM_USER_NAME.equals(runAsUser) || runAsUser.equals(getUserService().getCurrentUserName())) {
             return "";
         }
         return " " + MessageUtil.getMessage("applog_log_subtitution", getUserService().getUserFullName(runAsUser), runAsUser);

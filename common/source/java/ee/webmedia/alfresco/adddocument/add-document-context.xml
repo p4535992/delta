@@ -2,7 +2,7 @@
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
    
-   <bean class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+   <bean id="addDocumentResourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee/webmedia/alfresco/adddocument/addDocument-messages</value>
@@ -52,9 +52,17 @@
          </list>
       </property>
    </bean>
-   
-   <bean class="ee.webmedia.alfresco.adddocument.web.WebServiceDocumentsMenuItemProcessor" />
-   
+
+   <bean id="removeAddedDocumentParentHierarchyPropertiesUpdater" class="ee.webmedia.alfresco.adddocument.bootstrap.RemoveAddedDocumentParentHierarchyPropertiesUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="addDocumentSpacesBootstrap" />
+         </list>
+      </property>
+   </bean>
+
    <bean id="WebServiceDocumentListDialog" class="ee.webmedia.alfresco.adddocument.web.WebServiceDocumentListDialog" scope="session" />
 
 </beans>

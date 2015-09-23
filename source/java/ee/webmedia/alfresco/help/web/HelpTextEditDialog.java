@@ -28,7 +28,7 @@ import org.alfresco.web.config.DialogsConfigElement.DialogConfig;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.BeanNameAware;
 
-import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
+import ee.webmedia.alfresco.docadmin.service.UnmodifiableFieldDefinition;
 import ee.webmedia.alfresco.help.model.HelpTextModel;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
@@ -103,7 +103,7 @@ public class HelpTextEditDialog extends BaseDialogBean implements BeanNameAware 
     }
 
     public void processFieldSearchResults(String fieldCode) {
-        FieldDefinition fieldDefinition = getDocumentAdminService().getFieldDefinition(fieldCode);
+        UnmodifiableFieldDefinition fieldDefinition = getDocumentAdminService().getFieldDefinition(fieldCode);
         String fieldName = fieldDefinition != null ? fieldDefinition.getName() : fieldCode;
         helpText.getProperties().put(PROP_CODE, fieldCode);
         helpText.getProperties().put(PROP_NAME, fieldName);

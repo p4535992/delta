@@ -18,7 +18,7 @@ public interface WorkflowCommonModel {
         QName COMPOUND_WORKFLOW_DEFINITION = QName.createQName(URI, "compoundWorkflowDefinition");
         QName COMPOUND_WORKFLOW = QName.createQName(URI, "compoundWorkflow");
         QName WORKFLOW = QName.createQName(URI, "workflow");
-        /** No new nodes of this type should be created. Nodes for this type are still created in memory. */
+        /** No new nodes of this type should be saved in repo. Nodes for this type are still created in memory. */
         @Deprecated
         QName TASK = QName.createQName(URI, "task");
         /** Deprecated: no new nodes of this type should be created */

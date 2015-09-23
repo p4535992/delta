@@ -81,6 +81,7 @@ import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Workflow;
+import ee.webmedia.alfresco.workflow.service.WorkflowConstantsBean;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 
@@ -105,6 +106,7 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
     private UserService userService;
     private PrivilegeService privilegeService;
     private CaseFileLogService caseFileLogService;
+    private WorkflowConstantsBean workflowConstantsBean;
 
     @Override
     public List<AssociationModel> getAssocs(String documentTypeId, QName typeQNamePattern) {
@@ -129,7 +131,7 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
         Integer baseDocTypeVersionNr = baseDoc.getDocumentTypeVersionNr();
         Integer newDocTypeVersionNr = newDoc.getDocumentTypeVersionNr();
 
-        Pair<DocumentType, DocumentTypeVersion> baseDocTypeAndVersion = documentAdminService.getDocumentTypeAndVersion(baseDocTypeId, baseDocTypeVersionNr);
+        Pair<DocumentType, DocumentTypeVersion> baseDocTypeAndVersion = documentAdminService.getDocumentTypeAndVersion(baseDocTypeId, baseDocTypeVersionNr, true);
         DocumentType baseDocType = baseDocTypeAndVersion.getFirst();
 
         DocTypeAssocType replyOrF = DocTypeAssocType.valueOf(replyOrFollowUp);
@@ -626,7 +628,7 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
                 assocInf.setTitle(TextUtil.joinNonBlankStrings(Arrays.asList((String) volumeProps.get(VolumeModel.Props.VOLUME_MARK),
                         (String) volumeProps.get(DocumentDynamicModel.Props.TITLE)), " "));
                 if (isCaseFile) {
-                    assocInf.setType(BeanHelper.getDocumentAdminService().getCaseFileTypeName(volumeNode));
+                    assocInf.setType(BeanHelper.getDocumentAdminService().getCaseFileTypeName((String) volumeProps.get(DocumentAdminModel.Props.OBJECT_TYPE_ID)));
                     assocInf.setCaseFileVolume(true);
                 } else {
                     assocInf.setType(MessageUtil.getMessage(VolumeType.valueOf((String) volumeNode.getProperties().get(VolumeModel.Props.VOLUME_TYPE))));
@@ -660,7 +662,7 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
         return !ASSOCS_BETWEEN_DOC_LIST_UNIT_ITEMS.contains(assocTypeQName)
                 && (!isDocumentWorkflowAssociation
                         || (isDocumentWorkflowAssociation
-                                && (isSourceAssoc || !workflowService.isIndependentWorkflowEnabled() || !workflowService.isWorkflowTitleEnabled())));
+                                && (isSourceAssoc || !workflowConstantsBean.isIndependentWorkflowEnabled() || !workflowConstantsBean.isWorkflowTitleEnabled())));
     }
 
     private boolean isNotSearchableDocument(final NodeRef targetRef) {
@@ -715,6 +717,10 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
 
     public void setCaseFileLogService(CaseFileLogService caseFileLogService) {
         this.caseFileLogService = caseFileLogService;
+    }
+
+    public void setWorkflowConstantsBean(WorkflowConstantsBean workflowConstantsBean) {
+        this.workflowConstantsBean = workflowConstantsBean;
     }
 
 }

@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.docconfig.service;
 
+import java.io.Serializable;
+
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.namespace.QName;
 
@@ -9,7 +11,7 @@ import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 /**
  * Property definition that isn't globally the same, but some of it's behavior depends on the {@link DocumentTypeVersion}.
  */
-public interface DynamicPropertyDefinition extends PropertyDefinition {
+public interface DynamicPropertyDefinition extends PropertyDefinition, Serializable {
 
     /**
      * If {@code null} or empty, then this property exists on the document node itself, not on child (or grand-child) nodes. If non-empty, then this property does not exist on the

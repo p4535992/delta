@@ -17,9 +17,12 @@ import ee.webmedia.alfresco.base.BaseObject;
 import ee.webmedia.alfresco.base.BaseServiceImpl;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
+import ee.webmedia.alfresco.utils.RepoUtil;
 
 public class DocumentTypeVersion extends BaseObject implements MetadataContainer {
     private static final long serialVersionUID = 1L;
+
+    private static final Map<String, QName> DOC_VERSION_TO_ASSOC_QNAME = new HashMap<>();
 
     // When this object is create-added under some documentType, then versionNr property needs to be set
 
@@ -38,13 +41,18 @@ public class DocumentTypeVersion extends BaseObject implements MetadataContainer
     }
 
     @Override
+    protected <P extends BaseObject> void setParent(P parent) {
+        super.setParent(parent);
+    }
+
+    @Override
     public void resetParent() {
         super.resetParent();
     }
 
     @Override
     protected QName getAssocName() {
-        return QName.createQName(DocumentAdminModel.URI, getVersionNr().toString());
+        return RepoUtil.getFromQNamePool(getVersionNr().toString(), DocumentAdminModel.URI, DOC_VERSION_TO_ASSOC_QNAME);
     }
 
     // ChildrenList

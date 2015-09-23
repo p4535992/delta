@@ -13,8 +13,10 @@ import java.util.Set;
 
 import javax.faces.context.FacesContext;
 
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.casefile.model.CaseFileModel;
@@ -22,7 +24,6 @@ import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.web.evaluator.IsOwnerEvaluator;
 import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.model.UserPrivileges;
 import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
@@ -39,7 +40,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
  */
 public class DocumentTypePrivilegesHandler extends AbstractInheritingPrivilegesHandler {
     private static final long serialVersionUID = 1L;
-    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentTypePrivilegesHandler.class);
 
     protected DocumentTypePrivilegesHandler() {
         this(DocumentCommonModel.Types.DOCUMENT, Arrays.asList(Privilege.VIEW_DOCUMENT_META_DATA, Privilege.VIEW_DOCUMENT_FILES, Privilege.EDIT_DOCUMENT));
@@ -56,7 +56,7 @@ public class DocumentTypePrivilegesHandler extends AbstractInheritingPrivilegesH
 
     @Override
     public boolean isEditable() {
-        return super.isEditable() || new IsOwnerEvaluator().evaluate(state.getManageableRef());
+        return super.isEditable() || AuthenticationUtil.getRunAsUser().equals(getNodeService().getProperty(state.getManageableRef(), DocumentCommonModel.Props.OWNER_ID));
     }
 
     @Override
@@ -96,6 +96,7 @@ public class DocumentTypePrivilegesHandler extends AbstractInheritingPrivilegesH
         }
         FileService fileService = BeanHelper.getFileService();
         Map<String, Set<Privilege>> missingPrivsByUser = new HashMap<String, Set<Privilege>>();
+        Map<NodeRef, Pair<Boolean, Boolean>> digiDocStatuses = new HashMap<>();
         for (Task task : tasks) {
             String ownerId = task.getOwnerId();
             UserPrivileges userPrivileges = loosingPrivileges.get(ownerId);
@@ -103,7 +104,7 @@ public class DocumentTypePrivilegesHandler extends AbstractInheritingPrivilegesH
                 continue;
             }
             Set<Privilege> requiredPrivileges = PrivilegeUtil.getPrivsWithDependencies(PrivilegeUtil.getRequiredPrivsForInprogressTask(task, docRef, fileService,
-                    CaseFileModel.Types.CASE_FILE.equals(getNodeType())));
+                    CaseFileModel.Types.CASE_FILE.equals(getNodeType()), digiDocStatuses));
             requiredPrivileges.removeAll(userPrivileges.getActivePrivileges());
             if (!requiredPrivileges.isEmpty()) {
                 Set<Privilege> missingPrivileges = missingPrivsByUser.get(userPrivileges.getUserName());

@@ -9,7 +9,7 @@ import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.volume.model.Volume;
+import ee.webmedia.alfresco.volume.model.UnmodifiableVolume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
 public class IsOpenDocListUnitEvaluator extends BaseActionEvaluator {
@@ -18,10 +18,7 @@ public class IsOpenDocListUnitEvaluator extends BaseActionEvaluator {
 
     @Override
     public boolean evaluate(Node parentNode) {
-        if (!new IsAdminOrDocManagerEvaluator().evaluate(parentNode)) {
-            return false;
-        }
-        if (parentNode == null) {
+        if (parentNode == null || !BeanHelper.getUserService().isDocumentManager()) {
             return false;
         }
         NodeRef parentRef = parentNode.getNodeRef();
@@ -33,7 +30,7 @@ public class IsOpenDocListUnitEvaluator extends BaseActionEvaluator {
             Case aCase = BeanHelper.getCaseService().getCaseByNoderef(parentRef);
             return DocListUnitStatus.OPEN.getValueName().equals(aCase.getStatus());
         } else if (nodeService.getType(parentRef).equals(VolumeModel.Types.VOLUME)) {
-            Volume volume = BeanHelper.getVolumeService().getVolumeByNodeRef(parentRef);
+            UnmodifiableVolume volume = BeanHelper.getVolumeService().getUnmodifiableVolume(parentRef, null);
             return DocListUnitStatus.OPEN.getValueName().equals(volume.getStatus());
         }
         return false;

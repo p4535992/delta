@@ -51,4 +51,9 @@ public class ScannedFoldersListDialog extends BaseDialogBean {
         return fileService;
     }
 
+    @Override
+    public void clean() {
+        files = null;
+    }
+
 }

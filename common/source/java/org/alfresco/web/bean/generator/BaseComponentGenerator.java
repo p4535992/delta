@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.faces.FacesException;
+import javax.faces.component.EditableValueHolder;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIGraphic;
 import javax.faces.component.UIInput;
@@ -51,8 +52,10 @@ import javax.faces.convert.Converter;
 import javax.faces.el.EvaluationException;
 import javax.faces.el.MethodBinding;
 import javax.faces.el.ValueBinding;
+import javax.faces.event.ValueChangeEvent;
 import javax.faces.validator.Validator;
 
+import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
 import org.alfresco.repo.dictionary.constraint.AbstractConstraint;
 import org.alfresco.repo.dictionary.constraint.ListOfValuesConstraint;
 import org.alfresco.repo.dictionary.constraint.NumericRangeConstraint;
@@ -230,7 +233,6 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
         if (isNotBlank(styleClass)) {
             final String existingStyleClass = (String) attributes.get(STYLE_CLASS);
             if (isNotBlank(existingStyleClass)) {
-                logger.warn("component already has existing styleclass set from code ("+existingStyleClass+"), adding styleclass also from property-sheet: "+styleClass);
                 attributes.put(STYLE_CLASS, existingStyleClass+" "+styleClass);
             } else {
                 attributes.put(STYLE_CLASS, styleClass);
@@ -240,6 +242,11 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
         String dontRenderIfDisabled = getCustomAttributes().get(WMUIProperty.DONT_RENDER_IF_DISABLED_ATTR);
         if (org.apache.commons.lang.StringUtils.isNotEmpty(dontRenderIfDisabled)) {
             attributes.put(WMUIProperty.DONT_RENDER_IF_DISABLED_ATTR, Boolean.parseBoolean(dontRenderIfDisabled));
+        }
+
+        String valueChangeListener = getCustomAttributes().get(GeneralSelectorGenerator.ATTR_VALUE_CHANGE_LISTENER);
+        if (org.apache.commons.lang.StringUtils.isNotEmpty(valueChangeListener) && component instanceof EditableValueHolder) {
+            ((EditableValueHolder) component).setValueChangeListener(context.getApplication().createMethodBinding(valueChangeListener, new Class[] { ValueChangeEvent.class }));
         }
     }
 

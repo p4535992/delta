@@ -1,5 +1,20 @@
 package ee.webmedia.alfresco.docadmin.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import javax.faces.context.FacesContext;
+import javax.faces.event.ActionEvent;
+
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.util.Pair;
+import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.collections4.map.CaseInsensitiveMap;
+import org.apache.commons.lang.StringUtils;
+
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
@@ -12,19 +27,6 @@ import ee.webmedia.alfresco.docdynamic.web.BaseSnapshotCapableDialog;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageData;
 import ee.webmedia.alfresco.utils.MessageUtil;
-import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.util.Pair;
-import org.alfresco.web.bean.repository.Node;
-import org.apache.commons.collections4.map.CaseInsensitiveMap;
-import org.apache.commons.lang.StringUtils;
-
-import javax.faces.context.FacesContext;
-import javax.faces.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
 
 /**
  * Base dialog for editing {@link DynamicType} details
@@ -47,10 +49,10 @@ public abstract class DynamicTypeDetailsDialog<D extends DynamicType, S extends 
     public abstract static class DynTypeDialogSnapshot<D extends DynamicType> implements BaseSnapshotCapableDialog.Snapshot {
         private static final long serialVersionUID = 1L;
 
-        private D dynType;
-        private boolean addNewLatestDocumentTypeVersion = true;
+        public D dynType;
+        public boolean addNewLatestDocumentTypeVersion = true;
         /** only initialized when not showing latest version */
-        private Integer docTypeVersion;
+        public Integer docTypeVersion;
         /** only initialized when not showing latest version */
         public NodeRef docTypeVersionRef;
 
@@ -74,6 +76,22 @@ public abstract class DynamicTypeDetailsDialog<D extends DynamicType, S extends 
         public void setDynType(D docType) {
             this.dynType = docType;
         }
+
+        public void setAddNewLatestDocumentTypeVersion(boolean addNewLatestDocumentTypeVersion) {
+            this.addNewLatestDocumentTypeVersion = addNewLatestDocumentTypeVersion;
+        }
+
+        public boolean isAddNewLatestDocumentTypeVersion() {
+            return addNewLatestDocumentTypeVersion;
+        }
+
+        public void setDocTypeVersion(Integer docTypeVersion) {
+            this.docTypeVersion = docTypeVersion;
+        }
+
+        public Integer getDocTypeVersion() {
+            return docTypeVersion;
+        }
     }
 
     abstract protected S newSnapshot();
@@ -93,7 +111,7 @@ public abstract class DynamicTypeDetailsDialog<D extends DynamicType, S extends 
             fieldsListBean.doReorder();
             Pair<D, MessageData> result = getDocumentAdminService().saveOrUpdateDynamicType(getCurrentSnapshot().getDynType(), false);
             D saveOrUpdateDocumentType = result.getFirst();
-            getCurrentSnapshot().addNewLatestDocumentTypeVersion = true;
+            getCurrentSnapshot().setAddNewLatestDocumentTypeVersion(true);
             updateDialogState(saveOrUpdateDocumentType, getCurrentSnapshot(), null);
             MessageData messageData = result.getSecond();
             if (messageData != null) {
@@ -198,7 +216,7 @@ public abstract class DynamicTypeDetailsDialog<D extends DynamicType, S extends 
     /** replace dynType in memory with fresh copy from repo */
     void refreshDocType() {
         S currentSnapshot = getCurrentSnapshot();
-        currentSnapshot.addNewLatestDocumentTypeVersion = true;
+        currentSnapshot.setAddNewLatestDocumentTypeVersion(true);
         D documentType = getDocumentTypeWithoutOlderDTVersionChildren(currentSnapshot.getDynType().getNodeRef());
         updateDialogState(documentType, currentSnapshot, null);
     }
@@ -232,15 +250,15 @@ public abstract class DynamicTypeDetailsDialog<D extends DynamicType, S extends 
         if (docTypeVersionRef != null) {
             docTypeVersion = documentType.getDocumentTypeVersions().getChildByNodeRef(docTypeVersionRef);
             currentSnapshot.docTypeVersionRef = docTypeVersionRef;
-            currentSnapshot.docTypeVersion = docTypeVersion.getVersionNr();
+            currentSnapshot.setDocTypeVersion(docTypeVersion.getVersionNr());
         } else {
-            if (currentSnapshot.addNewLatestDocumentTypeVersion) {
+            if (currentSnapshot.isAddNewLatestDocumentTypeVersion()) {
                 documentType.addNewLatestDocumentTypeVersion();
             }
             docTypeVersion = documentType.getLatestDocumentTypeVersion();
             versionsListBean.resetOrInit(documentType);
         }
-        currentSnapshot.addNewLatestDocumentTypeVersion = false;
+        currentSnapshot.setAddNewLatestDocumentTypeVersion(false);
         fieldsListBean.init(docTypeVersion);
     }
 
@@ -331,7 +349,7 @@ public abstract class DynamicTypeDetailsDialog<D extends DynamicType, S extends 
         if (currentSnapshot == null) {
             return null;
         }
-        Integer docTypeVersion = currentSnapshot.docTypeVersion;
+        Integer docTypeVersion = currentSnapshot.getDocTypeVersion();
         Integer verNr = docTypeVersion != null ? docTypeVersion : currentSnapshot.getDynType().getLatestVersion();
         return MessageUtil.getMessage("doc_type_details_panel_metadata", verNr);
     }

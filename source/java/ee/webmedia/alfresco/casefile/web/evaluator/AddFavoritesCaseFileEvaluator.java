@@ -1,13 +1,13 @@
 package ee.webmedia.alfresco.casefile.web.evaluator;
 
 import org.alfresco.service.cmr.repository.StoreRef;
-import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.bean.repository.Node;
 
+import ee.webmedia.alfresco.common.evaluator.NodeBasedEvaluatorSharedResource;
+import ee.webmedia.alfresco.common.evaluator.SharedResourceEvaluator;
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.document.web.evaluator.ViewStateActionEvaluator;
 
-public class AddFavoritesCaseFileEvaluator extends BaseActionEvaluator {
+public class AddFavoritesCaseFileEvaluator extends SharedResourceEvaluator {
     private static final long serialVersionUID = 1L;
 
     @Override
@@ -15,11 +15,17 @@ public class AddFavoritesCaseFileEvaluator extends BaseActionEvaluator {
         if (!docNode.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)) {
             return false;
         }
-        ViewStateActionEvaluator viewStateEval = new ViewStateActionEvaluator();
-        if (!viewStateEval.evaluate(docNode)) {
+        if (BeanHelper.getDocumentDialogHelperBean().isInEditMode()) {
             return false;
         }
         return BeanHelper.getCaseFileFavoritesService().isFavoriteAddable(docNode.getNodeRef());
+    }
+
+    @Override
+    public boolean evaluate() {
+        NodeBasedEvaluatorSharedResource resource = (NodeBasedEvaluatorSharedResource) sharedResource;
+        return resource.isWorkspaceNode() && !resource.isInEditMode()
+                && !resource.isFavourite() && !BeanHelper.getDocumentService().isDraft(resource.getObject().getNodeRef());
     }
 
 }

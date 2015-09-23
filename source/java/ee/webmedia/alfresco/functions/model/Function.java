@@ -1,6 +1,6 @@
 package ee.webmedia.alfresco.functions.model;
 
-import static ee.webmedia.alfresco.app.AppConstants.DEFAULT_COLLATOR;
+import static ee.webmedia.alfresco.app.AppConstants.getNewCollatorInstance;
 
 import java.io.Serializable;
 
@@ -111,9 +111,9 @@ public class Function implements Serializable, Comparable<Function> {
     public int compareTo(Function fn2) {
         if (getOrder() == fn2.getOrder()) {
             int cmpMark;
-            if ((cmpMark = DEFAULT_COLLATOR.compare(getMark(), fn2.getMark())) == 0) {
+            if ((cmpMark = getNewCollatorInstance().compare(getMark(), fn2.getMark())) == 0) {
                 if (title != null && fn2.title != null) {
-                    return DEFAULT_COLLATOR.compare(getTitle(), fn2.getTitle());
+                    return getNewCollatorInstance().compare(getTitle(), fn2.getTitle());
                 } else if (title == null && fn2.title == null) {
                     return 0;
                 }

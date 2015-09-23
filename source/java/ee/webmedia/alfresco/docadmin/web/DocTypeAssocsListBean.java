@@ -62,7 +62,7 @@ public abstract class DocTypeAssocsListBean<T extends AssociationModel> implemen
 
     private Map<String, String> getDocumentTypeNames() {
         if (docTypesNamesByDocTypeId == null) {
-            docTypesNamesByDocTypeId = getDocumentAdminService().getDocumentTypeNames(true);
+            docTypesNamesByDocTypeId = getDocumentAdminService().getDocumentTypeNames(null);
         }
         return docTypesNamesByDocTypeId;
     }

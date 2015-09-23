@@ -47,32 +47,15 @@
       </property>
    </bean>
 
-   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
+   <bean id="scannedResourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee/webmedia/alfresco/document/scanned/web/scanned-webclient</value>
          </list>
       </property>
    </bean>
-
-   <bean class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
-      <property name="resourceBundles">
-         <list>
-            <value>ee/webmedia/alfresco/document/scanned/web/scanned-webclient</value>
-         </list>
-      </property>
-   </bean>
-
 
    <!-- START: web beans: -->
    <bean id="ScannedFoldersListDialog" class="ee.webmedia.alfresco.document.scanned.web.ScannedFoldersListDialog" scope="session" />
-   
-   <bean class="ee.webmedia.alfresco.document.scanned.web.ScannedDocumentsMenuItemProcessor">
-      <property name="menuService" ref="MenuService" />
-      <property name="generalService" ref="GeneralService"/>
-      <property name="fileFolderService" ref="FileFolderService" />
-      <property name="nodeService" ref="NodeService" />
-      <property name="scannedFilesPath" value="${scannedFiles.rootPath}${scannedFiles.folder.name}"/>
-   </bean>
    <!-- END: web beans: -->
 </beans>

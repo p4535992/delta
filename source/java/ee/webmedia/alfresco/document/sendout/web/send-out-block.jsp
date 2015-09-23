@@ -7,10 +7,10 @@
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:panel id="send-out-block-panel" label="#{msg.document_send_title}" styleClass="panel-100" progressive="true" rendered="#{SendOutBlockBean.rendered}" expanded="false">
+<a:panel id="send-out-block-panel" label="#{msg.document_send_title}" styleClass="panel-100 with-pager" progressive="true" rendered="#{SendOutBlockBean.rendered}" expanded="false">
 
    <a:richList id="sendOutList" viewMode="details" value="#{SendOutBlockBean.sendInfos}" var="r" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-      width="100%" refreshOnBind="true" initialSortColumn="sendDateTime">
+      width="100%" refreshOnBind="true" pageSize="#{BrowseBean.pageSizeContent}" initialSortColumn="sendDateTime">
 
       <a:column id="col1" primary="true">
          <f:facet name="header">
@@ -56,6 +56,8 @@
          <h:outputText id="col5-txt" value="#{r.resolution}" escape="false" />
       </a:column>
 
+      <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
+      <a:dataPager id="sendoutListPager" styleClass="pager" />
    </a:richList>
 
 </a:panel>

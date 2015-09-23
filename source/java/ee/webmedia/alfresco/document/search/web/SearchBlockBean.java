@@ -4,6 +4,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -103,6 +104,11 @@ public class SearchBlockBean extends AbstractSearchBlockBean implements Document
         show = true;
         showSimilarDocumentsBlock = false;
         documentSearchBean.reset();
+    }
+
+    @Override
+    public void clean() {
+        reset();
     }
 
     @Override
@@ -296,7 +302,12 @@ public class SearchBlockBean extends AbstractSearchBlockBean implements Document
     public void findSimilarDocuments(String senderRegNumber) {
         final List<AssociationRef> targetAssocs = BeanHelper.getNodeService().getTargetAssocs(document.getNodeRef(), DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP);
         if (targetAssocs.isEmpty() && StringUtils.isNotBlank(senderRegNumber)) {
-            List<Document> documents = getDocumentSearchService().searchIncomingLetterRegisteredDocuments(senderRegNumber);
+            List<NodeRef> docRefs = getDocumentSearchService().searchIncomingLetterRegisteredDocuments(senderRegNumber);
+            List<Document> documents = new ArrayList<>();
+            for (NodeRef docRef : docRefs) {
+                documents.add(new Document(docRef));
+            }
+            Collections.sort(documents);
             assocBlockObjects = new ArrayList<AssocBlockObject>();
             for (Document doc : documents) {
                 assocBlockObjects.add(new AssocBlockObject(doc));

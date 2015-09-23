@@ -43,6 +43,7 @@ import ee.webmedia.alfresco.utils.UserUtil;
  */
 public class SubstituteListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
+    public static final String BEAN_NAME = "SubstituteListDialog";
     private static final Log log = LogFactory.getLog(SubstituteListDialog.class);
     private static final TransformingComparator SUBSTITUTE_START_DATE_COMPARATOR = new TransformingComparator(new Transformer<Substitute, Date>() {
         @Override
@@ -98,11 +99,16 @@ public class SubstituteListDialog extends BaseDialogBean {
 
     @Override
     public String cancel() {
+        return super.cancel();
+    }
+
+    @Override
+    public void clean() {
         substitutes = null;
         originalSubstitutes = null;
         addedSubstitutes = null;
         emailAddresses = null;
-        return super.cancel();
+        username = null;
     }
 
     @Override
@@ -216,9 +222,7 @@ public class SubstituteListDialog extends BaseDialogBean {
     }
 
     private void sendNotificationEmails(List<Substitute> savedSubstitutes) {
-        for (Substitute savedSubstitute : savedSubstitutes) {
-            BeanHelper.getNotificationService().notifySubstitutionEvent(savedSubstitute);
-        }
+        BeanHelper.getNotificationService().notifySubstitutionEvent(savedSubstitutes);
     }
 
     public void deleteSubstitute(ActionEvent event) {

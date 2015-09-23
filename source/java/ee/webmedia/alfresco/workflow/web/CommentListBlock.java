@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.workflow.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getJsfBindingHelper;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -43,7 +45,6 @@ public class CommentListBlock extends BaseDialogBean {
     private CompoundWorkflow compoundWorkflow;
     private List<Comment> comments = new ArrayList<Comment>();
     private String newComment;
-    private transient UIPanel editCommentModalContainer;
 
     @Override
     public Object getActionsContext() {
@@ -185,14 +186,16 @@ public class CommentListBlock extends BaseDialogBean {
     }
 
     public UIPanel getEditCommentModalContainer() {
-        if (editCommentModalContainer == null) {
-            editCommentModalContainer = new UIPanel();
+        UIPanel editCommentComponent = (UIPanel) getJsfBindingHelper().getComponentBinding(getModalContainerBindingName(this));
+        if (editCommentComponent == null) {
+            editCommentComponent = new UIPanel();
+            getJsfBindingHelper().addBinding(getModalContainerBindingName(this), editCommentComponent);
         }
-        return editCommentModalContainer;
+        return editCommentComponent;
     }
 
     public void setEditCommentModalContainer(UIPanel editCommentModalContainer) {
-        this.editCommentModalContainer = editCommentModalContainer;
+        getJsfBindingHelper().addBinding(getModalContainerBindingName(this), editCommentModalContainer);
     }
 
     public String getNewComment() {

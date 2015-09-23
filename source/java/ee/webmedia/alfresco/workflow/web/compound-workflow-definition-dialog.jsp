@@ -8,6 +8,8 @@
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<%-- just a placeholder for dynamically generated panels --%>
-<h:panelGroup binding="#{CompoundWorkflowDefinitionDialog.commonDataGroup}" />
-<wm:ajaxCapablePanelGroupTag id="compound-workflow-panel-group" binding="#{CompoundWorkflowDefinitionDialog.panelGroup}" />
+<h:panelGroup id="compound-workflow-dialog">
+    <%-- just a placeholder for dynamically generated panels --%>
+    <h:panelGroup binding="#{CompoundWorkflowDefinitionDialog.commonDataGroup}" />
+    <wm:ajaxCapablePanelGroupTag id="compound-workflow-panel-group" binding="#{CompoundWorkflowDefinitionDialog.panelGroup}" />
+</h:panelGroup>

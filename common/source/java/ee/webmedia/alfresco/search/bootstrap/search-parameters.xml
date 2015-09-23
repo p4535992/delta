@@ -5,6 +5,7 @@ xmlns:param="http://alfresco.webmedia.ee/model/parameters/1.0">
    <param:intParameter view:childName="param:maxSearchResultRows">
       <view:properties>
          <param:value>100</param:value>
+         <param:name>maxSearchResultRows</param:name>
          <param:description>Maksimaalne vaikimisi ridade arv dokumentide nimekirjades</param:description>
       </view:properties>
    </param:intParameter>

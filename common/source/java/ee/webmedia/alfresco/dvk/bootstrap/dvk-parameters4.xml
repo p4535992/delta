@@ -6,6 +6,7 @@
    <param:stringParameter view:childName="param:dvkFailedSendsResendTime">
       <view:properties>
          <param:value>00:30</param:value>
+         <param:name>dvkFailedSendsResendTime</param:name>
       </view:properties>
    </param:stringParameter>
    

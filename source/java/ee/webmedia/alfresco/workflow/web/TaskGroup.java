@@ -1,9 +1,10 @@
 package ee.webmedia.alfresco.workflow.web;
 
 import java.io.Serializable;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import org.alfresco.util.GUID;
 
@@ -17,7 +18,8 @@ public class TaskGroup implements Serializable {
     final private String groupId;
     private String groupName;
     private Date dueDate;
-    private List<Integer> taskIds;
+    private Integer minimumTaskIndex;
+    private Set<Integer> taskIds;
     private boolean expanded;
     private boolean responsible;
     private boolean fullAccess;
@@ -33,6 +35,21 @@ public class TaskGroup implements Serializable {
         this.fullAccess = fullAccess;
         dueDate = null;
         getTaskIds().add(taskId);
+    }
+
+    public void addTask(Integer taskIndex) {
+        getTaskIds().add(taskIndex);
+        if (minimumTaskIndex > taskIndex) {
+            minimumTaskIndex = taskIndex;
+        }
+    }
+
+    public boolean hasTask(Integer taskIndex) {
+        return getTaskIds().contains(taskIndex);
+    }
+
+    public void removeTask(Integer taskIndex) {
+        getTaskIds().remove(taskIndex);
     }
 
     public String getGroupId() {
@@ -55,15 +72,15 @@ public class TaskGroup implements Serializable {
         this.dueDate = dueDate;
     }
 
-    public List<Integer> getTaskIds() {
+    public Set<Integer> getTaskIds() {
         if (taskIds == null) {
-            taskIds = new ArrayList<Integer>();
+            taskIds = new LinkedHashSet<>();
         }
         return taskIds;
     }
-
-    public void setTaskIds(List<Integer> taskIds) {
-        this.taskIds = taskIds;
+    
+    public boolean isEmpty() {
+        return getTaskIds().isEmpty();
     }
 
     public boolean isExpanded() {
@@ -88,6 +105,13 @@ public class TaskGroup implements Serializable {
 
     public void setFullAccess(boolean fullAccess) {
         this.fullAccess = fullAccess;
+    }
+
+    public Integer getMinimumTaskIndex() {
+        if (minimumTaskIndex == null) {
+            minimumTaskIndex = Collections.min(getTaskIds());
+        }
+        return minimumTaskIndex;
     }
 
     @Override

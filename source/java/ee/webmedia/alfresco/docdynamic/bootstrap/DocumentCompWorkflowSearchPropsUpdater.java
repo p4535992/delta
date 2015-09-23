@@ -13,7 +13,7 @@ import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.ObjectUtils;
 
-import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
+import ee.webmedia.alfresco.common.bootstrap.AbstractParallelNodeUpdater;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.SearchUtil;
@@ -24,7 +24,7 @@ import ee.webmedia.alfresco.utils.SearchUtil;
  * (for example when migrating from 2.* to 3.*), because DocumentUpdater calls the same (changed) functionality.
  * During 2.* -> 3.* migration this updater should be merged with DocumentUpdater.
  */
-public class DocumentCompWorkflowSearchPropsUpdater extends AbstractNodeUpdater {
+public class DocumentCompWorkflowSearchPropsUpdater extends AbstractParallelNodeUpdater {
 
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {

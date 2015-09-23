@@ -42,6 +42,7 @@ import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.filestore.FileContentReader;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.permissions.AccessDeniedException;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.ServiceRegistry;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.model.FileNotFoundException;
@@ -59,7 +60,11 @@ import org.alfresco.web.app.Application;
 import org.alfresco.web.bean.LoginBean;
 import org.apache.commons.logging.Log;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.webdav.WebDAVCustomHelper;
 
 /**
@@ -427,13 +432,28 @@ public abstract class BaseDownloadContentServlet extends BaseServlet
             if (logger.isInfoEnabled())
                logger.info("Client aborted stream read:\n\tnode: " + nodeRef + "\n\tcontent: " + reader);
          }
+         logFileOpened(nodeRef, filename, nodeService);
       }
       catch (Throwable err)
       {
          throw new AlfrescoRuntimeException("Error during download content servlet processing: " + err.getMessage(), err);
       }
    }
-   
+
+   private void logFileOpened(NodeRef fileRef, String fileName, NodeService nodeService) {
+       final NodeRef parentRef = nodeService.getPrimaryParent(fileRef).getParentRef();
+       if (nodeService.isType(parentRef, DocumentCommonModel.Types.DOCUMENT)) {
+           final String fName = TextUtil.decodeUrl(fileName); // fileName is extracted from url and may contain special symbols
+           BeanHelper.getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
+               @Override
+               public Void execute() throws Throwable {
+                   BeanHelper.getDocumentLogService().addDocumentLog(parentRef, MessageUtil.getMessage("file_opened", fName));
+                   return null;
+               }
+           }, false, true);
+       }
+   }
+
    /**
     * Helper to generate a URL to a content node for downloading content from the server.
     * 

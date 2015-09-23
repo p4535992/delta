@@ -54,8 +54,6 @@
    <r:propertySheetGrid labelStyleClass="propertiesLabel" columns="1" mode="view" value="#{UserDetailsDialog.user}" externalConfig="true" />
 </a:panel>
 
-<h:outputText value="#{AssignResponsibilityBean.setFromOwnerUserConsole}" />
-
 <f:verbatim><div style="overflow:auto;"></f:verbatim>
 <f:verbatim><div class="column panel panel-65"></f:verbatim>
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/assignresponsibility/web/assign-responsibility.jsp" />
@@ -83,3 +81,5 @@
 <f:verbatim></div></f:verbatim>
 
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/user/web/users-groups.jsp" />
+
+<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-cancel-button.jsp" />

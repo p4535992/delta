@@ -24,6 +24,7 @@
  */
 package org.alfresco.web.data;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Timestamp;
 import java.text.CollationKey;
@@ -88,7 +89,7 @@ public abstract class Sort
          }
          else
          {
-             collator = AppConstants.DEFAULT_COLLATOR;
+             collator = AppConstants.getNewCollatorInstance();
          }
          
          this.keys = buildCollationKeys(collator);
@@ -162,19 +163,25 @@ public abstract class Sort
                  } catch (NoSuchMethodException error){
                      // no action
                  }
-             }              
+             }
             // no bean getter method found - try Map implementation
-            if (propertiesGetter != null){
-                bean = propertiesGetter.invoke(bean); 
-            } else if (bean instanceof Node) {
-                bean = ((Node) bean).getProperties();
-            }
+            bean = invokeGetter(propertiesGetter, bean);
             if (bean instanceof Map)
             {
                if (column != null && column.contains(":")) {
                    column = QName.createQName(column, BeanHelper.getNamespaceService()).toString();
                }
                Object obj = ((Map)bean).get(this.column);
+               
+               if(obj == null) { // Right now only first element is tested but that might be null causing the sorting to fall back to comparing strings values of objects
+                   for(int i = 1; i < this.data.size() && obj == null; i++) {
+                       bean = invokeGetter(propertiesGetter, this.data.get(i));
+                       if(bean instanceof Map) {
+                           obj = ((Map)bean).get(this.column);
+                       }
+                   }
+               }
+               
                if (obj != null)
                {
                   returnType = obj.getClass();
@@ -336,6 +343,16 @@ public abstract class Sort
       
       return keys;
    }
+
+
+private Object invokeGetter(Method propertiesGetter, Object bean) throws IllegalAccessException, InvocationTargetException {
+    if (propertiesGetter != null){
+        bean = propertiesGetter.invoke(bean);
+    } else if (bean instanceof Node) {
+        bean = ((Node) bean).getProperties();
+    }
+    return bean;
+}
 
 
 private Method getItemMethod(String propMethodName, Map<Class, Method> propertiesGetters, Class<? extends Object> dataItemClass) {

@@ -63,7 +63,7 @@
 
    <bean id="logService" class="ee.webmedia.alfresco.log.service.LogServiceImpl">
       <property name="jdbcTemplate">
-         <bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
+         <bean class="org.springframework.jdbc.core.JdbcTemplate">
             <constructor-arg ref="dataSource" />
          </bean>
       </property>
@@ -112,31 +112,16 @@
       <property name="batchSize" value="1" />
    </bean>
 
-   <!-- WEB/JSF -->
-
-   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
+   <bean id="logResourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
+            <value>ee.webmedia.alfresco.log.web.app-log</value>
             <value>ee/webmedia/alfresco/log/web/log-webclient</value>
          </list>
       </property>
    </bean>
- 
-   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
-      <property name="resourceBundles">
-         <list>
-            <value>ee/webmedia/alfresco/log/web/app-log</value>
-         </list>
-      </property>
-   </bean>
-   
-   <bean class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
-      <property name="resourceBundles">
-         <list>
-            <value>ee.webmedia.alfresco.log.web.app-log</value>
-         </list>
-      </property>
-   </bean>
+
+   <!-- WEB/JSF -->
 
    <bean id="logWebClientConfigBootstrap" class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
       <property name="configs">

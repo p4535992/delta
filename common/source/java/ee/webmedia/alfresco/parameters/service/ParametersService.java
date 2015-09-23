@@ -29,7 +29,7 @@ public interface ParametersService {
      * @param requiredClazz - parameter is expected to be instance of that class
      * @return value of given parameter converted to requiredClazz
      */
-    <T> T getParameter(Parameters parameter, Class<T> requiredClazz);
+    <T> T getParameterValue(Parameters parameter, Class<T> requiredClazz);
 
     String getStringParameter(Parameters parameter);
 
@@ -40,7 +40,7 @@ public interface ParametersService {
     /**
      * @return all parameter objects from repository
      */
-    List<Parameter<?>> getAllParameters();
+    List<Parameter<? extends Serializable>> getAllParameters();
 
     /**
      * @param parameters - parameters to be updated to the repository
@@ -61,7 +61,7 @@ public interface ParametersService {
 
     /**
      * Returns map indexed by parameter values (meaning in case of equal values only one value is returned)
-     * 
+     *
      * @param collection
      * @return
      */

@@ -12,14 +12,14 @@ import ee.webmedia.alfresco.archivals.model.ActivityType;
 import ee.webmedia.alfresco.archivals.model.ArchiveJobStatus;
 import ee.webmedia.alfresco.archivals.web.ArchivalActivity;
 import ee.webmedia.alfresco.document.file.model.File;
-import ee.webmedia.alfresco.functions.model.Function;
+import ee.webmedia.alfresco.functions.model.UnmodifiableFunction;
 
 public interface ArchivalsService {
     String BEAN_NAME = "ArchivalsService";
 
     void disposeVolumes(List<NodeRef> selectedVolumes, Date destructionStartDate, String docDeletingComment, NodeRef activityRef, NodeRef templateRef, String logMessageKey);
 
-    List<Function> getArchivedFunctions();
+    List<UnmodifiableFunction> getArchivedFunctions();
 
     boolean isSimpleDestructionEnabled();
 
@@ -27,7 +27,7 @@ public interface ArchivalsService {
 
     NodeRef addArchivalActivity(ActivityType activityType, ActivityStatus activityStatus, List<NodeRef> volumeRefs, NodeRef templateRef);
 
-    void archiveVolumeOrCaseFile(NodeRef volumeNodeRef);
+    void archiveVolumeOrCaseFile(NodeRef volumeNodeRef, boolean resumingPaused);
 
     void setNewReviewDate(List<NodeRef> volumes, Date reviewDate, NodeRef activityRef);
 
@@ -72,5 +72,11 @@ public interface ArchivalsService {
     void pauseArchiving(ActionEvent event);
 
     void continueArchiving(ActionEvent event);
+
+    boolean isArchivingContinuedManually();
+
+    void resetManualActions();
+
+    boolean isArchivingAllowed();
 
 }

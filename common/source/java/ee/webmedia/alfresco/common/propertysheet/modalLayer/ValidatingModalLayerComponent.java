@@ -31,6 +31,7 @@ public class ValidatingModalLayerComponent extends ModalLayerComponent {
     public static final String ATTR_IS_HIDDEN = "isHidden";
     public static final String ATTR_PRESERVE_VALUES = "attrPreserveValues";
     public static final String ATTR_AJAX_ENABLED = "ajaxEnabled";
+    public static final String ATTR_ADDITIONAL_VALIDATION_ARG = "additionalArgument";
     public final static int AJAX_PARENT_LEVEL = 1;
 
     @Override
@@ -53,7 +54,12 @@ public class ValidatingModalLayerComponent extends ModalLayerComponent {
                 Map<String, Object> attributes = ComponentUtil.getAttributes(validatedChild);
                 boolean mandatory = attrIsTrue(attributes, ATTR_MANDATORY);
                 if (mandatory) {
-                    validationJs.append("isEmptyInput(" + serializer.serialize(validatedChild.getClientId(context)) + ")");
+                    if (attributes.containsKey(ATTR_ADDITIONAL_VALIDATION_ARG)) {
+                        String arg = (String) attributes.get(ATTR_ADDITIONAL_VALIDATION_ARG);
+                        validationJs.append("isEmptyInputOr(" + serializer.serialize(validatedChild.getClientId(context)) + "," + arg + ")");
+                    } else {
+                        validationJs.append("isEmptyInput(" + serializer.serialize(validatedChild.getClientId(context)) + ")");
+                    }
                 }
                 if (attrIsTrue(attributes, ATTR_IS_DATE)) {
                     if (mandatory) {
@@ -70,8 +76,6 @@ public class ValidatingModalLayerComponent extends ModalLayerComponent {
         for (UIComponent child : ComponentUtil.getChildren(this)) {
             Map<String, Object> attributes = ComponentUtil.getAttributes(child);
             boolean isHidden = attrIsTrue(attributes, ATTR_IS_HIDDEN);
-            String styleClass = (String) attributes.get("styleClass");
-            String style = (String) attributes.get("style");
             out.write("<tr><td class=\"propertiesLabel" + (isHidden ? " hidden" : "") + "\">");
             String labelKey = (String) attributes.get(ATTR_LABEL_KEY);
             out.write(StringUtils.isNotBlank(labelKey) ? MessageUtil.getMessage(labelKey) : "" + " </td>");

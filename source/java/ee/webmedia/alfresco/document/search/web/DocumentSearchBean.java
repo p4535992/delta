@@ -11,6 +11,7 @@ import javax.faces.component.html.HtmlSelectManyListbox;
 import javax.faces.context.FacesContext;
 import javax.faces.model.SelectItem;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.utils.WebUtil;
@@ -47,6 +48,10 @@ public class DocumentSearchBean implements Serializable {
             getDocumentTypeListItems();
         }
         return documentTypes;
+    }
+
+    public boolean isDocumentWorkflowEnabled() {
+        return BeanHelper.getWorkflowConstantsBean().isDocumentWorkflowEnabled();
     }
 
     public List<SelectItem> getDocumentTypeListItems() {

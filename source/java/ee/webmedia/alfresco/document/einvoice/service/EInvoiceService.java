@@ -13,6 +13,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.collections.Predicate;
+import org.apache.xmlbeans.XmlObject;
 
 import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
 import ee.webmedia.alfresco.document.einvoice.generated.Invoice;
@@ -24,8 +25,6 @@ import ee.webmedia.alfresco.document.einvoice.model.TransactionDescParameter;
 import ee.webmedia.alfresco.document.einvoice.model.TransactionTemplate;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
-import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
-import org.apache.xmlbeans.XmlObject;
 
 /**
  * Handle e-invoices conversion between document and xml
@@ -66,15 +65,13 @@ public interface EInvoiceService {
 
     /**
      * Return nodeRef or null if dimension doesn't exist
-     * 
+     *
      * @param dimension
      * @return
      */
     NodeRef getDimension(Dimensions dimension);
 
     Integer updateDocumentsSapAccount();
-
-    boolean isEinvoiceEnabled();
 
     void updateDimensions(List<Dimension> dimensions);
 
@@ -93,7 +90,7 @@ public interface EInvoiceService {
     /**
      * Modify dataFileList - add new files for transactions containing multiple Arve elements
      * and remove data files that were completely transfered to new transaction files
-     * 
+     *
      * @return map of invoice corresponding transaction file
      */
     <F extends XmlObject> Map<NodeRef, Integer> importTransactionsForInvoices(List<NodeRef> newInvoices, List<F> dataFileList);

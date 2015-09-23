@@ -44,14 +44,14 @@ public interface GeneralService {
 
     /**
      * If you call this method from a bootstrap / module component, then you must use dependsOn = archivalsStoresBootstrap.
-     * 
+     *
      * @return
      */
     LinkedHashSet<ArchivalsStoreVO> getArchivalsStoreVOs();
 
     /**
      * If you call this method from a bootstrap / module component, then you must use dependsOn = archivalsStoresBootstrap.
-     * 
+     *
      * @return
      */
     LinkedHashSet<StoreRef> getAllWithArchivalsStoreRefs();
@@ -225,7 +225,7 @@ public interface GeneralService {
      * @param output
      * @param fileRefs selected file nodeRefs.
      */
-    void writeZipFileFromFiles(OutputStream output, List<NodeRef> fileRefs);
+    long writeZipFileFromFiles(OutputStream output, List<NodeRef> fileRefs);
 
     long writeZipFileFromStream(OutputStream output, String fileName, InputStream in);
 
@@ -323,5 +323,19 @@ public interface GeneralService {
     void setModifiedToNow(NodeRef nodeRef);
 
     void explainAnalyzeQuery(String sqlQuery, Log traceLog, boolean analyze, Object[] args);
+
+    void refreshMaterializedViews(QName... nodeTypeQName);
+
+    <T> List<T> fetchObjectsForChildAssocs(Collection<ChildAssociationRef> childAssocs, Set<QName> propsToLoad, NodeBasedObjectCallback<T> callback);
+
+    <T> List<T> fetchObjects(Collection<NodeRef> nodeRefs, Set<QName> propsToLoad, NodeBasedObjectCallback<T> callback);
+
+    <T> T fetchObject(NodeRef nodeRef, Set<QName> propsToLoad, NodeBasedObjectCallback<T> callback, Map<Long, QName> propertryTypes);
+
+    Node fetchNode(NodeRef nodeRef, Map<Long, QName> propertyTypes);
+
+    WmNode fetchObjectNode(NodeRef objectRef, QName objectType, Map<Long, QName> propertyTypes);
+    
+    void runBeforeCommit(final RunAsWork<Void> work);
 
 }

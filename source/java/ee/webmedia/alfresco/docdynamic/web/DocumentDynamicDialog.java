@@ -6,6 +6,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicServi
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentLockHelperBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFileService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getJsfBindingHelper;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPropertySheetStateBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
@@ -55,10 +56,12 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.casefile.service.CaseFile;
-import ee.webmedia.alfresco.cases.model.Case;
+import ee.webmedia.alfresco.cases.service.UnmodifiableCase;
 import ee.webmedia.alfresco.classificator.constant.DocTypeAssocType;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
+import ee.webmedia.alfresco.common.propertysheet.component.SimUIPropertySheet;
 import ee.webmedia.alfresco.common.propertysheet.component.SubPropertySheetItem;
+import ee.webmedia.alfresco.common.service.RequestCacheBean;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
@@ -112,7 +115,9 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 import ee.webmedia.alfresco.utils.WebUtil;
+import ee.webmedia.alfresco.volume.model.UnmodifiableVolume;
 import ee.webmedia.alfresco.volume.model.Volume;
+import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
@@ -128,7 +133,7 @@ import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
  * </p>
  */
 public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<DocDialogSnapshot, DocumentDynamicBlock, DialogDataProvider> implements DialogDataProvider,
-BlockBeanProviderProvider {
+        BlockBeanProviderProvider {
     private static final long serialVersionUID = 1L;
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentDynamicDialog.class);
 
@@ -137,8 +142,10 @@ BlockBeanProviderProvider {
     public static final QName TEMP_ARCHIVAL_ACTIVITY_NODE_REF = RepoUtil.createTransientProp("archivalActivityNodeRef");
     public static final QName TEMP_VALIDATE_WITHOUT_SAVE = RepoUtil.createTransientProp("validateWithoutSave");
     private static final String PARAM_NODEREF = "nodeRef";
+    private static final String SIGNABLE_BY_OWNER_KEY = "signableByOwner";
     private String renderedModal;
     private boolean showConfirmationPopup;
+    private RequestCacheBean requestCacheBean;
 
     // TODO kontrollida et kustutatud dokumendi ekraanile tagasipöördumine töötaks... või tahavad teised blokid laadida uuesti asju? ja siis oleks mõtekam dialoogi mitte kuvada?
 
@@ -187,7 +194,6 @@ BlockBeanProviderProvider {
         String documentTypeId = ActionUtil.getParam(event, "typeId");
         DocumentDynamic doc = getDocumentDynamicService().createNewDocumentInDrafts(documentTypeId).getFirst();
         setLocationFromVolume(doc);
-        propertySheet = null;
         open(doc.getNodeRef(), doc, true, true);
     }
 
@@ -266,7 +272,7 @@ BlockBeanProviderProvider {
                     , getDocumentType().getName());
         }
 
-        Map<QName, Serializable> overrides = new HashMap<QName, Serializable>(2);
+        Map<QName, Serializable> overrides = new HashMap<>(2);
         overrides.put(DocumentCommonModel.Props.DOC_NAME, docName);
         overrides.put(DocumentCommonModel.Props.UPDATE_METADATA_IN_FILES, Boolean.TRUE);
 
@@ -285,7 +291,7 @@ BlockBeanProviderProvider {
     public void copyDocument(@SuppressWarnings("unused") ActionEvent event) {
         DocumentDynamic baseDoc = getCurrentSnapshot().document;
 
-        Map<QName, Serializable> overrides = new HashMap<QName, Serializable>(1);
+        Map<QName, Serializable> overrides = new HashMap<>(1);
         overrides.put(DocumentCommonModel.Props.UPDATE_METADATA_IN_FILES, Boolean.TRUE);
         NodeRef docRef = getDocumentDynamicService().copyDocumentToDrafts(baseDoc, overrides,
                 DocumentSpecificModel.Props.ENTRY_DATE,
@@ -320,7 +326,7 @@ BlockBeanProviderProvider {
         }
         Pair<DocumentDynamic, AssociationModel> newDocumentAndAssociatonModel = BeanHelper.getDocumentAssociationsService().createAssociatedDocFromModel(baseDocRef, assocModelRef);
         DocumentDynamic newDocument = newDocumentAndAssociatonModel.getFirst();
-        open(newDocument.getNodeRef(), newDocument, true, false);
+        open(newDocument.getNodeRef(), newDocument, true, true);
         addWorkflowAssocs(baseDocRef, newDocumentAndAssociatonModel.getSecond().getAssociationType().getAssocBetweenDocs());
         getAssocsBlockBean().sortDocAssocInfos();
     }
@@ -540,7 +546,7 @@ BlockBeanProviderProvider {
             config = snapshot.config;
         }
 
-        List<DialogButtonConfig> buttons = new ArrayList<DialogButtonConfig>(1);
+        List<DialogButtonConfig> buttons = new ArrayList<>(1);
         DocumentType docType = (DocumentType) config.getDocType();
         if (snapshot.inEditMode && SystematicDocumentType.INCOMING_LETTER.isSameType(document.getDocumentTypeId())
                 && docType.isRegistrationEnabled() && docType.isRegistrationOnDocFormEnabled()
@@ -552,7 +558,18 @@ BlockBeanProviderProvider {
                 buttons.add(new DialogButtonConfig("documentRegisterButton", null, "document_registerDoc", "#{DocumentDynamicDialog.saveAndRegister}", "false", null));
             }
         }
+
+        if (document.isDvk() || document.isForwardedDecDocument()) {
+            buttons.add(new DialogButtonConfig("forwardDecDocumentButton", null, "document_forward_dec_document", "#{DialogManager.bean.forwardDecDocuments}", "false", null));
+        }
         return buttons;
+    }
+
+    public void forwardDecDocuments() {
+        String result = BeanHelper.getForwardDecDocumentDialog().init();
+        if (result != null) {
+            WebUtil.navigateTo("dialog:forwardDecDocumentDialog", FacesContext.getCurrentInstance());
+        }
     }
 
     /**
@@ -590,6 +607,13 @@ BlockBeanProviderProvider {
     /** Used in jsp */
     public String getOnChangeStyleClass() {
         return ComponentUtil.getOnChangeStyleClass();
+    }
+
+    public void reloadDocument(NodeRef docRef) {
+        if (getCurrentSnapshot() != null && getCurrentSnapshot().inEditMode) {
+            DocumentDynamic doc = BeanHelper.getDocumentDynamicService().getDocument(docRef);
+            getCurrentSnapshot().setDocument(doc);
+        }
     }
 
     // =========================================================================
@@ -657,8 +681,8 @@ BlockBeanProviderProvider {
     private void openOrSwitchModeCommon(NodeRef docRef, boolean inEditMode) {
         DocumentDynamic document = inEditMode
                 ? getDocumentDynamicService().getDocumentWithInMemoryChangesForEditing(docRef)
-                        : getDocumentDynamicService().getDocument(docRef);
-                openOrSwitchModeCommon(document, inEditMode);
+                : getDocumentDynamicService().getDocument(docRef);
+        openOrSwitchModeCommon(document, inEditMode);
     }
 
     private void openOrSwitchModeCommon(DocumentDynamic document, boolean inEditMode) {
@@ -715,7 +739,7 @@ BlockBeanProviderProvider {
     protected Map<Class<? extends DocumentDynamicBlock>, DocumentDynamicBlock> getBlocks() {
         Map<Class<? extends DocumentDynamicBlock>, DocumentDynamicBlock> blocks = super.getBlocks();
         if (blocks.isEmpty()) {
-            blocks = new HashMap<Class<? extends DocumentDynamicBlock>, DocumentDynamicBlock>();
+            blocks = new HashMap<>();
             blocks.put(FileBlockBean.class, BeanHelper.getFileBlockBean());
             blocks.put(LogBlockBean.class, BeanHelper.getLogBlockBean());
             blocks.put(WorkflowBlockBean.class, BeanHelper.getWorkflowBlockBean());
@@ -762,7 +786,7 @@ BlockBeanProviderProvider {
         BeanHelper.getNotificationService().processAccessRestrictionChangedNotification(document, existingAndMissingEmails.getFirst());
 
         if (!existingAndMissingEmails.getSecond().isEmpty()) {
-            List<String> names = new ArrayList<String>(existingAndMissingEmails.getSecond().size());
+            List<String> names = new ArrayList<>(existingAndMissingEmails.getSecond().size());
             for (SendInfo sendInfo : existingAndMissingEmails.getSecond()) {
                 names.add(sendInfo.getRecipient());
             }
@@ -800,6 +824,7 @@ BlockBeanProviderProvider {
         }
         if (!isInEditMode || !getCurrentSnapshot().viewModeWasOpenedInThePast || !canRestore()) {
             getDocumentDynamicService().deleteDocumentIfDraft(getDocument().getNodeRef());
+            cleanDyamicBlocks();
             return super.cancel(); // closeDialogSnapshot
         }
         // Switch from edit mode back to view mode
@@ -850,6 +875,9 @@ BlockBeanProviderProvider {
                 isFinished = false;
                 return null;
             }
+        }
+        if (!BeanHelper.getWorkflowConstantsBean().isDocumentWorkflowEnabled()) {
+            resetAllRequestCaches();
         }
         final boolean relocateAssociations = isRelocatingAssociations();
         if (!getCurrentSnapshot().moveAssociatedDocumentsConfirmed && relocateAssociations) {
@@ -930,6 +958,12 @@ BlockBeanProviderProvider {
         }, false, true);
     }
 
+    private void resetAllRequestCaches() {
+        BeanHelper.getWorkflowBlockBean().clearRequestCache();
+        BeanHelper.getAssocsBlockBean().clearRequestCache();
+        clearRequestCache();
+    }
+
     public Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> save(final DocumentDynamic document, final List<String> saveListenerBeanNames, final boolean relocateAssocDocs,
             boolean newTransaction) {
         Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> result;
@@ -939,7 +973,8 @@ BlockBeanProviderProvider {
             public Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> execute() throws Throwable {
                 // May throw UnableToPerformException or UnableToPerformMultiReasonException
                 ((FileBlockBean) getBlocks().get(FileBlockBean.class)).updateFilesProperties();
-                Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> saveResult = getDocumentDynamicService().updateDocumentGetDocAndNodeRefs(document, saveListenerBeanNames, relocateAssocDocs, true);
+                Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> saveResult = getDocumentDynamicService().updateDocumentGetDocAndNodeRefs(document, saveListenerBeanNames,
+                        relocateAssocDocs, true);
                 // Delete DecContainer after document saving. Just in case.
                 getFileService().removeDecContainer(saveResult.getFirst().getNodeRef());
 
@@ -1016,11 +1051,11 @@ BlockBeanProviderProvider {
     }
 
     public static NodeRef getParent(NodeRef volumeRef, String caseLabel) {
-        Volume volume = BeanHelper.getVolumeService().getVolumeByNodeRef(volumeRef);
+        UnmodifiableVolume volume = BeanHelper.getVolumeService().getUnmodifiableVolume(volumeRef, null);
         NodeRef parentRef = null;
         if (volume.isContainsCases() && caseLabel != null) {
-            Case existingCase = BeanHelper.getCaseService().getCaseByTitle(caseLabel, volumeRef, null);
-            parentRef = existingCase != null ? existingCase.getNode().getNodeRef() : null;
+            UnmodifiableCase existingCase = BeanHelper.getCaseService().getCaseByTitle(caseLabel, volumeRef, null);
+            parentRef = existingCase != null ? existingCase.getNodeRef() : null;
         } else {
             parentRef = volumeRef;
         }
@@ -1096,7 +1131,7 @@ BlockBeanProviderProvider {
     private boolean checkCanRegister() {
         WmNode node = getNode();
         try {
-            BeanHelper.getDocumentLockHelperBean().checkAssocDocumentLocks(node, null);
+            BeanHelper.getDocLockService().checkAssocDocumentLocks(node, null);
         } catch (NodeLockedException e) {
             BeanHelper.getDocumentLockHelperBean().handleLockedNode("document_registerDoc_error_docLocked_initialDocument", e);
             setSaveAndRegister(false);
@@ -1128,9 +1163,9 @@ BlockBeanProviderProvider {
         try {
             DocumentParentNodesVO parentNodes = getDocumentService().getAncestorNodesByDocument(document.getNodeRef());
             getDocumentService().setTransientProperties(document, parentNodes);
-            document = getDocumentService().registerDocument(document);
+            NodeRef docRef = getDocumentService().registerDocument(document);
             // Update generated files
-            BeanHelper.getDocumentTemplateService().updateGeneratedFiles(document.getNodeRef(), true);
+            BeanHelper.getDocumentTemplateService().updateGeneratedFiles(docRef, true);
             ((MenuBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MenuBean.BEAN_NAME)).processTaskItems();
             MessageUtil.addInfoMessage("document_registerDoc_success");
         } catch (UnableToPerformException e) {
@@ -1195,7 +1230,7 @@ BlockBeanProviderProvider {
             return true;
         }
         return getCurrentSnapshot().inEditMode && searchBlockBean.isShow() && !searchBlockBean.isShowSimilarDocumentsBlock()
-                && (getDocument().isImapOrDvk() && !getDocument().isNotEditable());
+                && ((getDocument().isImapOrDvk() && !getDocument().isNotEditable()) || getDocument().isForwardedDecDocument());
     }
 
     public boolean isAssocsBlockExpanded() {
@@ -1205,7 +1240,8 @@ BlockBeanProviderProvider {
     public boolean isShowTypeBlock() {
         return !getCurrentSnapshot().document.isDraft() && getCurrentSnapshot().inEditMode
                 && DocumentStatus.WORKING.getValueName().equals(getCurrentSnapshot().document.getDocStatus())
-                && validateViewMetaDataPermission(getCurrentSnapshot().document.getNodeRef());
+                && validateViewMetaDataPermission(getCurrentSnapshot().document.getNodeRef())
+                || getCurrentSnapshot().document.isForwardedDecDocument();
 
     }
 
@@ -1306,6 +1342,19 @@ BlockBeanProviderProvider {
         return true;
     }
 
+    @Override
+    public void clean() {
+        clearState();
+        resetModals();
+        cleanDyamicBlocks();
+    }
+
+    private void cleanDyamicBlocks() {
+        for (DocumentDynamicBlock documentDynamicBlock : getBlocks().values()) {
+            documentDynamicBlock.clean();
+        }
+    }
+
     // =========================================================================
     // Getters
     // =========================================================================
@@ -1317,6 +1366,27 @@ BlockBeanProviderProvider {
             return null;
         }
         return snapshot.document;
+    }
+
+    public boolean isSignableByOwner() {
+        Boolean signableByOwner = (Boolean) requestCacheBean.getResult(SIGNABLE_BY_OWNER_KEY);
+        if (signableByOwner == null) {
+            DocumentDynamic doc = getDocument();
+            Map<String, Object> docProps = doc.getNode().getProperties();
+            NodeRef functionRef = (NodeRef) docProps.get(DocumentCommonModel.Props.FUNCTION);
+            signableByOwner = BeanHelper.getWorkflowConstantsBean().isDocumentOrIndependentWorkflowEnabled()
+                    && !isInEditMode()
+                    && AuthenticationUtil.getRunAsUser().equals(docProps.get(DocumentCommonModel.Props.OWNER_ID))
+                    && functionRef != null && !BeanHelper.getFunctionsService().getUnmodifiableFunction(functionRef, null).isDocumentActivitiesAreLimited()
+                    && getDocumentType().isDocSigningForOwnerEnabled()
+                    && !BeanHelper.getWorkflowService().hasCompoundWorkflowsWithStatus(doc.getNodeRef(), Status.NEW_INPROGRESS_OR_STOPPED);
+            requestCacheBean.setResult(SIGNABLE_BY_OWNER_KEY, signableByOwner);
+        }
+        return signableByOwner;
+    }
+
+    public void clearRequestCache() {
+        requestCacheBean.clear();
     }
 
     public DocumentType getDocumentType() {
@@ -1410,15 +1480,18 @@ BlockBeanProviderProvider {
     // Components
     // =========================================================================
 
-    private transient UIPropertySheet propertySheet;
-
     @Override
     public UIPropertySheet getPropertySheet() {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("getPropertySheet propertySheet=" + ObjectUtils.toString(propertySheet));
+        UIPropertySheet propSheet = (UIPropertySheet) getJsfBindingHelper().getComponentBinding(getPropertySheetBindingName());
+        if (propSheet == null) {
+            propSheet = new SimUIPropertySheet();
+            getJsfBindingHelper().addBinding(getPropertySheetBindingName(), propSheet);
+            updatePropertySheet();
         }
-        // Additional checks are no longer needed, because ExternalAccessServlet behavior with JSF is now correct
-        return propertySheet;
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("getPropertySheet propertySheet=" + ObjectUtils.toString(propSheet));
+        }
+        return propSheet;
     }
 
     public void setPropertySheet(UIPropertySheet propertySheet) {
@@ -1426,22 +1499,12 @@ BlockBeanProviderProvider {
             LOG.debug("setPropertySheet propertySheet=" + ObjectUtils.toString(propertySheet));
         }
         // Additional checks are no longer needed, because ExternalAccessServlet behavior with JSF is now correct
-        this.propertySheet = propertySheet;
+        getJsfBindingHelper().addBinding(getPropertySheetBindingName(), propertySheet);
     }
 
     @Override
     protected void resetOrInit(DialogDataProvider provider) {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("resetOrInit propertySheet=" + ObjectUtils.toString(propertySheet));
-        }
         WmNode node = getNode();
-        if (propertySheet != null) {
-            propertySheet.getChildren().clear();
-            propertySheet.getClientValidations().clear();
-            propertySheet.setNode(node);
-            propertySheet.setMode(getMode());
-            propertySheet.setConfig(getPropertySheetConfigElement());
-        }
         if (node != null) {
             BeanHelper.getVisitedDocumentsBean().getVisitedDocuments().add(node.getNodeRef());
         }
@@ -1450,6 +1513,18 @@ BlockBeanProviderProvider {
         resetModals();
         setShowSaveAndRegisterButton(false);
         super.resetOrInit(provider); // reset blocks
+        updatePropertySheet();
+    }
+
+    private void updatePropertySheet() {
+        UIPropertySheet propertySheetComponent = (UIPropertySheet) getJsfBindingHelper().getComponentBinding(getPropertySheetBindingName());
+        if (propertySheetComponent != null) {
+            propertySheetComponent.getChildren().clear();
+            propertySheetComponent.getClientValidations().clear();
+            propertySheetComponent.setNode(getNode());
+            propertySheetComponent.setMode(getMode());
+            propertySheetComponent.setConfig(getPropertySheetConfigElement());
+        }
     }
 
     @Override
@@ -1461,6 +1536,10 @@ BlockBeanProviderProvider {
     private void resetModals() {
         renderedModal = null;
         showConfirmationPopup = false;
+        getModalContainer();
+    }
+
+    private void updateModals(UIPanel panel) {
         // Add favorite modal component
         FavoritesModalComponent favoritesModal = new FavoritesModalComponent();
         final FacesContext context = FacesContext.getCurrentInstance();
@@ -1484,7 +1563,7 @@ BlockBeanProviderProvider {
         DocumentLinkGeneratorModalComponent linkModal = new DocumentLinkGeneratorModalComponent();
         linkModal.setId("document-link-modal-" + context.getViewRoot().createUniqueId());
 
-        List<UIComponent> children = ComponentUtil.getChildren(getModalContainer());
+        List<UIComponent> children = ComponentUtil.getChildren(panel);
         children.clear();
         children.add(favoritesModal);
         children.add(accessRestrictionChangeReasonModal);
@@ -1505,17 +1584,19 @@ BlockBeanProviderProvider {
         return getCurrentSnapshot() == null ? null : this;
     }
 
-    private transient UIPanel modalContainer;
-
     public UIPanel getModalContainer() {
-        if (modalContainer == null) {
-            modalContainer = new UIPanel();
+        UIPanel panel = (UIPanel) getJsfBindingHelper().getComponentBinding(getModalContainerBindingName(this));
+        if (panel == null) {
+            panel = (UIPanel) FacesContext.getCurrentInstance().getApplication().createComponent(UIPanel.COMPONENT_TYPE);
+            updateModals(panel);
+            getJsfBindingHelper().addBinding(getModalContainerBindingName(this), panel);
         }
-        return modalContainer;
+        return panel;
+
     }
 
     public void setModalContainer(UIPanel modalContainer) {
-        this.modalContainer = modalContainer;
+        getJsfBindingHelper().addBinding(getModalContainerBindingName(this), modalContainer);
     }
 
     // =========================================================================
@@ -1558,6 +1639,14 @@ BlockBeanProviderProvider {
     public CaseFile getCaseFile() {
         // Not used.
         return null;
+    }
+
+    public RequestCacheBean getRequestCacheBean() {
+        return requestCacheBean;
+    }
+
+    public void setRequestCacheBean(RequestCacheBean requestCacheBean) {
+        this.requestCacheBean = requestCacheBean;
     }
 
 }

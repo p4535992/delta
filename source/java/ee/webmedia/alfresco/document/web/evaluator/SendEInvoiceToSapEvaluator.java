@@ -21,7 +21,7 @@ public class SendEInvoiceToSapEvaluator extends SendEInvoiceToSapManuallyEvaluat
                 && !InvoiceType.ETT.getValue().equals(docProps.get(DocumentSpecificModel.Props.INVOICE_TYPE))
                 && (StringUtils.isNotBlank((String) docProps.get(DocumentSpecificModel.Props.PURCHASE_ORDER_SAP_NUMBER))
                         || Boolean.TRUE.equals(docProps.get(DocumentSpecificModel.Props.XXL_INVOICE)) || BeanHelper.getWorkflowService().hasTaskOfType(docNode.getNodeRef(),
-                        WorkflowSpecificModel.Types.REVIEW_WORKFLOW, WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW));
+                                WorkflowSpecificModel.Types.REVIEW_TASK, WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK));
     }
 
 }

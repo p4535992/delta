@@ -19,7 +19,7 @@
          </f:facet>
          <a:actionLink id="col2-link" value="#{r.title} (#{r.containingDocsCount})" action="#{DocumentListDialog.action}" tooltip="#{msg.case_document_list_info}" showLink="false"
             actionListener="#{DocumentListDialog.setup}">
-            <f:param name="caseNodeRef" value="#{r.node.nodeRef}" />
+            <f:param name="caseNodeRef" value="#{r.nodeRef}" />
          </a:actionLink>
       </a:column>
 
@@ -38,7 +38,7 @@
          </f:facet>
          <a:actionLink id="col7-act1" value="#{r.title}" image="/images/icons/edit_properties.gif" action="#{CaseDetailsDialog.action}" showLink="false"
             actionListener="#{CaseDetailsDialog.showDetails}" tooltip="#{msg.case_details_info}">
-            <f:param name="caseNodeRef" value="#{r.node.nodeRef}" />
+            <f:param name="caseNodeRef" value="#{r.nodeRef}" />
          </a:actionLink>
       </a:column>
 

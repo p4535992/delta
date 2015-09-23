@@ -74,7 +74,6 @@ import org.apache.poi.poifs.filesystem.Entry;
 import org.apache.poi.poifs.filesystem.NPOIFSFileSystem;
 import org.apache.xml.security.transforms.TransformationException;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.util.Assert;
 import org.springframework.util.FileCopyUtils;
 
 import com.icegreen.greenmail.store.FolderException;
@@ -84,6 +83,8 @@ import com.icegreen.greenmail.util.GreenMailUtil;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.classificator.enums.StorageType;
 import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
+import ee.webmedia.alfresco.common.service.ApplicationConstantsBean;
+import ee.webmedia.alfresco.common.service.BulkLoadNodeService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
@@ -135,6 +136,8 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
     private String sendFailureNoticesSubfolderType;
     private Map<NodeRef, String> imapFolderTypes = null;
     private Map<NodeRef, Set<String>> imapFolderFixedSubfolders = null;
+    private ApplicationConstantsBean applicationConstantsBean;
+    private BulkLoadNodeService bulkLoadNodeService;
 
     // todo: make this configurable with spring
     private Set<String> allowedFolders = null;
@@ -235,6 +238,7 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
 
             saveOriginalEmlFile(mimeMessage, docRef);
             saveAttachments(docRef, mimeMessage, true);
+            fileService.reorderFiles(docRef);
 
             return (Long) nodeService.getProperty(docRef, ContentModel.PROP_NODE_DBID);
         } catch (Exception e) { // todo: improve exception handling
@@ -313,6 +317,9 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
                 saveAttachments(docRef, mimeMessage, false, invoiceRefToAttachment);
                 documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_imported", I18NUtil.getMessage("document_log_creator_imap")) //
                         , I18NUtil.getMessage("document_log_creator_imap"));
+            }
+            if (!newInvoices.isEmpty()) {
+                fileService.reorderFiles(newInvoices);
             }
 
         } catch (Exception e) { // TODO: improve exception handling
@@ -594,20 +601,6 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
 
     private boolean isAttachment(Part part) throws MessagingException {
         return Part.ATTACHMENT.equalsIgnoreCase(part.getDisposition()) || StringUtils.isNotBlank(part.getFileName());
-    }
-
-    @Override
-    public NodeRef getAttachmentRoot() {
-        NodeRef attachmentSpaceRef = generalService.getNodeRef(ImapModel.Repo.ATTACHMENT_SPACE);
-        Assert.notNull(attachmentSpaceRef, "Attachment node reference not found");
-        return attachmentSpaceRef;
-    }
-
-    @Override
-    public NodeRef getSendFailureNoticeRoot() {
-        NodeRef sendFailureNoticeSpaceRef = generalService.getNodeRef(ImapModel.Repo.SEND_FAILURE_NOTICE_SPACE);
-        Assert.notNull(sendFailureNoticeSpaceRef, "Send failure notice node reference not found");
-        return sendFailureNoticeSpaceRef;
     }
 
     @Override
@@ -981,7 +974,7 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
                 }
                 if (getAllowedFolders().contains(folder.getName())) {
                     if (folder.getName().equals(getIncomingInvoiceFolderName())) {
-                        return einvoiceService.isEinvoiceEnabled();
+                        return applicationConstantsBean.isEinvoiceEnabled();
                     }
                     return true;
                 }
@@ -993,20 +986,30 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
     }
 
     @Override
-    public int getAllFilesCount(NodeRef attachmentRoot, boolean countFilesInSubfolders) {
-        int count = 0;
-        count = fileService.getAllFilesExcludingDigidocSubitems(attachmentRoot).size();
-        if (countFilesInSubfolders) {
-            for (Subfolder imapFolder : getImapSubfolders(attachmentRoot, ContentModel.TYPE_CONTENT)) {
-                count += getAllFilesCount(imapFolder.getNodeRef(), countFilesInSubfolders);
+    public int getAllFilesCount(NodeRef attachmentRoot, boolean countFilesInSubfolders, int limit) {
+        int count = bulkLoadNodeService.countChildNodes(attachmentRoot, ContentModel.TYPE_CONTENT);
+
+        if (countFilesInSubfolders && count < limit) {
+            Set<NodeRef> childRefs = bulkLoadNodeService.loadChildRefs(attachmentRoot, null, null, ContentModel.TYPE_CONTENT);
+            Map<NodeRef, Integer> childCounts = bulkLoadNodeService.countChildNodes(new ArrayList<NodeRef>(childRefs), ContentModel.TYPE_CONTENT);
+            for (Integer childCount : childCounts.values()) {
+                count += childCount;
+                if (count > limit) {
+                    break;
+                }
             }
         }
         return count;
     }
 
     @Override
-    public List<Subfolder> getImapSubfolders(NodeRef parentRef, QName countableChildNodeType) {
-        return fileService.getSubfolders(parentRef, ImapModel.Types.IMAP_FOLDER, countableChildNodeType);
+    public List<Subfolder> getImapSubfoldersWithChildCount(NodeRef parentRef, QName countableChildNodeType) {
+        return fileService.getSubfolders(parentRef, ImapModel.Types.IMAP_FOLDER, countableChildNodeType, true);
+    }
+
+    @Override
+    public List<Subfolder> getImapSubfolders(NodeRef parentRef) {
+        return fileService.getSubfolders(parentRef, ImapModel.Types.IMAP_FOLDER, null, false);
     }
 
     private Collection<MailFolder> addBehaviour(final Collection<AlfrescoImapFolder> folders) {
@@ -1144,6 +1147,14 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
 
     public void setSaveOriginalToRepo(boolean saveOriginalToRepo) {
         this.saveOriginalToRepo = saveOriginalToRepo;
+    }
+
+    public void setApplicationConstantsBean(ApplicationConstantsBean applicationConstantsBean) {
+        this.applicationConstantsBean = applicationConstantsBean;
+    }
+
+    public void setBulkLoadNodeService(BulkLoadNodeService bulkLoadNodeService) {
+        this.bulkLoadNodeService = bulkLoadNodeService;
     }
 
 }

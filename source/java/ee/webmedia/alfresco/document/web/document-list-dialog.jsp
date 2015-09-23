@@ -58,7 +58,7 @@
 
    <%-- Main List --%>
    <a:richList id="documentList" styleClass="duplicate-header" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-      width="100%" value="#{DialogManager.bean.documents}" var="r" binding="#{DialogManager.bean.richList}" refreshOnBind="true" initialSortColumn="<%=((BaseDocumentListDialog)Application.getDialogManager().getBean()).getInitialSortColumn() %>" >
+      width="100%" value="<%=((BaseDocumentListDialog)Application.getDialogManager().getBean()).getDocumentListValueBinding()%>" var="r" binding="#{DialogManager.bean.richList}" refreshOnBind="true" >
       
       <%-- checkbox --%>
       <a:column id="col-checkbox" primary="true" styleClass="#{r.cssStyleClass}" rendered="#{UserService.documentManager && DialogManager.bean.showCheckboxes}" >

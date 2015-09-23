@@ -26,7 +26,7 @@ import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.cases.model.Case;
+import ee.webmedia.alfresco.cases.service.UnmodifiableCase;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -100,13 +100,13 @@ public abstract class AbstractSearchFilterBlockBean<T extends FilterService> ext
         }
         Map<String, Object> properties = filter.getProperties();
         properties.put(getFilterNameProperty().toString(), newFilterName);
-        Case caseByTitle = null;
+        UnmodifiableCase caseByTitle = null;
         NodeRef volumeRef = (NodeRef) properties.get(DocumentCommonModel.Props.VOLUME.toString());
         if (volumeRef != null) {
             caseByTitle = BeanHelper.getCaseService().getCaseByTitle((String) properties.get(RepoUtil.createTransientProp("caseLabelEditable").toString()), volumeRef, null);
         }
         if (caseByTitle != null) {
-            properties.put(DocumentCommonModel.Props.CASE.toString(), caseByTitle.getNode().getNodeRef());
+            properties.put(DocumentCommonModel.Props.CASE.toString(), caseByTitle.getNodeRef());
         } else if (properties.containsKey(DocumentCommonModel.Props.CASE.toString())) {
             properties.put(DocumentCommonModel.Props.CASE.toString(), null);
         }
@@ -237,16 +237,21 @@ public abstract class AbstractSearchFilterBlockBean<T extends FilterService> ext
     }
 
     protected void reset() {
+        selectedFilter = null;
+        filter = null;
+        clean();
+    }
+
+    @Override
+    public void clean() {
         searchTitleInput = null;
         originalFilterName = null;
         publicCheckBox = null;
         publicFilterRefs = null;
-
         propertySheet = null;
         selectedFilterMenu = null;
-        filter = null;
         allFilters = null;
-        selectedFilter = null;
+        filterService = null;
     }
 
     abstract protected Node getNewFilter();

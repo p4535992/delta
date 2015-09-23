@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 
+import ee.webmedia.alfresco.document.file.model.FileModel;
 import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
@@ -76,10 +77,13 @@ import ee.webmedia.alfresco.dvk.model.DvkReceivedLetterDocument;
 import ee.webmedia.alfresco.dvk.model.DvkSendDocuments;
 import ee.webmedia.alfresco.dvk.model.DvkSendReviewTask;
 import ee.webmedia.alfresco.dvk.model.DvkSendWorkflowDocuments;
+import ee.webmedia.alfresco.email.model.EmailAttachment;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.monitoring.MonitoredService;
 import ee.webmedia.alfresco.monitoring.MonitoringUtil;
+import ee.webmedia.alfresco.notification.model.NotificationCache;
+import ee.webmedia.alfresco.notification.model.NotificationResult;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
@@ -202,7 +206,7 @@ public abstract class DvkServiceImpl implements DvkService {
     public Collection<String> receiveDocuments() {
         final long maxReceiveDocumentsNr = parametersService.getLongParameter(Parameters.DVK_MAX_RECEIVE_DOCUMENTS_NR);
         final String dvkReceiveDocumentsInvoiceFolder = parametersService.getStringParameter(Parameters.DVK_RECEIVE_DOCUMENTS_INVOICE_FOLDER);
-        NodeRef dvkIncomingFolder = generalService.getNodeRef(receivedDvkDocumentsPath);
+        NodeRef dvkIncomingFolder = BeanHelper.getConstantNodeRefsBean().getReceivedDvkDocumentsRoot();
         log.info("Starting to receive documents (max " + maxReceiveDocumentsNr + " documents at the time)");
         final Set<String> receiveDocuments = new HashSet<String>();
         Collection<String> lastReceiveDocuments;
@@ -283,6 +287,7 @@ public abstract class DvkServiceImpl implements DvkService {
                 throw e;// didn't even manage to handle exception
             }
             if (storedDocuments != null && storedDocuments.size() > 0) {
+                BeanHelper.getFileService().reorderFiles(storedDocuments);
                 receivedDocumentIds.add(dhlId);
                 createdDocumentCounter += storedDocuments.size();
             } else {
@@ -402,7 +407,7 @@ public abstract class DvkServiceImpl implements DvkService {
             List<DecContainer.File> fileList = decContainer.getFileList();
 
             if (fileList == null || fileList.size() == 0) {
-                log.warn("document contains " + fileList.size() + " datafiles.\ndvk id: " + dhlId + ", sender: " + senderOrganisationCode);
+                log.warn("document contains " + (fileList != null ? fileList.size() : 0) + " datafiles.\ndvk id: " + dhlId + ", sender: " + senderOrganisationCode);
             } else if (log.isDebugEnabled()) {
                 log.debug("document contains " + fileList.size() + " datafiles");
             }
@@ -522,7 +527,9 @@ public abstract class DvkServiceImpl implements DvkService {
 
         DocumentType documentType = documentAdminService.getDocumentType(documentTypeId, DocumentAdminService.DOC_TYPE_WITHOUT_OLDER_DT_VERSION_CHILDREN);
         if (documentType == null) {
-            log.error("Couldn't find document type for id '" + documentTypeId + "'");
+            String errorMessage = "Couldn't find document type for id '" + documentTypeId + "'";
+            log.error(errorMessage);
+            throw new RuntimeException(errorMessage);
         }
         List<Field> fields = documentType.getLatestDocumentTypeVersion().getFieldsDeeply();
         Recipient recipient = getCurrentOrganisationRecipient(decContainer);
@@ -653,11 +660,6 @@ public abstract class DvkServiceImpl implements DvkService {
             log.info("Stored invoice data from " + dhlId + " to " + invoiceNodes.size() + " invoices.");
             return invoiceNodes;
         }
-        NodeRef sapRegisteredDoc = importSapInvoiceRegistration(fileList);
-        if (sapRegisteredDoc != null) {
-            log.info("Stored SAP document data from " + dhlId + " to " + sapRegisteredDoc);
-            return Arrays.asList(sapRegisteredDoc);
-        }
         NodeRef reviewTaskNotificationNode = importReviewTaskData(decContainer, dhlId);
         if (reviewTaskNotificationNode != null) {
             if (RepoUtil.isUnsaved(reviewTaskNotificationNode)) {
@@ -707,7 +709,7 @@ public abstract class DvkServiceImpl implements DvkService {
             String messageForRecipient);
 
     protected Collection<String> getPreviouslyFailedDvkIds() {
-        NodeRef corruptFolderRef = generalService.getNodeRef(corruptDvkDocumentsPath);
+        NodeRef corruptFolderRef = BeanHelper.getConstantNodeRefsBean().getDvkCorruptRoot();
         final List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(corruptFolderRef);
         final HashSet<String> failedDvkIds = new HashSet<String>(childAssocs.size());
         for (ChildAssociationRef failedAssocRef : childAssocs) {
@@ -719,9 +721,11 @@ public abstract class DvkServiceImpl implements DvkService {
     }
 
     protected <F extends XmlObject> NodeRef storeFile(String dhlId, String senderOrgNr, NodeRef documentFolder, F dataFile) throws IOException {
-        String filename = DvkUtil.getFileName(dataFile);
+        String displayName = DvkUtil.getFileName(dataFile);
+        String filename = FilenameUtil.checkAndGetUniqueFilename(documentFolder, displayName, BeanHelper.getGeneralService());
         NodeRef file = createFileNode(documentFolder, filename);
-        log.info("Writing file '" + filename + "' (fileRef: " + file + ") from DVK document with dvkId '" + dhlId + "' to repository space: '"
+        nodeService.setProperty(file, FileModel.Props.DISPLAY_NAME, displayName);
+        log.info("Writing file '" + filename + "' (fileRef: " + file + ", original name: " + displayName + ") from DVK document with dvkId '" + dhlId + "' to repository space: '"
                 + receivedDvkDocumentsPath + "' (parentRef: " + documentFolder + ")");
 
         final ContentWriter writer = fileFolderService.getWriter(file);
@@ -822,17 +826,15 @@ public abstract class DvkServiceImpl implements DvkService {
 
     abstract protected <F extends XmlObject> List<NodeRef> importDimensionData(String dhlId, List<F> dataFileList);
 
-    abstract protected <F extends XmlObject> NodeRef importSapInvoiceRegistration(List<F> dataFileList);
-
     abstract protected <D extends XmlObject> NodeRef importReviewTaskData(D dhlDokument, String dvkId);
 
-    private String sendDocuments(Collection<ContentToSend> contentsToSend, final DvkSendDocuments sd, boolean requireFiles) {
+    private String sendDocument(Collection<ContentToSend> contentsToSend, final DvkSendDocuments sd, boolean requireFiles, final SendDocumentsDecContainerCallback callback) {
         final Collection<String> recipientsRegNrs = sd.getRecipientsRegNrs();
         List<String> personIdCodes = sd.getPersonIdCodes();
         verifyEnoughData(contentsToSend, recipientsRegNrs, personIdCodes, requireFiles);
         try {
             final Set<String> sendDocuments = dhlXTeeService.sendDocuments(contentsToSend, getRecipients(recipientsRegNrs, personIdCodes), getSenderAddress(),
-                    new SimDhsSendDocumentsCallback(sd), new SendDocumentsRequestCallback() {
+                    callback, new SendDocumentsRequestCallback() {
 
                         @Override
                         public void doWithRequest(SendDocumentsV2RequestType dokumentDocument) {
@@ -852,13 +854,23 @@ public abstract class DvkServiceImpl implements DvkService {
         }
     }
 
-    @Override
-    public String sendDocuments(Collection<ContentToSend> contentsToSend, final DvkSendDocuments sd) {
-        return sendDocuments(contentsToSend, sd, true);
+    private String sendDocuments(Collection<ContentToSend> contentsToSend, DvkSendDocuments sendDocument, boolean requireFiles) {
+        return sendDocument(contentsToSend, sendDocument, requireFiles, new SimDhsSendDocumentsCallback(sendDocument));
     }
 
     @Override
-    public Pair<NodeRef, List<Map<QName, Serializable>>> sendTaskNotificationDocument(Task task) {
+    public String sendDocuments(Collection<ContentToSend> contentsToSend, DvkSendDocuments sendDocument) {
+        return sendDocuments(contentsToSend, sendDocument, true);
+    }
+
+    @Override
+    public String forwardDecDocument(Collection<ContentToSend> contentsToSend, DvkSendDocuments sendDocument) {
+        return sendDocument(contentsToSend, sendDocument, false, new ForwardDecContainerCallback(sendDocument));
+    }
+
+    @Override
+    public NotificationResult sendTaskNotificationDocument(Task task, NotificationCache notificationCache) {
+        NotificationResult result = new NotificationResult();
         if (task.isStatus(Status.IN_PROGRESS) && StringUtils.isBlank(task.getOwnerId()) && StringUtils.isBlank(task.getInstitutionName())
                 && !task.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK) && task.getParent().getParent().isDocumentWorkflow()) {
 
@@ -868,7 +880,7 @@ public abstract class DvkServiceImpl implements DvkService {
             boolean isDvkCapable = orgNodeRef != null && Boolean.TRUE.equals(nodeService.getProperty(orgNodeRef, AddressbookModel.Props.DVK_CAPABLE));
             boolean isDecTaskCapable = isDvkCapable && Boolean.TRUE.equals(nodeService.getProperty(orgNodeRef, AddressbookModel.Props.DEC_TASK_CAPABLE));
             boolean canSendDvk = isDecTaskCapable && (!task.isType(WorkflowSpecificModel.Types.REVIEW_TASK)
-                    || !BeanHelper.getWorkflowService().isReviewToOtherOrgEnabled() || StringUtils.isBlank(task.getOwnerOrgStructUnit()));
+                    || !BeanHelper.getWorkflowConstantsBean().isReviewToOtherOrgEnabled() || StringUtils.isBlank(task.getOwnerOrgStructUnit()));
 
             if (canSendDvk) {
                 Workflow workflow = task.getParent();
@@ -884,13 +896,15 @@ public abstract class DvkServiceImpl implements DvkService {
                     sd.setTextContent(WorkflowUtil.getTaskMessageForRecipient(task));
                     String dvkId;
 
-                    List<NodeRef> docFileRefs = BeanHelper.getFileService().getAllFileRefs(docNodeRef, true);
-                    if (CollectionUtils.isNotEmpty(docFileRefs)) {
-                        List<ContentToSend> contentsToSend = BeanHelper.getSendOutService().prepareContents(docNodeRef, docFileRefs, false);
-                        dvkId = sendDocuments(contentsToSend, sd, true);
-                    } else {
-                        dvkId = sendDocuments(Collections.<ContentToSend> emptyList(), sd, false);
+                    List<EmailAttachment> attachments = notificationCache.getAttachments().get(docNodeRef);
+                    if (attachments == null) {
+                        List<NodeRef> docFileRefs = BeanHelper.getFileService().getAllFileRefs(docNodeRef, true);
+                        attachments = BeanHelper.getEmailService().getAttachments(docFileRefs, false, null, null);
+                        notificationCache.getAttachments().put(docNodeRef, attachments);
                     }
+                    List<ContentToSend> contentsToSend = CollectionUtils.isNotEmpty(attachments) ? BeanHelper.getSendOutService().prepareContents(attachments)
+                            : Collections.<ContentToSend> emptyList();
+                    dvkId = sendDocuments(contentsToSend, sd, false);
 
                     Map<QName, Serializable> props = new HashMap<QName, Serializable>();
                     props.put(DocumentCommonModel.Props.SEND_INFO_RECIPIENT, taskOwnerName);
@@ -900,7 +914,9 @@ public abstract class DvkServiceImpl implements DvkService {
                     props.put(DocumentCommonModel.Props.SEND_INFO_SEND_STATUS, SendStatus.SENT.toString());
                     props.put(DocumentCommonModel.Props.SEND_INFO_DVK_ID, dvkId);
                     props.put(DocumentCommonModel.Props.SEND_INFO_RESOLUTION, WorkflowUtil.getTaskSendInfoResolution(task));
-                    return new Pair<NodeRef, List<Map<QName, Serializable>>>(docNodeRef, new ArrayList<Map<QName, Serializable>>(Arrays.asList(props)));
+                    result.setDocRef(docNodeRef);
+                    result.addSendInfoProps(props);
+                    result.markSent();
                 } catch (RuntimeException e) {
                     log.debug("Sending document over dvk failed: ", e);
                     RetryingTransactionHelper txHelper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
@@ -918,7 +934,7 @@ public abstract class DvkServiceImpl implements DvkService {
                 }
             }
         }
-        return null;
+        return result;
     }
 
     @Override
@@ -1025,6 +1041,41 @@ public abstract class DvkServiceImpl implements DvkService {
         return sender;
     }
 
+    private class ForwardDecContainerCallback implements SendDocumentsDecContainerCallback {
+        private final DvkSendDocuments dvkSendDocuments;
+
+        private ForwardDecContainerCallback(DvkSendDocuments dvkSendDocuments) {
+            dvkSendDocuments.validateOutGoing();
+            this.dvkSendDocuments = dvkSendDocuments;
+        }
+
+        @Override
+        public void doWithDocument(DecContainerDocument decContainerDocument) {
+            Node document = new Node(dvkSendDocuments.getDocumentNodeRef());
+            DecContainer newContainer = decContainerDocument.getDecContainer();
+            NodeRef oldDecContainer = BeanHelper.getFileService().getDecContainer(document.getNodeRef());
+            String xmlAsString = fileFolderService.getReader(oldDecContainer).getContentString();
+
+            try {
+                DecContainerDocument oldDoc = (DecContainerDocument) XmlObject.Factory.parse(xmlAsString);
+                DecContainer oldContainer = oldDoc.getDecContainer();
+
+                newContainer.setAccess(oldContainer.getAccess());
+                newContainer.setDecMetadata(oldContainer.getDecMetadata());
+                newContainer.setInitiator(oldContainer.getInitiator());
+                newContainer.setRecipientArray(oldContainer.getRecipientArray());
+                newContainer.setRecordCreator(oldContainer.getRecordCreator());
+                newContainer.setRecordMetadata(oldContainer.getRecordMetadata());
+                newContainer.setRecordSenderToDec(oldContainer.getRecordSenderToDec());
+                newContainer.setRecordTypeSpecificMetadata(oldContainer.getRecordTypeSpecificMetadata());
+                newContainer.setSignatureMetadataArray(oldContainer.getSignatureMetadataArray());
+            } catch (XmlException e) {
+                log.warn("Failed to parse xml string", e);
+                throw new UnableToPerformException("existing_dec_container_parsing_failed");
+            }
+        }
+    }
+
     private class SimDhsSendDocumentsCallback implements SendDocumentsDecContainerCallback {
         private final DvkSendDocuments dvkSendDocuments;
 
@@ -1037,7 +1088,7 @@ public abstract class DvkServiceImpl implements DvkService {
         public void doWithDocument(DecContainerDocument decContainerDocument) {
             Node document = new Node(dvkSendDocuments.getDocumentNodeRef());
             Map<String, Object> properties = document.getProperties();
-            DocumentTypeVersion documentTypeVersion = BeanHelper.getDocumentConfigService().getDocumentTypeAndVersion(document).getSecond();
+            DocumentTypeVersion documentTypeVersion = BeanHelper.getDocumentConfigService().getDocumentTypeAndVersion(document, false).getSecond();
             final DecContainer decContainer = decContainerDocument.getDecContainer();
             Pair<Boolean, Map<String, String>> addDocumentMetadata = addDocumentMetadata(properties, documentTypeVersion, decContainer);
             if (!addDocumentMetadata.getFirst()) {
@@ -1180,7 +1231,8 @@ public abstract class DvkServiceImpl implements DvkService {
             InputStream signatureInput = null;
             try {
                 signatureInput = DvkUtil.getFileContents(file);
-                signatureItems = BeanHelper.getSignatureService().getDataItemsAndSignatureItems(signatureInput, false);
+                boolean isBdoc = FilenameUtil.isBdocFile(file.getFileName());
+                signatureItems = BeanHelper.getSignatureService().getDataItemsAndSignatureItems(signatureInput, false, isBdoc);
             } catch (SignatureException e) {
                 log.error("Failed to retrieve signatures from " + file.getFileName() + " (" + file.getFileGuid() + ")!", e);
                 throw new RuntimeException(e);

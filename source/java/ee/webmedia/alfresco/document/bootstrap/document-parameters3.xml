@@ -7,12 +7,14 @@
    <param:stringParameter view:childName="param:signerName">
       <view:properties>
          <param:value></param:value>
+         <param:name>signerName</param:name>
       </view:properties>
    </param:stringParameter>   
    
    <param:stringParameter view:childName="param:contractFirstPartyName">
       <view:properties>
          <param:value></param:value>
+         <param:name>contractFirstPartyName</param:name>
       </view:properties>
    </param:stringParameter>      
 

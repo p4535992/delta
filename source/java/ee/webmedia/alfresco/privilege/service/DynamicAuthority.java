@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.privilege.service;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
@@ -11,6 +12,7 @@ import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.security.AuthorityService;
+import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
@@ -37,11 +39,10 @@ public abstract class DynamicAuthority implements InitializingBean {
         AuthenticationUtil.runAs(new RunAsWork<Object>() {
             @Override
             public Boolean doWork() throws Exception {
-                documentManagersGroup = userService.getDocumentManagersGroup();
+                documentManagersGroup = authorityService.getName(AuthorityType.GROUP, UserService.DOCUMENT_MANAGERS_GROUP);
                 return null;
             }
         }, AuthenticationUtil.getSystemUserName());
-
         privilegeService.addDynamicAuthority(this);
     }
 
@@ -50,8 +51,10 @@ public abstract class DynamicAuthority implements InitializingBean {
         return authorities.contains(documentManagersGroup) || authorities.contains(PermissionService.ADMINISTRATOR_AUTHORITY);
     }
 
-    /** Must return true or false exactly on same conditions as hasAuthority(NodeRef nodeRef, String userName) */
-    public abstract boolean hasAuthority(NodeRef nodeRef, QName type, String userName);
+    /**
+     * Must return true or false exactly on same conditions as hasAuthority(NodeRef nodeRef, String userName)
+     */
+    public abstract boolean hasAuthority(NodeRef nodeRef, QName type, String userName, Map<String, Object> properties);
 
     public Set<Privilege> getGrantedPrivileges() {
         return grantedPrivileges;

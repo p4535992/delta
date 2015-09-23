@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.workflow.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getJsfBindingHelper;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
 
 import java.util.Date;
@@ -30,7 +31,6 @@ public class RelatedUrlDetailsDialog extends BaseDialogBean {
     private static final String PARAM_URL_INDEX_IN_WORKFLOW = "urlIndexInWorkflow";
 
     private RelatedUrl relatedUrl;
-    private transient UIPropertySheet propertySheet;
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
@@ -102,17 +102,16 @@ public class RelatedUrlDetailsDialog extends BaseDialogBean {
 
     private void resetFields() {
         relatedUrl = null;
-        propertySheet = null;
     }
 
     // START: getters / setters
 
     public void setPropertySheet(UIPropertySheet propertySheet) {
-        this.propertySheet = propertySheet;
+        getJsfBindingHelper().addBinding(getPropertySheetBindingName(), propertySheet);
     }
 
     public UIPropertySheet getPropertySheet() {
-        return propertySheet;
+        return (UIPropertySheet) getJsfBindingHelper().getComponentBinding(getPropertySheetBindingName());
     }
     // END: getters / setters
 }

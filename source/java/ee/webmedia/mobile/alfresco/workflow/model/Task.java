@@ -3,6 +3,7 @@ package ee.webmedia.mobile.alfresco.workflow.model;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -31,6 +32,12 @@ public class Task implements Comparable<Task>, Serializable {
     // property from parent workflow
     private boolean isSignTogether;
     private Integer reviewTaskOutcome;
+    private String commentLabel;
+    private String typeStr;
+    private List<TaskFile> files;
+    private Date completedDateTime;
+    private String ownerNameWithSubstitute;
+    private String commentAndLinks;
 
     public Task() {
         actions = new HashMap<String, String>();
@@ -44,7 +51,6 @@ public class Task implements Comparable<Task>, Serializable {
         type = task.getType();
         actions = new HashMap<String, String>();
         nodeRef = task.getNodeRef();
-        isSignTogether = task.getParent().isSignTogether();
     }
 
     public boolean isOverDue() {
@@ -188,6 +194,54 @@ public class Task implements Comparable<Task>, Serializable {
 
     public void setReviewTaskOutcome(Integer reviewTaskOutcome) {
         this.reviewTaskOutcome = reviewTaskOutcome;
+    }
+
+    public String getCommentLabel() {
+        return commentLabel;
+    }
+
+    public void setCommentLabel(String commentLabel) {
+        this.commentLabel = commentLabel;
+    }
+
+    public String getTypeStr() {
+        return typeStr;
+    }
+
+    public void setTypeStr(String typeStr) {
+        this.typeStr = typeStr;
+    }
+
+    public List<TaskFile> getFiles() {
+        return files;
+    }
+
+    public void setFiles(List<TaskFile> files) {
+        this.files = files;
+    }
+
+    public Date getCompletedDateTime() {
+        return completedDateTime;
+    }
+
+    public void setCompletedDateTime(Date completedDateTime) {
+        this.completedDateTime = completedDateTime;
+    }
+
+    public String getOwnerNameWithSubstitute() {
+        return ownerNameWithSubstitute;
+    }
+
+    public void setOwnerNameWithSubstitute(String ownerNameWithSubstitute) {
+        this.ownerNameWithSubstitute = ownerNameWithSubstitute;
+    }
+
+    public String getCommentAndLinks() {
+        return commentAndLinks;
+    }
+
+    public void setCommentAndLinks(String commentAndLinks) {
+        this.commentAndLinks = commentAndLinks;
     }
 
 }

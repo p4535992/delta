@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.workflow.service;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -16,6 +17,7 @@ import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
 public class Workflow extends BaseWorkflowObject implements Serializable {
     private static final long serialVersionUID = 1L;
+    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(BaseWorkflowObject.class);
 
     private final CompoundWorkflow parent;
     private final List<Task> tasks = new ArrayList<Task>();
@@ -94,6 +96,11 @@ public class Workflow extends BaseWorkflowObject implements Serializable {
 
     public void removeTask(int index) {
         removedTasks.add(tasks.remove(index));
+    }
+
+    public void removeTasks(Collection<Task> tasks) {
+        removedTasks.addAll(tasks);
+        this.tasks.removeAll(tasks);
     }
 
     public void addTask(Task task) {
@@ -205,7 +212,7 @@ public class Workflow extends BaseWorkflowObject implements Serializable {
 
     public boolean isSignTogether() {
         String signingTypeStr = getSigningTypeStr();
-        return StringUtils.isBlank(signingTypeStr) ? false : SigningType.SIGN_TOGETHER == SigningType.valueOf(signingTypeStr);
+        return WorkflowUtil.isSignTogetherType(signingTypeStr);
     }
 
     public SigningType getSigningType() {
@@ -219,8 +226,11 @@ public class Workflow extends BaseWorkflowObject implements Serializable {
 
     @Override
     protected String additionalToString() {
-        return "\n  parent=" + WmNode.toString(getParent()) + "\n  tasks=" + WmNode.toString(getTasks()) + "\n  removedTasks="
-                + WmNode.toString(getRemovedTasks());
+        if (LOG.isTraceEnabled()) {
+            return "\n  parent=" + WmNode.toString(getParent()) + "\n  tasks=" + WmNode.toString(getTasks()) + "\n  removedTasks="
+                    + WmNode.toString(getRemovedTasks());
+        }
+        return "";
     }
 
     @Override

@@ -28,6 +28,8 @@ import ee.webmedia.alfresco.thesaurus.service.ThesaurusService;
 
 public class ThesaurusListDialog extends BaseDialogBean {
 
+    public static final String BEAN_NAME = "ThesaurusListDialog";
+
     private static final long serialVersionUID = 1L;
     private transient ThesaurusService thesaurusService;
 
@@ -41,6 +43,11 @@ public class ThesaurusListDialog extends BaseDialogBean {
 
     @Override
     public void restored() {
+        thesauri = null;
+    }
+
+    @Override
+    public void clean() {
         thesauri = null;
     }
 

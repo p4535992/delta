@@ -2,7 +2,7 @@
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
-   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
+   <bean id="fileResourceBundle" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee/webmedia/alfresco/document/file/web/file-webclient</value>
@@ -38,9 +38,8 @@
       <property name="authenticationService" ref="AuthenticationService" />
       <property name="contentService" ref="ContentService" />
       <property name="documentLogService" ref="DocumentLogService"/>
-      <property name="scannedFilesPath" value="${scannedFiles.rootPath}${scannedFiles.folder.name}"/>
+      <property name="bulkLoadNodeService" ref="BulkLoadNodeService"/>
       <property name="openOfficeFiles" value="${conf.openoffice-client-extensions}" />
-      <property name="jumploaderPath" value="${jumploader.applet.file}" />
    </bean>
 
    <bean id="FileService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -74,6 +73,44 @@
                <prop key="encoding">UTF-8</prop>
             </props>
          </list>
+      </property>
+   </bean>
+   
+   <bean id="fileOrderInListAndConvertToPdfIfSignedUpdater" class="ee.webmedia.alfresco.document.file.bootstrap.FileOrderInListAndConvertToPdfIfSignedUpdater" parent="abstractParallelNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="fileParametersBootstrap" />
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
+      <property name="fileService" ref="FileService" />
+   </bean>
+   
+   <bean id="fixDdocMimetypeUpdater" class="ee.webmedia.alfresco.document.file.bootstrap.FixDdocMimetypeUpdater" parent="abstractNodeUpdater" lazy-init="true">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="false" />
+      <property name="enabled" value="false" /><!-- Executed from node-browser -->
+      <property name="mimetypeService" ref="MimetypeService" />
+      <property name="bulkLoadNodeService" ref="BulkLoadNodeService" />
+   </bean>
+   
+   <bean id="recoverMisplacedDocumentFiles" class="ee.webmedia.alfresco.document.file.bootstrap.RecoverMisplacedDocumentFiles" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="enabled" value="${updater.recoverMisplacedDocumentFiles.enabled}" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="fileParametersBootstrap" />
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
+      <property name="fileService" ref="FileService" />
+      <property name="jdbcTemplate">
+         <bean class="org.springframework.jdbc.core.JdbcTemplate">
+            <constructor-arg ref="dataSource" />
+         </bean>
       </property>
    </bean>
    

@@ -9,6 +9,7 @@ import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Workflow;
+import ee.webmedia.alfresco.workflow.service.WorkflowConstantsBean;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 public class BaseWorkflowType implements WorkflowType, InitializingBean {
@@ -20,11 +21,12 @@ public class BaseWorkflowType implements WorkflowType, InitializingBean {
     private int taskOutcomes = 0;
 
     protected WorkflowService workflowService;
+    private WorkflowConstantsBean workflowConstantsBean;
     private NamespaceService namespaceService;
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        workflowService.registerWorkflowType(this);
+        workflowConstantsBean.registerWorkflowType(this);
     }
 
     @Override
@@ -88,8 +90,8 @@ public class BaseWorkflowType implements WorkflowType, InitializingBean {
         this.taskOutcomes = taskOutcomes;
     }
 
-    public void setWorkflowService(WorkflowService workflowService) {
-        this.workflowService = workflowService;
+    public void setWorkflowConstantsBean(WorkflowConstantsBean workflowConstantsBean) {
+        this.workflowConstantsBean = workflowConstantsBean;
     }
 
     public void setNamespaceService(NamespaceService namespaceService) {
@@ -109,6 +111,10 @@ public class BaseWorkflowType implements WorkflowType, InitializingBean {
     @Override
     public boolean isIndependentTaskType() {
         return false;
+    }
+
+    public void setWorkflowService(WorkflowService workflowService) {
+        this.workflowService = workflowService;
     }
 
 }

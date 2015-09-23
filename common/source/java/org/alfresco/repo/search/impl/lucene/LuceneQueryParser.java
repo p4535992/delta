@@ -109,6 +109,8 @@ import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
  */
 public class LuceneQueryParser extends QueryParser
 {
+    public static final String IS_UNSENT_DOC_FIELD = "IS_UNSENT_DOC";
+
     private static Log s_logger = LogFactory.getLog(LuceneQueryParser.class);
 
     private NamespacePrefixResolver namespacePrefixResolver;
@@ -522,7 +524,7 @@ public class LuceneQueryParser extends QueryParser
                 TermQuery termQuery = new TermQuery(new Term(field, queryText));
                 return termQuery;
             }
-            else if (field.equals("DOC_VISIBLE_TO"))
+            else if (field.equals("DOC_VISIBLE_TO") || field.equals(IS_UNSENT_DOC_FIELD))
             {
                 TermQuery termQuery = new TermQuery(new Term(field, queryText));
                 return termQuery;

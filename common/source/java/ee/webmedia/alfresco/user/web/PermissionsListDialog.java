@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.user.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getJsfBindingHelper;
+
 import java.util.Iterator;
 import java.util.List;
 
@@ -26,7 +28,6 @@ public class PermissionsListDialog extends BaseDialogBean {
     /** allows delegating actual permission removing to another method using given method binding expression */
     private static String DELEGATE_REMOVE_AUTHORITY_MB = "delegateRemoveAuthorityMB";
 
-    private transient UIRichList authoritiesRichList;
     private transient UserService userService;
 
     private NodeRef nodeRef;
@@ -55,13 +56,18 @@ public class PermissionsListDialog extends BaseDialogBean {
         return super.cancel();
     }
 
-    private void reset() {
+    @Override
+    public void clean() {
         // Don't call these from restored() since this dialog uses nested dialogs for actual rights management!
         nodeRef = null;
         permission = null;
         alternateConfigId = null;
         callbackMethodBinding = null;
         alternateDialogTitleId = null;
+    }
+
+    private void reset() {
+        clean();
         restored();
     }
 
@@ -126,8 +132,9 @@ public class PermissionsListDialog extends BaseDialogBean {
     @Override
     public void restored() {
         authorities = null;
-        if (authoritiesRichList != null) {
-            authoritiesRichList.setValue(null);
+        UIRichList authoritiesListComponent = getAuthoritiesRichList();
+        if (authoritiesListComponent != null) {
+            authoritiesListComponent.setValue(null);
         }
     }
 
@@ -148,11 +155,11 @@ public class PermissionsListDialog extends BaseDialogBean {
     }
 
     public UIRichList getAuthoritiesRichList() {
-        return authoritiesRichList;
+        return (UIRichList) getJsfBindingHelper().getComponentBinding(getRichListBindingName());
     }
 
     public void setAuthoritiesRichList(UIRichList authoritiesRichList) {
-        this.authoritiesRichList = authoritiesRichList;
+        getJsfBindingHelper().addBinding(getRichListBindingName(), authoritiesRichList);
     }
 
     protected UserService getUserService() {

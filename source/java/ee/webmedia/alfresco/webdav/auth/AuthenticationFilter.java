@@ -126,7 +126,7 @@ public class AuthenticationFilter implements DependencyInjectedFilter {
 
         String ticket = null;
 
-        String path = WebDAV.getRepositoryPath(httpReq);
+        String path = WebDAVHelper.getRepositoryPath(httpReq);
         List<String> pathElements = WebDAVHelper.splitAllPaths(path);
         if (pathElements.size() > 0) {
             ticket = pathElements.get(0);

@@ -28,13 +28,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
-import org.alfresco.repo.security.permissions.PermissionServiceSPI;
 import org.alfresco.repo.tenant.TenantService;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.repository.NodeService;
-import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.cmr.security.AuthenticationService;
 import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.cmr.security.AuthorityType;
@@ -59,15 +55,11 @@ public class AuthorityServiceImpl implements AuthorityService, InitializingBean
     
     private PersonService personService;
 
-    private NodeService nodeService;
-    
     private TenantService tenantService;
 
     private AuthorityDAO authorityDAO;
     
     private AuthenticationService authenticationService;
-    
-    private PermissionServiceSPI permissionServiceSPI;
 
     private Set<String> adminSet = Collections.singleton(PermissionService.ADMINISTRATOR_AUTHORITY);
 
@@ -88,11 +80,6 @@ public class AuthorityServiceImpl implements AuthorityService, InitializingBean
         super();
     }
 
-    public void setNodeService(NodeService nodeService)
-    {
-        this.nodeService = nodeService;
-    }
-    
     public void setTenantService(TenantService tenantService)
     {
         this.tenantService = tenantService;
@@ -113,11 +100,6 @@ public class AuthorityServiceImpl implements AuthorityService, InitializingBean
         this.authenticationService = authenticationService;
     }
 
-    public void setPermissionServiceSPI(PermissionServiceSPI permissionServiceSPI)
-    {
-        this.permissionServiceSPI = permissionServiceSPI;
-    }
-    
     public void setAdminGroups(Set<String> adminGroups)
     {
         this.adminGroups = adminGroups;
@@ -230,11 +212,7 @@ public class AuthorityServiceImpl implements AuthorityService, InitializingBean
             authorities.addAll(authorityDAO.getAllAuthorities(type));
             break;
         case USER:
-            for (NodeRef personRef : personService.getAllPeople())
-            {
-                authorities.add(DefaultTypeConverter.INSTANCE.convert(String.class, nodeService.getProperty(personRef,
-                        ContentModel.PROP_USERNAME)));
-            }
+            authorities.addAll(personService.getAllUserNames());
             break;
         default:
             break;

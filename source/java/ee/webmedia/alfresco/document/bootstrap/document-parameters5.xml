@@ -7,12 +7,14 @@
    <param:doubleParameter view:childName="param:trainingApplicationDailyAllowanceSum">
       <view:properties>
          <param:value>0.0</param:value>
+         <param:name>trainingApplicationDailyAllowanceSum</param:name>
       </view:properties>
    </param:doubleParameter>
    
    <param:doubleParameter view:childName="param:errandOrderAbroadDailyAllowanceSum">
       <view:properties>
          <param:value>0.0</param:value>
+         <param:name>errandOrderAbroadDailyAllowanceSum</param:name>
       </view:properties>
    </param:doubleParameter>
 

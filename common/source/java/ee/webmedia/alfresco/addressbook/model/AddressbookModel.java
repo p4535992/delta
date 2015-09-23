@@ -61,6 +61,7 @@ public interface AddressbookModel {
         QName ENCRYPTION_PERSON_ID = QName.createQName(AddressbookModel.URI, "encryptionPersonId");
         QName MANAGEABLE_FOR_ADMIN = QName.createQName(AddressbookModel.URI, "manageableForAdmin");
         QName DEC_TASK_CAPABLE = QName.createQName(AddressbookModel.URI, "decTaskCapable");
+        QName FORWARDING_DEC_DOCUMENT_ALLOWED = QName.createQName(AddressbookModel.URI, "forwardingDecDocumentAllowed");
     }
 
     interface Aspects {
@@ -70,5 +71,6 @@ public interface AddressbookModel {
         QName ENCRYPTION_PERSON_ID = QName.createQName(AddressbookModel.URI, "encryptionPersonId");
         QName SKYPE = QName.createQName(AddressbookModel.URI, "skype");
         QName DEC_TASK_CAPABLE = QName.createQName(AddressbookModel.URI, "decTaskCapable");
+        QName FORWARDING_DEC_DOCUMENT_ALLOWED = QName.createQName(AddressbookModel.URI, "forwardingDecDocumentAllowed");
     }
 }

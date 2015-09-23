@@ -1,10 +1,11 @@
 package ee.webmedia.alfresco.document.search.web;
 
-import java.util.Collections;
+import java.util.ArrayList;
 
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.apache.lucene.search.BooleanQuery;
@@ -12,6 +13,7 @@ import org.apache.lucene.search.Hits;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.CreatedOrRegistratedDateComparator;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.web.BaseDocumentListDialog;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
@@ -20,6 +22,8 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 public class DocumentQuickSearchResultsDialog extends BaseDocumentListDialog {
     private static final long serialVersionUID = 1L;
+
+    public static final String BEAN_NAME = "DocumentQuickSearchResultsDialog";
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentQuickSearchResultsDialog.class);
 
     private String searchValue;
@@ -46,21 +50,24 @@ public class DocumentQuickSearchResultsDialog extends BaseDocumentListDialog {
 
     @Override
     public void restored() {
-        BeanHelper.getVisitedDocumentsBean().resetVisitedDocuments(documents);
+        BeanHelper.getVisitedDocumentsBean().resetVisitedDocuments(documentProvider);
     }
 
     protected void doInitialSearch() {
         try {
             DocumentSearchService documentSearchService = getDocumentSearchService();
-            documents = setLimited(documentSearchService.quickSearchDocuments(searchValue, containerNodeRef, getLimit()));
-            Collections.sort(documents, CreatedOrRegistratedDateComparator.getComparator());
+            documentProvider = new DocumentListDataProvider(setLimited(documentSearchService.quickSearchDocuments(searchValue, containerNodeRef, getLimit())),
+                    false, DOC_PROPS_TO_LOAD);
+            documentProvider.orderInitial(false, CreatedOrRegistratedDateComparator.getComparator(), DocumentCommonModel.Props.REG_DATE_TIME, ContentModel.PROP_CREATED);
         } catch (BooleanQuery.TooManyClauses e) {
             log.error("Quick search of '" + searchValue + "' failed: " + e.getMessage()); // stack trace is logged in the service
-            documents = setLimitedEmpty();
+            setLimitedEmpty();
+            documentProvider = new DocumentListDataProvider(new ArrayList<NodeRef>());
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_search_toomanyclauses");
         } catch (Hits.TooLongQueryException e) {
             log.error("Quick search of '" + searchValue + "' failed: " + e.getMessage()); // stack trace is logged in the service
-            documents = setLimitedEmpty();
+            setLimitedEmpty();
+            documentProvider = new DocumentListDataProvider(new ArrayList<NodeRef>());
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_search_toolongquery");
         }
     }
@@ -87,10 +94,19 @@ public class DocumentQuickSearchResultsDialog extends BaseDocumentListDialog {
 
     @Override
     public String getInfoMessage() {
-        if (getSearchValue().length() < 3) {
+        if (searchValue == null || searchValue.length() < 3) {
             return MessageUtil.getMessage("document_quick_search_query_3_char_min");
         }
         return super.getInfoMessage();
+    }
+
+    @Override
+    public void clean() {
+        super.clean();
+        clearRichList();
+        documentProvider = null;
+        containerNodeRef = null;
+        searchValue = null;
     }
 
     // START: getters / setters

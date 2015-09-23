@@ -4,6 +4,7 @@
    <param:stringParameter view:childName="param:docPropSupervisionReportDocName">
       <view:properties>
          <param:value>Järelevalveakt</param:value>
+         <param:name>docPropSupervisionReportDocName</param:name>
       </view:properties>
    </param:stringParameter>
 

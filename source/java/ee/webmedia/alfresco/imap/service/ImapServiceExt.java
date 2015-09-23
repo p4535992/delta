@@ -29,7 +29,7 @@ public interface ImapServiceExt {
 
     /**
      * Gets IMAP folder.
-     * 
+     *
      * @param user Imap user
      * @param folderName Folder name.
      * @return folder
@@ -38,7 +38,7 @@ public interface ImapServiceExt {
 
     /**
      * Saves mail to given folder.
-     * 
+     *
      * @param folderNodeRef Reference to folder
      * @param mimeMessage Mail message
      * @param incomingEmail true if incoming mail (otherwise it is assumed to be outgoing mail)
@@ -49,7 +49,7 @@ public interface ImapServiceExt {
 
     /**
      * Lists folders used for IMAP.
-     * 
+     *
      * @param user Imap user
      * @param mailboxPattern Mailbox pattern
      * @return Collection of IMAP folders.
@@ -58,7 +58,7 @@ public interface ImapServiceExt {
 
     /**
      * Saves attachments from mail message to given folder.
-     * 
+     *
      * @param folderNodeRef Reference to folder
      * @param originalMessage Mail message
      * @throws IOException
@@ -66,13 +66,6 @@ public interface ImapServiceExt {
      * @throws TransformationException
      */
     void saveAttachments(NodeRef folderNodeRef, MimeMessage originalMessage, boolean saveBody) throws IOException, MessagingException, TransformationException;
-
-    /**
-     * Get node reference to attachments folder
-     * 
-     * @return node reference
-     */
-    NodeRef getAttachmentRoot();
 
     void saveIncomingEInvoice(NodeRef folderNodeRef, MimeMessage mimeMessage) throws FolderException;
 
@@ -89,12 +82,12 @@ public interface ImapServiceExt {
     void saveAttachmentsToSubfolder(NodeRef document, MimeMessage originalMessage, boolean saveBody) throws IOException, MessagingException, TransformationException,
             FolderException;
 
-    List<Subfolder> getImapSubfolders(NodeRef parentRef, QName countableChildNodeType);
+    List<Subfolder> getImapSubfolders(NodeRef parentRef);
 
-    int getAllFilesCount(NodeRef attachmentRoot, boolean countFilesInSubfolders);
+    List<Subfolder> getImapSubfoldersWithChildCount(NodeRef parentRef, QName countableChildNodeType);
+
+    int getAllFilesCount(NodeRef attachmentRoot, boolean countFilesInSubfolders, int limit);
 
     void saveFailureNoticeToSubfolder(NodeRef folderNodeRef, MimeMessage mimeMessage, String behaviour) throws FolderException;
-
-    NodeRef getSendFailureNoticeRoot();
 
 }

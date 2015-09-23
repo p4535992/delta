@@ -1,8 +1,9 @@
 package ee.webmedia.alfresco.casefile.service;
 
-import static ee.webmedia.alfresco.app.AppConstants.DEFAULT_COLLATOR;
+import static ee.webmedia.alfresco.app.AppConstants.getNewCollatorInstance;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
 
+import java.text.Collator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -13,12 +14,10 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.springframework.util.Assert;
 
-import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.common.model.DynamicBase;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
-import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.PropsConvertedMap;
@@ -26,8 +25,6 @@ import ee.webmedia.alfresco.eventplan.model.EventPlanCommon;
 import ee.webmedia.alfresco.eventplan.model.EventPlanModel;
 import ee.webmedia.alfresco.eventplan.model.EventPlanModel.Props;
 import ee.webmedia.alfresco.eventplan.model.RetaintionStart;
-import ee.webmedia.alfresco.functions.model.Function;
-import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.volume.model.VolumeOrCaseFile;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
@@ -37,8 +34,10 @@ public class CaseFile extends DynamicBase implements Cloneable, VolumeOrCaseFile
     private static final long serialVersionUID = 1L;
     private static final FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
     private String compoundWorkflowState;
+    private String seriesLabel;
+    private String typeName;
 
-    protected CaseFile(WmNode node) {
+    public CaseFile(WmNode node) {
         Assert.notNull(node);
         this.node = node;
     }
@@ -67,7 +66,10 @@ public class CaseFile extends DynamicBase implements Cloneable, VolumeOrCaseFile
 
     @Override
     public String getType() {
-        return getDocumentAdminService().getCaseFileTypeName(getNode());
+        if (typeName == null) {
+            typeName = getDocumentAdminService().getCaseFileTypeName(getDocumentTypeId());
+        }
+        return typeName;
     }
 
     public String getDueDateStr() {
@@ -116,10 +118,7 @@ public class CaseFile extends DynamicBase implements Cloneable, VolumeOrCaseFile
     @Override
     public String getFunctionLabel() {
         if (getFunctionNodeRef() != null) {
-            Function function = BeanHelper.getFunctionsService().getFunctionByNodeRef(getFunctionNodeRef());
-            if (function != null) {
-                return DocumentLocationGenerator.getFunctionLabel(function);
-            }
+            return BeanHelper.getFunctionsService().getFunctionLabel(getFunctionNodeRef());
         }
         return null;
     }
@@ -134,13 +133,13 @@ public class CaseFile extends DynamicBase implements Cloneable, VolumeOrCaseFile
 
     @Override
     public String getSeriesLabel() {
-        if (getSeriesNodeRef() != null) {
-            Series series = BeanHelper.getSeriesService().getSeriesByNodeRef(getSeriesNodeRef());
-            if (series != null) {
-                return DocumentLocationGenerator.getSeriesLabel(series);
+        if (seriesLabel == null) {
+            NodeRef seriesRef = getSeriesNodeRef();
+            if (seriesRef != null) {
+                seriesLabel = BeanHelper.getSeriesService().getSeriesLabel(seriesRef);
             }
         }
-        return null;
+        return seriesLabel;
     }
 
     public String getWorkflowsStatus() {
@@ -190,6 +189,7 @@ public class CaseFile extends DynamicBase implements Cloneable, VolumeOrCaseFile
 
     @Override
     public int compareTo(VolumeOrCaseFile other) {
+        Collator collatorInstance = getNewCollatorInstance();
         if (StringUtils.equalsIgnoreCase(getVolumeMark(), other.getVolumeMark())) {
             String title = getTitle();
             String title2 = other.getTitle();
@@ -200,9 +200,9 @@ public class CaseFile extends DynamicBase implements Cloneable, VolumeOrCaseFile
             } else if (title != null && title2 == null) {
                 return 1;
             }
-            return AppConstants.DEFAULT_COLLATOR.compare(title, title2);
+            return collatorInstance.compare(title, title2);
         }
-        return DEFAULT_COLLATOR.compare(getVolumeMark(), other.getVolumeMark());
+        return collatorInstance.compare(getVolumeMark(), other.getVolumeMark());
     }
 
     @Override

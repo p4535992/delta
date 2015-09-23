@@ -17,7 +17,7 @@
       width="100%" value="#{DialogManager.bean.workflows}" var="r" refreshOnBind="true" >
       
       <%-- Title --%>
-      <a:column id="col1" rendered="#{WmWorkflowService.workflowTitleEnabled}">
+      <a:column id="col1" rendered="#{workflowConstantsBean.workflowTitleEnabled}">
          <f:facet name="header">
             <a:sortLink id="col1-sort" label="#{msg.title}" value="title" styleClass="header" />
          </f:facet>

@@ -2,11 +2,13 @@ package ee.webmedia.alfresco.addressbook.web.dialog;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getAddressbookService;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import ee.webmedia.alfresco.addressbook.service.AddressbookEntry;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.repository.MapNode;
 import org.alfresco.web.bean.repository.Node;
@@ -20,7 +22,7 @@ public class AddressbookOrgDetailsDialog extends AddressbookPersonDetailsDialog 
     public static final String BEAN_NAME = "AddressbookOrgDetailsDialog";
     MapNode currentNode;
 
-    private List<Node> orgPeople;
+    private List<AddressbookEntry> orgPeople;
 
     @Override
     protected void reset() {
@@ -29,17 +31,19 @@ public class AddressbookOrgDetailsDialog extends AddressbookPersonDetailsDialog 
         currentNode = null;
     }
 
-    public List<Node> getOrgPeople() {
+    public List<AddressbookEntry> getOrgPeople() {
         if (getCurrentNode() == null) {
-            if (orgPeople != null && !orgPeople.isEmpty()) {
-                return orgPeople;
-            }
-            return Collections.emptyList();
+            return (orgPeople != null) ? orgPeople : Collections.<AddressbookEntry>emptyList();
         }
-        return getAddressbookService().listPerson(getCurrentNodeRef());
+
+        if (orgPeople == null) {
+            List<AddressbookEntry> addressbookEntries = getAddressbookService().listOrganizationPeople(getCurrentNodeRef());
+            orgPeople = (addressbookEntries == null) ? new ArrayList<AddressbookEntry>() : addressbookEntries;
+        }
+        return orgPeople;
     }
 
-    public void setOrgPeople(List<Node> list) {
+    public void setOrgPeople(List<AddressbookEntry> list) {
         orgPeople = list;
     }
 
@@ -47,6 +51,7 @@ public class AddressbookOrgDetailsDialog extends AddressbookPersonDetailsDialog 
     public void restored() {
         super.restored();
         currentNode = groupNodeValues(super.getCurrentNodeRef());
+        orgPeople = null;
     }
 
     @Override

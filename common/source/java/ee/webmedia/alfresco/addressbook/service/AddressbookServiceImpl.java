@@ -12,7 +12,9 @@ import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsOr;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +22,6 @@ import java.util.Set;
 
 import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
-import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.security.AccessStatus;
@@ -29,7 +30,6 @@ import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
-import org.alfresco.service.namespace.QNamePattern;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.GUID;
 import org.alfresco.util.Pair;
@@ -44,7 +44,9 @@ import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Props;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
 import ee.webmedia.alfresco.addressbook.web.dialog.AddressbookAddEditDialog;
 import ee.webmedia.alfresco.addressbook.web.dialog.ContactGroupAddDialog.UserDetails;
+import ee.webmedia.alfresco.common.service.CreateObjectCallback;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.search.service.AbstractSearchServiceImpl;
 import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageDataWrapper;
@@ -52,6 +54,7 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
+import ee.webmedia.alfresco.utils.UserUtil;
 
 public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements AddressbookService {
 
@@ -65,7 +68,6 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
     private Set<QName> searchFields; // doesn't need to be synchronized, because it is not modified during runtime
     private Set<QName> contactGroupSearchFields; // doesn't need to be synchronized, because it is not modified during runtime
     private StoreRef store;
-    private NodeRef addressbookRoot;
 
     // ---------- interface methods
 
@@ -77,34 +79,67 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
 
     @Override
     public List<Node> listOrganizationAndPerson() {
-        return listAddressbookChildren(RegexQNamePattern.MATCH_ALL);
+        List<Node> nodes = listAddressbookChildren(Types.ORGANIZATION);
+        nodes.addAll(listAddressbookChildren(Types.PRIV_PERSON));
+        return nodes;
     }
 
     @Override
     public List<Node> listOrganization() {
-        return listAddressbookChildren(AddressbookModel.Assocs.ORGANIZATIONS);
+        return listAddressbookChildren(Types.ORGANIZATION);
     }
 
     @Override
-    public List<AddressbookEntry> listAddressbookEntries(QName type) {
-        List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(getAddressbookRoot(), type, RegexQNamePattern.MATCH_ALL);
-        List<AddressbookEntry> addressbooks = new ArrayList<AddressbookEntry>(childRefs.size());
-        for (ChildAssociationRef ref : childRefs) {
-            try {
-                addressbooks.add(new AddressbookEntry(getNode(ref.getChildRef())));
-            } catch (InvalidNodeRefException e) {
-                // This can happen if two users modify the addressbook simultaneously and one of them deletes a contact/organization
-                // We can ignore this situation since the node doesn't exist any more and therefore it can be excluded from the listing.
-                LOG.error("Unable to get addressbook entrys properties with type " + type, e);
-                continue;
+    public List<AddressbookEntry> listAddressbookEntries(final QName type) {
+        return loadChildren(BeanHelper.getConstantNodeRefsBean().getAddressbookRoot(), type, new CreateObjectCallback<AddressbookEntry>() {
+            @Override
+            public AddressbookEntry create(NodeRef nodeRef, Map<QName, Serializable> properties) {
+                return new AddressbookEntry(new WmNode(nodeRef, type, null, properties));
             }
-        }
-        return addressbooks;
+        });
+    }
+
+    @Override
+    public List<AddressbookEntry> listOrganizationPeople(final NodeRef organizationRef) {
+        return loadChildren(organizationRef, Types.ORGPERSON, new CreateObjectCallback<AddressbookEntry>() {
+            @Override
+            public AddressbookEntry create(NodeRef nodeRef, Map<QName, Serializable> properties) {
+                return new AddressbookEntry(new WmNode(nodeRef, Types.ORGPERSON, null, properties));
+            }
+        });
+    }
+
+    @Override
+    public List<Pair<String, String>> listAllGroupMembers(NodeRef groupRef) {
+        CreateObjectCallback<Pair<String, String>> cb = new CreateObjectCallback<Pair<String, String>>() {
+            @Override
+            public Pair<String, String> create(NodeRef nodeRef, Map<QName, Serializable> properties) {
+                String name = (String) properties.get(AddressbookModel.Props.ORGANIZATION_NAME);
+                return Pair.newInstance(name, nodeRef.toString());
+            }
+        };
+        return loadChildren(groupRef, null, cb);
+    }
+
+    private List<Node> listNodeChildren(QName type, NodeRef parent) {
+        return loadChildren(parent, type, new CreateObjectCallback<Node>() {
+            @Override
+            public Node create(NodeRef nodeRef, Map<QName, Serializable> properties) {
+                return new MapNode(nodeRef, nodeService, properties);
+            }
+        });
+    }
+
+    private <T> List<T> loadChildren(NodeRef parentRef, final QName childType, CreateObjectCallback<T> createObjectCallback) {
+        List<T> childrenList = BeanHelper.getBulkLoadNodeService().loadChildNodes(
+                Arrays.asList(parentRef), null, childType, new HashMap<Long, QName>(), createObjectCallback).get(parentRef);
+
+        return (childrenList == null) ? new ArrayList<T>() : childrenList;
     }
 
     @Override
     public List<Node> listContactGroups() {
-        return listAddressbookChildren(AddressbookModel.Assocs.CONTACT_GROUPS);
+        return listAddressbookChildren(Types.CONTACT_GROUP);
     }
 
     @Override
@@ -201,7 +236,7 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
     }
 
     @Override
-    public MessageDataWrapper addToGroup(NodeRef groupNodeRef, List<UserDetails> usersForGroup) {
+    public MessageDataWrapper addToGroup(NodeRef groupNodeRef, List<UserDetails> usersForGroup, boolean createAddedToGroupInfo) {
         List<AssociationRef> assocRefs = nodeService.getTargetAssocs(groupNodeRef, RegexQNamePattern.MATCH_ALL);
         final HashSet<String> existingRefs = new HashSet<String>();
         for (AssociationRef assocRef : assocRefs) {
@@ -219,7 +254,9 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
                     feedBack.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, "addressbook_contactgroup_task_capable_org_missing_email"));
                 } else {
                     addToGroup(groupNodeRef, contactNodeRef);
-                    feedBack.addFeedbackItem(new MessageDataImpl(MessageSeverity.INFO, "addressbook_added_to_contactgroup"));
+                    if (createAddedToGroupInfo) {
+                        feedBack.addFeedbackItem(new MessageDataImpl(MessageSeverity.INFO, "addressbook_added_to_contactgroup"));
+                    }
                 }
             }
         }
@@ -238,12 +275,12 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
 
     @Override
     public List<Node> listPerson() {
-        return listAddressbookChildren(AddressbookModel.Assocs.ABPEOPLE);
+        return listAddressbookChildren(Types.PRIV_PERSON);
     }
 
     @Override
     public List<Node> listPerson(NodeRef org) {
-        return listNodeChildren(AddressbookModel.Assocs.ORGPEOPLE, org);
+        return listNodeChildren(Types.ORGPERSON, org);
     }
 
     @Override
@@ -334,7 +371,7 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
 
     @Override
     public List<Node> search(String searchCriteria, int limit, boolean onlyActive) {
-        return executeSearch(searchCriteria, searchFields, false, false, allContactTypes, null, limit, onlyActive);
+        return executeSearch(searchCriteria, searchFields, false, false, false, allContactTypes, null, limit, onlyActive);
     }
 
     @Override
@@ -344,7 +381,7 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
         if (emptySearch) {
             result = listContactGroups();
         } else {
-            result = executeSearch(searchCriteria, contactGroupSearchFields, false, false, Collections.<QName> emptySet(), null, limit, false);
+            result = executeSearch(searchCriteria, contactGroupSearchFields, false, false, false, Collections.<QName> emptySet(), null, limit, false);
         }
         if (excludeTaskCapable) { // should be done during search
             List<Node> notTaskCapable = new ArrayList<Node>(result.size());
@@ -386,6 +423,11 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
     }
 
     @Override
+    public List<Node> searchDecDocumentForwardCapableContacts(String searchCriteria, int limit) {
+        return executeSearch(searchCriteria, searchFields, false, true, true, allContactTypes, null, limit, true);
+    }
+
+    @Override
     public List<Node> searchPersonContacts(String searchCriteria, int limit) {
         Set<QName> types = new HashSet<QName>();
         types.add(Types.ORGPERSON);
@@ -405,19 +447,56 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
                 contactGroupSearchFields,
                 true,
                 dvkCapableOnly,
+                false,
                 orgOnly ? Collections.singleton(Types.ORGANIZATION) : Collections.<QName> emptySet(),
                 institutionToRemove,
                 limit,
                 false); // Contact groups don't have AddressbookModel.Props.ACTIVESTATUS property
     }
 
-    private List<Node> executeSearch(String searchCriteria, Set<QName> fields, boolean taskCapableOnly, boolean dvkCapableOnly, Set<QName> types, String institutionToRemove,
-            int limit) {
-        return executeSearch(searchCriteria, fields, taskCapableOnly, dvkCapableOnly, types, institutionToRemove, limit, true);
+    @Override
+    public List<Pair<String, String>> searchTaskCapableContacts(String param, int limit) {
+        List<Node> taskCapableContacts = searchTaskCapableContacts(param, true, false, null, limit);
+        return transform(taskCapableContacts);
+    }
+
+    @Override
+    public List<Pair<String, String>> searchTaskCapableContactGroups(String param, int limit) {
+        List<Node> taskCapableContactGroups = searchTaskCapableContactGroups(param, false, false, null, limit);
+        return transform(taskCapableContactGroups);
+    }
+
+    private List<Pair<String, String>> transform(List<Node> list) {
+        List<Pair<String, String>> result = new ArrayList<>();
+        for (Node node : list) {
+            NodeRef id = node.getNodeRef();
+            if (id == null) {
+                continue;
+            }
+            String name = "";
+            Map<String, Object> props = node.getProperties();
+            if (node.getType().equals(Types.ORGANIZATION)) {
+                name = (String) props.get(Props.ORGANIZATION_NAME.toString());
+            } else if (node.getType().equals(Types.CONTACT_GROUP)) {
+                name = (String) props.get(Props.GROUP_NAME);
+            } else if (node.getType().equals(Types.PRIV_PERSON) || node.getType().equals(Types.ORGPERSON)) {
+                name = UserUtil.getPersonFullName((String) props.get(Props.PERSON_FIRST_NAME.toString()), (String) props
+                        .get(Props.PERSON_LAST_NAME.toString()));
+            }
+            if (StringUtils.isNotEmpty(name)) {
+                result.add(Pair.newInstance(name, id.toString()));
+            }
+        }
+        return result;
     }
 
     private List<Node> executeSearch(String searchCriteria, Set<QName> fields, boolean taskCapableOnly, boolean dvkCapableOnly, Set<QName> types, String institutionToRemove,
-            int limit, boolean onlyActive) {
+            int limit) {
+        return executeSearch(searchCriteria, fields, taskCapableOnly, dvkCapableOnly, false, types, institutionToRemove, limit, true);
+    }
+
+    private List<Node> executeSearch(String searchCriteria, Set<QName> fields, boolean taskCapableOnly, boolean dvkCapableOnly, boolean decDocumenForwardCapableOnly,
+            Set<QName> types, String institutionToRemove, int limit, boolean onlyActive) {
         List<String> queryPartsAnd = new ArrayList<String>(4);
         if (StringUtils.isNotBlank(searchCriteria)) {
             queryPartsAnd.add(SearchUtil.generateStringWordsWildcardQuery(parseQuickSearchWords(searchCriteria, 1), true, true, fields.toArray(new QName[0])));
@@ -430,6 +509,9 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
         }
         if (dvkCapableOnly && fields != contactGroupSearchFields) {
             queryPartsAnd.add(generatePropertyBooleanQuery(Props.DVK_CAPABLE, true));
+        }
+        if (decDocumenForwardCapableOnly) {
+            queryPartsAnd.add(generatePropertyBooleanQuery(Props.FORWARDING_DEC_DOCUMENT_ALLOWED, true));
         }
         if (onlyActive) {
             queryPartsAnd.add(generatePropertyBooleanQuery(Props.ACTIVESTATUS, true));
@@ -534,22 +616,13 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
 
     private NodeRef createNode(NodeRef parent, QName assoc, QName type, Map<QName, Serializable> data) {
         QName randomqname = QName.createQName(URI, GUID.generate());
-        ChildAssociationRef a = nodeService.createNode(parent == null ? getAddressbookRoot() : parent, assoc,
+        ChildAssociationRef a = nodeService.createNode(parent == null ? BeanHelper.getConstantNodeRefsBean().getAddressbookRoot() : parent, assoc,
                 randomqname, type, data);
         if (Types.ORGPERSON.equals(type)) {
             // add org name to props for better search and representation
             nodeService.setProperty(a.getChildRef(), Props.PRIVATE_PERSON_ORG_NAME, nodeService.getProperty(parent, Props.ORGANIZATION_NAME));
         }
         return a.getChildRef();
-    }
-
-    @Override
-    public NodeRef getAddressbookRoot() {
-        if (addressbookRoot == null) {
-            String xPath = AddressbookModel.Repo.ADDRESSBOOK_SPACE;
-            addressbookRoot = generalService.getNodeRef(xPath);
-        }
-        return addressbookRoot;
     }
 
     @Override
@@ -581,24 +654,8 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
         return BeanHelper.getDocumentSearchService().searchOrganizationNodeRef(orgEmail, orgName);
     }
 
-    private List<Node> listNodeChildren(QNamePattern type, NodeRef parent) {
-        List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(parent, type, RegexQNamePattern.MATCH_ALL);
-        List<Node> entryNodes = new ArrayList<Node>(childRefs.size());
-        for (ChildAssociationRef ref : childRefs) {
-            try {
-                entryNodes.add(getNode(ref.getChildRef()));
-            } catch (InvalidNodeRefException e) {
-                // This can happen if two users modify the addressbook simultaneously and one of them deletes a contact/organization
-                // We can ignore this situation since the node doesn't exist any more and therefore it can be excluded from the listing.
-                LOG.error("Unable to get " + parent + " childs properties with type " + type, e);
-                continue;
-            }
-        }
-        return entryNodes;
-    }
-
-    private List<Node> listAddressbookChildren(QNamePattern type) {
-        return listNodeChildren(type, getAddressbookRoot());
+    private List<Node> listAddressbookChildren(QName type) {
+        return listNodeChildren(type, BeanHelper.getConstantNodeRefsBean().getAddressbookRoot());
     }
 
     @Override
@@ -670,7 +727,7 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
 
     @Override
     public boolean hasCreatePermission() {
-        return permissionService.hasPermission(getAddressbookRoot(), PermissionService.CREATE_CHILDREN) == AccessStatus.ALLOWED;
+        return permissionService.hasPermission(BeanHelper.getConstantNodeRefsBean().getAddressbookRoot(), PermissionService.CREATE_CHILDREN) == AccessStatus.ALLOWED;
     }
 
 }

@@ -1,14 +1,12 @@
 package ee.webmedia.alfresco.log.web;
 
-import java.util.List;
-
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.apache.myfaces.application.jsp.JspStateManagerImpl;
 
-import ee.webmedia.alfresco.log.model.LogEntry;
+import ee.webmedia.alfresco.log.model.LogFilter;
 import ee.webmedia.alfresco.simdhs.CSVExporter;
 import ee.webmedia.alfresco.simdhs.DataReader;
 import ee.webmedia.alfresco.simdhs.EscapingCSVExporter;
@@ -23,13 +21,13 @@ public class ApplicationLogListDialog extends BaseDialogBean {
 
     public static final String BEAN_NAME = "ApplicationLogListDialog";
 
-    private List<LogEntry> logEntries;
+    private LogEntryDataProvider logEntries;
 
-    public void search(List<LogEntry> entries) {
-        logEntries = entries;
+    public void search(LogFilter filter) {
+        logEntries = new LogEntryDataProvider(filter);
     }
 
-    public List<LogEntry> getLogEntries() {
+    public LogEntryDataProvider getLogEntries() {
         return logEntries;
     }
 
@@ -44,5 +42,10 @@ public class ApplicationLogListDialog extends BaseDialogBean {
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         logEntries = null;
         return null;
+    }
+
+    @Override
+    public void clean() {
+        logEntries = null;
     }
 }

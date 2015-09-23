@@ -36,6 +36,7 @@ import org.alfresco.service.cmr.dictionary.InvalidAspectException;
 import org.alfresco.service.cmr.dictionary.InvalidTypeException;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.QNamePattern;
+import org.alfresco.util.Pair;
 
 /**
  * Interface for public and internal <b>node</b> and <b>store</b> operations.
@@ -63,6 +64,8 @@ import org.alfresco.service.namespace.QNamePattern;
 @PublicService
 public interface NodeService
 {
+    String NON_TX_BEAN_NAME = "nodeService";
+    
     /**
      * Gets a list of all available node store references
      * 
@@ -218,6 +221,8 @@ public interface NodeService
     @Auditable(key = Auditable.Key.ARG_0 ,parameters = {"nodeRef"})
     public QName getType(NodeRef nodeRef) throws InvalidNodeRefException;
     
+    boolean isType(NodeRef nodeRef, QName type);
+    
     /**
      * Re-sets the type of the node.  Can be called in order specialise a node to a sub-type.
      * 
@@ -369,12 +374,30 @@ public interface NodeService
     
     /**
      * @param nodeRef
+     * @param propertyTypes - map for caching property qnames when method is called several times for nodes having same property types
+     * @return Returns all properties keyed by their qualified name
+     * @throws InvalidNodeRefException if the node could not be found
+     */
+    @Auditable(key = Auditable.Key.ARG_0 ,parameters = {"nodeRef"})    
+    public Map<QName, Serializable> getProperties(NodeRef nodeRef, Set<QName> propsToLoad, Map<Long, QName> propertyTypes) throws InvalidNodeRefException;
+    
+    /**
+     * @param nodeRef
      * @param qname the qualified name of the property
      * @return Returns the value of the property, or null if not yet set
      * @throws InvalidNodeRefException if the node could not be found
      */
     @Auditable(key = Auditable.Key.ARG_0 ,parameters = {"nodeRef", "qname"})
     public Serializable getProperty(NodeRef nodeRef, QName qname) throws InvalidNodeRefException;
+    
+    /**
+     * @param nodeRef
+     * @param qname the qualified name of the property
+     * @return Returns the value of the property, or null if not yet set
+     * @throws InvalidNodeRefException if the node could not be found
+     */
+    @Auditable(key = Auditable.Key.ARG_0 ,parameters = {"nodeRef", "qname"})    
+    Serializable getProperty(NodeRef nodeRef, QName qname, Map<QName, Pair<Long, QName>> propertyTypes) throws InvalidNodeRefException;    
     
     /**
      * Set the values of all properties to be an <code>Serializable</code> instances.
@@ -670,6 +693,9 @@ public interface NodeService
      */
     @Auditable(key = Auditable.Key.ARG_0 ,parameters = {"storeRef"})
     public NodeRef getStoreArchiveNode(StoreRef storeRef);
+    
+    @Auditable(key = Auditable.Key.ARG_0 ,parameters = {"storeRef"})
+    boolean hasStoreArchiveMapping(StoreRef storeRef);
 
     /**
      * Restore an individual node (along with its sub-tree nodes) to the target location.

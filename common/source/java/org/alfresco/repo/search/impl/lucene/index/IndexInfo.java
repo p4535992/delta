@@ -70,10 +70,14 @@ import org.alfresco.repo.search.impl.lucene.LuceneXPathHandler;
 import org.alfresco.repo.search.impl.lucene.analysis.AlfrescoStandardAnalyser;
 import org.alfresco.repo.search.impl.lucene.query.PathQuery;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.util.ApplicationContextHelper;
 import org.alfresco.util.GUID;
 import org.alfresco.util.TraceableThreadFactory;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.lucene.analysis.Analyzer;
@@ -2209,11 +2213,155 @@ public class IndexInfo implements IndexMonitor
                 {
                     throw new IOException("Invalid file check sum");
                 }
+                
+                File indexInfo2File = new File(this.indexDirectory, "IndexInfo2");
+                if (indexInfo2File.exists()) {
+                    g_logger.info("Found secondary indexinfo, trying to add: " + indexInfo2File);
+                    RandomAccessFile indexInfo2 = openFile(indexInfo2File);
+                    FileChannel indexInfo2Channel = indexInfo2.getChannel();
+                    g_logger.info("Current index status before adding: " + toString() + dumpInfoAsString());
+                    addStatusFromExternalFile(indexInfo2Channel);
+                    g_logger.info("Current index status after adding: " + toString() + dumpInfoAsString());
+                    writeStatus();
+                    indexInfo2Channel.close();
+                    indexInfo2.close();
+                    if (!indexInfo2File.delete()) {
+                        throw new RuntimeException("Error deleting file " + indexInfo2File);
+                    }
+                    g_logger.info("Secondary indexinfo adding complete, deleted file: " + indexInfo2File);
+                    merger.special = SpecialMerge.DELETIONS;
+                }
+            }
+        }
+    }
+
+    private void addStatusFromExternalFile(FileChannel channel) throws IOException
+    {
+        channel.position(0);
+        ByteBuffer buffer;
+
+        if (useNIOMemoryMapping)
+        {
+            MappedByteBuffer mbb = channel.map(MapMode.READ_ONLY, 0, channel.size());
+            mbb.load();
+            buffer = mbb;
+        }
+        else
+        {
+            buffer = ByteBuffer.wrap(new byte[(int) channel.size()]);
+            channel.read(buffer);
+            buffer.position(0);
+        }
+
+        buffer.position(0);
+        boolean isEmptyBuffer = !buffer.hasRemaining();
+        long onDiskVersion = isEmptyBuffer ? 0 : buffer.getLong();
+        CRC32 crc32 = new CRC32();
+        crc32.update((int) (onDiskVersion >>> 32) & 0xFFFFFFFF);
+        crc32.update((int) (onDiskVersion >>> 0) & 0xFFFFFFFF);
+        int size = isEmptyBuffer ? 0 : buffer.getInt();
+        crc32.update(size);
+        LinkedHashMap<String, IndexEntry> newIndexEntries = new LinkedHashMap<String, IndexEntry>();
+        // Not all state is saved some is specific to this index so we
+        // need to add the transient stuff.
+        // Until things are committed they are not shared unless it is
+        // prepared
+        for (int i = 0; i < size; i++)
+        {
+            String indexTypeString = readString(buffer, crc32);
+            IndexType indexType;
+            try
+            {
+                indexType = IndexType.valueOf(indexTypeString);
+            }
+            catch (IllegalArgumentException e)
+            {
+                throw new IOException("Invalid type " + indexTypeString);
+            }
+
+            String name = readString(buffer, crc32);
+
+            String parentName = readString(buffer, crc32);
+
+            String txStatus = readString(buffer, crc32);
+            TransactionStatus status;
+            try
+            {
+                status = TransactionStatus.valueOf(txStatus);
+            }
+            catch (IllegalArgumentException e)
+            {
+                throw new IOException("Invalid status " + txStatus);
+            }
+
+            String mergeId = readString(buffer, crc32);
+
+            long documentCount = buffer.getLong();
+            crc32.update((int) (documentCount >>> 32) & 0xFFFFFFFF);
+            crc32.update((int) (documentCount >>> 0) & 0xFFFFFFFF);
+
+            long deletions = buffer.getLong();
+            crc32.update((int) (deletions >>> 32) & 0xFFFFFFFF);
+            crc32.update((int) (deletions >>> 0) & 0xFFFFFFFF);
+
+            byte deleteOnlyNodesFlag = buffer.get();
+            crc32.update(deleteOnlyNodesFlag);
+            boolean isDeletOnlyNodes = deleteOnlyNodesFlag == 1;
+
+            if (!status.isTransient())
+            {
+                newIndexEntries.put(name, new IndexEntry(indexType, name, parentName, status, mergeId, documentCount, deletions, isDeletOnlyNodes));
             }
         }
 
-    }
+        // External entries must be first, then a DELTA deletion entry must be right after them, and then our own entries must be last
+        // That way the DELTA deletion entry applies only to the INDEX entries that are positioned before it 
+        final String guid = GUID.generate();
+        newIndexEntries.put(guid, new IndexEntry(IndexType.DELTA, guid, "", TransactionStatus.PREPARING, "", 0, 0, false));
 
+        for (final IndexEntry entry : indexEntries.values())
+        {
+            newIndexEntries.put(entry.getName(), entry);
+        }
+        long onDiskCRC32 = isEmptyBuffer ? 0 : buffer.getLong();
+        if (isEmptyBuffer || crc32.getValue() == onDiskCRC32)
+        {
+            indexEntries = newIndexEntries;
+
+            final HashSet<String> toDelete = new HashSet<String>();
+            final File indexDeletionsFile = new File(indexDirectory, "IndexInfo2Deletions");
+            g_logger.info("Reading lines from " + indexDeletionsFile);
+            List<String> lines;
+            try {
+                lines = FileUtils.readLines(indexDeletionsFile);
+            } catch (final IOException e) {
+                throw new RuntimeException("Reading lines from " + indexDeletionsFile + " failed: " + e.getMessage(), e);
+            }
+            g_logger.info("Read " + lines.size() + " lines, parsing noderefs");
+            final Map<StoreRef, Set<NodeRef>> nodesToDelete = new HashMap<StoreRef, Set<NodeRef>>();
+            for (String line : lines) {
+                line = line.trim();
+                if (StringUtils.isEmpty(line)) {
+                    continue;
+                }
+                toDelete.add(line);
+            }
+            g_logger.info("Deleting file " + indexDeletionsFile);
+            if (!indexDeletionsFile.delete()) {
+                throw new RuntimeException("Error deleting file " + indexDeletionsFile);
+            }
+            g_logger.info("Successfully deleted file " + indexDeletionsFile);
+
+            setPreparedState(guid, toDelete, 0, false);
+            indexEntries.get(guid).setStatus(TransactionStatus.COMMITTED);
+
+        }
+        else
+        {
+            g_logger.error("Invalid file check sum, ignoring secondary indexinfo: " + channel);
+        }
+    }
+    
     private String readString(ByteBuffer buffer, CRC32 crc32) throws UnsupportedEncodingException
     {
         int size = buffer.getInt();
@@ -3000,12 +3148,18 @@ public class IndexInfo implements IndexMonitor
         DONE, RESCHEDULE;
     }
 
+    public enum SpecialMerge {
+        NONE,
+        INDEXES,
+        DELETIONS
+    }
+
     private abstract class AbstractSchedulable implements Schedulable, Runnable
     {
         ScheduledState scheduledState = ScheduledState.UN_SCHEDULED;
-        boolean special = false;
+        SpecialMerge special = SpecialMerge.NONE;
 
-        public void runNow()
+        public void runNow(boolean deletions)
         {
             while (true)
             {
@@ -3023,7 +3177,7 @@ public class IndexInfo implements IndexMonitor
                         if (scheduledState == ScheduledState.FAILED || scheduledState == ScheduledState.UN_SCHEDULED)
                         {
                             g_logger.info("Current scheduledState = " + scheduledState + " - scheduling merger now");
-                            special = true;
+                            special = deletions ? SpecialMerge.DELETIONS : SpecialMerge.INDEXES;
                             switch (scheduledState)
                             {
                             case FAILED:
@@ -3229,9 +3383,13 @@ public class IndexInfo implements IndexMonitor
             // Single JVM to start with
             MergeAction action = MergeAction.NONE;
 
-            if (special)
+            if (special == SpecialMerge.INDEXES)
             {
                 action = MergeAction.MERGE_INDEX;
+            }
+            else if (special == SpecialMerge.DELETIONS)
+            {
+                action = MergeAction.APPLY_DELTA_DELETION;
             }
             else
             {
@@ -3482,6 +3640,7 @@ public class IndexInfo implements IndexMonitor
             LinkedHashMap<String, IndexEntry> indexes;
 
             getWriteLock();
+            boolean printIndexInfo = false;
             try
             {
                 toDelete = doWithFileLock(new LockWork<LinkedHashMap<String, IndexEntry>>()
@@ -3538,6 +3697,12 @@ public class IndexInfo implements IndexMonitor
                     }
 
                 });
+                if (special != SpecialMerge.NONE)
+                {
+                    special = SpecialMerge.NONE;
+                    g_logger.info("Special deletions merge; " + toString() + dumpInfoAsString());
+                    printIndexInfo = true;
+                }
                 if (toDelete.size() == 0)
                 {
                     g_logger.warn("Cannot apply deletions. Sleeping 100 milliseconds to throttle retries. IndexInfo: " + toString() + dumpInfoAsString());
@@ -3784,7 +3949,10 @@ public class IndexInfo implements IndexMonitor
                     }
 
                 });
-
+                if (printIndexInfo)
+                {
+                    g_logger.info("After special deletions merge; " + toString() + dumpInfoAsString());
+                }
             }
             finally
             {
@@ -3837,9 +4005,9 @@ public class IndexInfo implements IndexMonitor
                         }
 
                         int position;
-                        if (special)
+                        if (special != SpecialMerge.NONE)
                         {
-                            special = false;
+                            special = SpecialMerge.NONE;
                             g_logger.info("Special merge - using position=0; " + toString() + dumpInfoAsString());
                             int sum = 0;
                             for (int i = 1; i < mergeList.size(); i++)
@@ -4441,7 +4609,12 @@ public class IndexInfo implements IndexMonitor
 
     public void runMergeNow()
     {
-        merger.runNow();
+        merger.runNow(false);
+    }
+
+    public void runMergeNow(boolean deletions)
+    {
+        merger.runNow(deletions);
     }
 
 }

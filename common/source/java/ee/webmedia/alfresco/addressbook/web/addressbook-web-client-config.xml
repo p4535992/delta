@@ -95,7 +95,8 @@
    <config evaluator="aspect-name" condition="ab:organizationProperties">
       <property-sheet>
          <show-property name="ab:taskCapable" readOnlyIf="#{AddressbookAddEditDialog.getNotAllowedEditTaskCapable}" />
-         <show-property name="ab:decTaskCapable" readOnlyIf="#{AddressbookAddEditDialog.notDecTaskCapable}" />
+         <show-property name="ab:decTaskCapable" readOnlyIf="#{AddressbookAddEditDialog.notDvkCapable}" />
+         <show-property name="ab:forwardingDecDocumentAllowed" readOnlyIf="#{AddressbookAddEditDialog.notDvkCapable}" />
       </property-sheet>
    </config>
    
@@ -199,7 +200,7 @@
          <action id="addressbook_add_to_group">
             <label-id>addressbook_add_to_contactgroup</label-id>
             <image>/images/icons/add_group.gif</image>
-            <onclick>showModal('dialog:dialog-body:addressbook_add_to_group_popup'); return false;</onclick>
+            <onclick>showModal('dialog:dialog-body:addressbook_add_to_group_-1_popup'); return false;</onclick>
          </action>
 
          <!-- Action menu for Addressbook-->

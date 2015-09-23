@@ -25,6 +25,7 @@
 package org.alfresco.service.cmr.security;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -33,6 +34,7 @@ import org.alfresco.service.NotAuditable;
 import org.alfresco.service.PublicService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.web.bean.repository.Node;
 
 /**
  * This service encapsulates the management of people and groups.
@@ -65,7 +67,7 @@ public interface PersonService
      * @see #setCreateMissingPeople(boolean)
      * @see #createMissingPeople()
      */
-    @Auditable(parameters = {"userName"})
+    @Auditable(parameters = { "userName" })
     public NodeRef getPerson(String userName);
 
     /**
@@ -75,7 +77,7 @@ public interface PersonService
      *            the user name
      * @return Returns true if the user exists, otherwise false
      */
-    @Auditable(parameters = {"userName"})
+    @Auditable(parameters = { "userName" })
     public boolean personExists(String userName);
 
     /**
@@ -95,7 +97,7 @@ public interface PersonService
      * 
      * @see #getPerson(String)
      */
-    @Auditable(parameters = {"createMissing"})
+    @Auditable(parameters = { "createMissing" })
     public void setCreateMissingPeople(boolean createMissing);
 
     /**
@@ -118,7 +120,7 @@ public interface PersonService
      * @param properties -
      *            the map of properties to set (as the NodeService)
      */
-    @Auditable(parameters = {"userName", "properties"})
+    @Auditable(parameters = { "userName", "properties" })
     public void setPersonProperties(String userName, Map<QName, Serializable> properties);
 
     /**
@@ -136,7 +138,7 @@ public interface PersonService
      * @param properties
      * @return
      */
-    @Auditable(parameters = {"properties"})
+    @Auditable(parameters = { "properties" })
     public NodeRef createPerson(Map<QName, Serializable> properties);
 
     /**
@@ -150,7 +152,7 @@ public interface PersonService
      *            a set if zones including the identifier for the external user registry owning the person information, or <code>null</code> or an empty set
      * @return the node ref
      */
-    @Auditable(parameters = {"properties", "zones"})
+    @Auditable(parameters = { "properties", "zones" })
     public NodeRef createPerson(Map<QName, Serializable> properties, Set<String> zones);
 
     /**
@@ -158,7 +160,7 @@ public interface PersonService
      * 
      * @param userName
      */
-    @Auditable(parameters = {"userName"})
+    @Auditable(parameters = { "userName" })
     public void deletePerson(String userName);
 
     /**
@@ -168,7 +170,7 @@ public interface PersonService
      */
     @Auditable
     public Set<NodeRef> getAllPeople();
-    
+
     /**
      * Get people filtered by the given property name/value pair
      * 
@@ -186,7 +188,7 @@ public interface PersonService
      */
     @Auditable
     public NodeRef getPeopleContainer();
-    
+
     /**
      * Are user names case sensitive?
      * 
@@ -206,9 +208,25 @@ public interface PersonService
      */
     @NotAuditable
     public String getUserIdentifier(String caseSensitiveUserName);
-    
+
     Map<QName, Serializable> getPersonProperties(String userName);
 
-    void removeFromPersonPropertiesCache(String username);
+    List<Node> getPersonNodeList(int limit);
+
+    List<NodeRef> getAllUserRefs();
+
+    Set<String> getAllUserNames();
+
+    Node getPersonNode(String userName);
+
+    void updateCache(Node personNode);
+
+    void updateCache(String userName);
+
+    Object getPersonProperty(String userName, QName property);
+    
+    NodeRef getPersonFromRepo(String userName);
+    
+    void setPersonProperty(String username, QName property, Serializable value);
 
 }

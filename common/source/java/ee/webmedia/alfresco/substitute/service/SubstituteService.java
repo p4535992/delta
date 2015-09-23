@@ -6,16 +6,24 @@ import java.util.List;
 import org.alfresco.service.cmr.repository.NodeRef;
 
 import ee.webmedia.alfresco.substitute.model.Substitute;
+import ee.webmedia.alfresco.substitute.model.UnmodifiableSubstitute;
 
 public interface SubstituteService {
     public static final String BEAN_NAME = "SubstituteService";
 
     /**
-     * Gets list of substitutes.
-     * 
+     * Gets list of substitutes from repo.
+     *
      * @return List
      */
     List<Substitute> getSubstitutes(NodeRef userNodeRef);
+
+    /**
+     * Get list of {@code UnmodifiableSubstitute}s from cache
+     */
+    List<UnmodifiableSubstitute> getUnmodifiableSubstitutes(NodeRef userNodeRef);
+
+    String getSubstituteLabel(String userName);
 
     Substitute getSubstitute(NodeRef substituteRef);
 
@@ -46,7 +54,7 @@ public interface SubstituteService {
      * 
      * @return
      */
-    List<Substitute> findActiveSubstitutionDuties(String userName);
+    List<Substitute> searchActiveSubstitutionDuties(String userName);
 
     /**
      * @param otherUserName
@@ -63,5 +71,7 @@ public interface SubstituteService {
      * @return list of substitutes
      */
     List<Substitute> findSubstitutionDutiesInPeriod(NodeRef userNodeRef, Date startDate, Date endDate);
+
+    String clearCache();
 
 }

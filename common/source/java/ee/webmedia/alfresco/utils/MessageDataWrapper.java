@@ -46,6 +46,10 @@ public class MessageDataWrapper implements Iterable<MessageData> {
         return false;
     }
 
+    public boolean isEmpty() {
+        return feedbackItems == null ? true : feedbackItems.isEmpty();
+    }
+
     @Override
     public String toString() {
         return hasErrors() ? "HAS ERRORS:\n" : "Feedback:\n" + feedbackItems;

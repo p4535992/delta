@@ -3,19 +3,29 @@ package ee.webmedia.alfresco.common.search;
 import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
 import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsOr;
 
+import java.io.Serializable;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.StringTokenizer;
 
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.springframework.util.Assert;
 
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
@@ -26,7 +36,7 @@ public class DbSearchUtil {
 
     public static final String ACTIVE_FIELD = "wfs_active";
     public static final String TASK_TYPE_FIELD = "task_type";
-    private static final String SEPARATOR = "_";
+    public static final String SEPARATOR = "_";
 
     public static Pair<String, List<Object>> generateTaskMultiStringExactQuery(List<String> values, QName... propNames) {
         if (values == null || values.isEmpty()) {
@@ -162,29 +172,7 @@ public class DbSearchUtil {
         return sb.toString();
     }
 
-    public static QName getPropQNameFromDbFieldName(String fieldName) {
-        String namespaceUri = null;
-        String prefix = null;
-        if (fieldName.startsWith(prefix = getPrefix(WorkflowCommonModel.PREFIX) + SEPARATOR)) {
-            namespaceUri = WorkflowCommonModel.URI;
-        } else if (fieldName.startsWith(prefix = getPrefix(WorkflowSpecificModel.PREFIX) + SEPARATOR)) {
-            namespaceUri = WorkflowSpecificModel.URI;
-        } else {
-            return null;
-        }
-        StringTokenizer st = new StringTokenizer(fieldName.substring(prefix.length()), SEPARATOR);
-        StringBuilder sb = new StringBuilder();
-        boolean firstToken = true;
-        while (st.hasMoreTokens()) {
-            String token = st.nextToken();
-            char firstChar = firstToken ? token.charAt(0) : Character.toUpperCase(token.charAt(0));
-            sb.append(firstChar + token.substring(1));
-            firstToken = false;
-        }
-        return QName.createQName(namespaceUri, sb.toString());
-    }
-
-    private static String getPrefix(String prefix) {
+    public static String getPrefix(String prefix) {
         return (new StringTokenizer(prefix, ":")).nextToken();
     }
 
@@ -222,6 +210,7 @@ public class DbSearchUtil {
     }
 
     public static String getQuestionMarks(int size) {
+        Assert.isTrue(size > 0, "At least one question mark should be returned.");
         String questionMarks = StringUtils.repeat("?, ", size);
         questionMarks = questionMarks.substring(0, questionMarks.length() - 2);
         return questionMarks;
@@ -244,6 +233,89 @@ public class DbSearchUtil {
 
     public static String generateTaskPropertiesNotEqualQuery(QName propName1, QName propName2) {
         return getDbFieldNameFromPropQName(propName1) + "!= " + getDbFieldNameFromPropQName(propName2);
+    }
+
+    /**
+     * Returns all NodeRef uuids from the given collection of NodeRefs.
+     *
+     * @param nodeRefs
+     * @return Array of workflow uuids or null
+     */
+    public static List<Object> appendNodeRefIdQueryArguments(Collection<NodeRef> nodeRefs, Object... firstArguments) {
+        int headLength = 0;
+        if (firstArguments != null) {
+            headLength = firstArguments.length;
+        }
+
+        int tailLength = 0;
+        if (nodeRefs != null) {
+            tailLength = nodeRefs.size();
+        }
+
+        List<Object> result = new ArrayList<>((headLength + tailLength));
+        if (headLength > 0) {
+            for (Object argument : firstArguments) {
+                result.add(argument);
+            }
+        }
+        if (tailLength > 0) {
+            for (NodeRef nodeRef : nodeRefs) {
+                result.add(nodeRef.getId());
+            }
+        }
+
+        return result;
+    }
+
+    public static String createCommaSeparatedUpdateString(Collection<String> dbColumnNames) {
+        StringBuffer sb = new StringBuffer();
+        boolean isNotFirst = false;
+        for (String fieldName : dbColumnNames) {
+            if (isNotFirst) {
+                sb.append(", ");
+            }
+            isNotFirst = true;
+            sb.append(fieldName + "=?");
+        }
+
+        return sb.toString();
+    }
+
+    public static Map<QName, Serializable> buildSearchableSendInfos(List<SendInfo> sendInfos) {
+        int size = sendInfos.size();
+        ArrayList<String> sendModes = new ArrayList<>(size);
+        ArrayList<String> sendRecipients = new ArrayList<>(size);
+        ArrayList<Date> sendTimes = new ArrayList<>(size);
+        ArrayList<String> sendResolutions = new ArrayList<>(size);
+        for (SendInfo sendInfo : sendInfos) {
+            sendModes.add(sendInfo.getSendMode());
+            sendRecipients.add(sendInfo.getRecipient());
+            sendTimes.add(sendInfo.getSendDateTime());
+            sendResolutions.add(sendInfo.getResolution());
+        }
+
+        Map<QName, Serializable> props = new HashMap<>();
+        props.put(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE, sendModes);
+        props.put(DocumentCommonModel.Props.SEARCHABLE_SEND_INFO_RECIPIENT, sendRecipients);
+        props.put(DocumentCommonModel.Props.SEARCHABLE_SEND_INFO_SEND_DATE_TIME, sendTimes);
+        props.put(DocumentCommonModel.Props.SEARCHABLE_SEND_INFO_RESOLUTION, sendResolutions);
+
+        return props;
+    }
+
+    public static void setParameterValue(PreparedStatement statement, int fieldIndex, Object value) throws SQLException {
+        if (value instanceof Date) {
+            Timestamp timestamp = new Timestamp(((Date) value).getTime());
+            statement.setTimestamp(fieldIndex, timestamp);
+        } else if (value instanceof Boolean) {
+            statement.setBoolean(fieldIndex, (Boolean) value);
+        } else if (value instanceof Integer) {
+            statement.setInt(fieldIndex, (Integer) value);
+        } else if (value instanceof List) {
+            statement.setObject(fieldIndex, statement.getConnection().createArrayOf("text", ((List) value).toArray()));
+        } else {
+            statement.setObject(fieldIndex, value);
+        }
     }
 
 }

@@ -97,7 +97,7 @@
             <action>#{CaseFileDialog.removeNotification}</action>
          </action>          
 
-         <action-group id="case_file_actions">
+         <action-group id="case_file_actions" shared-resource="ee.webmedia.alfresco.common.evaluator.CaseFileActionsGroupResource">
             <action idref="case_file_favorites_add" />
          	<action idref="case_file_favorites_remove" />
          	<action idref="case_file_permissions" />

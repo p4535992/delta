@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,6 +31,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.repo.content.MimetypeMap;
+import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.ContentWriter;
@@ -60,6 +62,8 @@ import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.classificator.enums.StorageType;
 import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
+import ee.webmedia.alfresco.common.service.ApplicationConstantsBean;
+import ee.webmedia.alfresco.common.service.CreateObjectCallback;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
@@ -71,6 +75,8 @@ import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
+import ee.webmedia.alfresco.document.sendout.model.DocumentSendInfo;
+import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.dvk.model.DvkModel;
@@ -84,11 +90,11 @@ import ee.webmedia.alfresco.monitoring.MonitoringUtil;
 import ee.webmedia.alfresco.notification.model.NotificationModel;
 import ee.webmedia.alfresco.notification.service.NotificationService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
-import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.utils.DvkUtil;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.volume.model.UnmodifiableVolume;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.service.VolumeService;
 import ee.webmedia.alfresco.workflow.generated.DeleteLinkedReviewTaskType;
@@ -129,6 +135,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
     private WorkflowService workflowService;
     private NotificationService notificationService;
     private EInvoiceService einvoiceService;
+    private ApplicationConstantsBean applicationConstantsBean;
 
     @Override
     public int updateDocAndTaskSendStatuses() {
@@ -137,11 +144,14 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         final Map<NodeRef /* taskRef */, Pair<String /* dvkId */, String /* recipientRegNr */>> taskRefsAndIds //
         = documentSearchService.searchTaskBySendStatusQuery(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK);
         taskRefsAndIds.putAll(documentSearchService.searchTaskBySendStatusQuery(WorkflowSpecificModel.Types.REVIEW_TASK));
-        if (docRefsAndIds.size() == 0 && taskRefsAndIds.size() == 0) {
+        final Map<NodeRef, Pair<String, String>> forwardedDecDocRefsAndIds = documentSearchService.searchForwardedDecDocumentsDvkIds(SendStatus.SENT);
+
+        if (docRefsAndIds.size() == 0 && taskRefsAndIds.size() == 0 && forwardedDecDocRefsAndIds.size() == 0) {
             return 0; // no need to ask statuses
         }
         // get unique dvkIds
-        final Set<String> dvkIds = new HashSet<String>(docRefsAndIds.size() + taskRefsAndIds.size());
+        final Set<String> dvkIds = new HashSet<String>(docRefsAndIds.size() + taskRefsAndIds.size() + forwardedDecDocRefsAndIds.size());
+        docRefsAndIds.putAll(forwardedDecDocRefsAndIds);
         for (Pair<String, String> value : docRefsAndIds.values()) {
             dvkIds.add(value.getFirst());
         }
@@ -181,8 +191,64 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
             }
         }
 
-        return updateNodeSendStatus(docRefsAndIds, statusesByIds, DocumentCommonModel.Props.SEND_INFO_SEND_STATUS)
+        int updatedNodesCount = updateNodeSendStatus(docRefsAndIds, statusesByIds, DocumentCommonModel.Props.SEND_INFO_SEND_STATUS)
                 + updateNodeSendStatus(taskRefsAndIds, statusesByIds, WorkflowSpecificModel.Props.SEND_STATUS);
+
+        return updatedNodesCount;
+    }
+
+    @Override
+    public void deleteForwardedDecDocuments() {
+        final Map<NodeRef, Pair<String, String>> forwardedDecDocRefsAndIds = documentSearchService.searchForwardedDecDocumentsDvkIds(SendStatus.RECEIVED);
+        deleteForwardedDecDocumentsOnBackground(forwardedDecDocRefsAndIds.keySet());
+    }
+
+    private void deleteForwardedDecDocumentsOnBackground(final Set<NodeRef> sendInfoRefs) {
+        if (org.apache.commons.collections4.CollectionUtils.isEmpty(sendInfoRefs)) {
+            return;
+        }
+
+        generalService.runOnBackground(new RunAsWork<Void>() {
+
+            @Override
+            public Void doWork() throws Exception {
+                Set<NodeRef> docRefsSet = BeanHelper.getBulkLoadNodeService().loadPrimaryParentNodeRefs(sendInfoRefs, Collections.singleton(DocumentCommonModel.Types.DOCUMENT));
+                List<NodeRef> docRefs = new ArrayList<>(docRefsSet);
+
+                Map<NodeRef, List<SendInfo>> documentSendInfos = BeanHelper.getBulkLoadNodeService().loadChildNodes(docRefs,
+                        Collections.singleton(DocumentCommonModel.Props.SEND_INFO_SEND_STATUS), DocumentCommonModel.Types.SEND_INFO,
+                        null,
+                        new CreateObjectCallback<SendInfo>() {
+                    @Override
+                    public SendInfo create(NodeRef nodeRef, Map<QName, Serializable> properties) {
+                        return new DocumentSendInfo(properties);
+                    }
+                });
+
+                if (documentSendInfos == null) {
+                    return null;
+                }
+
+                Set<NodeRef> docsToDelete = new HashSet<>();
+                String expectedStatus = SendStatus.RECEIVED.toString();
+                outer: for (Entry<NodeRef, List<SendInfo>> entry : documentSendInfos.entrySet()) {
+                    NodeRef docRef = entry.getKey();
+                    for (SendInfo si : entry.getValue()) {
+                        if (!expectedStatus.equals(si.getSendStatus())) {
+                            continue outer;
+                        }
+                    }
+                    docsToDelete.add(docRef);
+                }
+                for (NodeRef doc : docsToDelete) {
+                    nodeService.deleteNode(doc);
+                }
+                if (log.isDebugEnabled()) {
+                    log.debug("Deleted " + docsToDelete.size() + " documents");
+                }
+                return null;
+            }
+        }, "deleteForwardedDecDocuments", true);
     }
 
     @Override
@@ -345,11 +411,11 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
     @Override
     protected <F extends XmlObject> List<NodeRef> importInvoiceData(String dhlId, String senderOrgNr, List<F> dataFileList) {
         List<NodeRef> newInvoices = new ArrayList<NodeRef>();
-        if (!einvoiceService.isEinvoiceEnabled()) {
+        if (!applicationConstantsBean.isEinvoiceEnabled()) {
             return newInvoices;
         }
         try {
-            NodeRef receivedInvoiceFolder = generalService.getNodeRef(documentService.getReceivedInvoicePath());
+            NodeRef receivedInvoiceFolder = BeanHelper.getConstantNodeRefsBean().getReceivedInvoiceRoot();
             // read invoice(s) from attachments
             Map<NodeRef, Integer> invoiceRefToDatafile = new HashMap<NodeRef, Integer>();
             Map<NodeRef, Integer> transactionRefToDataFile = new HashMap<NodeRef, Integer>();
@@ -387,39 +453,9 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
     }
 
     @Override
-    protected <F extends XmlObject> NodeRef importSapInvoiceRegistration(List<F> dataFileList) {
-        if (!einvoiceService.isEinvoiceEnabled() || dataFileList == null) {
-            return null;
-        }
-        try {
-            for (F dataFile : dataFileList) {
-                if (isXmlMimetype(getFileName(dataFile))) {
-                    Pair<String, String> docUrlAndErpDocNumber = einvoiceService.getDocUrlAndErpDocNumber(getFileContents(dataFile));
-                    if (docUrlAndErpDocNumber != null) {
-                        NodeRef updatedDoc = einvoiceService.updateDocumentEntrySapNumber(docUrlAndErpDocNumber.getFirst(), docUrlAndErpDocNumber.getSecond());
-                        if (updatedDoc == null) {
-                            // throw exception if document was parsed sucessfully, but related document could not be found
-                            String message = "Failed to find document with url " + docUrlAndErpDocNumber.getFirst() + ", saving dvk document to failed dvk folder.";
-                            log.error(message);
-                            throw new RuntimeException(message);
-                        }
-                        documentLogService.addDocumentLog(updatedDoc, I18NUtil.getMessage("document_log_status_add_sap_entry_number"));
-                        return updatedDoc;
-                    }
-                }
-            }
-        } catch (Base64DecodingException e) {
-            throw new RuntimeException("Failed to decode", e);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to decode", e);
-        }
-        return null;
-    }
-
-    @Override
     protected <F extends XmlObject> List<NodeRef> importDimensionData(String dhlId, List<F> dataFileList) {
         List<NodeRef> dimensionNodes = new ArrayList<NodeRef>();
-        if (!einvoiceService.isEinvoiceEnabled() || dataFileList == null) {
+        if (!applicationConstantsBean.isEinvoiceEnabled() || dataFileList == null) {
             return dimensionNodes;
         }
         for (XmlObject dataFile : dataFileList) {
@@ -458,14 +494,12 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         for (Entry<QName, Task> entry : notifications.entrySet()) {
             QName notificationType = entry.getKey();
             Task task = entry.getValue();
-            if (NotificationModel.NotificationType.TASK_NEW_TASK_NOTIFICATION.equals(notificationType)) {
+            if (NotificationModel.NotificationType.TASK_NEW_TASK_NOTIFICATION.equals(notificationType)
+                    || NotificationModel.NotificationType.TASK_CANCELLED_TASK_NOTIFICATION.equals(notificationType)) {
                 notificationService.notifyTaskEvent(task);
-            } else if (NotificationModel.NotificationType.TASK_CANCELLED_TASK_NOTIFICATION.equals(notificationType)) {
-                notificationService.notifyTaskEvent(task);
-            } else if (NotificationModel.NotificationType.EXTERNAL_REVIEW_WORKFLOW_RECIEVING_ERROR.equals(notificationType)) {
-                notifyExternalReviewReceivingFailure(task);
-            } else if (NotificationModel.NotificationType.EXTERNAL_REVIEW_WORKFLOW_SERIES_ERROR.equals(notificationType)) {
-                notifyExternalReviewSeriesFailure(task);
+            } else if (NotificationModel.NotificationType.EXTERNAL_REVIEW_WORKFLOW_RECIEVING_ERROR.equals(notificationType)
+                    || NotificationModel.NotificationType.EXTERNAL_REVIEW_WORKFLOW_SERIES_ERROR.equals(notificationType)) {
+                notificationService.notifyExternalReviewError(task);
             }
         }
         if (statusErrorNotificationContent != null) {
@@ -668,7 +702,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
             String time = format.format(new Date());
             corruptDocName = FilenameUtil.buildFileName(corruptDocName + " " + time, "xml");
             log.debug("Trying to store DVK document to '" + corruptDvkDocumentsPath + "+/" + corruptDocName + "'");
-            NodeRef corruptFolder = generalService.getNodeRef(corruptDvkDocumentsPath);
+            NodeRef corruptFolder = BeanHelper.getConstantNodeRefsBean().getDvkCorruptRoot();
             final NodeRef corruptDocNodeRef = fileFolderService.create(corruptFolder, corruptDocName, DvkModel.Types.FAILED_DOC).getNodeRef();
             nodeService.setProperty(corruptDocNodeRef, DvkModel.Props.DVK_ID, dhlId);
             final ContentWriter writer = fileFolderService.getWriter(corruptDocNodeRef);
@@ -708,30 +742,26 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         notificationService.notifyExternalReviewError(task);
     }
 
-    private void notifyExternalReviewSeriesFailure(Task task) {
-        notificationService.notifyExternalReviewError(task);
-    }
-
     @Override
     protected Pair<Location, Boolean> getDvkWorkflowDocLocation(String senderName, NodeRef dvkDefaultIncomingFolder) {
         String dvkWorkflowSeriesMark = parametersService.getStringParameter(Parameters.EXTERNAL_REVIEW_AUTOMATIC_FOLDER);
         if (dvkWorkflowSeriesMark == null) {
             return new Pair<Location, Boolean>(new Location(dvkDefaultIncomingFolder), Boolean.FALSE);
         }
-        Series series = documentSearchService.searchSeriesByIdentifier(dvkWorkflowSeriesMark);
-        Volume dvkDocVolume = null;
-        if (series == null) {
+        NodeRef seriesRef = documentSearchService.searchSeriesByIdentifier(dvkWorkflowSeriesMark);
+        NodeRef dvkDocVolumeRef = null;
+        if (seriesRef == null) {
             return new Pair<Location, Boolean>(new Location(dvkDefaultIncomingFolder), Boolean.FALSE);
         }
-        List<Volume> volumes = volumeService.getAllValidVolumesBySeries(series.getNode().getNodeRef());
-        for (Volume volume : volumes) {
+        List<UnmodifiableVolume> volumes = volumeService.getAllValidVolumesBySeries(seriesRef);
+        for (UnmodifiableVolume volume : volumes) {
             if (StringUtils.equalsIgnoreCase(volume.getTitle(), senderName)) {
-                dvkDocVolume = volume;
+                dvkDocVolumeRef = volume.getNodeRef();
                 break;
             }
         }
-        if (dvkDocVolume == null) {
-            dvkDocVolume = volumeService.createVolume(series.getNode().getNodeRef());
+        if (dvkDocVolumeRef == null) {
+            Volume dvkDocVolume = volumeService.createVolume(seriesRef);
             // TODO: standard configuration for creating new dvkWorkflowDocumentFolder
             dvkDocVolume.setValidFrom(new Date());
             dvkDocVolume.setContainsCases(false);
@@ -739,9 +769,9 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
             dvkDocVolume.setStatus(DocListUnitStatus.OPEN.getValueName());
             dvkDocVolume.setVolumeMark(dvkWorkflowSeriesMark + "-" + senderName);
             dvkDocVolume.setVolumeTypeEnum(VolumeType.ANNUAL_FILE);
-            volumeService.saveOrUpdate(dvkDocVolume, false);
+            dvkDocVolumeRef = volumeService.saveOrUpdate(dvkDocVolume, false);
         }
-        return new Pair<Location, Boolean>(new Location(dvkDocVolume.getNode().getNodeRef()), Boolean.TRUE);
+        return new Pair<Location, Boolean>(new Location(dvkDocVolumeRef), Boolean.TRUE);
     }
 
     @Override
@@ -810,7 +840,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
 
         try {
             DecRecipient recipient = DecRecipient.Factory.newInstance();
-            if (!workflowService.isInternalTesting()) {
+            if (!applicationConstantsBean.isInternalTesting()) {
                 recipient.setOrganisationCode(sendReviewTask.getRecipientsRegNr());
             } else {
                 // For internal testing, always send task to current organization itself
@@ -968,7 +998,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
                         if (recipients.contains(institutionCode)) {
                             // tasks with current institution code are sent to this institution
                             // and are not meant to be sent out
-                            if (workflowService.isInternalTesting() || !getInstitutionCode().equalsIgnoreCase(institutionCode)) {
+                            if (applicationConstantsBean.isInternalTesting() || !getInstitutionCode().equalsIgnoreCase(institutionCode)) {
                                 if (!recipientInclusionMap.containsKey(institutionCode)) {
                                     recipientInclusionMap.put(institutionCode, new ArrayList<NodeRef>());
                                 }
@@ -1184,6 +1214,10 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
 
     public void setEinvoiceService(EInvoiceService einvoiceService) {
         this.einvoiceService = einvoiceService;
+    }
+
+    public void setApplicationConstantsBean(ApplicationConstantsBean applicationConstantsBean) {
+        this.applicationConstantsBean = applicationConstantsBean;
     }
 
     // END: getters / setters

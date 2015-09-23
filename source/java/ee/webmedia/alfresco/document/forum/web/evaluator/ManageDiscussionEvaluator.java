@@ -5,10 +5,13 @@ import java.util.List;
 import javax.faces.context.FacesContext;
 
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
@@ -16,10 +19,7 @@ import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator;
-import ee.webmedia.alfresco.document.web.evaluator.IsOwnerEvaluator;
-import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
-import ee.webmedia.alfresco.workflow.service.Task;
+import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 public class ManageDiscussionEvaluator extends BaseActionEvaluator {
@@ -46,21 +46,22 @@ public class ManageDiscussionEvaluator extends BaseActionEvaluator {
     }
 
     private boolean isAppropriateUser(Node node) {
-        boolean isOwner = new IsOwnerEvaluator().evaluate(node);
-        boolean hasUserRights = isOwner || new IsAdminOrDocManagerEvaluator().evaluate(node);
+        String runAsUser = AuthenticationUtil.getRunAsUser();
+        boolean isOwner = runAsUser.equals(node.getProperties().get(DocumentCommonModel.Props.OWNER_ID.toString()));
+        boolean hasUserRights = isOwner || BeanHelper.getUserService().isDocumentManager();
         if (hasUserRights) {
             return true;
         }
-        final List<CompoundWorkflow> compoundWorkflows = getWorkflowService().getCompoundWorkflows(node.getNodeRef());
+        final List<NodeRef> compoundWorkflows = getWorkflowService().getCompoundWorkflowNodeRefs(node.getNodeRef());
         // Check if owner is compoundWorkflow owner
-        for (CompoundWorkflow compoundWorkflow : compoundWorkflows) {
-            if (AuthenticationUtil.getRunAsUser().equals(compoundWorkflow.getOwnerId())) {
+        final String currentUser = AuthenticationUtil.getRunAsUser();
+        for (NodeRef compoundWorkflowRef : compoundWorkflows) {
+            if (StringUtils.equals(currentUser, (String) nodeService.getProperty(compoundWorkflowRef, WorkflowCommonModel.Props.OWNER_ID))) {
                 return true;
             }
         }
         // Check if user has any tasks in workflows
-        final List<Task> myTasks = getWorkflowService().getMyTasksInProgress(compoundWorkflows);
-        if (myTasks.size() > 0) {
+        if (CollectionUtils.isNotEmpty(compoundWorkflows) && BeanHelper.getWorkflowDbService().hasInProgressTasks(compoundWorkflows, currentUser)) {
             return true;
         }
         return false;

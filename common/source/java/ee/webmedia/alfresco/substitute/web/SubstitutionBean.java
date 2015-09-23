@@ -20,14 +20,12 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.web.app.Application;
 import org.alfresco.web.app.servlet.BaseServlet;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
-import ee.webmedia.alfresco.menu.web.MenuItemCountBean.MenuItemCountVO;
 import ee.webmedia.alfresco.substitute.model.Substitute;
 import ee.webmedia.alfresco.substitute.model.SubstitutionInfo;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -61,9 +59,18 @@ public class SubstitutionBean implements Serializable {
             substitutionInfo = new SubstitutionInfo(getSubstituteService().getSubstitute(userNodeRef));
         }
         setForceSubstituteTaskReload(true);
-        Map<String, MenuItemCountVO> menuItemCountMap = BeanHelper.getMenuItemCountBean().getMap();
+        Map<String, Integer> menuItemCountMap = BeanHelper.getMenuItemCountBean().getMap();
         if (menuItemCountMap != null) {
             menuItemCountMap.clear();
+        }
+    }
+
+    public void selectSubstitution(Substitute substitute) {
+        if (substitute == null) {
+            substitutionInfo = new SubstitutionInfo();
+        } else {
+            currentStructUnitUser = null;
+            substitutionInfo = new SubstitutionInfo(substitute);
         }
     }
 
@@ -101,8 +108,8 @@ public class SubstitutionBean implements Serializable {
     }
 
     public List<SelectItem> getActiveSubstitutions() {
-        List<SelectItem> selectItems = new ArrayList<SelectItem>();
-        List<Substitute> substitutions = getSubstituteService().findActiveSubstitutionDuties(Application.getCurrentUser(FacesContext.getCurrentInstance()).getUserName());
+        List<SelectItem> selectItems = new ArrayList<>();
+        List<Substitute> substitutions = getSubstituteService().searchActiveSubstitutionDuties(AuthenticationUtil.getFullyAuthenticatedUser());
         for (Substitute substitution : substitutions) {
             selectItems.add(new SelectItem(substitution.getNodeRef().toString(),
                     getUserService().getUserFullName(substitution.getReplacedPersonUserName())));
@@ -111,7 +118,7 @@ public class SubstitutionBean implements Serializable {
     }
 
     public String getSubstitutionMessages() {
-        List<Substitute> substitutions = getSubstituteService().findActiveSubstitutionDuties(AuthenticationUtil.getRunAsUser());
+        List<Substitute> substitutions = getSubstituteService().searchActiveSubstitutionDuties(AuthenticationUtil.getRunAsUser());
         DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
         StringBuilder builder = new StringBuilder();
         for (int i = 0; i < substitutions.size(); i++) {

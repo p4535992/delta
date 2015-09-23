@@ -3,15 +3,18 @@ package ee.webmedia.alfresco.workflow.service;
 import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.getPrivsWithDependencies;
 import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.getRequiredPrivsForInprogressTask;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.util.Pair;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
 
 import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.workflow.model.Status;
@@ -26,7 +29,7 @@ public class CaseFileWorkflowTaskStatusChangeListener implements WorkflowEventLi
     private WorkflowService workflowService;
     private PrivilegeService privilegeService;
     private GeneralService generalService;
-    private DocumentService documentService;
+    private DocumentSearchService documentSearchService;
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -59,10 +62,11 @@ public class CaseFileWorkflowTaskStatusChangeListener implements WorkflowEventLi
         }
 
         // Add task owner privileges to case file
-        privilegeService.setPermissions(caseFileRef, ownerId, getPrivsWithDependencies(getRequiredPrivsForInprogressTask(task, null, null, true)));
+        Map<NodeRef, Pair<Boolean, Boolean>> digiDocStatuses = new HashMap<>();
+        privilegeService.setPermissions(caseFileRef, ownerId, getPrivsWithDependencies(getRequiredPrivsForInprogressTask(task, null, null, true, digiDocStatuses)));
         // and to documents under this case file
-        Set<Privilege> privsWithDependencies = getPrivsWithDependencies(getRequiredPrivsForInprogressTask(task, null, null, false));
-        for (NodeRef docRef : documentService.getAllDocumentRefsByParentRef(caseFileRef)) {
+        Set<Privilege> privsWithDependencies = getPrivsWithDependencies(getRequiredPrivsForInprogressTask(task, null, null, false, digiDocStatuses));
+        for (NodeRef docRef : documentSearchService.searchAllDocumentRefsByParentRef(caseFileRef)) {
             privilegeService.setPermissions(docRef, ownerId, privsWithDependencies);
         }
     }
@@ -81,8 +85,8 @@ public class CaseFileWorkflowTaskStatusChangeListener implements WorkflowEventLi
         this.generalService = generalService;
     }
 
-    public void setDocumentService(DocumentService documentService) {
-        this.documentService = documentService;
+    public void setDocumentSearchService(DocumentSearchService documentSearchService) {
+        this.documentSearchService = documentSearchService;
     }
 
     // END: getters/setters

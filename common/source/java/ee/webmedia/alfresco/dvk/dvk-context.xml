@@ -33,6 +33,27 @@
          </list>
       </property>
    </bean>
+   
+   <bean id="dvkSpacesBootstrap2" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="dvkSpacesBootstrap" />
+         </list>
+      </property>   
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">${dvk.received.parent.folder.xpath}</prop>
+               <prop key="location">ee/webmedia/alfresco/dvk/bootstrap/forwardedDecDocumentsBootstrap.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+   
 
    <bean id="deleteDvkOrganizationRegNrParameterBootstrap" class="ee.webmedia.alfresco.common.bootstrap.DeleteNodeByXPathBootstrap" parent="abstractDeleteNodeByXPathBootstrap">
       <property name="moduleId" value="common" />
@@ -232,7 +253,7 @@
       </property>
    </bean>
 
-   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
+   <bean id="dvkResourceBundle" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee/webmedia/alfresco/dvk/web/dvk-webclient</value>

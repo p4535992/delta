@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.archivals.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getApplicationConstantsBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
 
 import java.util.ArrayList;
@@ -20,7 +21,6 @@ import org.alfresco.config.Config;
 import org.alfresco.config.ConfigElement;
 import org.alfresco.config.ConfigService;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
@@ -70,7 +70,7 @@ public abstract class VolumeArchiveBaseDialog extends BaseDialogBean {
     protected List<NodeRef> storeNodeRefs;
     private List<SelectItem> nextEvents;
     public static final String EMPTY_LABEL = MessageUtil.getMessage("select_default_label");
-    protected List<QName> renderedFilterFields;
+    protected List<String> renderedFilterFields;
     private boolean confirmGenerateWordFile;
 
     protected static final ComparatorChain BASE_COMPARATOR;
@@ -88,13 +88,13 @@ public abstract class VolumeArchiveBaseDialog extends BaseDialogBean {
             public Comparable<String> tr(Volume volume) {
                 return volume.getVolumeMark();
             }
-        }, new NullComparator(AppConstants.DEFAULT_COLLATOR)));
+        }, new NullComparator(AppConstants.getNewCollatorInstance())));
         chain.addComparator(new TransformingComparator(new ComparableTransformer<Volume>() {
             @Override
             public Comparable<String> tr(Volume volume) {
                 return volume.getTitle();
             }
-        }, new NullComparator(AppConstants.DEFAULT_COLLATOR)));
+        }, new NullComparator(AppConstants.getNewCollatorInstance())));
         BASE_COMPARATOR = chain;
     }
 
@@ -193,8 +193,8 @@ public abstract class VolumeArchiveBaseDialog extends BaseDialogBean {
         }
         booleanSelectItems = new ArrayList<SelectItem>();
         booleanSelectItems.add(new SelectItem("", EMPTY_LABEL));
-        booleanSelectItems.add(new SelectItem(Boolean.TRUE, MessageUtil.getMessage("yes")));
-        booleanSelectItems.add(new SelectItem(Boolean.FALSE, MessageUtil.getMessage("no")));
+        booleanSelectItems.add(new SelectItem(Boolean.TRUE, getApplicationConstantsBean().getMessageYes()));
+        booleanSelectItems.add(new SelectItem(Boolean.FALSE, getApplicationConstantsBean().getMessageNo()));
 
         statuses = new ArrayList<SelectItem>();
         statuses.add(new SelectItem(DocListUnitStatus.OPEN.getValueName()));
@@ -363,56 +363,56 @@ public abstract class VolumeArchiveBaseDialog extends BaseDialogBean {
         return false;
     }
 
-    protected List<QName> getRenderedFilterFields() {
+    protected List<String> getRenderedFilterFields() {
         throw new RuntimeException("Subclasses have to implement this method!");
     }
 
     public boolean showValidTo() {
-        return getRenderedFilterFields().contains(VolumeSearchModel.Props.VALID_TO);
+        return getRenderedFilterFields().contains(VolumeSearchModel.Props.VALID_TO.toPrefixString());
     }
 
     public boolean showHasArchivalValue() {
-        return getRenderedFilterFields().contains(VolumeSearchModel.Props.HAS_ARCHIVAL_VALUE);
+        return getRenderedFilterFields().contains(VolumeSearchModel.Props.HAS_ARCHIVAL_VALUE.toPrefixString());
     }
 
     public boolean showStatus() {
-        return getRenderedFilterFields().contains(VolumeSearchModel.Props.STATUS);
+        return getRenderedFilterFields().contains(VolumeSearchModel.Props.STATUS.toPrefixString());
     }
 
     public boolean showStore() {
-        return getRenderedFilterFields().contains(VolumeSearchModel.Props.STORE);
+        return getRenderedFilterFields().contains(VolumeSearchModel.Props.STORE.toPrefixString());
     }
 
     public boolean showRetainPermanent() {
-        return getRenderedFilterFields().contains(VolumeSearchModel.Props.RETAIN_PERMANENT);
+        return getRenderedFilterFields().contains(VolumeSearchModel.Props.RETAIN_PERMANENT.toPrefixString());
     }
 
     public boolean showRetainUntilDate() {
-        return getRenderedFilterFields().contains(VolumeSearchModel.Props.RETAIN_UNTIL_DATE);
+        return getRenderedFilterFields().contains(VolumeSearchModel.Props.RETAIN_UNTIL_DATE.toPrefixString());
     }
 
     public boolean showMarkedForTransfer() {
-        return getRenderedFilterFields().contains(VolumeSearchModel.Props.MARKED_FOR_TRANSFER);
+        return getRenderedFilterFields().contains(VolumeSearchModel.Props.MARKED_FOR_TRANSFER.toPrefixString());
     }
 
     public boolean showExportedForUam() {
-        return getRenderedFilterFields().contains(VolumeSearchModel.Props.EXPORTED_FOR_UAM);
+        return getRenderedFilterFields().contains(VolumeSearchModel.Props.EXPORTED_FOR_UAM.toPrefixString());
     }
 
     public boolean showExportedForUamDateTime() {
-        return getRenderedFilterFields().contains(VolumeSearchModel.Props.EXPORTED_FOR_UAM_DATE_TIME);
+        return getRenderedFilterFields().contains(VolumeSearchModel.Props.EXPORTED_FOR_UAM_DATE_TIME.toPrefixString());
     }
 
     public boolean showNextEvent() {
-        return getRenderedFilterFields().contains(VolumeSearchModel.Props.NEXT_EVENT);
+        return getRenderedFilterFields().contains(VolumeSearchModel.Props.NEXT_EVENT.toPrefixString());
     }
 
     public boolean showMarkedForDestruction() {
-        return getRenderedFilterFields().contains(VolumeSearchModel.Props.MARKED_FOR_DESTRUCTION);
+        return getRenderedFilterFields().contains(VolumeSearchModel.Props.MARKED_FOR_DESTRUCTION.toPrefixString());
     }
 
     public boolean showDisposalActCreated() {
-        return getRenderedFilterFields().contains(VolumeSearchModel.Props.DISPOSAL_ACT_CREATED);
+        return getRenderedFilterFields().contains(VolumeSearchModel.Props.DISPOSAL_ACT_CREATED.toPrefixString());
     }
 
     // rendering conditions for dialog buttons' confirmation messages

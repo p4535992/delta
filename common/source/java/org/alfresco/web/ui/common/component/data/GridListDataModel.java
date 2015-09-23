@@ -26,6 +26,7 @@ package org.alfresco.web.ui.common.component.data;
 
 import java.util.List;
 
+import org.alfresco.util.Pair;
 import org.alfresco.web.data.QuickSort;
 
 /**
@@ -87,8 +88,15 @@ public class GridListDataModel implements IGridDataModel
    
    private List data = null;
 
-@Override
-public Object remove(int index) {
-    return this.data.remove(index);
-}
+   @Override
+   public int loadSlice(int rowIndex, int maxRowIndex) {
+       // nothing to do; all data is loaded
+       return 0;
+   }
+   
+   @Override
+   public Pair<Integer, Integer> getCurrentSlice() {
+      return null;
+   }
+   
 }

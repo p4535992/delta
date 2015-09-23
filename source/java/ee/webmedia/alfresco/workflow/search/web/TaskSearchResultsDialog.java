@@ -1,23 +1,23 @@
 package ee.webmedia.alfresco.workflow.search.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchService;
-
-import java.util.Collections;
-import java.util.List;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getJsfBindingHelper;
 
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.apache.myfaces.application.jsp.JspStateManagerImpl;
 
-import ee.webmedia.alfresco.document.model.CreatedOrRegistratedDateComparator;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.web.BaseLimitedListDialog;
 import ee.webmedia.alfresco.simdhs.CSVExporter;
 import ee.webmedia.alfresco.simdhs.DataReader;
 import ee.webmedia.alfresco.simdhs.RichListDataReader;
-import ee.webmedia.alfresco.workflow.search.model.TaskInfo;
+import ee.webmedia.alfresco.workflow.web.TaskInfoListDataProvider;
 
 /**
  * Task search results dialog bean.
@@ -27,15 +27,14 @@ public class TaskSearchResultsDialog extends BaseLimitedListDialog {
     private static final long serialVersionUID = 1L;
     public static final String BEAN_NAME = "TaskSearchResultsDialog";
 
-    private List<TaskInfo> tasks;
+    private TaskInfoListDataProvider tasks;
     private Node filter;
-    private UIRichList richList;
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         // finish button is not used
         return null; // but in case someone clicks finish button twice on the previous dialog,
-                     // then silently ignore it and stay on the same page
+        // then silently ignore it and stay on the same page
     }
 
     private void clearRichList() {
@@ -57,13 +56,26 @@ public class TaskSearchResultsDialog extends BaseLimitedListDialog {
 
     @Override
     protected void limitChangedEvent() {
-        doInitialSearch();
+        BeanHelper.getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
+
+            @Override
+            public Void execute() throws Throwable {
+                doInitialSearch();
+                return null;
+            }
+        }, false);
+
+    }
+
+    @Override
+    public void clean() {
+        tasks = null;
+        filter = null;
     }
 
     private void doInitialSearch() {
-        tasks = setLimited(getDocumentSearchService().queryTasks(filter, getLimit()));
+        tasks = new TaskInfoListDataProvider(setLimited(getDocumentSearchService().searchTaskRefs(filter, AuthenticationUtil.getRunAsUser(), getLimit())));
         clearRichList();
-        Collections.sort(tasks, CreatedOrRegistratedDateComparator.getComparator());
     }
 
     public void exportAsCsv(@SuppressWarnings("unused") ActionEvent event) {
@@ -81,16 +93,16 @@ public class TaskSearchResultsDialog extends BaseLimitedListDialog {
         doInitialSearch();
     }
 
-    public List<TaskInfo> getTasks() {
+    public TaskInfoListDataProvider getTasks() {
         return tasks;
     }
 
     public void setRichList(UIRichList richList) {
-        this.richList = richList;
+        getJsfBindingHelper().addBinding(getRichListBindingName(), richList);
     }
 
     public UIRichList getRichList() {
-        return richList;
+        return (UIRichList) getJsfBindingHelper().getComponentBinding(getRichListBindingName());
     }
 
 }

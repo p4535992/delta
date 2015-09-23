@@ -11,6 +11,7 @@ var mDelta = (function($) {
    api.init = function() {
       initTriggers();
       initPagers();
+      initSubstitutionLinks();
    }
 
    api.log = function() {
@@ -149,7 +150,25 @@ var mDelta = (function($) {
    
    activeTrigger = function() {
       var index = document.URL.indexOf("#!");
-      return index < 0 ? "" : document.URL.substring(index + 2, document.URL.length);;
+      return index < 0 ? "" : document.URL.substring(index + 2, document.URL.length);
+   }
+   
+   initSubstitutionLinks = function() {
+      $('.substitutionLink').click(function() {
+         var userName = $(this).siblings('input').first().attr('value');
+         $.ajax({
+            url: getContextPath() + '/m/ajax/substitute',
+            data: { 'userName' : userName },
+            method: 'POST',
+            mode: 'queue',
+            success: function() {
+               location.replace(getContextPath() + '/m');
+            },
+            error: function() {
+               location.replace(getContextPath() + '/m');
+            }
+         });
+      });
    }
 
    return api;
@@ -158,7 +177,106 @@ var mDelta = (function($) {
 
 $(document).ready(function() {
    mDelta.init();
+   
+   // Datepicker. http://amsul.ca/pickadate.js/date.htm
+   $('.datepicker').pickadate({
+      firstDay: 1,
+      monthsFull: ['Jaanuar', 'Veebruar', 'Märts', 'Aprill', 'Mai', 'Juuni', 'Juuli', 'August', 'September', 'Oktoober', 'November', 'Detsember'],
+      weekdaysShort: ['Püh', 'Esm', 'Tei', 'Kol', 'Nel', 'Ree', 'Lau'],
+      today: 'Täna',
+      clear: 'Kustuta',
+      formatSubmit: 'dd.mm.yyyy',
+      hiddenSuffix: '',
+      hiddenName: true,
+      onClose: function() {$('.datepicker').blur()}
+   });
+
+   // Timepicker. http://amsul.ca/pickadate.js/time.htm
+   $('.timepicker').pickatime({
+      clear: 'Kustuta',
+      format: 'HH:i',
+      interval: 15
+   });
+   
+   $('.readmore').each(function(i, elem) {
+      addShowMoreListener($(elem));
+   });
+
 });
+
+// Autocomplete - http://loopj.com/jquery-tokeninput/
+function setupSuggester(suggester, url) {
+   suggester.tokenInput(
+      getContextPath() + url, {
+      method: 'POST',
+      propertyToSearch: 'name',
+      resultsFormatter: function(item) {
+         if(!item) {return '';}
+         var showId = item.userItemFilterType && (item.userItemFilterType == 8 || item.userItemFilterType == 4 || item.userItemFilterType == 2);
+         return '<li><span class="name">' + item.name + (showId ? '</span></li>' : ('</span><span class="id">' + item.userId + '</span></li>'));
+      },
+      tokenFormatter: function(item) {
+         if(!item) {return '';}
+         var isGroup = item.userItemFilterType && (item.userItemFilterType == 8 || item.userItemFilterType == 2);
+         var type = isGroup ? "group" : "";
+         return '<li><span class="name" itemtype='+type+'>' + item.name + '</span></li>'; 
+      },
+      minChars: 3,
+      onAdd: function(item) {
+         var val = suggester.attr('value');
+         if(val.length > 0) {
+            val +="¤¤";
+         }
+         val += item.userId;
+         suggester.attr('value', val);
+         suggester.val(val);
+      },
+      onDelete: function(item) {
+         removeFromList('¤¤', item.userId, suggester);
+         suggester.val(suggester.attr('value'));
+      },
+      prePopulate: suggester.hasClass('prePopulate') ? [{id: suggester.parent().find('#initialUserId').attr('value'), name: suggester.parent().find('#initialUserName').attr('value')}] : null,
+      searchDelay: 0,
+      tokenLimit: suggester.hasClass('singleEntry') ? 1 : null,
+      hintText: false,
+      noResultsText: 'Vasted puuduvad',
+      searchingText: 'Otsimine...',
+      deleteText: '&times;',
+      appendToElement: $(".autocomplete").parent()
+   });
+}
+
+function removeFromList(separator, valueToRemove, $element) {
+   var separatorLength = separator.length;
+   var val = $element.attr('value');
+   if(!val) {
+      return;
+   }
+   val = val.replace(valueToRemove, '');
+   val = val.replace(separator + separator, separator);
+   if(val.length > 0 && val.substr(val.length - separatorLength) == separator) {
+      val = val.substr(0, val.length - separatorLength);
+   }
+   if(val.length >= separatorLength && val.substr(0, separatorLength) == separator) {
+      val = val.substr(separatorLength, val.length);
+   }
+   $element.attr('value', val);
+}
+
+var contextPath = null;
+
+function getContextPath() {
+   if (contextPath == null) {
+      var path = window.location.pathname;
+      var idx = path.indexOf("/", 1);
+      if (idx != -1) {
+         contextPath = path.substring(0, idx);
+      } else {
+         contextPath = "";
+      }
+   }
+   return contextPath;
+}
 
 function getMobileIdSignature(signingFlowId, uri) {
    var mobileIdChallengeId = $('#mobileIdChallengeId').val();
@@ -187,6 +305,69 @@ function isEmptyInput(inputId) {
    return isEmptyValue(inputValue);
 }
 
+function isEmptyInputOr(inputId, valueToCheck) {
+   var inputValue = document.getElementById(inputId).value;
+   return isEmptyValue(inputValue) || inputValue == valueToCheck;
+}
+
 function isEmptyValue(inputValue) {
    return inputValue == null || (!(inputValue instanceof Array) && inputValue.replace(/^\\s+|\\s+$/g, '').length == 0);
+}
+
+function addShowMoreListener(element) {
+   var lenght = 150,
+   more = 'Näita rohkem',
+   less = 'Näita vähem';
+
+   if(element.text().length > lenght) {
+      var target = element,
+      trigger = $('<a>').addClass('more').html(more);
+
+      trigger
+         .on('click', function(e) {
+            if(target.hasClass('active')) {
+               trigger.html(less);
+               target.removeClass('active');
+            } else {
+               trigger.html(more);
+               target.addClass('active');
+            }
+         });
+      element.addClass('active').append(trigger);
+   }
+}
+
+function addFancyBox($element) {
+   $element.fancybox({
+      padding: 0,
+      openEffect: "none",
+      closeEffect: "none",
+      scrolling: "visible",
+      fitToView: false,
+      minWidth: 250,
+      autoSize: true,
+      helpers: {
+         overlay: { closeClick: false } // prevents closing when clicking OUTSIDE fancybox
+      },
+      tpl: {
+         wrap: '<div class="fancybox-wrap" tabIndex="-1"><div class="fancybox-skin"><div class="fancybox-outer"><div class="fancybox-inner"></div></div></div></div>',
+         iframe: '<iframe id="fancybox-frame{rnd}" name="fancybox-frame{rnd}" class="fancybox-iframe" frameborder="0" vspace="0" hspace="0"' + (window.navigator.userAgent.indexOf("MSIE ") > 0 ? ' allowtransparency="true"' : '') + '></iframe>',
+         error: '<p class="fancybox-error">Sisu pole võimalik laadida.</p>',
+         closeBtn: '<a title="Sulge" class="fancybox-item fancybox-close" href="javascript:;"></a>'
+      }
+   });
+}
+
+var translations = [];
+
+function addTranslation(key, translation) {
+   translations[key] = translation;
+}
+
+function translate(key) {
+   var translation = translations[key];
+   if (translation == null) {
+      translation = key;
+   }
+   return translation;
 }

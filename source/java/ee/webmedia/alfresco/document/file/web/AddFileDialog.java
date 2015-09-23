@@ -1,10 +1,9 @@
 package ee.webmedia.alfresco.document.file.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getApplicationConstantsBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getParametersService;
 import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.getDocTypeIdAndVersionNr;
-import static ee.webmedia.alfresco.utils.ComponentUtil.addChildren;
-import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
 import static ee.webmedia.alfresco.utils.FilenameUtil.getFilenameFromDisplayname;
 
 import java.io.FileInputStream;
@@ -16,17 +15,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.faces.application.Application;
 import javax.faces.application.FacesMessage;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIInput;
-import javax.faces.component.UIParameter;
 import javax.faces.component.html.HtmlInputText;
-import javax.faces.component.html.HtmlInputTextarea;
-import javax.faces.component.html.HtmlOutputText;
-import javax.faces.component.html.HtmlPanelGrid;
-import javax.faces.component.html.HtmlPanelGroup;
-import javax.faces.component.html.HtmlSelectBooleanCheckbox;
 import javax.faces.component.html.HtmlSelectManyMenu;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
@@ -40,14 +32,11 @@ import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.model.FileExistsException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.util.Pair;
-import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.FileUploadBean;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.config.DialogsConfigElement.DialogButtonConfig;
 import org.alfresco.web.ui.common.Utils;
-import org.alfresco.web.ui.common.component.UIActionLink;
-import org.alfresco.web.ui.repo.component.UIActions;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.BooleanUtils;
@@ -98,7 +87,6 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
     private transient EInvoiceService eInvoiceService;
     private transient DocumentTemplateService documentTemplateService;
 
-    private transient HtmlPanelGroup uploadedFilesPanelGroup;
     private transient HtmlSelectManyMenu attachmentSelect;
     private transient HtmlSelectManyMenu scannedSelect;
 
@@ -107,13 +95,17 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
     private List<String> selectedFileName;
     private List<String> selectedFileNameWithoutExtension;
     private List<Boolean> selectedAssociatedWithMetaData;
+    private List<Long> selectedFileOrderInList;
     private DocumentDialog documentDialog;
 
     private NodeRef attachmentParentRef;
     private NodeRef scannedParentRef;
     private boolean inactiveFileDialog;
 
-    private static final List<String> BOUND_METADATA_EXTENSIONS = Arrays.asList("doc", "docx", "odt");
+    private long activeFilesCount = 0;
+    private long inactiveFilesCount = 0;
+
+    public static final List<String> BOUND_METADATA_EXTENSIONS = Arrays.asList("doc", "docx", "odt");
 
     @Override
     public String cancel() {
@@ -155,7 +147,6 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
         selectedFileName = null;
         selectedFileNameWithoutExtension = null;
         selectedAssociatedWithMetaData = null;
-        uploadedFilesPanelGroup = null;
         attachmentSelect = null;
         scannedSelect = null;
         attachmentParentRef = null;
@@ -167,27 +158,47 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
 
     @Override
     public List<DialogButtonConfig> getAdditionalButtons() {
-        List<DialogButtonConfig> buttons = new ArrayList<DialogButtonConfig>(1);
-        if (getFileUploadBean() == null && getSelectedFileNodeRef() == null) {
-            buttons.add(new DialogButtonConfig("confirmFileSelectionButton", null, "file_confirm_selected_files",
-                    "#{AddFileDialog.confirmSelectedFiles}", "false", null));
-        }
+        List<DialogButtonConfig> buttons = new ArrayList<>(1);
+        buttons.add(new DialogButtonConfig("changeFileButton", null, "file_change_button", "#{ChangeFileDialog.open}", "false", null));
         return buttons;
     }
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Exception {
+        return save(context, outcome, true);
+    }
+
+    String save(FacesContext context, String outcome, boolean addAttatchmentsAndScannedFiles) {
         try {
             try {
+                boolean reorderFiles = false;
+                activeFilesCount = 0;
+                inactiveFilesCount = 0;
                 NodeRef documentNodeRef = getDocumentDialogHelperBean().getNodeRef();
                 validatePermission(documentNodeRef, Privilege.EDIT_DOCUMENT);
-                List<String> existingDisplayNames = getFileService().getDocumentFileDisplayNames(documentNodeRef);
+                List<File> existingFiles = getFileService().getAllFiles(documentNodeRef);
+                List<String> existingDisplayNames = new ArrayList<>(existingFiles.size());
+                for (File f : existingFiles) {
+                    if (f.getDisplayName() != null) {
+                        existingDisplayNames.add(f.getDisplayName());
+                    }
+                    if (f.isActive()) {
+                        activeFilesCount++;
+                    } else {
+                        inactiveFilesCount++;
+                    }
+                }
+
                 Map<Integer, EInvoice> attachmentInvoices = new HashMap<Integer, EInvoice>();
                 Map<Integer, EInvoice> fileInvoices = new HashMap<Integer, EInvoice>();
-                boolean isParseInvoice = getEInvoiceService().isEinvoiceEnabled()
+                boolean isParseInvoice = getApplicationConstantsBean().isEinvoiceEnabled()
                         && DocumentSubtypeModel.Types.INVOICE.equals(getNodeService().getType(documentNodeRef));
                 boolean invoiceAdded = false;
                 boolean updateGeneratedFiles = false;
+                Map<NodeRef, Long> originalOrderNrs = new HashMap<>();
+                if (addAttatchmentsAndScannedFiles) {
+                    addAttatchmentsAndScannedFiles();
+                }
                 if (isFileSelected) {
                     for (int i = 0; i < selectedFileNodeRef.size(); i++) {
                         checkEncryptedFile(selectedFileName.get(i));
@@ -195,6 +206,11 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
                         checkDigiDoc(selectedFileNodeRef.get(i), selectedFileName.get(i));
                     }
                     for (int i = 0; i < selectedFileNodeRef.size(); i++) {
+                        if (isActiveFileDialog()) {
+                            activeFilesCount = selectedFileOrderInList.get(i) - 1;
+                        } else {
+                            inactiveFilesCount = selectedFileOrderInList.get(i) - 1;
+                        }
                         Pair<String, String> filenames = getAttachmentFilenames(documentNodeRef, existingDisplayNames, i);
                         NodeRef fileRef = selectedFileNodeRef.get(i);
                         boolean associatedWithMetaData = BooleanUtils.toBoolean(selectedAssociatedWithMetaData.get(i));
@@ -204,17 +220,17 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
                                 if (!invoiceAdded) {
                                     getEInvoiceService().setDocPropsFromInvoice(einvoice.getInvoice().get(0), documentNodeRef, null, false);
                                     updateGeneratedFiles |= addFileAndFilename(filenames.getFirst(), filenames.getSecond(), documentNodeRef, fileRef, existingDisplayNames,
-                                            associatedWithMetaData);
+                                            associatedWithMetaData, originalOrderNrs);
                                     invoiceAdded = true;
                                 }
                                 attachmentInvoices.put(i, einvoice);
                             } else {
                                 updateGeneratedFiles |= addFileAndFilename(filenames.getFirst(), filenames.getSecond(), documentNodeRef, fileRef, existingDisplayNames,
-                                        associatedWithMetaData);
+                                        associatedWithMetaData, originalOrderNrs);
                             }
                         } else {
                             updateGeneratedFiles |= addFileAndFilename(filenames.getFirst(), filenames.getSecond(), documentNodeRef, fileRef, existingDisplayNames,
-                                    associatedWithMetaData);
+                                    associatedWithMetaData, originalOrderNrs);
                         }
                     }
                 }
@@ -222,6 +238,10 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
                     List<java.io.File> files = getFileUploadBean().getFiles();
                     List<String> fileNames = getFileUploadBean().getFileNames();
                     List<String> fileNameWithoutExtension = getFileUploadBean().getFileNameWithoutExtension();
+                    List<Long> fileOrderNr = getFileUploadBean().getOrderNumbers();
+                    if (fileOrderNr != null) {
+                        reorderFiles = true;
+                    }
                     for (int i = 0; i < files.size(); i++) {
                         checkEncryptedFile(fileNames.get(i));
                         checkFileSize(files.get(i), fileNames.get(i));
@@ -231,6 +251,13 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
                         Pair<String, String> filenames = getFileFilenames(documentNodeRef, existingDisplayNames, fileNames, fileNameWithoutExtension, i);
                         java.io.File file = files.get(i);
                         String mimeType = getFileUploadBean().getContentTypes().get(i);
+                        if (reorderFiles) {
+                            if (isActiveFileDialog()) {
+                                activeFilesCount = fileOrderNr.get(i) - 1;
+                            } else {
+                                inactiveFilesCount = fileOrderNr.get(i) - 1;
+                            }
+                        }
                         boolean associatedWithMetaData = BooleanUtils.toBoolean(getFileUploadBean().getAssociatedWithMetaData().get(i));
                         if (isParseInvoice) {
                             EInvoice einvoice = EInvoiceUtil.unmarshalEInvoice(file);
@@ -238,17 +265,17 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
                                 if (!invoiceAdded) {
                                     getEInvoiceService().setDocPropsFromInvoice(einvoice.getInvoice().get(0), documentNodeRef, null, false);
                                     updateGeneratedFiles |= addFileAndFilename(filenames.getFirst(), filenames.getSecond(), documentNodeRef, existingDisplayNames, file, mimeType,
-                                            associatedWithMetaData);
+                                            associatedWithMetaData, originalOrderNrs);
                                     invoiceAdded = true;
                                 }
                                 fileInvoices.put(i, einvoice);
                             } else {
                                 updateGeneratedFiles |= addFileAndFilename(filenames.getFirst(), filenames.getSecond(), documentNodeRef, existingDisplayNames, file, mimeType,
-                                        associatedWithMetaData);
+                                        associatedWithMetaData, originalOrderNrs);
                             }
                         } else {
                             updateGeneratedFiles |= addFileAndFilename(filenames.getFirst(), filenames.getSecond(), documentNodeRef, existingDisplayNames, file, mimeType,
-                                    associatedWithMetaData);
+                                    associatedWithMetaData, originalOrderNrs);
                         }
                     }
                 }
@@ -257,15 +284,23 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
                 if (updateGeneratedFiles) {
                     getDocumentTemplateService().updateGeneratedFiles(documentNodeRef, false);
                     DocumentDialogHelperBean documentDialogHelperBean = BeanHelper.getDocumentDialogHelperBean();
-                    documentDialogHelperBean.switchMode(documentDialogHelperBean.isInEditMode());
+                    boolean inEditMode = documentDialogHelperBean.isInEditMode();
+                    if (!inEditMode) {
+                        documentDialogHelperBean.switchMode(inEditMode);
+                    }
+                    BeanHelper.getDocumentDynamicDialog().reloadDocument(documentNodeRef);
                 }
                 if (invoiceAdded) {
                     documentDialog.reloadDocAndClearPropertySheet(true);
                 }
 
                 // generate new invoice files in case of multiple uploaded invoice xmls
-                createAdditionalInvoices(attachmentInvoices, documentNodeRef, !documentDialog.isDraft());
-                createAdditionalInvoices(fileInvoices, documentNodeRef, !documentDialog.isDraft());
+                createAdditionalInvoices(attachmentInvoices, documentNodeRef, !documentDialog.isDraft(), originalOrderNrs);
+                createAdditionalInvoices(fileInvoices, documentNodeRef, !documentDialog.isDraft(), originalOrderNrs);
+
+                if (reorderFiles || (isFileSelected && !originalOrderNrs.isEmpty())) {
+                    fileService.reorderFiles(documentNodeRef, originalOrderNrs);
+                }
 
             } catch (NodeLockedException e) {
                 BeanHelper.getDocumentLockHelperBean().handleLockedNode("document_addFile_error_docLocked");
@@ -287,23 +322,27 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
     private void checkDigiDoc(NodeRef fileNodeRef, String fileName) {
         try {
             if (FilenameUtil.isDigiDocFile(fileName)) {
-                BeanHelper.getSignatureService().getDataItemsAndSignatureItems(fileNodeRef, false);
+                BeanHelper.getSignatureService().getDataItemsAndSignatureItems(fileNodeRef, false, FilenameUtil.isBdocFile(fileName));
             }
         } catch (SignatureException e) {
-            throw new UnableToPerformException("file_ddoc_not_valid", fileName);
+            throw new UnableToPerformException("file_digidoc_not_valid", fileName, getDigiDocFormat(fileName));
         }
     }
 
     private void checkDigiDoc(java.io.File file, String fileName) {
         try {
             if (FilenameUtil.isDigiDocFile(fileName)) {
-                BeanHelper.getSignatureService().getDataItemsAndSignatureItems(new FileInputStream(file), false);
+                BeanHelper.getSignatureService().getDataItemsAndSignatureItems(new FileInputStream(file), false, FilenameUtil.isBdocFile(fileName));
             }
         } catch (SignatureException e) {
-            throw new UnableToPerformException("file_ddoc_not_valid", fileName);
+            throw new UnableToPerformException("file_digidoc_not_valid", fileName, getDigiDocFormat(fileName));
         } catch (FileNotFoundException e) {
             throw new UnableToPerformException("file_not_found", fileName);
         }
+    }
+
+    private static String getDigiDocFormat(String fileName) {
+        return FilenameUtil.isBdocFile(fileName) ? "bdoc" : "ddoc";
     }
 
     private void checkFileSize(java.io.File file, String fileName) {
@@ -332,20 +371,30 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
         return getFilenameFromDisplayname(documentNodeRef, existingDisplayNames, displayName, BeanHelper.getGeneralService());
     }
 
-    public boolean addFileAndFilename(String name, String displayName, NodeRef documentNodeRef, NodeRef fileRef, List<String> existingFilenames, boolean associatedWithMetaData) {
-        boolean hasDeltaFormulae = getFileService().addExistingFileToDocument(name, displayName, documentNodeRef, fileRef, isActiveFileDialog(), associatedWithMetaData);
+    private boolean addFileAndFilename(String name, String displayName, NodeRef documentNodeRef, NodeRef fileRef, List<String> existingFilenames, boolean associatedWithMetaData,
+            Map<NodeRef, Long> originalOrderNrs) {
+        long orderNr = isActiveFileDialog() ? ++activeFilesCount : ++inactiveFilesCount;
+        Pair<Boolean, NodeRef> result = getFileService().addExistingFileToDocument(name, displayName, documentNodeRef, fileRef, isActiveFileDialog(), associatedWithMetaData,
+                orderNr);
+        originalOrderNrs.put(fileRef, orderNr);
+        boolean hasDeltaFormulae = result.getFirst();
         existingFilenames.add(name);
         return hasDeltaFormulae;
     }
 
-    public boolean addFileAndFilename(String name, String displayName, NodeRef documentNodeRef, List<String> existingFilenames, java.io.File file, String mimeType,
-            boolean associatedWithMetaData) {
-        boolean hasDeltaFormulae = getFileService().addUploadedFileToDocument(name, displayName, documentNodeRef, file, mimeType, isActiveFileDialog(), associatedWithMetaData);
+    private boolean addFileAndFilename(String name, String displayName, NodeRef documentNodeRef, List<String> existingFilenames, java.io.File file, String mimeType,
+            boolean associatedWithMetaData, Map<NodeRef, Long> orderNrs) {
+        long orderNr = isActiveFileDialog() ? ++activeFilesCount : ++inactiveFilesCount;
+        Pair<Boolean, NodeRef> result = getFileService().addUploadedFileToDocument(name, displayName, documentNodeRef, file, mimeType, isActiveFileDialog(),
+                associatedWithMetaData, orderNr);
+        boolean hasDeltaFormulae = result.getFirst();
+        NodeRef addedFileRef = result.getSecond();
+        orderNrs.put(addedFileRef, Long.MAX_VALUE);
         existingFilenames.add(name);
         return hasDeltaFormulae;
     }
 
-    public void createAdditionalInvoices(Map<Integer, EInvoice> attachmentInvoices, NodeRef originalDocument, boolean save) {
+    public void createAdditionalInvoices(Map<Integer, EInvoice> attachmentInvoices, NodeRef originalDocument, boolean save, Map<NodeRef, Long> originalOrderNrs) {
         boolean isFirstInvoice = true;
         for (Map.Entry<Integer, EInvoice> entry : attachmentInvoices.entrySet()) {
             for (Invoice invoice : entry.getValue().getInvoice()) {
@@ -363,7 +412,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
                         if (i == entry.getKey() || !attachmentInvoices.containsKey(new Integer(i))) {
                             Pair<String, String> filenames = getAttachmentFilenames(docRef, existingFilenames, i);
                             addFileAndFilename(filenames.getFirst(), filenames.getSecond(), docRef, selectedFileNodeRef.get(i), existingFilenames,
-                                    BooleanUtils.toBoolean(selectedAssociatedWithMetaData.get(i)));
+                                    BooleanUtils.toBoolean(selectedAssociatedWithMetaData.get(i)), originalOrderNrs);
                         }
                     }
                 }
@@ -374,8 +423,8 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
                     for (int i = 0; i < files.size(); i++) {
                         if (i == entry.getKey() || !attachmentInvoices.containsKey(new Integer(i))) {
                             Pair<String, String> filenames = getFileFilenames(docRef, existingFilenames, fileNames, fileNameWithoutExtension, i);
-                            addFileAndFilename(filenames.getFirst(), filenames.getSecond(), docRef
-                                    , existingFilenames, files.get(i), getFileUploadBean().getContentTypes().get(i), BooleanUtils.toBoolean(selectedAssociatedWithMetaData.get(i)));
+                            addFileAndFilename(filenames.getFirst(), filenames.getSecond(), docRef, existingFilenames, files.get(i),
+                                    getFileUploadBean().getContentTypes().get(i), BooleanUtils.toBoolean(selectedAssociatedWithMetaData.get(i)), originalOrderNrs);
                         }
                     }
                 }
@@ -397,7 +446,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
 
     // TODO: optimize, store unmarshalled invoices for later use?
     public boolean isNeedMultipleInvoiceConfirmation() {
-        if (!getEInvoiceService().isEinvoiceEnabled()) {
+        if (!getApplicationConstantsBean().isEinvoiceEnabled()) {
             return false;
         }
         if (SystematicDocumentType.INVOICE.getId().equals(getDocTypeIdAndVersionNr(getDocumentDialogHelperBean().getNode()).getFirst())) {
@@ -453,7 +502,6 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
 
     @Override
     public void restored() {
-        refreshUploadedFilesPanelGroup();
         super.restored();
     }
 
@@ -464,11 +512,6 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
             return ""; // Don't return null!
         }
         return super.getErrorOutcome(exception);
-    }
-
-    @Override
-    protected String doPostCommitProcessing(FacesContext context, String outcome) {
-        return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME + "#files-panel";
     }
 
     protected void clearUpload() {
@@ -521,168 +564,41 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
         return MessageFormat.format(msg, namesStr);
     }
 
-    public HtmlPanelGroup getUploadedFilesPanelGroup() {
-        return uploadedFilesPanelGroup;
-    }
-
-    public void setUploadedFilesPanelGroup(HtmlPanelGroup panelGroup) {
-        if (uploadedFilesPanelGroup == null) {
-            uploadedFilesPanelGroup = panelGroup;
-            refreshUploadedFilesPanelGroup();
-        } else {
-            uploadedFilesPanelGroup = panelGroup;
-        }
-    }
-
-    /**
-     * @param app
-     */
-    private void refreshUploadedFilesPanelGroup() {
-        @SuppressWarnings("unchecked")
-        List<UIComponent> groupChildren = uploadedFilesPanelGroup.getChildren();
-        groupChildren.clear();
-
-        Application app = FacesContext.getCurrentInstance().getApplication();
-        HtmlPanelGrid uploadedFilesGrid = (HtmlPanelGrid) app.createComponent(HtmlPanelGrid.COMPONENT_TYPE);
-        uploadedFilesGrid.setStyleClass("table-padding");
-        uploadedFilesGrid.setColumnClasses("propertiesLabel,");
-        uploadedFilesGrid.setColumns(5);
-
-        groupChildren.add(uploadedFilesGrid);
-
-        @SuppressWarnings("unchecked")
-        List<UIComponent> gridChildren = uploadedFilesGrid.getChildren();
-        int rowCount = 0, size = 0;
-        List<String> fileNames = new ArrayList<String>();
-        FileUploadBean fileBean = getFileUploadBean();
-        if (fileBean != null) {
-            size = fileBean.getFiles().size();
-            fileNames = fileBean.getFileNames();
-        }
-        for (int i = 0; i < size; i++, rowCount++) { // Uploaded files
-            gridChildren.add(createLabel(app, rowCount, "name", true));
-
-            String nameValueBinding = "#{AddFileDialog.fileUploadBean.fileNameWithoutExtension[" + i + "]}";
-            gridChildren.add(createInput(app, rowCount, nameValueBinding));
-            if (BOUND_METADATA_EXTENSIONS.contains(FilenameUtils.getExtension(fileNames.get(i)).toLowerCase())) {
-                gridChildren.add(createLabel(app, rowCount, "file_associated_with_metadata", false));
-                gridChildren.add(createCheckbox(app, rowCount, "#{AddFileDialog.fileUploadBean.associatedWithMetaData[" + i + "]}"));
-            } else {
-                gridChildren.add(createDummyOutput(app, rowCount, 1));
-                gridChildren.add(createDummyOutput(app, rowCount, 2));
-            }
-
-            String deleteMethodBinding = "#{AddFileDialog.removeUploadedFile}";
-            gridChildren.add(createDelete(app, rowCount, i, deleteMethodBinding));
-        }
-
-        if (selectedFileNodeRef == null) {
-            return; // We can skip further processing
-        }
-
-        for (int i = 0; i < selectedFileNodeRef.size(); i++, rowCount++) { // Scanned files and email-attachments
-            gridChildren.add(createLabel(app, rowCount, "name", true));
-
-            String nameValueBinding = "#{AddFileDialog.selectedFileNameWithoutExtension[" + i + "]}";
-            gridChildren.add(createInput(app, rowCount, nameValueBinding));
-
-            if (BOUND_METADATA_EXTENSIONS.contains(FilenameUtils.getExtension(selectedFileName.get(i)))) {
-                gridChildren.add(createLabel(app, rowCount, "file_associated_with_metadata", false));
-                gridChildren.add(createCheckbox(app, rowCount, "#{AddFileDialog.selectedAssociatedWithMetaData[" + i + "]}"));
-            } else {
-                gridChildren.add(createDummyOutput(app, rowCount, 1));
-                gridChildren.add(createDummyOutput(app, rowCount, 2));
-            }
-
-            String deleteMethodBinding = "#{AddFileDialog.removeSelectedFile}";
-            gridChildren.add(createDelete(app, rowCount, i, deleteMethodBinding));
-        }
-    }
-
-    private UIActionLink createDelete(Application app, int rowCount, int i, String deleteBinding) {
-        UIActionLink delete = (UIActionLink) app.createComponent("org.alfresco.faces.ActionLink");
-        delete.setId("file-remove-link-" + rowCount);
-        delete.setImage("/images/icons/delete.gif");
-        delete.setValue("");
-        delete.setTooltip(MessageUtil.getMessage("delete"));
-        delete.setActionListener(app.createMethodBinding(deleteBinding, UIActions.ACTION_CLASS_ARGS));
-        delete.setShowLink(false);
-        putAttribute(delete, "styleClass", "icon-link");
-
-        UIParameter index = (UIParameter) app.createComponent(UIParameter.COMPONENT_TYPE);
-        index.setName("index");
-        index.setValue(i);
-        addChildren(delete, index);
-        return delete;
-    }
-
-    private UIComponent createInput(Application app, int rowCount, String nameValueBinding) {
-        UIInput nameInput = (UIInput) app.createComponent(HtmlInputTextarea.COMPONENT_TYPE);
-        nameInput.setValueBinding("value", app.createValueBinding(nameValueBinding));
-        nameInput.setId("uploaded-file-input-" + rowCount);
-        nameInput.setRequired(true);
-        nameInput.setValidator(app.createMethodBinding("#{AddFileDialog.validateFileName}", new Class[] { FacesContext.class, UIComponent.class,
-                Object.class }));
-        putAttribute(nameInput, "styleClass", "expand19-200");
-        return nameInput;
-    }
-
-    private UIComponent createCheckbox(Application app, int rowCount, String nameValueBinding) {
-        UIInput metaInput = (UIInput) app.createComponent(HtmlSelectBooleanCheckbox.COMPONENT_TYPE);
-        metaInput.setValueBinding("value", app.createValueBinding(nameValueBinding));
-        metaInput.setId("uploaded-file-checkbox-" + rowCount);
-        metaInput.setRequired(true);
-        metaInput.setValue(true);
-        return metaInput;
-    }
-
-    private HtmlOutputText createLabel(Application app, int rowCount, String name, boolean required) {
-        HtmlOutputText label = (HtmlOutputText) app.createComponent(HtmlOutputText.COMPONENT_TYPE);
-        label.setValue((required ? "<span class=\"red\">* </span>" : "") + MessageUtil.getMessage(name));
-        label.setStyleClass("propertiesLabel");
-        label.setEscape(false);
-        label.setId("uploaded-file-label-" + name + "-" + rowCount);
-        return label;
-    }
-
-    private HtmlOutputText createDummyOutput(Application app, int rowCount, int colCount) {
-        HtmlOutputText dummyOutput = (HtmlOutputText) app.createComponent(HtmlOutputText.COMPONENT_TYPE);
-        dummyOutput.setValue("");
-        dummyOutput.setId("uploaded-file-void-" + rowCount + "-" + colCount);
-        return dummyOutput;
-    }
-
     public void removeUploadedFile(ActionEvent event) {
         int index = Integer.parseInt(ActionUtil.getParam(event, "index"));
         getFileUploadBean().removeFile(index);
-        refreshUploadedFilesPanelGroup();
     }
 
     public void removeSelectedFile(ActionEvent event) {
         int index = Integer.parseInt(ActionUtil.getParam(event, "index"));
         selectedFileNodeRef.remove(index);
         selectedFileName.remove(index);
-        refreshUploadedFilesPanelGroup();
     }
 
     public FileUploadBean getFileUploadBean() {
-        FileUploadBean fileBean = (FileUploadBean) FacesContext.getCurrentInstance().getExternalContext().getSessionMap().
-                get(FileUploadBean.FILE_UPLOAD_BEAN_NAME);
-        return fileBean;
+        return (FileUploadBean) FacesContext.getCurrentInstance().getExternalContext().getSessionMap().get(FileUploadBean.FILE_UPLOAD_BEAN_NAME);
     }
 
     public List<NodeRef> getSelectedFileNodeRef() {
         return selectedFileNodeRef;
     }
 
+    public void setSelectedFileNodeRef(List<NodeRef> selectedFileNodeRef) {
+        this.selectedFileNodeRef = selectedFileNodeRef;
+    }
+
     public List<String> getSelectedFileName() {
         return selectedFileName;
+    }
+
+    public void setSelectedFileName(List<String> selectedFileName) {
+        this.selectedFileName = selectedFileName;
     }
 
     public void validateFileName(@SuppressWarnings("unused") FacesContext context, UIComponent component, Object value) {
         if (component instanceof HtmlInputText) {
             boolean isValid = true;
-            if (!value.toString().equals(FilenameUtil.stripForbiddenWindowsCharacters(value.toString()))) {
+            if (!value.toString().equals(FilenameUtil.stripForbiddenWindowsCharactersAndRedundantWhitespaces(value.toString()))) {
                 isValid = false;
             }
 
@@ -700,63 +616,54 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
         }
     }
 
-    public void confirmSelectedFiles() {
+    public boolean addAttatchmentsAndScannedFiles() {
         String[] attachments = getAttachmentSelect() == null ? new String[0] : (String[]) getAttachmentSelect().getValue();
         String[] scanned = getScannedSelect() == null ? new String[0] : (String[]) getScannedSelect().getValue();
 
         String[] selected = (String[]) ArrayUtils.addAll(attachments, scanned);
 
         if (selectedFileNodeRef == null) {
-            selectedFileNodeRef = new ArrayList<NodeRef>(selected.length);
+            selectedFileNodeRef = new ArrayList<>(selected.length);
         }
 
         if (selectedFileName == null) {
-            selectedFileName = new ArrayList<String>(selected.length);
+            selectedFileName = new ArrayList<>(selected.length);
         }
 
         if (selectedFileNameWithoutExtension == null) {
-            selectedFileNameWithoutExtension = new ArrayList<String>(selected.length);
+            selectedFileNameWithoutExtension = new ArrayList<>(selected.length);
         }
 
         if (selectedAssociatedWithMetaData == null) {
-            selectedAssociatedWithMetaData = new ArrayList<Boolean>(selected.length);
+            selectedAssociatedWithMetaData = new ArrayList<>(selected.length);
         }
-
-        FileUploadBean fileUploadBean = getFileUploadBean();
-        if (fileUploadBean != null) {
-            List<java.io.File> files = fileUploadBean.getFiles();
-            List<String> fileNames = getFileUploadBean().getFileNames();
-
-            for (int i = 0; i < files.size(); i++) {
-                try {
-                    checkEncryptedFile(fileNames.get(i));
-                    checkFileSize(files.get(i), fileNames.get(i));
-                    checkDigiDoc(files.get(i), fileNames.get(i));
-                } catch (UnableToPerformException e) {
-                    Utils.addErrorMessage(MessageUtil.getMessage(e.getMessageKey(), e.getMessageValuesForHolders()));
-                }
-            }
+        if (selectedFileOrderInList == null) {
+            selectedFileOrderInList = new ArrayList<>(selected.length);
         }
 
         for (String nodeRefStr : selected) {
             NodeRef nodeRef = new NodeRef(nodeRefStr);
             File file = getFileService().getFile(nodeRef);
+            Assert.notNull(file, "Selected file was not found.");
+            String fileName = file.getName();
             try {
-                checkEncryptedFile(file.getName());
-                checkFileSize(nodeRef, file.getName());
-                checkDigiDoc(nodeRef, file.getName());
+                checkEncryptedFile(fileName);
+                checkFileSize(nodeRef, fileName);
+                checkDigiDoc(nodeRef, fileName);
             } catch (UnableToPerformException e) {
                 Utils.addErrorMessage(MessageUtil.getMessage(e.getMessageKey(), e.getMessageValuesForHolders()));
             }
-            Assert.notNull(file, "Selected file was not found.");
-
             selectedFileNodeRef.add(nodeRef);
-            selectedFileName.add(file.getName());
-            selectedFileNameWithoutExtension.add(FilenameUtils.getBaseName(file.getName()));
-            selectedAssociatedWithMetaData.add(false);
+            selectedFileName.add(fileName);
+            selectedFileNameWithoutExtension.add(FilenameUtils.getBaseName(fileName));
+            boolean associateWithMetadata = AddFileDialog.BOUND_METADATA_EXTENSIONS.contains(FilenameUtils.getExtension(fileName));
+            selectedAssociatedWithMetaData.add(associateWithMetadata);
+            long orderNr = isActiveFileDialog() ? ++activeFilesCount : ++inactiveFilesCount;
+            selectedFileOrderInList.add(orderNr);
         }
 
         isFileSelected = (selectedFileNodeRef.size() > 0);
+        return isFileSelected;
     }
 
     public void attachmentFolderSelected(ActionEvent event) {
@@ -865,22 +772,22 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
 
     public NodeRef getAttachmentParenNodeRef() {
         if (attachmentParentRef == null) {
-            attachmentParentRef = BeanHelper.getImapServiceExt().getAttachmentRoot();
+            attachmentParentRef = BeanHelper.getConstantNodeRefsBean().getAttachmentRoot();
         }
         return attachmentParentRef;
     }
 
     public List<SelectItem> getAttachmentFolders() {
         List<SelectItem> attachmentFolders = new ArrayList<SelectItem>();
-        NodeRef attachmentRootFolderRef = BeanHelper.getImapServiceExt().getAttachmentRoot();
+        NodeRef attachmentRootFolderRef = BeanHelper.getConstantNodeRefsBean().getAttachmentRoot();
         attachmentFolders.add(new SelectItem(attachmentRootFolderRef.toString(), MessageUtil.getMessage("menu_email_attachments")));
-        addFolderSelectItems(attachmentFolders, BeanHelper.getImapServiceExt().getImapSubfolders(attachmentRootFolderRef, ContentModel.TYPE_CONTENT), " ");
+        addFolderSelectItems(attachmentFolders, BeanHelper.getImapServiceExt().getImapSubfolders(attachmentRootFolderRef), " ");
         return attachmentFolders;
     }
 
     public NodeRef getScannedParenNodeRef() {
         if (scannedParentRef == null) {
-            scannedParentRef = BeanHelper.getGeneralService().getNodeRef(ScannedModel.Repo.SCANNED_SPACE);
+            scannedParentRef = BeanHelper.getConstantNodeRefsBean().getScannedFilesRoot();
         }
         return scannedParentRef;
     }
@@ -889,7 +796,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
         List<SelectItem> attachmentFolders = new ArrayList<SelectItem>();
         NodeRef scannedRootFolderRef = BeanHelper.getGeneralService().getNodeRef(ScannedModel.Repo.SCANNED_SPACE);
         attachmentFolders.add(new SelectItem(scannedRootFolderRef.toString(), MessageUtil.getMessage("menu_scanned_documents")));
-        addFolderSelectItems(attachmentFolders, BeanHelper.getFileService().getSubfolders(scannedRootFolderRef, ContentModel.TYPE_FOLDER, ContentModel.TYPE_CONTENT), " ");
+        addFolderSelectItems(attachmentFolders, BeanHelper.getFileService().getSubfolders(scannedRootFolderRef, ContentModel.TYPE_FOLDER, ContentModel.TYPE_CONTENT, false), " ");
         return attachmentFolders;
     }
 
@@ -897,7 +804,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
         for (Subfolder subfolder : subfolders) {
             String itemLabel = prefix + subfolder.getName();
             attachmentFolders.add(new SelectItem(subfolder.getNodeRef().toString(), itemLabel));
-            addFolderSelectItems(attachmentFolders, BeanHelper.getImapServiceExt().getImapSubfolders(subfolder.getNodeRef(), ContentModel.TYPE_CONTENT), prefix + prefix);
+            addFolderSelectItems(attachmentFolders, BeanHelper.getImapServiceExt().getImapSubfolders(subfolder.getNodeRef()), prefix + prefix);
         }
     }
 
@@ -956,6 +863,18 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
 
     public boolean isActiveFileDialog() {
         return !inactiveFileDialog;
+    }
+
+    public Long getMaxCount() {
+        return inactiveFileDialog ? inactiveFilesCount : activeFilesCount;
+    }
+
+    public List<Long> getSelectedFileOrderInList() {
+        return selectedFileOrderInList;
+    }
+
+    public void setSelectedFileOrderInList(List<Long> selectedFileOrderInList) {
+        this.selectedFileOrderInList = selectedFileOrderInList;
     }
 
     // END: getters / setters

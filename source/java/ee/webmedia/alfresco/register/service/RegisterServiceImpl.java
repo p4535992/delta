@@ -17,7 +17,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.MapNode;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
-import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.log.PropDiffHelper;
@@ -45,8 +45,8 @@ public class RegisterServiceImpl implements RegisterService {
     private NodeService nodeService;
     private LogService logService;
     private UserService userService;
-    private SimpleJdbcTemplate jdbcTemplate;
-    private final String REGISTER_TABLE_NAME = "delta_register";
+    private JdbcTemplate jdbcTemplate;
+	
     private boolean valueEditable;
 
     @Override
@@ -75,26 +75,40 @@ public class RegisterServiceImpl implements RegisterService {
 
     @Override
     public Node getRegisterNode(int id) {
-        final NodeRef registerRef = generalService.getNodeRef(RegisterModel.Repo.REGISTERS_SPACE + "/" + RegisterModel.NAMESPACE_PREFFIX + id);
+        return getRegisterNodeRefById(id);
+    }
+
+    private Node getRegisterNodeRefById(int registerId) {
+        final NodeRef registerRef = generalService.getNodeRef(RegisterModel.Repo.REGISTERS_SPACE + "/" + RegisterModel.NAMESPACE_PREFFIX + registerId);
         final Node registerNode = new Node(registerRef);
         final Map<String, Object> props = registerNode.getProperties();
-        props.put(RegisterModel.Prop.COUNTER.toString(), getRegisterCounter(id));
+        props.put(RegisterModel.Prop.COUNTER.toString(), getRegisterCounter(registerId));
         return registerNode;
     }
 
     private Integer getRegisterCounter(int registerId) {
-        return jdbcTemplate.queryForInt("SELECT counter FROM " + REGISTER_TABLE_NAME + " WHERE register_id=?", registerId);
+        return jdbcTemplate.queryForInt("SELECT last_value FROM " + getSequenceName(registerId));
+    }
+
+    private String getSequenceName(int registerId) {
+        return SEQ_REGISTER_PREFIX + registerId + SEQ_REGISTER_SUFFIX;
     }
 
     @Override
     public Register getRegister(Integer registerId) {
-        final Node registerNode = getRegisterNode(registerId);
+        final Node registerNode = getRegisterNodeRefById(registerId);
         final Map<String, Object> props = registerNode.getProperties();
         Register reg = registerBeanPropertyMapper.toObject(RepoUtil.toQNameProperties(props));
         reg.setNodeRef(registerNode.getNodeRef());
         // counter is not mappable(stored in sequence ant put manually into props)
         reg.setCounter((Integer) props.get(RegisterModel.Prop.COUNTER.toString()));
         return reg;
+    }
+
+    @Override
+    public Register getSimpleRegister(Integer registerId) {
+        int registerCount = getRegisterCounter(registerId);
+        return new Register(registerId, registerCount);
     }
 
     @Override
@@ -145,20 +159,20 @@ public class RegisterServiceImpl implements RegisterService {
             createSequence(regId);
             nodeService.createNode(getRoot(), RegisterModel.Assoc.REGISTER,
                     QName.createQName(RegisterModel.URI, regId.toString()), RegisterModel.Types.REGISTER, newProps);
-            setRegisterCounterValue(regId, counter);
+            setSequenceCurrentValue(getSequenceName(regId), counter);
             logService.addLogEntry(LogEntry.create(LogObject.REGISTER, userService, "applog_register_add", prop.get(RegisterModel.Prop.NAME.toString())));
         } else {
             Map<QName, Serializable> oldProps = nodeService.getProperties(register.getNodeRef());
             nodeService.setProperties(register.getNodeRef(), newProps);
-            setRegisterCounterValue((Integer) prop.get(RegisterModel.Prop.ID), counter);
+            setSequenceCurrentValue(getSequenceName((Integer) prop.get(RegisterModel.Prop.ID)), counter);
 
             String diff = new PropDiffHelper()
-                    .label(RegisterModel.Prop.NAME, "register_name")
-                    .label(RegisterModel.Prop.COUNTER, "register_counter")
-                    .label(RegisterModel.Prop.ACTIVE, "register_active")
-                    .label(RegisterModel.Prop.AUTO_RESET, "register_autoReset")
-                    .label(RegisterModel.Prop.COMMENT, "register_comment")
-                    .diff(oldProps, newProps);
+            .label(RegisterModel.Prop.NAME, "register_name")
+            .label(RegisterModel.Prop.COUNTER, "register_counter")
+            .label(RegisterModel.Prop.ACTIVE, "register_active")
+            .label(RegisterModel.Prop.AUTO_RESET, "register_autoReset")
+            .label(RegisterModel.Prop.COMMENT, "register_comment")
+            .diff(oldProps, newProps);
             logService.addLogEntry(LogEntry.create(LogObject.REGISTER, userService, "applog_register_edit", prop.get(RegisterModel.Prop.NAME.toString()), diff));
         }
     }
@@ -170,43 +184,58 @@ public class RegisterServiceImpl implements RegisterService {
 
     @Override
     public int increaseCount(int registerId) {
-        int currentCounter = jdbcTemplate.queryForInt("SELECT counter FROM " + REGISTER_TABLE_NAME + " WHERE register_id=? FOR UPDATE", registerId);
-        currentCounter++;
-        setRegisterCounterValue(registerId, currentCounter);
-        return currentCounter;
+        return jdbcTemplate.queryForInt("SELECT nextval(?)", getSequenceName(registerId));
     }
 
-    private void setRegisterCounterValue(final int seqName, int seqValue) {
-        jdbcTemplate.update("UPDATE " + REGISTER_TABLE_NAME + " SET counter=? WHERE register_id=?", seqValue, seqName);
+    @Override
+    public void updateRegisterSequence(int registerId, int regCounterValue) {
+        final String seqName = getSequenceName(registerId);
+        jdbcTemplate.update("ALTER SEQUENCE " + seqName + " MINVALUE 0");
+        if (regCounterValue == 1) {
+            if (jdbcTemplate.queryForInt("SELECT nextval(?)", getSequenceName(registerId)) == 1) {
+                setSequenceCurrentValue(seqName, DEFAULT_COUNTER_INITIAL_VALUE);
+            } else {
+                setSequenceCurrentValue(seqName, 1);
+            }
+        }
+    }
+
+    private void setSequenceCurrentValue(final String seqName, int seqValue) {
+        jdbcTemplate.queryForInt("SELECT setval(?, ?)", seqName, seqValue);
     }
 
     @Override
     public void resetCounter(Node register) {
         final Map<String, Object> props = register.getProperties();
         int registerId = (Integer) props.get(RegisterModel.Prop.ID);
-        setRegisterCounterValue(registerId, DEFAULT_COUNTER_INITIAL_VALUE);
+        setSequenceCurrentValue(getSequenceName(registerId), DEFAULT_COUNTER_INITIAL_VALUE);
         props.put(RegisterModel.Prop.COUNTER.toString(), DEFAULT_COUNTER_INITIAL_VALUE);
     }
 
     @Override
-    public void resetAllAutoResetCounters() {
+    public int resetAllAutoResetCounters() {
+        int reset = 0;
         List<Register> registers = getRegisters();
         for (Register register : registers) {
             if (register.isAutoReset()) {
                 resetCounter(new MapNode(register.getNodeRef()));
+                reset++;
                 log.debug("Register " + register.getName() + " counter reseted.");
             }
         }
+        return reset;
     }
 
     private void createSequence(int registerId) {
-        jdbcTemplate.update("INSERT INTO " + REGISTER_TABLE_NAME + " (register_id,counter) values (?,?)", registerId, DEFAULT_COUNTER_INITIAL_VALUE);
-        log.debug("created sequence: " + registerId);
+        final String seqName = getSequenceName(registerId);
+        jdbcTemplate.update("CREATE SEQUENCE " + seqName + " MINVALUE 0");
+        setSequenceCurrentValue(getSequenceName(registerId), DEFAULT_COUNTER_INITIAL_VALUE);
+        log.debug("created sequence: " + seqName);
     }
 
     // START: getters / setters
     public void setDataSource(DataSource dataSource) {
-        jdbcTemplate = new SimpleJdbcTemplate(dataSource);
+        jdbcTemplate = new JdbcTemplate(dataSource);
     }
 
     public void setGeneralService(GeneralService generalService) {

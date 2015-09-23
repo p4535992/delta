@@ -7,6 +7,7 @@
    <param:stringParameter view:childName="param:costManagerFieldName">
       <view:properties>
          <param:value></param:value>
+         <param:name>costManagerFieldName</param:name>
       </view:properties>
    </param:stringParameter>
 

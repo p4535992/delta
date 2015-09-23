@@ -8,6 +8,10 @@ public interface VolumeModel {
     String VOLUME_MODEL_URI = "http://alfresco.webmedia.ee/model/volume/1.0";
     String URI = DocumentDynamicModel.URI;
 
+    interface Aspects {
+        QName VOLUME_ASSOCIATIONS = QName.createQName(VOLUME_MODEL_URI, "volumeAssociations");
+    }
+
     interface Types {
         QName VOLUME = QName.createQName(VOLUME_MODEL_URI, "volume");
         QName DELETED_DOCUMENT = QName.createQName(VOLUME_MODEL_URI, "deletedDocument");

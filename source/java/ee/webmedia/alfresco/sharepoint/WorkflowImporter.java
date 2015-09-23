@@ -390,7 +390,7 @@ public class WorkflowImporter {
                         Collections.sort(tasks);
                         int taskIndex = 0;
 
-                        WorkflowType workflowType = BeanHelper.getWorkflowService().getWorkflowTypes().get(workflow.getNodeType());
+                        WorkflowType workflowType = BeanHelper.getWorkflowConstantsBean().getWorkflowTypes().get(workflow.getNodeType());
                         for (Task task : tasks) {
                             if ((task.isAssignment() && workflow.isAssignment() || task.isConfirmation() && workflow.isConfirmation())
                                     && ObjectUtils.equals(task.getWorkflowOrder(), workflow.getOrderNo())) {
@@ -545,7 +545,7 @@ public class WorkflowImporter {
                         rows = jdbcTemplate
                                 .queryForList(
                                         "SELECT procedure_id, node_ref FROM imp_completed_procedures WHERE parent_id IS NOT NULL AND original_procedure_id = ? AND original_procedure_id != parent_id",
-                                            compoundFlow.getProcedureId());
+                                        compoundFlow.getProcedureId());
                         for (Map<String, Object> row : rows) {
                             Integer procedureId = (Integer) row.get("procedure_id");
                             createRelatedUrl(compoundFlowRef, procedureId, "Alam-alammenetlus");
@@ -772,31 +772,31 @@ public class WorkflowImporter {
                 "INSERT INTO imp_d_menetlus (id, prioriteet, olek, menetluseliik, alguskp, loppkp, tahtaegkp, algataja_id, kirjeldus, looja, " +
                         "loomisekp, labibkantselei, trykk, menetlusy_id, menetlusa_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?, ?, ?)", con, new CsvBasedParamsSetter() {
 
-                    @Override
-                    public boolean setCsvValues(PreparedStatement ps, CsvReader csv) throws SQLException, IOException {
-                        Integer procId = ImportUtil.getInteger(csv, 1);
-                        boolean notUsed = !completedIds.contains(procId);
-                        if (notUsed) {
-                            setInt(ps, 1, procId);
-                            ps.setString(2, ImportUtil.getString(csv, 4));
-                            ps.setString(3, ImportUtil.getString(csv, 5));
-                            ps.setString(4, ImportUtil.getString(csv, 6));
-                            ps.setTimestamp(5, ImportUtil.getTimestamp(csv, 7));
-                            ps.setTimestamp(6, ImportUtil.getTimestamp(csv, 8));
-                            ps.setTimestamp(7, ImportUtil.getTimestamp(csv, 9));
-                            setInt(ps, 8, ImportUtil.getInteger(csv, 10));
-                            ps.setString(9, ImportUtil.getString(csv, 14));
-                            ps.setString(10, ImportUtil.getString(csv, 15));
-                            ps.setTimestamp(11, ImportUtil.getTimestamp(csv, 16));
-                            ps.setBoolean(12, "1".equals(ImportUtil.getString(csv, 21)));
-                            ps.setBoolean(13, "1".equals(ImportUtil.getString(csv, 22)));
-                            setInt(ps, 14, ImportUtil.getInteger(csv, 3));
-                            setInt(ps, 15, ImportUtil.getInteger(csv, 2));
-                            newProcCount.incrementAndGet();
-                        }
-                        return notUsed;
-                    }
-                });
+            @Override
+            public boolean setCsvValues(PreparedStatement ps, CsvReader csv) throws SQLException, IOException {
+                Integer procId = ImportUtil.getInteger(csv, 1);
+                boolean notUsed = !completedIds.contains(procId);
+                if (notUsed) {
+                    setInt(ps, 1, procId);
+                    ps.setString(2, ImportUtil.getString(csv, 4));
+                    ps.setString(3, ImportUtil.getString(csv, 5));
+                    ps.setString(4, ImportUtil.getString(csv, 6));
+                    ps.setTimestamp(5, ImportUtil.getTimestamp(csv, 7));
+                    ps.setTimestamp(6, ImportUtil.getTimestamp(csv, 8));
+                    ps.setTimestamp(7, ImportUtil.getTimestamp(csv, 9));
+                    setInt(ps, 8, ImportUtil.getInteger(csv, 10));
+                    ps.setString(9, ImportUtil.getString(csv, 14));
+                    ps.setString(10, ImportUtil.getString(csv, 15));
+                    ps.setTimestamp(11, ImportUtil.getTimestamp(csv, 16));
+                    ps.setBoolean(12, "1".equals(ImportUtil.getString(csv, 21)));
+                    ps.setBoolean(13, "1".equals(ImportUtil.getString(csv, 22)));
+                    setInt(ps, 14, ImportUtil.getInteger(csv, 3));
+                    setInt(ps, 15, ImportUtil.getInteger(csv, 2));
+                    newProcCount.incrementAndGet();
+                }
+                return notUsed;
+            }
+        });
 
         LOG.info("Not imported procedures count: " + newProcCount.intValue());
     }
@@ -806,18 +806,18 @@ public class WorkflowImporter {
                 "INSERT INTO imp_d_dok_men (menetlus_id, id, dokument_id, urldokument, liik, looja, loomisekp) VALUES (?,?,?,?,?,?,?)", con,
                 new CsvBasedParamsSetter() {
 
-                    @Override
-                    public boolean setCsvValues(PreparedStatement ps, CsvReader csv) throws SQLException, IOException {
-                        setInt(ps, 1, ImportUtil.getInteger(csv, 1));
-                        setInt(ps, 2, ImportUtil.getInteger(csv, 2));
-                        setInt(ps, 3, ImportUtil.getInteger(csv, 4));
-                        ps.setString(4, ImportUtil.getString(csv, 5));
-                        ps.setString(5, ImportUtil.getString(csv, 7));
-                        ps.setString(6, ImportUtil.getString(csv, 9));
-                        ps.setTimestamp(7, ImportUtil.getTimestamp(csv, 10));
-                        return true;
-                    }
-                });
+            @Override
+            public boolean setCsvValues(PreparedStatement ps, CsvReader csv) throws SQLException, IOException {
+                setInt(ps, 1, ImportUtil.getInteger(csv, 1));
+                setInt(ps, 2, ImportUtil.getInteger(csv, 2));
+                setInt(ps, 3, ImportUtil.getInteger(csv, 4));
+                ps.setString(4, ImportUtil.getString(csv, 5));
+                ps.setString(5, ImportUtil.getString(csv, 7));
+                ps.setString(6, ImportUtil.getString(csv, 9));
+                ps.setTimestamp(7, ImportUtil.getTimestamp(csv, 10));
+                return true;
+            }
+        });
     }
 
     private void writeIsikMenetlused(Connection con) {
@@ -825,39 +825,39 @@ public class WorkflowImporter {
                 "INSERT INTO imp_d_isik_men (menetlus_id,id,ylem_id,staatus,kinnitatud,liik,d_org_strukt_id,alguskp,tahtaegkp,loppkp,looja,loomisekp) " +
                         "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", con, new CsvBasedParamsSetter() {
 
-                    @Override
-                    public boolean setCsvValues(PreparedStatement ps, CsvReader csv) throws SQLException, IOException {
-                        setInt(ps, 1, ImportUtil.getInteger(csv, 1));
-                        setInt(ps, 2, ImportUtil.getInteger(csv, 2));
-                        setInt(ps, 3, ImportUtil.getInteger(csv, 3));
-                        ps.setString(4, ImportUtil.getString(csv, 4));
-                        ps.setString(5, ImportUtil.getString(csv, 6));
-                        ps.setString(6, ImportUtil.getString(csv, 7));
-                        setInt(ps, 7, ImportUtil.getInteger(csv, 9));
-                        ps.setTimestamp(8, ImportUtil.getTimestamp(csv, 11));
-                        ps.setTimestamp(9, ImportUtil.getTimestamp(csv, 12));
-                        ps.setTimestamp(10, ImportUtil.getTimestamp(csv, 13));
-                        ps.setString(11, ImportUtil.getString(csv, 16));
-                        ps.setTimestamp(12, ImportUtil.getTimestamp(csv, 17));
-                        return true;
-                    }
-                });
+            @Override
+            public boolean setCsvValues(PreparedStatement ps, CsvReader csv) throws SQLException, IOException {
+                setInt(ps, 1, ImportUtil.getInteger(csv, 1));
+                setInt(ps, 2, ImportUtil.getInteger(csv, 2));
+                setInt(ps, 3, ImportUtil.getInteger(csv, 3));
+                ps.setString(4, ImportUtil.getString(csv, 4));
+                ps.setString(5, ImportUtil.getString(csv, 6));
+                ps.setString(6, ImportUtil.getString(csv, 7));
+                setInt(ps, 7, ImportUtil.getInteger(csv, 9));
+                ps.setTimestamp(8, ImportUtil.getTimestamp(csv, 11));
+                ps.setTimestamp(9, ImportUtil.getTimestamp(csv, 12));
+                ps.setTimestamp(10, ImportUtil.getTimestamp(csv, 13));
+                ps.setString(11, ImportUtil.getString(csv, 16));
+                ps.setTimestamp(12, ImportUtil.getTimestamp(csv, 17));
+                return true;
+            }
+        });
     }
 
     private void writeKommentaarid(Connection con) {
         writeCsvToTable(settings.getDataFolderFile("d_kommentaar.csv"), false, "INSERT INTO imp_d_kommentaar (menetlus_id, id, kommentaar, looja, loomisekp) VALUES (?,?,?,?,?)",
                 con, new CsvBasedParamsSetter() {
 
-                    @Override
-                    public boolean setCsvValues(PreparedStatement ps, CsvReader csv) throws SQLException, IOException {
-                        setInt(ps, 1, ImportUtil.getInteger(csv, 1));
-                        setInt(ps, 2, ImportUtil.getInteger(csv, 2));
-                        ps.setString(3, ImportUtil.getString(csv, 3));
-                        ps.setString(4, ImportUtil.getString(csv, 4));
-                        ps.setTimestamp(5, ImportUtil.getTimestamp(csv, 5));
-                        return true;
-                    }
-                });
+            @Override
+            public boolean setCsvValues(PreparedStatement ps, CsvReader csv) throws SQLException, IOException {
+                setInt(ps, 1, ImportUtil.getInteger(csv, 1));
+                setInt(ps, 2, ImportUtil.getInteger(csv, 2));
+                ps.setString(3, ImportUtil.getString(csv, 3));
+                ps.setString(4, ImportUtil.getString(csv, 4));
+                ps.setTimestamp(5, ImportUtil.getTimestamp(csv, 5));
+                return true;
+            }
+        });
     }
 
     private void writeLisavaljavaartus(Connection con) {
@@ -865,64 +865,64 @@ public class WorkflowImporter {
                 "INSERT INTO imp_d_lisavaljavaartus (menetlus_id, id, menetluseliik, valjatyyp, valjanimi, combo_vaartus, " +
                         "string_vaartus, date_vaartus, int_vaartus, is_selected) VALUES (?,?,?,?,?,?,?,?,?,?)", con, new CsvBasedParamsSetter() {
 
-                    @Override
-                    public boolean setCsvValues(PreparedStatement ps, CsvReader csv) throws SQLException, IOException {
-                        setInt(ps, 1, ImportUtil.getInteger(csv, 1));
-                        setInt(ps, 2, ImportUtil.getInteger(csv, 2));
-                        ps.setString(3, ImportUtil.getString(csv, 3));
-                        ps.setString(4, ImportUtil.getString(csv, 4));
-                        ps.setString(5, ImportUtil.getString(csv, 5));
-                        ps.setString(6, ImportUtil.getString(csv, 6));
-                        ps.setString(7, ImportUtil.getString(csv, 7));
-                        ps.setDate(8, ImportUtil.getSqlDateTS(csv, 8));
-                        setInt(ps, 9, ImportUtil.getInteger(csv, 9));
-                        ps.setBoolean(10, "1".equals(ImportUtil.getString(csv, 10)));
-                        return true;
-                    }
-                });
+            @Override
+            public boolean setCsvValues(PreparedStatement ps, CsvReader csv) throws SQLException, IOException {
+                setInt(ps, 1, ImportUtil.getInteger(csv, 1));
+                setInt(ps, 2, ImportUtil.getInteger(csv, 2));
+                ps.setString(3, ImportUtil.getString(csv, 3));
+                ps.setString(4, ImportUtil.getString(csv, 4));
+                ps.setString(5, ImportUtil.getString(csv, 5));
+                ps.setString(6, ImportUtil.getString(csv, 6));
+                ps.setString(7, ImportUtil.getString(csv, 7));
+                ps.setDate(8, ImportUtil.getSqlDateTS(csv, 8));
+                setInt(ps, 9, ImportUtil.getInteger(csv, 9));
+                ps.setBoolean(10, "1".equals(ImportUtil.getString(csv, 10)));
+                return true;
+            }
+        });
     }
 
     private void writeResolutsioonid(Connection con) {
         writeCsvToTable(settings.getDataFolderFile("resolutsioonid.csv"), false, "INSERT INTO imp_resolutsioonid (id, isik_men_id, resolutsioon) VALUES (?,?,?)", con,
                 new CsvBasedParamsSetter() {
 
-                    @Override
-                    public boolean setCsvValues(PreparedStatement ps, CsvReader csv) throws SQLException, IOException {
-                        setInt(ps, 1, ImportUtil.getInteger(csv, 1));
-                        setInt(ps, 2, ImportUtil.getInteger(csv, 2));
-                        ps.setString(3, ImportUtil.getString(csv, 8));
-                        return true;
-                    }
-                });
+            @Override
+            public boolean setCsvValues(PreparedStatement ps, CsvReader csv) throws SQLException, IOException {
+                setInt(ps, 1, ImportUtil.getInteger(csv, 1));
+                setInt(ps, 2, ImportUtil.getInteger(csv, 2));
+                ps.setString(3, ImportUtil.getString(csv, 8));
+                return true;
+            }
+        });
     }
 
     private void writeKasutOstr(Connection con) {
         writeCsvToTable(settings.getDataFolderFile("d_kasut_ostr.csv"), true, "INSERT INTO imp_d_kasut_ostr (id,d_org_strukt_id,kasutaja,alguskp,loppkp) VALUES (?,?,?,?,?)", con,
                 new CsvBasedParamsSetter() {
 
-                    @Override
-                    public boolean setCsvValues(PreparedStatement ps, CsvReader csv) throws SQLException, IOException {
-                        setInt(ps, 1, ImportUtil.getInteger(csv, 1));
-                        setInt(ps, 2, ImportUtil.getInteger(csv, 2));
-                        ps.setString(3, ImportUtil.getString(csv, 3));
-                        ps.setTimestamp(4, ImportUtil.getTimestamp(csv, 4));
-                        ps.setTimestamp(5, ImportUtil.getTimestamp(csv, 5));
-                        return true;
-                    }
-                });
+            @Override
+            public boolean setCsvValues(PreparedStatement ps, CsvReader csv) throws SQLException, IOException {
+                setInt(ps, 1, ImportUtil.getInteger(csv, 1));
+                setInt(ps, 2, ImportUtil.getInteger(csv, 2));
+                ps.setString(3, ImportUtil.getString(csv, 3));
+                ps.setTimestamp(4, ImportUtil.getTimestamp(csv, 4));
+                ps.setTimestamp(5, ImportUtil.getTimestamp(csv, 5));
+                return true;
+            }
+        });
     }
 
     private void writeKasutAdsi(Connection con) {
         writeCsvToTable(settings.getDataFolderFile(DocumentImporter.CSV_NAME_KASUT_ADSI), true, "INSERT INTO imp_d_kasut_adsi (displayname, samaccountname) VALUES (?,?)", con,
                 new CsvBasedParamsSetter() {
 
-                    @Override
-                    public boolean setCsvValues(PreparedStatement ps, CsvReader csv) throws SQLException, IOException {
-                        ps.setString(1, ImportUtil.getString(csv, 1));
-                        ps.setString(2, ImportUtil.getString(csv, 6));
-                        return true;
-                    }
-                });
+            @Override
+            public boolean setCsvValues(PreparedStatement ps, CsvReader csv) throws SQLException, IOException {
+                ps.setString(1, ImportUtil.getString(csv, 1));
+                ps.setString(2, ImportUtil.getString(csv, 6));
+                return true;
+            }
+        });
     }
 
     private void writeCompletedDocs(Connection con) {
@@ -931,20 +931,20 @@ public class WorkflowImporter {
         writeCsvToTable(settings.getWorkFolderFile(CSV_NAME_COMPLETED_DOCS), false, "INSERT INTO imp_completed_docs (document_id,node_ref,originallocation) VALUES (?,?,?)", con,
                 new CsvBasedParamsSetter() {
 
-                    @Override
-                    public boolean setCsvValues(PreparedStatement ps, CsvReader csv) throws SQLException, IOException {
-                        final String docNodeRef = ImportUtil.getString(csv, 2);
-                        boolean notUsed = !usedRefs.contains(docNodeRef);
+            @Override
+            public boolean setCsvValues(PreparedStatement ps, CsvReader csv) throws SQLException, IOException {
+                final String docNodeRef = ImportUtil.getString(csv, 2);
+                boolean notUsed = !usedRefs.contains(docNodeRef);
 
-                        if (notUsed) {
-                            ps.setString(1, ImportUtil.getString(csv, 1));
-                            ps.setString(2, docNodeRef);
-                            ps.setString(3, ImportUtil.getString(csv, 3));
-                            usedRefs.add(docNodeRef);
-                        }
-                        return notUsed;
-                    }
-                });
+                if (notUsed) {
+                    ps.setString(1, ImportUtil.getString(csv, 1));
+                    ps.setString(2, docNodeRef);
+                    ps.setString(3, ImportUtil.getString(csv, 3));
+                    usedRefs.add(docNodeRef);
+                }
+                return notUsed;
+            }
+        });
     }
 
     private void writeSystemUsers(Connection con) {
@@ -977,32 +977,32 @@ public class WorkflowImporter {
                 "INSERT INTO imp_completed_procedures (procedure_id,started_date_time,finished_date_time,comment,node_ref,parent_id,original_procedure_id) VALUES (?,?,?,?,?,?,?)",
                 con, new CsvBasedParamsSetter() {
 
-                    @Override
-                    public boolean setCsvValues(PreparedStatement ps, CsvReader csv) throws SQLException, IOException {
-                        ps.setInt(1, ImportUtil.getInteger(csv, 1));
-                        ps.setDate(2, ImportUtil.getSqlDate(csv, 2));
-                        ps.setDate(3, ImportUtil.getSqlDate(csv, 3));
-                        ps.setString(4, ImportUtil.getString(csv, 4));
-                        ps.setString(5, ImportUtil.getString(csv, 5));
+            @Override
+            public boolean setCsvValues(PreparedStatement ps, CsvReader csv) throws SQLException, IOException {
+                ps.setInt(1, ImportUtil.getInteger(csv, 1));
+                ps.setDate(2, ImportUtil.getSqlDate(csv, 2));
+                ps.setDate(3, ImportUtil.getSqlDate(csv, 3));
+                ps.setString(4, ImportUtil.getString(csv, 4));
+                ps.setString(5, ImportUtil.getString(csv, 5));
 
-                        Integer col6 = ImportUtil.getInteger(csv, 6);
-                        if (col6 == null) {
-                            ps.setNull(6, Types.INTEGER);
-                        } else {
-                            ps.setInt(6, col6);
-                        }
+                Integer col6 = ImportUtil.getInteger(csv, 6);
+                if (col6 == null) {
+                    ps.setNull(6, Types.INTEGER);
+                } else {
+                    ps.setInt(6, col6);
+                }
 
-                        Integer col7 = ImportUtil.getInteger(csv, 7);
-                        if (col7 == null) {
-                            ps.setNull(7, Types.INTEGER);
-                        } else {
-                            ps.setInt(7, col7);
-                        }
+                Integer col7 = ImportUtil.getInteger(csv, 7);
+                if (col7 == null) {
+                    ps.setNull(7, Types.INTEGER);
+                } else {
+                    ps.setInt(7, col7);
+                }
 
-                        return true;
-                    }
+                return true;
+            }
 
-                });
+        });
     }
 
     private void writeCompletedLog(Connection con) {

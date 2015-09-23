@@ -470,9 +470,10 @@ function addSearchSuggest(clientId, containerClientId, pickerCallback, pickerCal
                }
                ajaxSuccess(responseText, clientId, containerClientId);
                setScreenProtected(false);
+               handleEnterKeySkip = false;
             },
             error: ajaxError,
-            dataType: 'text'
+            dataType: 'html'
          });
       });
       jQInput.focus(function() {
@@ -543,8 +544,35 @@ function getOffice13Link(url) {
 
 function webdavOpen(url) {
    var showDoc = true;
+   var openDocumentCallback = function(url, readOnly, refresh) {
+      if (readOnly) {
+         webdavOpenReadOnly(url);
+      } else {
+         window.open(url, '_blank');
+         if (!refresh) {
+            return;
+         }
+
+         var selector = "a.webdav-open.icon-link[href='"+url+"']";
+         var link = $jQ(selector);
+         var tableId = link.closest("table").attr("id");
+         if (tableId) {
+            var linkId = link.attr("id");
+            // Request new HTML for the surrounding table to show unlock action
+            var ajaxUri = getContextPath() + "/ajax/invoke/AjaxBean.submit";
+            ajaxSubmit(linkId, tableId, [], ajaxUri, {"viewName": "/jsp/dialog/container.jsp", "componentClientId": linkId, "containerClientId": tableId});
+         }
+      }
+   };
+
+   var openOfficeUrl = url.substring(0, "vnd.sun.star.webdav://".length) == "vnd.sun.star.webdav://";
+   if (openOfficeUrl) {
+      showDoc = false;
+      openDocumentCallback(url, false, false); // Open in a new window to maintain compatibility with other configurations
+   }
+
    // Try to open using MSOffice and WebDAV capabilities
-   if (window.ActiveXObject !== undefined) {
+   if (showDoc && window.ActiveXObject !== undefined) {
       try {
          // If we are able to instantiate this component, we have Office 2013 installed
          var isOffice2013Installed = new ActiveXObject("SharePoint.OpenDocuments.5");
@@ -561,45 +589,15 @@ function webdavOpen(url) {
          }
       }
    }
-   if (showDoc == true) { // If we weren't able to open with ActiveX, check for OpenOffice WebDAV protocol and try to lock/open manually
-      var openDocumentCallback = function(url, readOnly, refresh) {
-         if (readOnly) {
-            webdavOpenReadOnly(url, false);
-         } else {
-            window.open(url, '_blank');
-            if (!refresh) {
-               return;
-            }
 
-            var selector = "a.webdav-open.icon-link[href='"+url+"']";
-            var link = $jQ(selector);
-            var tableId = link.closest("table").attr("id");
-            if (tableId) {
-               var linkId = link.attr("id");
-               // Request new HTML for the surrounding table to show unlock action
-               var ajaxUri = getContextPath() + "/ajax/invoke/AjaxBean.submit";
-               ajaxSubmit(linkId, tableId, [], ajaxUri, {"viewName": "/jsp/dialog/container.jsp", "componentClientId": linkId, "containerClientId": tableId});
-            }
-         }
-      };
-
-      var protocol = "vnd.sun.star.webdav";
-      if (url.substring(0, protocol.length) === protocol) { // Check if we are dealing with OpenOffice webdav
-         if (!confirm("Kas soovid faili avada muutmiseks ja lukustada selle enda nimele 12 tunniks? NB! Pärast faili sulgemist vajuta Deltas nupule \"Vabasta lukk\"!")) {
-            webdavOpenReadOnly(url, false);
-            return false;
-         }
-
-         // Attempt to lock the file and open document for OO if possible
-         lockFileManually(url, openDocumentCallback);
-      } else {
-         openDocumentCallback(url, false, false); // Open in a new window to maintain compatibility with other configurations
-      }
+   if (showDoc) {
+      openDocumentCallback(url, false, true); // Open in a new window to maintain compatibility with other configurations
    }
    userMessageChecker.init();
    window.name += "checkMessages";
    return false;
 }
+
 function requestNewMessages(xml){
    if(!xml){
       return;
@@ -633,7 +631,7 @@ var userMessageChecker = {
  * Open file in read-only mode (TODO: with webdav, if file is office document)
  * @return false
  */
-function webdavOpenReadOnly(url, omitConfirmation) {
+function webdavOpenReadOnly(url) {
    var uri = getContextPath() + '/ajax/invoke/AjaxBean.getDownloadUrl?path=' + url;
 
    $jQ.ajax({
@@ -642,9 +640,7 @@ function webdavOpenReadOnly(url, omitConfirmation) {
       data: 'url=' + url, // path is already escaped, so disable jquery escaping by giving it a string directly
       mode: 'queue',
       success: function openForDownload(responseText) {
-        if (omitConfirmation || confirm(getTranslation("webdav_noPermissionsDownloadConfirm"))) {
-           window.open(responseText, '_blank');// regular file saveAs/open by downloading it to HD
-        }
+         window.open(responseText, '_blank');// regular file saveAs/open by downloading it to HD
       },
       error: ajaxError,
       datatype: 'html'
@@ -737,16 +733,29 @@ function selectGroupForModalSearch(selectId, hiddenId, filterId){
 }
 
 function groupModalFilterChange(){
-   var selector = $jQ("#" + escapeId4JQ(this.id.replace("_filter","_groupSelector")));
-   if(selector == null) {
+   var filterId = "#" + escapeId4JQ(this.id);
+   var selectorId = filterId.replace("_filter","_groupSelector");
+   if($jQ(selectorId) == null) {
       return;
    }
-   $jQ("#" + escapeId4JQ(this.id.replace("_filter","_selectedGroup"))).val("");
-   $jQ("#" + escapeId4JQ(this.id.replace("_filter","_selectedGroupText"))).remove();
-   if(this.value == "1"){
-      selector.attr('disabled','');
+   $jQ(filterId.replace("_filter","_selectedGroup")).val("");
+   $jQ(filterId.replace("_filter","_selectedGroupText")).remove();
+   var resultsId = filterId.replace("_filter","_results");
+   var userGroups = $jQ(resultsId);
+   if(userGroups == null) {
+      return;
+   }
+   if(this.value == "2") {
+      userGroups.live('change', function(){
+         if($jQ(filterId).val() == 2 && $jQ(resultsId).children("option:selected").length == 1) {
+            $jQ(selectorId).removeAttr('disabled');
+         } else {
+            $jQ(selectorId).attr('disabled','disabled');
+         }
+      });
    } else {
-      selector.attr('disabled','disabled');
+      userGroups.unbind('change');
+      $jQ(selectorId).attr('disabled','disabled');
    }
 }
 
@@ -1104,35 +1113,34 @@ function handleAjaxViewStateError(responseText) {
 // There is no concurrency in JS. One thread per page. Event handling is based on a queue.
 // http://stackoverflow.com/questions/2078235/ajax-concurrency
 
-function queueUpdateMenuItemCount(menuItemId, timeout) {
-   if ($jQ('.menuItemCount[menuitemid=' + menuItemId + ']').length == 0) {
-      return;
+function updateItemsCountIfNeeded(id, updateMethod){
+   var menuElement = $jQ('#' + escapeId4JQ(id));
+   if (!menuElement.hasClass("menuItemCountUpdated")){
+      updateItemsCount(updateMethod);
+      menuElement.addClass("menuItemCountUpdated");
    }
-   window.setTimeout(function () {
-         updateMenuItemCount(menuItemId);
-   }, timeout);
 }
 
-function updateMenuItemCount(menuItemId) {
-   var uri = getContextPath() + '/ajax/invoke/MenuItemCountBean.updateCount?menuItemId=' + menuItemId;
+function updateMenuItemsCount() {
+   updateItemsCount('MenuItemCountBean.updateMenuItemsCount');
+}
+
+function updateItemsCount(updateMethod) {
+   var uri = getContextPath() + '/ajax/invoke/' + updateMethod;
    $jQ.ajax({
       type: 'POST',
       url: uri,
       mode: 'queue',
-      success: function (responseText) {
-         if ($jQ('.menuItemCount[menuitemid=' + menuItemId + ']').length == 0) {
+      success: function (json) {
+         if(!json || json.length > 30) {
             return;
          }
-         if (responseText) { // check that response is not empty
-            // if response is empty, then
-            // * either user clicked on a link to navigate to another page and browser cancelled all in-progress AJAX requests but still fired this callback
-            // * or the request was dropped by RequestControlFilter. normally should not happen
-
-            if (responseText.length > 7) {
-               // Response is too big, something is wrong. Probably session expired and response is CAS login page
-               return;
+         $jQ.each(json, function(idx, obj) {
+            var menuItemId = obj.menuItem;
+            if($jQ('.menuItemCount[menuitemid=' + menuItemId + ']').length == 0) {
+               return true;
             }
-
+            var responseText = obj.count;
             var count = responseText == '0' ? '' : ' (' + responseText + ')';
 
             // Construct element text
@@ -1159,16 +1167,13 @@ function updateMenuItemCount(menuItemId) {
             if (count.length > 2) {
                menuItem.parent().removeClass("hiddenMenuItem");
             }
-         }
-
-         //Continuous update disabled - if you stay on the same page, the counts are updated only once.
-         //queueUpdateMenuItemCount(menuItemId, menuItemUpdateTimeout);
+         });
       },
       error: function(request, textStatus, errorThrown) {
          // Don't destroy ajax queue, let other request proceed
          ajaxErrorHidden(request, textStatus, errorThrown); // log messsage to FireBug
       },
-      dataType: 'text'
+      dataType: 'json'
    });
 }
 
@@ -1702,6 +1707,7 @@ function initWithScreenProtected() {
       var sumString;
       elem.closest("table").find(".expectedExpenseSumField").each(function () {
          sumString = $jQ(this).val();
+         sumString = sumString.replace(/ /g,'');
          sumString = sumString.replace(",", ".");
          sum = parseFloat(sumString);
          if(sum) {
@@ -2210,14 +2216,15 @@ function handleHtmlLoaded(context, setFocus, selects) {
    /**
     * Open Office documents directly from server
     */
-   $jQ('.webdav-open', context).click(function () {
+   $jQ('.webdav-open', context).click(function (event) {
+      event.preventDefault();
       // 1) this.href = 'https://dhs.example.com/dhs/webdav/xxx/yyy/zzz/abc.doc'
       // 2) $jQ(this).attr('href') = '/dhs/webdav/xxx/yyy/zzz/abc.doc'
       var path = this.href; // SharePoint ActiveXObject methods need to get full URL
       checkFileLock(path, function webdavOpenCallback(filePath, status) {
          if (status.code < 1) {
             if (status.code == 0 || confirm(getTranslation("webdav_openReadOnly").replace("#", status.data))) {
-               webdavOpenReadOnly(filePath, status.code != 0);
+               webdavOpenReadOnly(filePath);
             }
          } else if (status.code == 1) {
             webdavOpen(filePath);
@@ -2232,7 +2239,7 @@ function handleHtmlLoaded(context, setFocus, selects) {
    });
 
    $jQ('a.webdav-readOnly', context).click(function () {
-      webdavOpenReadOnly(this.href, true);
+      webdavOpenReadOnly(this.href);
       return false;
    });
 
@@ -2313,8 +2320,12 @@ function handleHtmlLoaded(context, setFocus, selects) {
             setDateFromEnum(beginDate,endDate,selector.val());
             beginDate.change(clearRangePicker);
             endDate.change(clearRangePicker);
+            beginDate.each(clearRangePicker);
             selector.change(setDateFromEnumOnChange);
          });
+
+   $jQ("[id*='BeginDate_']").each(setMultiRowMinEndDate);
+   $jQ("[id*='BeginDate_']").live("change", setMultiRowMinEndDate);
 
    if(context != null) {
       $jQ("input", context).focus(function() {
@@ -2566,21 +2577,30 @@ function clearFormHiddenParams(currFormName, newTargetVal) {
    f.target = newTargetVal ? newTargetVal : '';
 }
 function clearRangePicker(){
-   var date = jQuery(this);
-   var dateId = date.attr("id");
-   dateId = dateId.replace("_EndDate","");
-   var otherDate;
-   if(dateId==date.attr("id")){
-      otherDate = jQuery("#" + escapeId4JQ(dateId + "_EndDate"))
-   } else {
-      otherDate = jQuery("#" + escapeId4JQ(dateId))
-   }
-   date.datepicker("option","minDate",null);
-   date.datepicker("option","maxDate",null);
-   otherDate.datepicker("option","minDate",null);
-   otherDate.datepicker("option","maxDate",null);
+   var dateId = jQuery(this).attr("id");
+   var isEndDate = dateId.indexOf("_EndDate") > -1;
+   var startDateSelector = "#" + (isEndDate ? escapeId4JQ(dateId.replace("_EndDate","")) : escapeId4JQ(dateId));
+   var endDateSelector = "#" + (isEndDate ? escapeId4JQ(dateId) : escapeId4JQ(dateId + "_EndDate"));
+   var startDate = jQuery(startDateSelector);
+   var endDate = jQuery(endDateSelector);
+   
+   startDate.datepicker("option","minDate",null);
+   startDate.datepicker("option","maxDate",null);
+   endDate.datepicker("option","maxDate",null);
+   setMinDateOption(startDate, endDate);
    var selector = jQuery("#" + escapeId4JQ(dateId + "_DateRangePicker"));
    selector.val("");
+}
+function setMultiRowMinEndDate() {
+   var beginDate = $jQ(this);
+   var fieldId = beginDate.attr("id");
+   var endDateId = fieldId.replace(/BeginDate(?=[^BeginDate]*$)/, "EndDate"); // replace last occurrence
+   var endDate = $jQ("#" + escapeId4JQ(endDateId));
+   setMinDateOption(beginDate, endDate);
+}
+function setMinDateOption(beginDate, endDate) {
+   var selectedStartDate = beginDate.val() ? beginDate.val() : null;
+   endDate.datepicker("option","minDate",selectedStartDate);
 }
 function setDateFromEnumOnChange(){
    var selector = jQuery(this);

@@ -255,8 +255,12 @@
             <value>${db.txn.isolation}</value>
         </property>
     </bean>
+    
+    <bean id="dataSource" class="org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy">
+        <constructor-arg ref="eagerDataSource"/>
+    </bean>
 
-    <bean id="dataSource" class="org.alfresco.config.JndiObjectFactoryBean">
+    <bean id="eagerDataSource" class="org.alfresco.config.JndiObjectFactoryBean">
         <property name="jndiName">
             <value>java:comp/env/jdbc/dataSource</value>
         </property>
@@ -357,7 +361,7 @@
     <!-- I18N                   -->
     <!--                        -->
 
-    <bean id="resourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+    <bean id="alfrescoResourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
         <property name="resourceBundles">
             <list>
                 <value>alfresco.messages.system-messages</value>
@@ -378,9 +382,24 @@
                 <value>alfresco.messages.avm-messages</value>
                 <value>alfresco.messages.linkvalidation-messages</value>
                 <value>alfresco.messages.content-filter-languages</value>
+                <value>alfresco.messages.webclient</value>
+                <value>alfresco.extension.webclient</value>
             </list>
         </property>
     </bean>
+
+   <!-- Package by feature resource bundle definitions. -->
+   <!-- If needed, Dictionary model messages could also be listed here to avoid multiple initializations -->
+   <bean id="resourceBundles" class="org.alfresco.i18n.I18NUtil" depends-on="addDocumentResourceBundles, addressbookResourceBundleBootstrap, alfrescoResourceBundles, archivalsResourceBundle,
+   assignResponsibilityResourceBundle, associationsResourceBundleBootstrap, baseResourceBundles, caseBundleBootstrap, caseFileBundleBootstrap,
+   classificatorResourceBundleBootstrap, classificatorResourceBundles, commonPropertysheetResourceBundles, commonResourceBundles, docAdminResourceBundle,
+   docSearchResourceBundles, documentDynamicResourceBundles, documentListResourceBundles, documentLogResourceBundles, documentResourceBundles, documentTemplateResourceBundles,
+   documentTypeResourceBundle, dvkResourceBundle, eInvoiceResourceBundles, eventPlanResourceBundles, fileResourceBundle, forumResourceBundle, functionsResourceBundles,
+   helpTextResourceBundle, imapResourceBundles, lockBundleBootstrap, logResourceBundles, menuTranslationResourceBundles, notificationSystemResourceBundles,
+   orgStructureResourceBundle, parametersResourceBundleBootstrap, privilegeResourceBundles, registerResourceBundle, registerResourceBundles, reportResourceBundle,
+   ruleResourceBundles, scannedResourceBundles, seriesResourceBundles, signatureResourceBundles, substituteResourceBundles, thesaurusResourceBundles, userResourceBundles,
+   userSystemResourceBundles, versionsResourceBundles, volumeResourceBundle, volumeSearchResourceBundles, webClientConfigAdminInterpreterHelp, webdavResourceBundles,
+   workflowResourceBundles, workflowSearchResourceBundles" />
     
     <!-- Repo-based Message Service (based on Core I18NUtil) -->
     
@@ -788,6 +807,18 @@
     <!--  Lock Service           -->
     <!--                               -->
 
+   <bean id="lockStoreFactory" class="org.alfresco.repo.lock.mem.DefaultLockStoreFactory"/>
+
+   <bean id="lockStore" factory-bean="lockStoreFactory" factory-method="createLockStore"/>
+
+   <bean id="lockableAspectInterceptor" class="org.alfresco.repo.lock.mem.LockableAspectInterceptor" init-method="init">
+      <!--<property name="nodeService" ref="dbNodeService"/>-->
+      <property name="nodeService" ref="mtAwareNodeService"/>
+      <property name="lockService" ref="lockService"/>
+      <property name="lockStore" ref="lockStore"/>
+      <property name="authenticationService" ref="authenticationService"/>
+   </bean>
+
     <bean id="lockService" class="org.alfresco.repo.lock.LockServiceImpl" init-method="init">
         <property name="nodeService">
             <ref bean="nodeService" />
@@ -807,6 +838,11 @@
         <property name="searchService">
             <ref bean="admSearchService"></ref>
         </property>
+       <property name="lockStore" ref="lockStore" />
+       <property name="behaviourFilter" ref="policyBehaviourFilter"/>
+       <property name="authorityService" ref="AuthorityService" />
+       <property name="lockableAspectInterceptor" ref="lockableAspectInterceptor" />
+       <property name="nodeIndexer" ref="nodeIndexer"/>
     </bean>
 
     <!--                               -->

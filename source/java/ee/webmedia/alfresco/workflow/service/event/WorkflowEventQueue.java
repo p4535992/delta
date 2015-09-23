@@ -3,17 +3,22 @@ package ee.webmedia.alfresco.workflow.service.event;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 
+import ee.webmedia.alfresco.workflow.service.BaseWorkflowObject;
+
 public class WorkflowEventQueue {
 
-    private final List<WorkflowEvent> events = new ArrayList<WorkflowEvent>();
+    private final List<WorkflowEvent> events = new ArrayList<>();
     private final Date now = new Date();
 
-    private final Map<WorkflowQueueParameter, Object> parameters = new HashMap<WorkflowQueueParameter, Object>();
+    private final Map<WorkflowQueueParameter, Object> parameters = new HashMap<>();
+    private final Set<NodeRef> objectsWithEvent = new HashSet<>();
 
     public enum WorkflowQueueParameter {
         /** Boolean */
@@ -44,6 +49,36 @@ public class WorkflowEventQueue {
 
     public List<WorkflowEvent> getEvents() {
         return events;
+    }
+
+    private boolean isAlreadyAdded(WorkflowEvent event) {
+        NodeRef objectRef = event.getObject().getNodeRef();
+        if (objectsWithEvent.contains(objectRef)) { // check for duplicate
+            BaseWorkflowObject object = event.getObject();
+            WorkflowEventType type = event.getType();
+            for (WorkflowEvent existingEvent : events) {
+                if (existingEvent.getType() == type && existingEvent.getObject().equals(object)) {
+                    return true;
+                }
+            }
+        } else {
+            objectsWithEvent.add(objectRef);
+        }
+        return false;
+    }
+
+    /** @return true if event was added to events list, false otherwise */
+    public boolean add(WorkflowEvent event) {
+        if (isAlreadyAdded(event)) {
+            return false;
+        }
+        events.add(event);
+        return true;
+    }
+
+    public void clear() {
+        events.clear();
+        objectsWithEvent.clear();
     }
 
     public Date getNow() {

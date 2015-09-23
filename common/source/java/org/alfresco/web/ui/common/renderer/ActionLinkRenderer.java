@@ -54,6 +54,7 @@ public class ActionLinkRenderer extends BaseRenderer
    // ------------------------------------------------------------------------------
    // Renderer implementation 
    
+    public static final String AJAX_NOT_ALLOWED = "ajaxNotAllowed";
     public static final String AJAX_ENABLED = "ajaxEnabled";
     public static final String AJAX_PARENT_LEVEL = "ajaxParentLevel";
 
@@ -190,16 +191,16 @@ public class ActionLinkRenderer extends BaseRenderer
       throws IOException
    {
       final Map attrs = link.getAttributes();
-      
+      StringBuffer sb = new StringBuffer();
       // generate the href link - output later in the process depending on various rendering options
       if (link.getHref() == null)
       {
-         out.write("<a href='#' onclick=\"");
+         sb.append("<a href='#' onclick=\"");
          
          // if we have an overriden onclick add that
          if (link.getOnclick() != null)
          {
-            out.write(link.getOnclick());
+             sb.append(link.getOnclick());
          }
          else
          {
@@ -217,110 +218,112 @@ public class ActionLinkRenderer extends BaseRenderer
                                                        getParameterComponents(link));
                     generateFormSubmit = escapeQuotes(generateFormSubmit);
                 }
-            out.write(generateFormSubmit);
+                sb.append(generateFormSubmit);
          }
          
-         out.write('"');
+         sb.append('"');
       }
       else
       {
          String href = link.getHref();
          
          // prefix the web context path if required
-         out.write("<a href=\"");
+         sb.append("<a href=\"");
          if (href.startsWith("/"))
          {
-            out.write(context.getExternalContext().getRequestContextPath());
+             sb.append(context.getExternalContext().getRequestContextPath());
          }
-         out.write(href);
+         sb.append(href);
          
          // append the href params if any are present
-         renderHrefParams(link, out, href);
+         renderHrefParams(link, sb, href);
          
-         out.write('"');
+         sb.append('"');
          
          // output href 'target' attribute if supplied
          if (link.getTarget() != null)
          {
-            out.write(" target='");
-            out.write(link.getTarget());
-            out.write("'");
+             sb.append(" target='");
+             sb.append(link.getTarget());
+             sb.append("'");
          }
       }
       
       // common link attributes
-      out.write(" id='");
+      sb.append(" id='");
       String attrId = (String) attrs.get("id");
       if (attrId != null && !attrId.startsWith(UIViewRoot.UNIQUE_ID_PREFIX))
       {
-         out.write(attrId);
+          sb.append(attrId);
       } 
       else 
       {
-         out.write(link.getClientId(context));
+          sb.append(link.getClientId(context));
       }
-      out.write("'");
+      sb.append("'");
       boolean appliedStyle = false;
 
       if (link.getImage() != null)
       {
-         out.write(" style='background-image: url(\"");
-         out.write(context.getExternalContext().getRequestContextPath() + link.getImage());
-         out.write("\");");
+          sb.append(" style='background-image: url(\"");
+          sb.append(context.getExternalContext().getRequestContextPath() + link.getImage());
+          sb.append("\");");
          appliedStyle = true;
       }
       if (attrs.get("style") != null)
       {
          if (!appliedStyle)
          {
-            out.write(" style='");
+             sb.append(" style='");
          }
-         out.write((String)attrs.get("style"));
+         sb.append((String)attrs.get("style"));
          appliedStyle = true;
       }
-      if (attrs.get("padding") != null && !attrs.get("padding").toString().equals("0"))
+      Object attrPadding = attrs.get("padding");
+      if (attrPadding!= null && !attrPadding.toString().equals("0"))
       {
          if (!appliedStyle)
          {
-            out.write(" style='");
+             sb.append(" style='");
          }
-         out.write(" padding: " + attrs.get("padding").toString() + "px;");
+         sb.append(" padding: " + attrPadding.toString() + "px;");
          appliedStyle = true;
       }
       
       if (appliedStyle)
       {
-         out.write("'");
+          sb.append("'");
       }
       if (attrs.get("styleClass") != null)
       {
-         out.write(" class='");
-         out.write((String)attrs.get("styleClass"));
+          sb.append(" class='");
+          sb.append((String)attrs.get("styleClass"));
          if (link.getImage() != null) {
-            out.write(" icon-link");
+             sb.append(" icon-link");
          }
-         out.write("'");
+         sb.append("'");
          appliedStyle = true;
       }
       if (link.getImage() != null && attrs.get("styleClass") == null) {
-          out.write(" class='icon-link'");
+          sb.append(" class='icon-link'");
       }
       if (appliedStyle == false && link.getShowLink() == true && link.getImage() != null && link.getPadding() == 0)
       {
          // apply default alignment style if we have an image and no outer table padding
-         out.write(" style='padding-left:2px;vertical-align:0%'");
+          sb.append(" style='padding-left:2px;vertical-align:0%'");
       }
       if (link.getTooltip() != null)
       {
-         out.write(" title=\"");
-         out.write(Utils.encode(link.getTooltip()));
-         out.write('"');
+          sb.append(" title=\"");
+          sb.append(Utils.encode(link.getTooltip()));
+          sb.append('"');
       } else {
-          out.write(" title=\"");
-          out.write(Utils.encode(link.getValue().toString()));
-          out.write('"');
+          sb.append(" title=\"");
+          sb.append(Utils.encode(link.getValue().toString()));
+          sb.append('"');
       }
-      out.write('>');
+      sb.append('>');
+      out.write(sb.toString());
    }
 
    /**
@@ -328,7 +331,7 @@ public class ActionLinkRenderer extends BaseRenderer
     * @param linkBuf
     * @param href
     */
-   private void renderHrefParams(UIActionLink link, Writer out, String href)
+   private void renderHrefParams(UIActionLink link, StringBuffer sb, String href)
       throws IOException
    {
       // append arguments if specified
@@ -341,18 +344,18 @@ public class ActionLinkRenderer extends BaseRenderer
             String paramValue = actionParams.get(name);
             if (first)
             {
-               out.write('?');
+               sb.append('?');
                first = false;
             }
             else
             {
-               out.write('&');
+               sb.append('&');
             }
             try
             {
-               out.write(name);
-               out.write("=");
-               out.write(URLEncoder.encode(paramValue, "UTF-8"));
+               sb.append(name);
+               sb.append("=");
+               sb.append(URLEncoder.encode(paramValue, "UTF-8"));
             }
             catch (UnsupportedEncodingException err)
             {
@@ -371,35 +374,36 @@ public class ActionLinkRenderer extends BaseRenderer
    private void renderMenuAction(FacesContext context, Writer out, UIActionLink link, int padding)
       throws IOException
    {
-      out.write("<li>");
+      StringBuffer sb = new StringBuffer();
+      sb.append("<li>");
       
       // render image cell first for a menu
       if (link.getImage() != null)
       {
-         out.write(Utils.buildImageTag(context, link.getImage(), (String)link.getValue()));
+          sb.append(Utils.buildImageTag(context, link.getImage(), (String)link.getValue()));
       }
       
-      out.write("<span");
+      sb.append("<span");
       if (padding != 0)
       {
-         out.write(" style=\"padding:");
-         out.write(Integer.toString(padding));
-         out.write("px\">");
+          sb.append(" style=\"padding:");
+          sb.append(Integer.toString(padding));
+          sb.append("px\">");
       }
       else
       {
-         out.write(">");
+          sb.append(">");
       }
       
       // render text link cell for the menu
       if (link.getHref() == null)
       {
-         out.write("<a href='#' onclick=\"");
+          sb.append("<a href='#' onclick=\"");
          
          // if we have an overriden onclick add that
          if (link.getOnclick() != null)
          {
-            out.write(link.getOnclick());
+             sb.append(link.getOnclick());
          }
          else
          {
@@ -422,10 +426,10 @@ public class ActionLinkRenderer extends BaseRenderer
             
             onclickStr = escapeQuotes(onclickStr);
                 }
-            out.write(onclickStr);
+                sb.append(onclickStr);
          }
          
-         out.write('"');
+         sb.append('"');
       }
       else
       {
@@ -434,41 +438,42 @@ public class ActionLinkRenderer extends BaseRenderer
          {
             href = context.getExternalContext().getRequestContextPath() + href;
          }
-         out.write("<a href=\"");
-         out.write(href);
+         sb.append("<a href=\"");
+         sb.append(href);
          
          // append the href params if any are present
-         renderHrefParams(link, out, href);
+         renderHrefParams(link, sb, href);
          
-         out.write('"');
+         sb.append('"');
          
          // output href 'target' attribute if supplied
          if (link.getTarget() != null)
          {
-            out.write(" target=\"");
-            out.write(link.getTarget());
-            out.write("\"");
+             sb.append(" target=\"");
+             sb.append(link.getTarget());
+             sb.append("\"");
          }
       }
       
       Map attrs = link.getAttributes();
       if (attrs.get("style") != null)
       {
-         out.write(" style=\"");
-         out.write((String)attrs.get("style"));
-         out.write('"');
+          sb.append(" style=\"");
+          sb.append((String)attrs.get("style"));
+          sb.append('"');
       }
       if (attrs.get("styleClass") != null)
       {
-         out.write(" class=\"");
-         out.write((String)attrs.get("styleClass"));
-         out.write('"');
+          sb.append(" class=\"");
+          sb.append((String)attrs.get("styleClass"));
+          sb.append('"');
       }
-      out.write('>');
-      out.write(Utils.encode(link.getValue().toString()));
-      out.write("</a>");
+      sb.append('>');
+      sb.append(Utils.encode(link.getValue().toString()));
+      sb.append("</a>");
       
-      out.write("</span></li>");
+      sb.append("</span></li>");
+      out.write(sb.toString());
    }
    
    

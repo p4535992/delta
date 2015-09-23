@@ -7,17 +7,22 @@ import javax.faces.component.UIInput;
 import javax.faces.context.FacesContext;
 import javax.faces.model.SelectItem;
 
+import org.alfresco.repo.transaction.RetryingTransactionHelper;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.classificator.enums.TemplateReportType;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.report.job.ExecuteReportsJob;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.workflow.search.model.TaskReportModel;
 import ee.webmedia.alfresco.workflow.search.service.TaskSearchFilterService;
 
 public class TaskReportDialog extends TaskSearchDialog {
+
+    public static final String BEAN_NAME = "TaskReportDialog";
 
     private static final long serialVersionUID = 1L;
 
@@ -42,14 +47,31 @@ public class TaskReportDialog extends TaskSearchDialog {
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         if (isValidFilter()) {
             try {
-                BeanHelper.getReportService().createReportResult(filter, TemplateReportType.TASKS_REPORT, TaskReportModel.Assocs.FILTER);
+                ExecuteReportsJob.REORDER_LOCK.lock();
+                RetryingTransactionHelper helper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
+                RetryingTransactionCallback<Void> cb = new RetryingTransactionCallback<Void>() {
+                    @Override
+                    public Void execute() throws Throwable {
+                        BeanHelper.getReportService().createReportResult(filter, TemplateReportType.TASKS_REPORT, TaskReportModel.Assocs.FILTER);
+                        return null;
+                    }
+                };
+                helper.doInTransaction(cb, false, true, true);
                 MessageUtil.addInfoMessage("report_created_success");
             } catch (UnableToPerformException e) {
                 MessageUtil.addErrorMessage(e.getMessageKey());
+            } finally {
+                ExecuteReportsJob.REORDER_LOCK.unlock();
             }
         }
         isFinished = false;
         return null;
+    }
+
+    @Override
+    public void clean() {
+        reportTemplates = null;
+        super.clean();
     }
 
     private boolean isValidFilter() {

@@ -29,26 +29,25 @@ import org.apache.commons.lang.time.FastDateFormat;
 import com.csvreader.CsvWriter;
 
 import ee.webmedia.alfresco.archivals.model.ArchivalsStoreVO;
-import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.cases.service.CaseService;
+import ee.webmedia.alfresco.cases.service.UnmodifiableCase;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.classificator.enums.TemplateReportType;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
-import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
-import ee.webmedia.alfresco.functions.model.Function;
+import ee.webmedia.alfresco.functions.model.UnmodifiableFunction;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
-import ee.webmedia.alfresco.register.service.RegisterService;
 import ee.webmedia.alfresco.report.model.ReportModel;
-import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
+import ee.webmedia.alfresco.series.model.UnmodifiableSeries;
 import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.volume.model.UnmodifiableVolume;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.volume.service.VolumeService;
@@ -64,14 +63,12 @@ public class DocumentListServiceImpl implements DocumentListService {
     private SeriesService seriesService;
     private VolumeService volumeService;
     private CaseService caseService;
-    private DocumentDynamicService documentDynamicService;
     private DocumentService documentService;
     private NodeService nodeService;
     private GeneralService generalService;
-    private RegisterService registerService;
 
     private final FastDateFormat fastDateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
-    
+
     private ContentWriter generateCsvFile(final NodeRef parentNodeRef, ContentWriter writer) {
 
         OutputStream out = null;
@@ -117,51 +114,57 @@ public class DocumentListServiceImpl implements DocumentListService {
         return nodeService.getProperties(fileRef);
     }
 
-    private void printFunctions(CsvWriter csvWriter, List<Function> functions) {
-        for (Function function : functions) {
-            List<Series> series = seriesService.getAllSeriesByFunction(function.getNode().getNodeRef());
-            printLine(csvWriter, function.getType(), function.getMark(), function.getTitle(), getContainingDocsCount(series), "", "",
+    private void printFunctions(CsvWriter csvWriter, List<UnmodifiableFunction> functions) {
+        Map<QName, Pair<Long, QName>> propertyTypes = new HashMap<QName, Pair<Long, QName>>();
+        for (UnmodifiableFunction function : functions) {
+            List<UnmodifiableSeries> series = seriesService.getAllSeriesByFunction(function.getNodeRef());
+            Map<NodeRef, Integer> seriesDocCount = new HashMap<NodeRef, Integer>();
+            printLine(csvWriter, function.getType(), function.getMark(), function.getTitle(), getContainingDocsCount(series, seriesDocCount), "", "",
                     function.getStatus());
-            printSeries(csvWriter, series);
+            printSeries(csvWriter, series, seriesDocCount, propertyTypes);
         }
     }
 
-    private void printSeries(CsvWriter csvWriter, List<Series> series) {
-        for (Series serie : series) {
-            printLine(csvWriter, serie.getType(), serie.getSeriesIdentifier(), serie.getTitle(), serie.getContainingDocsCount(), "",
-                    (String) nodeService.getProperty(serie.getNode().getNodeRef(), SeriesModel.Props.ACCESS_RESTRICTION),
+    private void printSeries(CsvWriter csvWriter, List<UnmodifiableSeries> series, Map<NodeRef, Integer> seriesDocCounts, Map<QName, Pair<Long, QName>> propertyTypes) {
+        for (UnmodifiableSeries serie : series) {
+            NodeRef seriesRef = serie.getSeriesRef();
+            printLine(csvWriter, serie.getType(), serie.getSeriesIdentifier(), serie.getTitle(), seriesDocCounts.get(seriesRef), "",
+                    (String) nodeService.getProperty(seriesRef, SeriesModel.Props.ACCESS_RESTRICTION, propertyTypes),
                     serie.getStatus());
-            printVolumes(csvWriter, serie.getNode().getNodeRef());
+            printVolumes(csvWriter, seriesRef);
         }
     }
 
-    private long getContainingDocsCount(List<Series> series) {
+    private long getContainingDocsCount(List<UnmodifiableSeries> series, Map<NodeRef, Integer> seriesDocCounts) {
         long count = 0;
-        for (Series serie : series) {
-            count += serie.getContainingDocsCount();
+        for (UnmodifiableSeries serie : series) {
+            int seriesDocCount = serie.getContainingDocsCount();
+            count += seriesDocCount;
+            seriesDocCounts.put(serie.getSeriesRef(), seriesDocCount);
         }
         return count;
     }
 
     private void printVolumes(CsvWriter csvWriter, NodeRef nodeRef) {
-        List<Volume> volumes = volumeService.getAllVolumesBySeries(nodeRef);
+        List<UnmodifiableVolume> volumes = volumeService.getAllVolumesBySeries(nodeRef);
         String label = MessageUtil.getMessage("volume");
-        for (Volume volume : volumes) {
+        for (UnmodifiableVolume volume : volumes) {
+            NodeRef volumeRef = volume.getNodeRef();
             Date dispositionDate = volume.getRetainUntilDate();
             printLine(csvWriter, label, volume.getVolumeMark(), volume.getTitle(),
                     volume.getContainingDocsCount(), (dispositionDate == null ? "" : fastDateFormat.format(dispositionDate)), "", volume.getStatus());
 
             // If volume contains cases and documents, then documents must be printed first
             if (volume.isContainsCases()) {
-                printCases(csvWriter, volume.getNode().getNodeRef());
+                printCases(csvWriter, volumeRef);
             }
         }
     }
 
     private void printCases(CsvWriter csvWriter, NodeRef nodeRef) {
-        List<Case> ccases = caseService.getAllCasesByVolume(nodeRef);
+        List<UnmodifiableCase> ccases = caseService.getAllCasesByVolume(nodeRef);
         String label = MessageUtil.getMessage("case");
-        for (Case ccase : ccases) {
+        for (UnmodifiableCase ccase : ccases) {
             printLine(csvWriter, label, "", ccase.getTitle(), ccase.getContainingDocsCount(),
                     "", "", "");
         }
@@ -171,8 +174,8 @@ public class DocumentListServiceImpl implements DocumentListService {
         try {
             csvWriter.writeRecord(new String[] {
                     type, mark == null ? "" : mark, title,
-                    (documentNumber < 0 ? "" : documentNumber).toString(),
-                    retentionDate, accessRestriction, status
+                            (documentNumber < 0 ? "" : documentNumber).toString(),
+                            retentionDate, accessRestriction, status
             });
         } catch (IOException e) {
             final String msg = "Failed to export consolidated docList row to CSV-stream";
@@ -184,24 +187,26 @@ public class DocumentListServiceImpl implements DocumentListService {
     public long createNewYearBasedVolumes() {
         log.info("creating copy of year-based volumes that are opened.");
         long counter = 0;
-        for (Function function : functionsService.getAllFunctions()) {
-            for (Series series : seriesService.getAllSeriesByFunction(function.getNodeRef())) {
-                for (Volume volume : volumeService.getAllValidVolumesBySeries(series.getNode().getNodeRef())) {
-                    if (DocListUnitStatus.OPEN.equals(volume.getStatus()) && VolumeType.ANNUAL_FILE.equals(volume.getVolumeTypeEnum())) {
+        Map<Long, QName> propertyTypes = new HashMap<Long, QName>();
+        for (UnmodifiableFunction function : functionsService.getAllFunctions()) {
+            for (UnmodifiableSeries series : seriesService.getAllSeriesByFunction(function.getNodeRef())) {
+                for (UnmodifiableVolume unmodifiableVolume : volumeService.getAllValidVolumesBySeries(series.getSeriesRef())) {
+                    if (DocListUnitStatus.OPEN.equals(unmodifiableVolume.getStatus()) && VolumeType.ANNUAL_FILE.name().equals(unmodifiableVolume.getVolumeType())) {
+                        Volume volume = volumeService.getVolumeByNodeRef(unmodifiableVolume.getNodeRef(), propertyTypes);
                         volumeService.copyVolume(volume);
                         counter++;
                         log.info("created copy of " + counter + " volume: [" + function.getMark() + "]" + function.getTitle()
-                                + "/[" + series.getSeriesIdentifier() + "]" + series.getTitle() + "/[" + volume.getVolumeMark() + "]" + volume.getTitle());
+                                + "/[" + series.getSeriesIdentifier() + "]" + series.getTitle() + "/[" + unmodifiableVolume.getVolumeMark() + "]" + unmodifiableVolume.getTitle());
                     } else {
                         if (log.isDebugEnabled()) {
                             log.debug("skipping volume: [" + function.getMark() + "]" + function.getTitle()
-                                    + "/[" + series.getSeriesIdentifier() + "]" + series.getTitle() + "/[" + volume.getVolumeMark() + "]" + volume.getTitle());
+                                    + "/[" + series.getSeriesIdentifier() + "]" + series.getTitle() + "/[" + unmodifiableVolume.getVolumeMark() + "]"
+                                    + unmodifiableVolume.getTitle());
                         }
                     }
                 }
             }
         }
-        registerService.resetAllAutoResetCounters();
         log.info("created copy of " + counter + " year-based volumes that were opened.");
         return counter;
     }
@@ -210,10 +215,11 @@ public class DocumentListServiceImpl implements DocumentListService {
     public long closeAllOpenExpiredVolumes() {
         log.info("Closing all expired volumes that are opened");
         long counter = 0;
-        for (Function function : functionsService.getAllFunctions()) {
-            for (Series series : seriesService.getAllSeriesByFunction(function.getNodeRef())) {
-                for (Volume volume : volumeService.getAllOpenExpiredVolumesBySeries(series.getNode().getNodeRef())) {
-                    volumeService.closeVolume(volume.getNodeRef());
+        Map<Long, QName> propertyTypes = new HashMap<Long, QName>();
+        for (UnmodifiableFunction function : functionsService.getAllFunctions()) {
+            for (UnmodifiableSeries series : seriesService.getAllSeriesByFunction(function.getNodeRef())) {
+                for (UnmodifiableVolume volume : volumeService.getAllOpenExpiredVolumesBySeries(series.getSeriesRef())) {
+                    volumeService.closeVolume(volume.getNodeRef(), propertyTypes);
                     counter++;
                     log.info("Closed volume: [" + function.getMark() + "]" + function.getTitle() + "/[" + series.getSeriesIdentifier() + "]"
                             + series.getTitle() + "/[" + volume.getVolumeMark() + "]" + volume.getTitle() + ", validTo=" + volume.getValidTo());
@@ -238,32 +244,32 @@ public class DocumentListServiceImpl implements DocumentListService {
     public long updateDocCounters(NodeRef functionsRoot) {
         long docCountInRepo = 0;
         log.info("Starting to update documents count in documentList");
-        for (Function function : functionsService.getFunctions(functionsRoot)) {
+        for (ChildAssociationRef functionAssocRef : functionsService.getFunctionAssocs(functionsRoot)) {
             long docCountInFunction = 0;
-            final NodeRef functionRef = function.getNodeRef();
+            final NodeRef functionRef = functionAssocRef.getChildRef();
             for (NodeRef seriesRef : seriesService.getAllSeriesRefsByFunction(functionRef)) {
                 long docCountInSeries = 0;
-                for (Volume volume : volumeService.getAllVolumesBySeries(seriesRef)) {
+                for (UnmodifiableVolume volume : volumeService.getAllVolumesBySeries(seriesRef)) {
                     long docCountInVolume = 0;
-                    final NodeRef volumeRef = volume.getNode().getNodeRef();
+                    final NodeRef volumeRef = volume.getNodeRef();
                     if (volume.isContainsCases()) {
-                        for (Case aCase : caseService.getAllCasesByVolume(volumeRef)) {
-                            final NodeRef caseRef = aCase.getNode().getNodeRef();
-                            final List<NodeRef> allDocumentsByCase = documentService.getAllDocumentRefsByParentRefWithoutRestrictedAccess(caseRef);
-                            final int documentsCountByCase = allDocumentsByCase.size();
+                        for (NodeRef caseRef : caseService.getCaseRefsByVolume(volumeRef)) {
+                            final int documentsCountByCase = documentService.getDocumentsCountByVolumeOrCase(caseRef);
                             nodeService.setProperty(caseRef, CaseModel.Props.CONTAINING_DOCS_COUNT, documentsCountByCase);
+                            caseService.removeFromCache(caseRef);
                             docCountInVolume += documentsCountByCase;
                         }
                     }
                     // Also include documents
-                    final List<NodeRef> allDocumentsByVolume = documentService.getAllDocumentRefsByParentRefWithoutRestrictedAccess(volumeRef);
-                    final int documentsCountByVolume = allDocumentsByVolume.size();
+                    final int documentsCountByVolume = documentService.getDocumentsCountByVolumeOrCase(volumeRef);
                     docCountInVolume += documentsCountByVolume;
 
                     nodeService.setProperty(volumeRef, VolumeModel.Props.CONTAINING_DOCS_COUNT, docCountInVolume);
+                    volumeService.removeFromCache(volumeRef);
                     docCountInSeries += docCountInVolume;
                 }
                 nodeService.setProperty(seriesRef, SeriesModel.Props.CONTAINING_DOCS_COUNT, docCountInSeries);
+                seriesService.removeFromCache(seriesRef);
                 docCountInFunction += docCountInSeries;
             }
             docCountInRepo += docCountInFunction;
@@ -282,8 +288,7 @@ public class DocumentListServiceImpl implements DocumentListService {
         for (ChildAssociationRef function : functionsService.getFunctionAssocs(functionsRoot)) {
             final NodeRef functionRef = function.getChildRef();
             for (NodeRef seriesRef : seriesService.getAllSeriesRefsByFunction(functionRef)) {
-                for (ChildAssociationRef volume : volumeService.getAllVolumeRefsBySeries(seriesRef)) {
-                    final NodeRef volumeRef = volume.getChildRef();
+                for (NodeRef volumeRef : volumeService.getAllVolumeRefsBySeries(seriesRef)) {
                     Boolean containsCases = (Boolean) nodeService.getProperty(volumeRef, VolumeModel.Props.CONTAINS_CASES);
                     if (containsCases != null && containsCases) {
                         for (NodeRef caseRef : caseService.getCaseRefsByVolume(volumeRef)) {
@@ -370,10 +375,6 @@ public class DocumentListServiceImpl implements DocumentListService {
         this.caseService = caseService;
     }
 
-    public void setDocumentDynamicService(DocumentDynamicService documentDynamicService) {
-        this.documentDynamicService = documentDynamicService;
-    }
-
     public void setDocumentService(DocumentService documentService) {
         this.documentService = documentService;
     }
@@ -388,10 +389,6 @@ public class DocumentListServiceImpl implements DocumentListService {
 
     public void setGeneralService(GeneralService generalService) {
         this.generalService = generalService;
-    }
-
-    public void setRegisterService(RegisterService registerService) {
-        this.registerService = registerService;
     }
 
     // END GETTERS_SETTERS

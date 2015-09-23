@@ -102,15 +102,32 @@ $jQ(document).ready(function() {
       }
    }
 
-   // hack that manually triggers onmouseover/mouseout events for disabled checkboxes(based on mouse movement in parent element)
-   var unShownTooltips = $jQ("input[type='checkbox'].tooltip").filter(":disabled").parent();
-   unShownTooltips.mouseover(function(e) {
-      e.stopPropagation();
-      $jQ(this).children().trigger(e);
-   });
-   unShownTooltips.mouseout(function(e) {
-      e.stopPropagation();
-      $jQ(this).children().trigger(e);
+   // hack that manually triggers onmouseover/mouseout events for disabled checkboxes
+   var unShownTooltips = $jQ("input[type='checkbox'].tooltip").filter(":disabled");
+   $jQ.each(unShownTooltips, function(i, cb){
+        var checkBox = $jQ(cb);
+        var parent = checkBox.parent();
+        var box = $jQ('<input>');
+        box.addClass('dummy');
+        box.attr('type', 'checkbox');
+        
+        box.css('opacity', '0');
+        box.css('position', 'relative');
+        checkBox.css('position', 'relative');
+        
+        var r = parseInt(checkBox.css('margin-right'), 10);
+        var leftVal = checkBox.width()/2 + r/2;
+        
+        box.css('left', '-'+leftVal+'px');
+        checkBox.css('left', leftVal+'px');
+        
+        box.appendTo(parent);
+        box.mouseover(function(e) {
+           box.siblings("input").trigger(e);
+        });
+        box.mouseout(function(e) {
+           box.siblings("input").trigger(e);
+        });
    });
 
    // confirm removing
@@ -137,10 +154,10 @@ $jQ(document).ready(function() {
       var groupHeaderRow = groupRows.eq(0);
       var groupUserRows = groupRows.slice(1);
       if (firstUpdate) {
-         var groupBodyCBs = groupUserRows.find("td input[type='checkbox']");
+         var groupBodyCBs = groupUserRows.find("td input[type='checkbox']:not(.dummy)");
          bindOnChangeUpdateHeaderCheckboxState(groupBodyCBs);
       }
-      var groupHeaderCheckboxes = groupHeaderRow.find("td input[type='checkbox']");
+      var groupHeaderCheckboxes = groupHeaderRow.find("td input[type='checkbox']:not(.dummy)");
       groupHeaderCheckboxes.each(function() {
          var groupPermissionHeaderCB = $jQ(this);
          var sameGroupAndPermissionCBs = getSameGroupAndPermissionCBs(groupPermissionHeaderCB);

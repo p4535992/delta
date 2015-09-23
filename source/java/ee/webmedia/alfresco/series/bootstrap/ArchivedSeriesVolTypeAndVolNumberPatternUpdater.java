@@ -57,6 +57,10 @@ public class ArchivedSeriesVolTypeAndVolNumberPatternUpdater extends AbstractNod
         if (!propsToUpdate.isEmpty()) {
             nodeService.addProperties(nodeRef, propsToUpdate);
         }
-        return propsToUpdate.keySet().toArray(new String[0]);
+        List<String> updatedProps = new ArrayList<String>(2);
+        for (QName prop : propsToUpdate.keySet()) {
+            updatedProps.add(prop.toString());
+        }
+        return updatedProps.toArray(new String[updatedProps.size()]);
     }
 }

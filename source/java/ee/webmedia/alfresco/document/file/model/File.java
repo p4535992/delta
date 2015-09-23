@@ -8,7 +8,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import ee.webmedia.alfresco.dvk.model.DvkModel;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.web.scripts.FileTypeImageUtils;
 import org.alfresco.service.cmr.model.FileInfo;
@@ -18,11 +17,13 @@ import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.time.FastDateFormat;
 
 import ee.webmedia.alfresco.common.service.IClonable;
+import ee.webmedia.alfresco.dvk.model.DvkModel;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.signature.model.DataItem;
 import ee.webmedia.alfresco.signature.model.SignatureItem;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
 
-public class File implements Serializable, IClonable<File> {
+public class File implements Serializable, IClonable<File>, Comparable<File> {
 
     private static final long serialVersionUID = 1L;
 
@@ -42,6 +43,7 @@ public class File implements Serializable, IClonable<File> {
     private Node node;
     private boolean digiDocItem;
     private boolean digiDocContainer;
+    private boolean bdoc;
     private boolean versionable;
     private SignatureItemsAndDataItems ddocItems;
     private boolean generated;
@@ -52,7 +54,9 @@ public class File implements Serializable, IClonable<File> {
     private boolean isPdf;
     private String activeLockOwner;
     private boolean decContainer;
+    private Long fileOrderInList;
     public static FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy HH:mm");
+    public Boolean viewDocumentFilesPermission;
 
     public File() {
     }
@@ -79,6 +83,14 @@ public class File implements Serializable, IClonable<File> {
         active = (fileProps.get(ACTIVE) == null) ? true : Boolean.parseBoolean(fileProps.get(ACTIVE).toString());
         convertToPdfIfSigned = Boolean.TRUE.equals(fileProps.get(FileModel.Props.CONVERT_TO_PDF_IF_SIGNED));
         decContainer = fileProps.containsKey(DvkModel.Props.DVK_ID);
+        fileOrderInList = (Long) fileProps.get(FileModel.Props.FILE_ORDER_IN_LIST);
+    }
+
+    public boolean isViewDocumentFilesPermission() {
+        if (viewDocumentFilesPermission == null) {
+            viewDocumentFilesPermission = node != null && node.hasPermission(Privilege.VIEW_DOCUMENT_FILES);
+        }
+        return viewDocumentFilesPermission;
     }
 
     public String getName() {
@@ -359,4 +371,41 @@ public class File implements Serializable, IClonable<File> {
         Boolean convertToPdf = node != null ? Boolean.TRUE.equals(node.getProperties().get(FileModel.Props.CONVERT_TO_PDF_IF_SIGNED)) : false;
         return convertToPdf != null ? convertToPdf : false;
     }
+
+    public boolean isBdoc() {
+        return bdoc;
+    }
+
+    public void setBdoc(boolean isBdoc) {
+        bdoc = isBdoc;
+    }
+
+    public Long getFileOrderInList() {
+        return fileOrderInList;
+    }
+
+    public void setFileOrderInList(Long fileOrderInList) {
+        this.fileOrderInList = fileOrderInList;
+    }
+
+    @Override
+    public int compareTo(File o) {
+        if (fileOrderInList < o.fileOrderInList) {
+            return -1;
+        } else if (fileOrderInList > o.fileOrderInList) {
+            return 1;
+        }
+        return orderDigidocSubitemAndParentContainer(o);
+    }
+
+    private int orderDigidocSubitemAndParentContainer(File o) {
+        if (digiDocItem == o.digiDocItem) {
+            return 0;
+        }
+        if (Boolean.TRUE.equals(digiDocItem)) {
+            return 1;
+        }
+        return -1;
+    }
+
 }

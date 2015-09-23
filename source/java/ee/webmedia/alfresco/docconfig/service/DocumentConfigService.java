@@ -18,9 +18,9 @@ import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 import ee.webmedia.alfresco.docadmin.service.DynamicType;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
+import ee.webmedia.alfresco.docadmin.service.UnmodifiableFieldDefinition;
 import ee.webmedia.alfresco.docconfig.generator.FieldGenerator;
 import ee.webmedia.alfresco.docconfig.generator.FieldGroupGenerator;
-import ee.webmedia.alfresco.docconfig.service.PropDefCacheKey;
 import ee.webmedia.alfresco.utils.TreeNode;
 
 public interface DocumentConfigService {
@@ -35,11 +35,13 @@ public interface DocumentConfigService {
 
     DocumentConfig getConfig(Node documentDynamicNode);
 
+    List<String> getSaveListenerBeanNames(Node documentDynamicNode);
+
     DocumentConfig getSearchConfig();
 
     DocumentConfig getDocLocationConfig();
 
-    Pair<DocumentType, DocumentTypeVersion> getDocumentTypeAndVersion(Node documentDynamicNode);
+    Pair<DocumentType, DocumentTypeVersion> getDocumentTypeAndVersion(Node documentDynamicNode, boolean cloneResult);
 
     void setUserContactProps(Map<QName, Serializable> props, String userName, String fieldId);
 
@@ -52,7 +54,7 @@ public interface DocumentConfigService {
     /**
      * Get property definition and field pairs that are declared for a document.
      * A pair always has non-null propertyDefinition; but field may be null, if it is a special hidden field.
-     * 
+     *
      * @param documentDynamicNode
      * @return
      */
@@ -62,7 +64,7 @@ public interface DocumentConfigService {
 
     /**
      * Set default property values on given node and all it's child and grand-child nodes.
-     * 
+     *
      * @param node node, on which default values are set. Can be document node or it's child (or grand-child) node.
      * @param childAssocTypeQNameHierarchy if node is document node, then this should be {@code null}; if node is document's child or grand-child node, then this should be its
      *            childAssocTypeQName hierarchy.
@@ -74,7 +76,7 @@ public interface DocumentConfigService {
 
     /**
      * Set default property values only on specific fields on given node and all it's child and grand-child nodes.
-     * 
+     *
      * @see #setDefaultPropertyValues(Node, QName[], boolean, DocumentTypeVersion)
      */
     void setDefaultPropertyValues(Node node, QName[] childAssocTypeQNameHierarchy, boolean forceOverwrite, boolean reallySetDefaultValues, List<Field> fields);
@@ -98,7 +100,7 @@ public interface DocumentConfigService {
 
     /**
      * NB! before this method can be called, it must be guaranteed that this fieldId is actually used in DocumentDynamicModel!
-     * 
+     *
      * @param fieldId
      * @return
      */
@@ -123,5 +125,7 @@ public interface DocumentConfigService {
     void removeFromChildAssocTypeQNameTreeCache(Pair<String, Integer> typeAndVersion);
 
     void removeFromPropertyDefinitionCache(PropDefCacheKey key);
+
+    PropertyDefinition createPropertyDefinition(UnmodifiableFieldDefinition fieldDefinition);
 
 }

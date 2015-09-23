@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.series.web.mydocuments;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -9,14 +10,15 @@ import javax.faces.context.FacesContext;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
-import ee.webmedia.alfresco.functions.model.Function;
+import ee.webmedia.alfresco.functions.model.UnmodifiableFunction;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
-import ee.webmedia.alfresco.series.model.Series;
+import ee.webmedia.alfresco.series.model.UnmodifiableSeries;
 import ee.webmedia.alfresco.user.service.UserService;
 
 public class MySeriesListDialog extends BaseDialogBean {
@@ -40,9 +42,10 @@ public class MySeriesListDialog extends BaseDialogBean {
             return;
         }
 
-        List<Series> series = getDocumentSearchService().searchSeriesUnit(orgstructId);
-        for (Series sr : series) {
-            Function fn = getFunctionsService().getFunctionByNodeRef(sr.getFunctionNodeRef());
+        List<UnmodifiableSeries> series = getDocumentSearchService().searchSeriesUnit(orgstructId);
+        Map<Long, QName> propertyTypes = new HashMap<Long, QName>();
+        for (UnmodifiableSeries sr : series) {
+            UnmodifiableFunction fn = getFunctionsService().getUnmodifiableFunction(sr.getFunctionRef(), propertyTypes);
             seriesFunction.add(new SeriesFunction(sr, fn));
         }
     }
@@ -98,15 +101,15 @@ public class MySeriesListDialog extends BaseDialogBean {
 
     public static class SeriesFunction implements Serializable {
         private static final long serialVersionUID = 1L;
-        private final Series series;
+        private final UnmodifiableSeries series;
         private final String functionTitle;
 
-        public SeriesFunction(Series series, Function function) {
-            functionTitle = function.getMark() + " " + function.getTitle();
+        public SeriesFunction(UnmodifiableSeries series, UnmodifiableFunction function) {
+            functionTitle = function.getFunctionLabel();
             this.series = series;
         }
 
-        public Series getSeries() {
+        public UnmodifiableSeries getSeries() {
             return series;
         }
 

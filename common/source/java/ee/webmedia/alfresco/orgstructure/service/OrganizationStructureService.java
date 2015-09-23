@@ -22,14 +22,14 @@ public interface OrganizationStructureService {
 
     /**
      * Returns a list of all found organization structures.
-     * 
+     *
      * @return
      */
     List<OrganizationStructure> getAllOrganizationStructures();
 
     /**
      * Return one organization structure.
-     * 
+     *
      * @param unitId
      * @return organization structure or {@code null} of not found
      */
@@ -37,7 +37,7 @@ public interface OrganizationStructureService {
 
     /**
      * Return one organization structure.
-     * 
+     *
      * @param unitId
      * @return organization structure or {@code null} of not found
      */
@@ -52,14 +52,14 @@ public interface OrganizationStructureService {
 
     /**
      * Find organization structures by name. If input is empty, all organization structures are returned.
-     * 
+     *
      * @param limit
      */
     List<OrganizationStructure> searchOrganizationStructures(String input, int limit);
 
     /**
      * Sets correct and up to date unit name for users, based on data found in organization structure list.
-     * 
+     *
      * @param users list of user nodes to be processed
      * @return processed nodes
      */
@@ -76,5 +76,7 @@ public interface OrganizationStructureService {
     List<NodeRef> getAllOrganizationStructureRefs();
 
     OrganizationStructure getOrganizationStructure(NodeRef nodeRef);
+
+    void loadUserUnit(Node user);
 
 }

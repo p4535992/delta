@@ -21,7 +21,9 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.security.AuthenticationService;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.service.transaction.TransactionService;
+import org.alfresco.util.EqualsHelper;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
@@ -29,7 +31,10 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
+import ee.webmedia.alfresco.report.model.ReportModel;
+import ee.webmedia.alfresco.substitute.model.SubstitutionInfo;
 import ee.webmedia.alfresco.versions.service.VersionsService;
+import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
 public class WebDAVCustomHelper extends WebDAVHelper {
 
@@ -115,13 +120,34 @@ public class WebDAVCustomHelper extends WebDAVHelper {
     public static void checkDocumentFileReadPermission(NodeRef fileRef) {
         NodeService nodeService = BeanHelper.getNodeService();
         NodeRef docRef = nodeService.getPrimaryParent(fileRef).getParentRef();
-        if (!DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(docRef))) {
-            if (!Version2Model.STORE_ID.equals(fileRef.getStoreRef().getIdentifier()) && !getUserService().isAdministrator() && !hasViewDocFilesPermission(fileRef)) {
+        QName nodeType = nodeService.getType(docRef);
+        if (!DocumentCommonModel.Types.DOCUMENT.equals(nodeType)) {
+            if (!Version2Model.STORE_ID.equals(fileRef.getStoreRef().getIdentifier()) && !getUserService().isAdministrator()
+                    && !isNoPermissionsRequired(nodeType)
+                    && !hasViewDocFilesPermission(fileRef)
+                    && !isRunAsUserReportResult(nodeType, docRef)) {
                 throw new AccessDeniedException("Not allowing reading - file is not under document and user has no permission to view files. File=" + fileRef);
             }
         } else if (!hasViewDocFilesPermission(docRef)) {
             throw new AccessDeniedException("permission " + Privilege.VIEW_DOCUMENT_FILES.getPrivilegeName() + " denied for file of document " + docRef);
         }
+    }
+
+    private static boolean isRunAsUserReportResult(QName type, NodeRef reportResultRef) {
+        if (!ReportModel.Types.REPORT_RESULT.equals(type)) {
+            return false;
+        }
+        NodeRef personRef = getGeneralService().getAncestorNodeRefWithType(reportResultRef, ContentModel.TYPE_PERSON);
+        if (personRef != null) {
+            String userName = (String) BeanHelper.getNodeService().getProperty(personRef, ContentModel.PROP_USERNAME);
+            return userName != null && userName.equals(AuthenticationUtil.getRunAsUser());
+        }
+        return false;
+
+    }
+
+    private static boolean isNoPermissionsRequired(QName nodeType) {
+        return WorkflowSpecificModel.Types.OPINION_WORKFLOW.equals(nodeType);
     }
 
     /**
@@ -130,7 +156,14 @@ public class WebDAVCustomHelper extends WebDAVHelper {
      * @return
      */
     private static boolean hasViewDocFilesPermission(NodeRef docOrFileRef) {
-        return BeanHelper.getPrivilegeService().hasPermission(docOrFileRef, AuthenticationUtil.getRunAsUser(), Privilege.VIEW_DOCUMENT_FILES);
+        SubstitutionInfo info = BeanHelper.getSubstitutionBean().getSubstitutionInfo();
+        String userName = AuthenticationUtil.getRunAsUser();
+        if (info.isSubstituting() && !EqualsHelper.nullSafeEquals(userName, info.getSubstitution().getReplacedPersonUserName())) {
+            // If user is downloading a file and BaseServlet.servletAuthenticate() is called after SubstitutionFilter.doFilter()
+            // then AuthenticationUtil.getRunAsUser() might give the username of a fully authenticated user instead of actual runAs user.
+            userName = info.getSubstitution().getReplacedPersonUserName();
+        }
+        return BeanHelper.getPrivilegeService().hasPermission(docOrFileRef, userName, Privilege.VIEW_DOCUMENT_FILES);
     }
 
     public static void checkDocumentFileWritePermission(NodeRef fileRef) throws WebDAVServerException {

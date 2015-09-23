@@ -43,7 +43,7 @@ public class ConfirmAddDuplicateDialog extends BaseDialogBean {
 
     @Override
     public String getFinishButtonLabel() {
-        return MessageUtil.getMessage("yes");
+        return BeanHelper.getApplicationConstantsBean().getMessageYes();
     }
 
     @Override

@@ -87,7 +87,7 @@ public class SeriesDetailsDialog extends BaseDialogBean {
             MessageUtil.addErrorMessage(context, "series_docNumberPattern_tn_not_allowed");
             foundErrors = true;
         }
-        if (BeanHelper.getVolumeService().isCaseVolumeEnabled()) {
+        if (BeanHelper.getApplicationConstantsBean().isCaseVolumeEnabled()) {
             // volRegister && volNumberPattern are visible and enabled
             @SuppressWarnings("unchecked")
             List<String> volType = (List<String>) getCurrentNode().getProperties().get(SeriesModel.Props.VOL_TYPE);
@@ -172,6 +172,11 @@ public class SeriesDetailsDialog extends BaseDialogBean {
     }
 
     @Override
+    public void clean() {
+        resetFields();
+    }
+
+    @Override
     public Object getActionsContext() {
         return series.getNode();
     }
@@ -187,7 +192,7 @@ public class SeriesDetailsDialog extends BaseDialogBean {
     // START: jsf actions/accessors
     public void showDetails(ActionEvent event) {
         String seriesNodeRef = ActionUtil.getParam(event, PARAM_SERIES_NODEREF);
-        series = getSeriesService().getSeriesByNodeRef(seriesNodeRef);
+        series = getSeriesService().getSeriesByNodeRef(new NodeRef(seriesNodeRef));
         getLogBlockBean().init(series.getNode());
     }
 

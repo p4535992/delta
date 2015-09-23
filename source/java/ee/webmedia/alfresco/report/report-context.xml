@@ -18,7 +18,7 @@
       </property>
    </bean> 
       
-   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
+   <bean id="reportResourceBundle" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee/webmedia/alfresco/report/web/report-webclient</value>
@@ -51,14 +51,13 @@
       <property name="workflowService" ref="WmWorkflowService" />
       <property name="documentAdminService" ref="DocumentAdminService" />
       <property name="mimetypeService" ref="MimetypeService" />
-      <property name="fileService" ref="FileService" />
       <property name="transactionService" ref="TransactionService" />
-      <property name="sendOutService" ref="SendOutService" />
-      <property name="caseFileService" ref="CaseFileService" />
       <property name="functionsService" ref="FunctionsService" />
       <property name="seriesService" ref="SeriesService" />
       <property name="reportGenerationEnabled" value="${jobs.enabled}" />
       <property name="usableByAdminDocManagerOnly" value="${conf.reports.usableByAdminDocManagerOnly}" />
+      <property name="bulkLoadNodeService" ref="BulkLoadNodeService" />
+      <property name="workflowConstantsBean" ref="workflowConstantsBean" />
    </bean>
 
    <bean id="ReportService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -82,7 +81,19 @@
             <ref bean="reportSpacesBootstrap" />
          </list>
       </property>
-   </bean>   
+   </bean>
+   
+   <bean id="addAdditionalPropertiesToReportResultsBootstrap" class="ee.webmedia.alfresco.report.bootstrap.AddAdditionalPropertiesToReportResultsBootstrap" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="fileFolderService" ref="FileFolderService" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="reportSpacesBootstrap" />
+         </list>
+      </property>
+   </bean>
    
    <bean id="executeReportsTrigger" class="org.alfresco.util.TriggerBean" >
       <property name="enabled" value="${jobs.enabled}" />
@@ -99,4 +110,3 @@
    <bean id="ReportListDialog" class="ee.webmedia.alfresco.report.web.ReportListDialog" scope="session" />    
    
 </beans>
-  

@@ -36,7 +36,7 @@
          </f:facet>
          <a:actionLink id="col2-text" value="#{r.series.title}" action="dialog:volumeListDialog" tooltip="#{msg.volume_list_info}"
             showLink="false" actionListener="#{VolumeListDialog.showAll}" >
-            <f:param name="seriesNodeRef" value="#{r.series.node.nodeRef}" />
+            <f:param name="seriesNodeRef" value="#{r.series.nodeRef}" />
          </a:actionLink>
       </a:column>
 

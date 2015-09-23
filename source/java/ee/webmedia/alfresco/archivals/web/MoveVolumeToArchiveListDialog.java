@@ -7,8 +7,8 @@ import java.util.List;
 
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.namespace.QName;
 import org.alfresco.web.config.DialogsConfigElement.DialogButtonConfig;
 
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
@@ -43,12 +43,12 @@ public class MoveVolumeToArchiveListDialog extends VolumeArchiveBaseDialog {
     }
 
     @Override
-    protected List<QName> getRenderedFilterFields() {
+    protected List<String> getRenderedFilterFields() {
         if (renderedFilterFields == null) {
-            renderedFilterFields = new ArrayList<QName>(Arrays.asList(
-                    VolumeSearchModel.Props.VALID_TO,
-                    VolumeSearchModel.Props.VALID_TO_END_DATE,
-                    VolumeSearchModel.Props.EVENT_PLAN));
+            renderedFilterFields = new ArrayList<String>(Arrays.asList(
+                    VolumeSearchModel.Props.VALID_TO.toPrefixString(),
+                    VolumeSearchModel.Props.VALID_TO_END_DATE.toPrefixString(),
+                    VolumeSearchModel.Props.EVENT_PLAN.toPrefixString()));
         }
         return renderedFilterFields;
     }
@@ -74,19 +74,27 @@ public class MoveVolumeToArchiveListDialog extends VolumeArchiveBaseDialog {
     public void archive(ActionEvent event) {
         confirmArchive = false;
         final List<NodeRef> volumesToArchive = getSelectedVolumes();
-        for (NodeRef ref : volumesToArchive) {
-            if (!nodeExists(ref)) {
-                LOG.warn("Archiving of volume [nodeRef=" + ref + "] failed. Node does not exist!");
-                continue;
+        BeanHelper.getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
+
+            @Override
+            public Void execute() throws Throwable {
+                for (NodeRef ref : volumesToArchive) {
+                    if (!nodeExists(ref)) {
+                        LOG.warn("Archiving of volume [nodeRef=" + ref + "] failed. Node does not exist!");
+                        continue;
+                    }
+                    if (!BeanHelper.getArchivalsService().isVolumeInArchivingQueue(ref)) {
+                        BeanHelper.getArchivalsService().addVolumeOrCaseToArchivingList(ref);
+                        LOG.info("Volume with nodeRef=" + ref + " was added to archive queue.");
+                    } else {
+                        LOG.info("Volume [nodeRef=" + ref + "] has already been added to archiving queue.");
+                        continue;
+                    }
+                }
+                return null;
             }
-            if (!BeanHelper.getArchivalsService().isVolumeInArchivingQueue(ref)) {
-                BeanHelper.getArchivalsService().addVolumeOrCaseToArchivingList(ref);
-                LOG.info("Volume with nodeRef=" + ref + " was added to archive queue.");
-            } else {
-                LOG.info("Volume [nodeRef=" + ref + "] has already been added to archiving queue.");
-                continue;
-            }
-        }
+        });
+
         MessageUtil.addInfoMessage("archivals_volume_archive_started", volumesToArchive.size());
     }
 

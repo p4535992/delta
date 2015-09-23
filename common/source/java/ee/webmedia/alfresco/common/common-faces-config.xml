@@ -120,6 +120,12 @@
       </managed-property>
    </managed-bean>
    
+   <managed-bean>
+      <managed-bean-name>BeanCleanupHelper</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.common.web.BeanCleanupHelper</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+   
    <converter>
       <converter-id>ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter</converter-id>
       <converter-class>ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter</converter-class>

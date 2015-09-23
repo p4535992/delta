@@ -180,14 +180,18 @@ public class FieldDetailsDialog extends BaseDialogBean {
 
     private void removeDecElementsWhitespaceAndUnusedTextFields() {
         List<String> incomingDecElements = field.getRelatedIncomingDecElement();
-        List<String> strippedIncomingDecElements = strip(incomingDecElements);
-        if (!CollectionUtils.isEqualCollection(incomingDecElements, strippedIncomingDecElements)) {
-            field.setRelatedIncomingDecElement(strippedIncomingDecElements);
+        if (incomingDecElements != null) {
+            List<String> strippedIncomingDecElements = strip(incomingDecElements);
+            if (!CollectionUtils.isEqualCollection(incomingDecElements, strippedIncomingDecElements)) {
+                field.setRelatedIncomingDecElement(strippedIncomingDecElements);
+            }
         }
         List<String> relatedOutgoingDecElements = field.getRelatedOutgoingDecElement();
-        List<String> strippedOutgoingDecElements = strip(relatedOutgoingDecElements);
-        if (!CollectionUtils.isEqualCollection(relatedOutgoingDecElements, strippedOutgoingDecElements)) {
-            field.setRelatedOutgoingDecElement(strippedOutgoingDecElements);
+        if (relatedOutgoingDecElements != null) {
+            List<String> strippedOutgoingDecElements = strip(relatedOutgoingDecElements);
+            if (!CollectionUtils.isEqualCollection(relatedOutgoingDecElements, strippedOutgoingDecElements)) {
+                field.setRelatedOutgoingDecElement(strippedOutgoingDecElements);
+            }
         }
     }
 
@@ -203,7 +207,6 @@ public class FieldDetailsDialog extends BaseDialogBean {
         return strippedDecElements;
     }
 
-    
     private boolean validateDecMappings(boolean valid, List<String> incomingDecElements, List<String> outgoingDecElements) {
         List<String> incomingDecMappings = new ArrayList<String>();
         if (incomingDecElements != null) {
@@ -395,7 +398,7 @@ public class FieldDetailsDialog extends BaseDialogBean {
     }
 
     public boolean isShowInapplicableForVol() {
-        return isFieldDefinition() && BeanHelper.getVolumeService().isCaseVolumeEnabled();
+        return isFieldDefinition() && BeanHelper.getApplicationConstantsBean().isCaseVolumeEnabled();
     }
 
     public boolean isIncomingDvkInfoRendered() {
@@ -495,7 +498,7 @@ public class FieldDetailsDialog extends BaseDialogBean {
      */
     public List<SelectItem> getClassificatorSelectItems(FacesContext context, UIInput selectComponent) {
         if (StringUtils.isBlank(field.getClassificator())) {
-            return Collections.<SelectItem> emptyList();
+            return null;
         }
         List<ClassificatorValue> classificatorValues //
         = getClassificatorService().getActiveClassificatorValues(getClassificatorService().getClassificatorByName(field.getClassificator()));
@@ -563,7 +566,11 @@ public class FieldDetailsDialog extends BaseDialogBean {
                         if (isClassificatorDefaultValueUiProp) {
                             HtmlSelectOneMenu clDefaultValues = (HtmlSelectOneMenu) uiProperty.getChildren().get(1);
                             List<SelectItem> clValueItems = getClassificatorSelectItems(FacesContext.getCurrentInstance(), clDefaultValues);
-                            ComponentUtil.setSelectItems(FacesContext.getCurrentInstance(), clDefaultValues, clValueItems);
+                            if (CollectionUtils.isNotEmpty(clValueItems)) {
+                                ComponentUtil.setSelectItems(FacesContext.getCurrentInstance(), clDefaultValues, clValueItems);
+                            } else {
+                                ComponentUtil.setReadonlyAttributeRecursively(clDefaultValues, true);
+                            }
                         }
                     }
 

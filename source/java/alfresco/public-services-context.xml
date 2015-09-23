@@ -482,6 +482,7 @@
         </property>
         <property name="interceptorNames">
             <list>
+                <idref bean="repeatingServiceCallInterceptor" />
                 <idref local="AuthorityService_transaction"/>
                 <idref local="AuditMethodInterceptor"/>
                 <idref local="exceptionTranslator"/>

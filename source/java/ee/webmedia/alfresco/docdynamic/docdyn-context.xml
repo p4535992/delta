@@ -26,15 +26,7 @@
       </property>
    </bean>
 
-   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
-      <property name="resourceBundles">
-         <list>
-            <value>ee/webmedia/alfresco/docdynamic/web/document-dynamic-webclient</value>
-         </list>
-      </property>
-   </bean>
-
-   <bean class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+   <bean id="documentDynamicResourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee/webmedia/alfresco/docdynamic/web/document-dynamic-webclient</value>
@@ -104,6 +96,7 @@
             <ref bean="structUnitFieldTypeUpdater" />
             <ref bean="convertToDynamicDocumentsUpdater" />
             <ref bean="fileEncodingUpdater" />
+            <ref bean="insertDeltaPermissionsBootstrap" />
          </list>
       </property>
       <property name="workflowService" ref="WmWorkflowService" />
@@ -113,10 +106,10 @@
    
    <!-- NB! This updater's searchableHasAllFinishedCompoundWorkflows part is not needed 
    when it is quaranteed that documentUpdater9 also runs (it performs the same functionality) -->
-   <bean id="documentCompWorkflowSearchPropsUpdater" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentCompWorkflowSearchPropsUpdater" parent="abstractNodeUpdater">
+   <bean id="documentCompWorkflowSearchPropsUpdater" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentCompWorkflowSearchPropsUpdater" parent="abstractParallelNodeUpdater">
       <property name="moduleId" value="simdhs" />
-      <property name="enabled" value="false" />
-      <property name="executeOnceOnly" value="true" />
+      <property name="enabled" value="${updater.documentCompWorkflowSearchPropsUpdater.enabled}" />
+      <property name="executeOnceOnly" value="false" />
        <property name="dependsOn">
          <list>
             <ref bean="archivalsStoresBootstrap" />
@@ -210,9 +203,24 @@
       <property name="enabled" value="false" /><!-- Executed manually from node-browser -->
    </bean>   
 
+   <bean id="documentSenderPersonNameUpdater" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentSenderPersonNameUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="false" />
+      <property name="enabled" value="${updater.documentSenderPersonNameUpdater.enabled}" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="documentUpdater9" />
+         </list>
+      </property>
+      <property name="baseService" ref="BaseService" />
+      <property name="documentAdminService" ref="DocumentAdminService" />
+   </bean>
+
    <!-- START: web beans: -->
 
-   <bean id="DocumentDynamicDialog" class="ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog" scope="session" />
+   <bean id="DocumentDynamicDialog" class="ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog" scope="session" >
+      <property name="requestCacheBean" ref="requestCacheBean"></property>
+   </bean>
 
    <bean id="DocumentDialogHelperBean" class="ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean" scope="session" />
 

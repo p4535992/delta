@@ -466,7 +466,7 @@ public class ConvertToDynamicDocumentsUpdater extends AbstractNodeUpdater {
         if (!document.hasAspect(DocumentUpdater.EMAIL_DATE_TIME)) {
             // documentUpdater collects document reg numbers that are later used in DocumentRegNumbersUpdater, that functionality must remain
             documentUpdater.addParentRegNumber(nodeRef, (String) newDocumentProperties.get(DocumentCommonModel.Props.REG_NUMBER));
-            newDocumentProperties.put(DocumentCommonModel.Props.SEARCHABLE_HAS_ALL_FINISHED_COMPOUND_WORKFLOWS, workflowService.hasAllFinishedCompoundWorkflows(nodeRef));
+            newDocumentProperties.put(DocumentCommonModel.Props.SEARCHABLE_HAS_ALL_FINISHED_COMPOUND_WORKFLOWS, workflowService.hasCompoundWorkflowsAndAllAreFinished(nodeRef));
             documentUpdater.updateMetadataInFiles(newDocumentProperties, newDocumentProperties);
             if (documentUpdater.getFileEncodingUpdater().getDocumentsToUpdate().contains(nodeRef)) {
                 documentUpdater.updateFileContentsProp(nodeRef, newDocumentProperties);
@@ -558,7 +558,7 @@ public class ConvertToDynamicDocumentsUpdater extends AbstractNodeUpdater {
                         if (isErrandV1
                                 && (DocumentChildModel.Assocs.ERRAND_ABROAD.equals(dynamicGrandChildAssocQName)
                                         || DocumentChildModel.Assocs.ERRAND_DOMESTIC.equals(dynamicGrandChildAssocQName) || DocumentChildModel.Assocs.ERRAND
-                                        .equals(dynamicGrandChildAssocQName))) {
+                                            .equals(dynamicGrandChildAssocQName))) {
                             existingGrandChildProps.putAll(errandPropsToAdd);
                         }
                         Node dynamicGrandChildNode = getOrCreateDynamicChildNode(dynamicChildNode, dynamicDocTypeId, childAssocTypeQNameTree, dynamicGrandChildAssocQName,

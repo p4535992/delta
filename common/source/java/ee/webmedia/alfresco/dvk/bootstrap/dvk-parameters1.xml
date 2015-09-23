@@ -6,6 +6,7 @@
    <param:stringParameter view:childName="param:externalReviewAutomaticFolder">
       <view:properties>
          <param:value>AÜTV</param:value>
+         <param:name>externalReviewAutomaticFolder</param:name>
       </view:properties>
    </param:stringParameter>
    

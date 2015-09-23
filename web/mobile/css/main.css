@@ -266,6 +266,16 @@ hr {
 	border-radius: 5px;
 	text-indent: 0;
 }
+.notifications .neutral:before {
+    content: url(../gfx/Info.svg);
+    padding-right: 1rem;
+    position: relative;
+    top: 3px;
+}
+.notifications .neutral {
+    background: none repeat scroll 0 0 #fafbfc;
+    border: 1px solid #e1e7ed;
+}
 .search {
 	height: 45px;
 	width: 45px;
@@ -377,6 +387,9 @@ article:nth-child(even) a {
 	float: left;
 	width: 64%;
 }
+.valuerow.bold {
+	font-weight: bold;
+}
 .filethumbnails {
 	margin: 1rem 0 0;
 	padding: 0;
@@ -442,7 +455,6 @@ article:nth-child(even) a {
 }
 .readmore {
 	position: relative;
-	padding: 0 0 3rem;
 	overflow: hidden;
 }
 .readmore.active {
@@ -837,6 +849,8 @@ input[type="file"] {
 	border: 1px solid #e6e6e6;
 	border-radius: 2px;
 	background: #fff;
+	z-index: 9999;
+	position: absolute;
 }
 .token-input-dropdown ul {
 	margin: -0.5rem;
@@ -846,7 +860,7 @@ input[type="file"] {
 	line-height: 1.25;
 }
 .token-input-dropdown li {
-	padding: .5rem;
+	padding: 0.35rem .5rem;
 	cursor: pointer;
 }
 .token-input-dropdown li:hover {
@@ -1711,4 +1725,166 @@ DIV.modalpopup-footer P {
 }
 DIV.modalpopup-footer P.action {
 	text-align: right;
+}
+.invalid {
+	border: 1px solid #CC0000;
+	box-shadow: 0px 0px 5px #CC0000;
+}
+.modaltarget:after {
+    background: url("../gfx/Expander.svg") no-repeat scroll 1px center rgba(0, 0, 0, 0);
+    content: "";
+    display: inline-block;
+    height: 10px;
+    width: 10px;
+}
+.modaltarget {
+    color: #ff9000;
+    font-weight: 700;
+}
+.modal-window {
+	display: block;
+	background: none repeat scroll 0 0 #fff;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+.modal-header {
+	padding: 17px 20px 13px;
+}
+.modal-header, .modal-header h1, .modal-header a {
+    color: #ff9000;
+}
+.modal-content {
+    min-height: 100px;
+    padding: 0 20px 20px;
+}
+.modal-buttons:before, .modal-buttons:after {
+    content: " ";
+    display: table;
+}
+.modal-buttons:after {
+    clear: both;
+}
+.modal-buttons:before, .modal-buttons:after {
+    content: " ";
+    display: table;
+}
+.modal-buttons {
+    padding: 0 20px 10px;
+}
+.fancybox-wrap, .fancybox-skin, .fancybox-outer, .fancybox-inner, .fancybox-image, .fancybox-wrap iframe, .fancybox-wrap object, .fancybox-nav, .fancybox-nav span, .fancybox-tmp {
+    border: 0 none;
+    margin: 0;
+    outline: medium none;
+    padding: 0;
+    vertical-align: top;
+}
+.fancybox-wrap {
+    left: 0;
+    position: absolute;
+    top: 0;
+    z-index: 100;
+}
+.fancybox-skin {
+    position: relative;
+}
+.fancybox-outer, .fancybox-inner {
+    position: relative;
+}
+.fancybox-inner {
+    overflow: hidden;
+}
+.fancybox-type-iframe .fancybox-inner {
+}
+#fancybox-loading {
+    background-position: 0 -108px;
+    cursor: pointer;
+    left: 50%;
+    margin-left: -22px;
+    margin-top: -22px;
+    opacity: 0.8;
+    position: fixed;
+    top: 50%;
+}
+#fancybox-loading div {
+    background: url("fancybox_loading.gif") no-repeat scroll center center rgba(0, 0, 0, 0);
+    height: 44px;
+    width: 44px;
+}
+.fancybox-close {
+    background-image: url(../gfx/Close.svg);
+    cursor: pointer;
+    height: 16px;
+    position: absolute;
+    right: 9px;
+    top: 11px;
+    width: 16px;
+}
+.fancybox-lock {
+    overflow: hidden !important;
+    width: auto;
+}
+.fancybox-lock body {
+    overflow: hidden !important;
+}
+.fancybox-lock-test {
+    overflow-y: hidden !important;
+}
+.fancybox-overlay {
+    background: none repeat scroll 0 0 rgba(0, 0, 0, 0.5);
+    display: none;
+    left: 0;
+    overflow: hidden;
+    position: absolute;
+    top: 0;
+}
+.fancybox-overlay-fixed {
+    bottom: 0;
+    position: fixed;
+    right: 0;
+}
+.fancybox-lock .fancybox-overlay {
+    overflow-x: auto;
+    overflow-y: scroll;
+}
+.fancybox-title {
+    display: none;
+}
+.covered {
+	z-index: 2;
+    overflow: hidden;
+    position: "absolute";
+    heigth: 100%;
+    opacity: 0.5;
+    background: "#CCCCCC";
+    pointer-events: none;
+}
+.task-files {
+	margin-left: 34%;
+    width: 66%;
+}
+.task-files td {
+    border: 1px solid #e6e6e6;
+    line-height: 1;
+    padding: 4px 8px;
+}
+.task-files .actions {
+    white-space: nowrap;
+    width: 1px;
+}
+.actions .remove {
+    background: url(../gfx/Dumster.svg) no-repeat scroll 100% 50% transparent;
+    display: block;
+    height: 17px;
+    overflow: hidden;
+    text-indent: -10000em;
+    width: 12px;
+}
+.file-upload-progress {
+    position: absolute;
+    width: 0%;
+    z-index: -1;    
+    background: #ff9500;
+    opacity: 0.5;    
+    transition:width 0.5s;
+    margin-top: -5px;
+    margin-left: -8px;
 }

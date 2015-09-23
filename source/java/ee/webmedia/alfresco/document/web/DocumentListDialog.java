@@ -2,13 +2,13 @@ package ee.webmedia.alfresco.document.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentConfigService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getJsfBindingHelper;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPropertySheetStateBean;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -53,10 +53,9 @@ import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGener
 import ee.webmedia.alfresco.docconfig.service.DocumentConfig;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
-import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.search.web.DocumentListDataProvider;
 import ee.webmedia.alfresco.document.service.DocumentServiceImpl;
-import ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -72,7 +71,7 @@ import ee.webmedia.alfresco.volume.web.VolumeListDialog;
 /**
  * Form backing bean for Document list. <br>
  * <br>
- * This Class has logic of two diferent, but similar versions of documents(when parent is volume or case). <br>
+ * This Class has logic of two different, but similar versions of documents(when parent is volume or case). <br>
  * Reason is that we don't have to worry about what the parent of document in jsp files.
  */
 public class DocumentListDialog extends BaseDocumentListDialog implements DialogDataProvider {
@@ -94,8 +93,6 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
     private Node locationNode;
 
     private DocumentConfig config;
-
-    private transient UIPropertySheet propSheet;
 
     private boolean confirmMoveAssociatedDocuments;
     private boolean showDocumentsLocationPopup;
@@ -126,7 +123,7 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         QName type = getNodeService().getType(parentRef);
         getPropertySheetStateBean().reset(null, null);
         if (VolumeModel.Types.VOLUME.equals(type) || CaseFileModel.Types.CASE_FILE.equals(type)) {
-            parentVolume = getVolumeService().getVolumeByNodeRef(parentRef);
+            parentVolume = getVolumeService().getVolumeByNodeRef(parentRef, null);
             parentCase = null;
         } else if (CaseModel.Types.CASE.equals(type)) {
             parentCase = getCaseService().getCaseByNoderef(parentRef);
@@ -147,10 +144,11 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         final String param;
         if (parameterMap.containsKey(VOLUME_NODE_REF)) {
             param = ActionUtil.getParam(event, VOLUME_NODE_REF);
-            if (!nodeExists(new NodeRef(param))) {
+            NodeRef volumeRef = new NodeRef(param);
+            if (!nodeExists(volumeRef)) {
                 return;
             }
-            parentVolume = getVolumeService().getVolumeByNodeRef(param);
+            parentVolume = getVolumeService().getVolumeByNodeRef(volumeRef, null);
             parentCase = null;
         } else {
             param = ActionUtil.getParam(event, CASE_NODE_REF);
@@ -316,13 +314,13 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
 
     private void updateDocumentInMassChangeLocation(NodeRef function, NodeRef series, NodeRef volume, String caseLabel, Set<NodeRef> updatedNodeRefs, NodeRef docRef) {
         DocumentDynamic document = getDocumentDynamicService().getDocument(docRef);
-        DocumentConfig cfg = getDocumentConfigService().getConfig(document.getNode());
+        List<String> saveListenerBeans = getDocumentConfigService().getSaveListenerBeanNames(document.getNode());
         document.setFunction(function);
         document.setSeries(series);
         document.setVolume(volume);
         document.setCase(null);
         document.getNode().getProperties().put(DocumentLocationGenerator.CASE_LABEL_EDITABLE.toString(), caseLabel);
-        List<Pair<NodeRef, NodeRef>> updatedRefs = getDocumentDynamicService().updateDocumentGetDocAndNodeRefs(document, cfg.getSaveListenerBeanNames(), true, true)
+        List<Pair<NodeRef, NodeRef>> updatedRefs = getDocumentDynamicService().updateDocumentGetDocAndNodeRefs(document, saveListenerBeans, true, true)
                 .getSecond();
         for (Pair<NodeRef, NodeRef> pair : updatedRefs) {
             updatedNodeRefs.add(pair.getFirst());
@@ -365,10 +363,10 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
 
     @Override
     public void restored() {
-        BeanHelper.getVisitedDocumentsBean().resetVisitedDocuments(documents);
+        BeanHelper.getVisitedDocumentsBean().resetVisitedDocuments(documentProvider);
     }
 
-    private void doInitialSearch() {
+    protected void doInitialSearch() {
         NodeRef parentRef = null;
         locationNode = null;
         selectedDocs = null;
@@ -379,46 +377,21 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         } else if (parentVolume != null) {// assuming that parentVolume is volume
             parentRef = parentVolume.getNode().getNodeRef();
         }
-        documents = setLimited(getChildNodes(parentRef, getLimit()));
+        List<NodeRef> docNodeRefs = setLimited(getChildNodes(parentRef, getLimit()));
+        documentProvider = new DocumentListDataProvider(docNodeRefs, true, DOC_PROPS_TO_LOAD);
         final boolean debugEnabled = LOG.isDebugEnabled();
         if (debugEnabled) {
-            LOG.debug("Found " + documents.size() + " document(s) during initial search. Limit: " + getLimit());
+            LOG.debug("Found " + documentProvider.getListSize() + " document(s) during initial search. Limit: " + getLimit());
         }
-
-        // Because documents are fetched from search, the results may not be accurate if indexing is done in background
-        // and mass change location was done during the last few seconds
-        // Therefore filter out documents, that are not under this volume or case
-        List<Document> removedDocs = null;
-        if (debugEnabled) {
-            removedDocs = new ArrayList<Document>();
-        }
-        for (Iterator<Document> i = documents.iterator(); i.hasNext();) {
-            Document document = i.next();
-            QName parentRefProperty = (parentCase != null) ? DocumentCommonModel.Props.CASE : DocumentCommonModel.Props.VOLUME;
-
-            NodeRef documentParentRef = (NodeRef) document.getProperties().get(parentRefProperty.toString());
-            if (!parentRef.equals(documentParentRef)) {
-                i.remove();
-                if (debugEnabled) {
-                    removedDocs.add(document);
-                }
-            }
-        }
-        if (debugEnabled) {
-            LOG.debug("Removed " + removedDocs.size() + " documents from " + parentRef + " children listing during filtering: " + removedDocs.toString());
-        }
-
-        Collections.sort(documents); // always sort, because at first user gets only limited amount of documents;
-        // and if user presses show all, then he/she knows it will take time
         resetModals();
         clearRichList();
     }
 
-    private Pair<List<Document>, Boolean> getChildNodes(NodeRef parentRef, int limit) {
+    private Pair<List<NodeRef>, Boolean> getChildNodes(NodeRef parentRef, int limit) {
         if (parentRef == null) {
-            return Pair.newInstance(Collections.<Document> emptyList(), false);
+            return Pair.newInstance(Collections.<NodeRef> emptyList(), false);
         }
-        return getDocumentService().searchAllDocumentsByParentNodeRef(parentRef, limit);
+        return getDocumentSearchService().searchAllDocumentsByParentRef(parentRef, limit);
     }
 
     @Override
@@ -456,7 +429,7 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
 
     @Override
     public boolean isShowCheckboxes() {
-        if (!new IsAdminOrDocManagerEvaluator().evaluate(getNode())) {
+        if (!BeanHelper.getUserService().isDocumentManager()) {
             return false;
         }
         GeneralService generalService = BeanHelper.getGeneralService();
@@ -490,7 +463,9 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
     }
 
     private void resetModals() {
-        if (propSheet != null) {
+        String bindingName = getPropertySheetBindingName();
+        UIPropertySheet propertySheetComponent = (UIPropertySheet) getJsfBindingHelper().getComponentBinding(bindingName);
+        if (propertySheetComponent != null && !propertySheetComponent.getChildren().isEmpty()) {
             return;
         }
         final FacesContext context = FacesContext.getCurrentInstance();
@@ -500,9 +475,11 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         DocumentLocationModalComponent locationModal = new DocumentLocationModalComponent();
         locationModal.setActionListener(application.createMethodBinding("#{DialogManager.bean.massChangeDocLocation}", UIActions.ACTION_CLASS_ARGS));
         List<UIComponent> modalChildren = ComponentUtil.getChildren(locationModal);
-        propSheet = generatePropSheet();
+        propertySheetComponent = generatePropSheet();
+        getJsfBindingHelper().addBinding(bindingName, propertySheetComponent);
+
         modalChildren.clear();
-        modalChildren.add(propSheet);
+        modalChildren.add(propertySheetComponent);
 
         List<UIComponent> children = ComponentUtil.getChildren(getPanel());
         children.clear();
@@ -526,6 +503,17 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         return sheet;
     }
 
+    @Override
+    public void clean() {
+        super.clean();
+        parentVolume = null;
+        parentCase = null;
+        locationNode = null;
+        config = null;
+        getJsfBindingHelper().removeBinding(getPropertySheetBindingName());
+        selectedDocs = null;
+    }
+
     // END: jsf actions/accessors
 
     // START: getters / setters
@@ -546,11 +534,11 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
 
     @Override
     public UIPropertySheet getPropertySheet() {
-        return propSheet;
+        return (UIPropertySheet) getJsfBindingHelper().getComponentBinding(getPropertySheetBindingName());
     }
 
     public void setPropSheet(UIPropertySheet propSheet) {
-        this.propSheet = propSheet;
+        getJsfBindingHelper().addBinding(getPropertySheetBindingName(), propSheet);
     }
 
     // END: getters / setters

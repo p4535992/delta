@@ -9,8 +9,8 @@ import org.alfresco.service.cmr.search.ResultSet;
 
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
 import ee.webmedia.alfresco.workflow.service.Task;
+import ee.webmedia.alfresco.workflow.service.WorkflowConstantsBean;
 import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
-import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 /**
  * Delete invalid (actually deleted) tasks with non-existing workflow refs.
@@ -18,7 +18,7 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
 public class LogAndDeleteNotExistingWorkflowTasks extends AbstractNodeUpdater {
 
     private WorkflowDbService workflowDbService;
-    private WorkflowService workflowService;
+    private WorkflowConstantsBean workflowConstantsBean;
 
     @Override
     protected boolean usePreviousInputState() {
@@ -44,7 +44,7 @@ public class LogAndDeleteNotExistingWorkflowTasks extends AbstractNodeUpdater {
     @Override
     protected String[] updateNode(NodeRef nodeRef) throws Exception {
         if (!nodeService.exists(nodeRef)) {
-            List<Task> tasksToDelete = workflowDbService.getWorkflowTasks(nodeRef, null, null, workflowService.getTaskPrefixedQNames(), null, null, false);
+            List<Task> tasksToDelete = workflowDbService.getWorkflowTasks(nodeRef, null, null, workflowConstantsBean.getTaskPrefixedQNames(), null, null, false);
             List<String> taskData = new ArrayList<String>();
             for (Task task : tasksToDelete) {
                 taskData.add(task.getNode().toString());
@@ -59,8 +59,12 @@ public class LogAndDeleteNotExistingWorkflowTasks extends AbstractNodeUpdater {
         this.workflowDbService = workflowDbService;
     }
 
-    public void setWorkflowService(WorkflowService workflowService) {
-        this.workflowService = workflowService;
+    public WorkflowConstantsBean getWorkflowConstantsBean() {
+        return workflowConstantsBean;
+    }
+
+    public void setWorkflowConstantsBean(WorkflowConstantsBean workflowConstantsBean) {
+        this.workflowConstantsBean = workflowConstantsBean;
     }
 
 }

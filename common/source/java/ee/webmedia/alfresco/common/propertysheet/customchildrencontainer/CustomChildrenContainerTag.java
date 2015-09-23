@@ -36,7 +36,7 @@ public class CustomChildrenContainerTag extends UIComponentTag {
     protected void setProperties(UIComponent component) {
         super.setProperties(component);
         Application application = FacesContext.getCurrentInstance().getApplication();
-        component.setValueBinding(CustomChildrenContainer.ATTR_PARAM_LIST, application.createValueBinding(parameterList));
+        component.setValueBinding(CustomChildrenContainer.ATTR_PARAMETERS, application.createValueBinding(parameterList));
         component.setValueBinding(CustomChildrenContainer.ATTR_CHILD_GENERATOR, application.createValueBinding(childGenerator));
         if (childrenRendered != null) {
             component.setValueBinding(CustomChildrenContainer.ATTR_CHILDREN_RENDERED, application.createValueBinding(childrenRendered));

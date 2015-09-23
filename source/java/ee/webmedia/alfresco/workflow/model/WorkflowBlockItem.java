@@ -3,199 +3,206 @@ package ee.webmedia.alfresco.workflow.model;
 import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.apache.commons.collections.Transformer;
-import org.apache.commons.collections.comparators.ComparatorChain;
-import org.apache.commons.collections.comparators.NullComparator;
-import org.apache.commons.collections.comparators.TransformingComparator;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateFormatUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.springframework.context.MessageSource;
-import org.springframework.util.Assert;
 import org.springframework.web.util.HtmlUtils;
 
 import ee.webmedia.alfresco.app.AppConstants;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.workflow.service.DueDateHistoryRecord;
-import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.web.DueDateHistoryModalComponent;
 
 public class WorkflowBlockItem implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private static final FastDateFormat DATE_FORMAT = FastDateFormat.getInstance("dd.MM.yyyy");
-    private final Task task;
-    private List<WorkflowBlockItem> groupItems;
-    private String groupName;
-    private int groupWorkflowIndex = -1;
+    private Integer rowNumber;
+    private NodeRef taskNodeRef;
+    private NodeRef workflowNodeRef;
+    private NodeRef compoundWorkflowNodeRef;
+    private String ownerName;
+    private int indexInWorkflow = -1;
     private boolean raisedRights = false;
     private boolean separator = false;
     private boolean zebra = false;
     private boolean isGroupBlockItem = false;
+    private Integer numberOfTasksInGroup;
     private String workflowGroupTasksUrl;
     private MessageSource messageSource;
+    private Date startedDateTime;
+    private Date completedDateTime;
+    private Date dueDate;
+    private String creatorName;
+    private String taskType;
+    private boolean isResponsible;
+    private Date proposedDueDate;
+    private String taskResolution;
+    private String workflowResolution;
+    private String taskOutcome;
+    private String ownerSubstituteName;
+    private String taskComment;
+    private String taskOwnerGroup;
+    private String taskStatus;
+    private List<DueDateHistoryRecord> dueDateHistoryRecords;
 
-    public WorkflowBlockItem(Task task, boolean raisedRights) {
-        this.task = task;
+    private String workflowTypeMessage;
+    private String workflowTypeCoResponsibleMessage;
+    private String emptyTaskValueMessage;
+    private String taskCompletedOutcomeMessage;
+    private String substituteMessage;
+    private String taskOutcomeMessage;
+    private String taskOutcomeWithSubstituteNoteMessage;
+
+    public WorkflowBlockItem(NodeRef compoundWorkflowNodeRef, NodeRef workflowNodeRef, NodeRef taskNodeRef, String ownerName, boolean isGroupBlockItem, boolean raisedRights) {
+        this.compoundWorkflowNodeRef = compoundWorkflowNodeRef;
+        this.workflowNodeRef = workflowNodeRef;
+        this.taskNodeRef = taskNodeRef;
+        this.ownerName = ownerName;
+        this.isGroupBlockItem = isGroupBlockItem;
         this.raisedRights = raisedRights;
-        isGroupBlockItem = false;
-    }
-
-    public WorkflowBlockItem(String groupName, int groupWorkflowIndex, boolean raisedRights) {
-        Assert.isTrue(StringUtils.isNotBlank(groupName));
-        task = null;
-        this.groupName = groupName;
-        this.groupWorkflowIndex = groupWorkflowIndex;
-        this.raisedRights = raisedRights;
-        isGroupBlockItem = true;
-    }
-
-    public WorkflowBlockItem(boolean separatorAndNotZebra) {
-        task = null;
-        separator = separatorAndNotZebra;
-        zebra = !separatorAndNotZebra;
-    }
-
-    public List<WorkflowBlockItem> getGroupItems() {
-        if (groupItems == null) {
-            groupItems = new ArrayList<WorkflowBlockItem>();
-        }
-        return groupItems;
     }
 
     public Date getStartedDateTime() {
-        return !isGroupBlockItem ? task.getStartedDateTime() : null;
+        return !isGroupBlockItem ? startedDateTime : null;
     }
 
     public Date getDueDate() {
-        return !isGroupBlockItem ? task.getDueDate() : null;
+        return !isGroupBlockItem ? dueDate : null;
     }
 
     public String getTaskCreatorName() {
-        return !isGroupBlockItem ? task.getCreatorName() : null;
+        return !isGroupBlockItem ? creatorName : null;
     }
 
     public String getWorkflowType() {
         if (isCoResponsibleTask()) {
-            return MessageUtil.getMessage("assignmentWorkflow_coOwner");
+            if (workflowTypeCoResponsibleMessage == null) {
+                workflowTypeCoResponsibleMessage = BeanHelper.getWorkflowConstantsBean().getAssignmentWorkflowCoOwnerMessage();
+            }
+            return workflowTypeCoResponsibleMessage;
         }
-        Task tmpTask = task != null ? task : groupItems.get(0).getTask();
-        return MessageUtil.getMessage(tmpTask.getParent().getType().getLocalName());
-    }
+        if (workflowTypeMessage == null) {
+            workflowTypeMessage = BeanHelper.getWorkflowConstantsBean().getWorkflowTypeNameByTask(taskType);
+        }
 
-    public Task getTask() {
-        return task;
+        return workflowTypeMessage;
     }
 
     private boolean isCoResponsibleTask() {
-        return task != null ? WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW.equals(task.getParent().getType()) && !task.isResponsible() : false;
+        return WorkflowSpecificModel.Types.ASSIGNMENT_TASK.getLocalName().equals(taskType) && !isResponsible;
     }
 
     public String getTaskOwnerName() {
-        return isGroupBlockItem ? groupName : task.getOwnerName();
+        return ownerName;
     }
 
     public String getTaskResolution() {
         if (isGroupBlockItem) {
             return "";
         }
-        if (task.isType(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK)) {
-            Date proposedDueDate = task.getProposedDueDate();
-            return MessageUtil.getMessage("task_due_date_extension_resolution",
-                    proposedDueDate != null ? DATE_FORMAT.format(proposedDueDate) : MessageUtil.getMessage("task_empty_value"), task.getResolution());
+        if (WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK.getLocalName().equals(taskType)) {
+            if (proposedDueDate == null && emptyTaskValueMessage == null) {
+                emptyTaskValueMessage = BeanHelper.getWorkflowConstantsBean().getEmptyTaskValueMessage();
+            }
+            String taskDue = proposedDueDate != null ? DATE_FORMAT.format(proposedDueDate) : emptyTaskValueMessage;
+            return MessageUtil.getMessage("task_due_date_extension_resolution", taskDue, workflowResolution);
         }
-        return task.getResolution();
+        return taskResolution;
     }
 
     public Date getCompletedDateTime() {
-        return task.getCompletedDateTime();
-    }
-
-    public int getWorkflowIndex() {
-        return isGroupBlockItem ? groupWorkflowIndex : task.getWorkflowIndex();
-    }
-
-    public int getTaskIndexInWorkflow() {
-        Integer taskIndexInWorkflow = task.getTaskIndexInWorkflow();
-        return taskIndexInWorkflow != null ? taskIndexInWorkflow : -1;
+        return completedDateTime;
     }
 
     public String getTaskOutcome() {
         if (isGroupBlockItem) {
             return "";
         }
-        StringBuffer sb = new StringBuffer(200);
-        String outcome = task.getOutcome();
-        if (StringUtils.isNotBlank(outcome) && !outcome.equals(MessageUtil.getMessage("task_completed_outcome"))) {
-            sb.append(HtmlUtils.htmlEscape(outcome));
-        }
-        if (sb.length() > 0) {
-            sb.append(" ");
-        }
-        if (getCompletedDateTime() != null) {
-            sb.append(DateFormatUtils.format(getCompletedDateTime(), "dd.MM.yyyy"));
-        }
-        if (StringUtils.isNotBlank(getTaskComment())) {
-            sb.append(": ").append(WebUtil.escapeHtmlExceptLinks(WebUtil.processLinks(getTaskComment())));
-        }
-        return sb.toString();
-    }
-
-    public String getFirstTaskId() {
-        Task firstTask = getFirstTask();
-        return firstTask != null ? firstTask.getNodeRef().getId() : null;
-    }
-
-    private Task getFirstTask() {
-        if (isGroupBlockItem) {
-            if (groupItems != null && !groupItems.isEmpty()) {
-                return groupItems.get(0).task;
+        if (taskOutcomeMessage == null) {
+            StringBuffer sb = new StringBuffer(200);
+            if (StringUtils.isNotBlank(taskOutcome) && !isTaskCompletedOutcome()) {
+                sb.append(HtmlUtils.htmlEscape(taskOutcome));
             }
-            return null;
+            if (sb.length() > 0) {
+                sb.append(" ");
+            }
+            if (getCompletedDateTime() != null) {
+                sb.append(DateFormatUtils.format(getCompletedDateTime(), "dd.MM.yyyy"));
+            }
+            if (StringUtils.isNotBlank(getTaskComment())) {
+                sb.append(": ").append(WebUtil.escapeHtmlExceptLinks(WebUtil.processLinks(getTaskComment())));
+            }
+            taskOutcomeMessage = sb.toString();
         }
-        return task;
+
+        return taskOutcomeMessage;
+    }
+
+    private boolean isTaskCompletedOutcome() {
+        return taskOutcome.equals(getTaskCompletedMessage());
+    }
+
+    private String getTaskCompletedMessage() {
+        if (taskCompletedOutcomeMessage == null) {
+            taskCompletedOutcomeMessage = MessageUtil.getMessage("task_completed_outcome");
+        }
+        return taskCompletedOutcomeMessage;
     }
 
     public String getCompoundWorkflowId() {
-        Task firstTask = getFirstTask();
-        return firstTask != null ? firstTask.getParent().getParent().getNodeRef().getId() : null;
+        return compoundWorkflowNodeRef.getId();
     }
 
     public String getTaskOutcomeWithSubstituteNote() {
         if (isGroupBlockItem) {
             return "";
         }
-        String substitute = task.getOwnerSubstituteName();
-        String substititeMessage = "";
-        if (StringUtils.isNotBlank(substitute)) {
-            substititeMessage = " ";
-            if (messageSource != null) {
-                substititeMessage += messageSource.getMessage("workflow.task.substitute.summary", new String[] { substitute }, AppConstants.getDefaultLocale());
+
+        if (taskOutcomeWithSubstituteNoteMessage == null) {
+            taskOutcomeWithSubstituteNoteMessage = getTaskOutcome() + getSubstituteMessage();
+        }
+
+        return taskOutcomeWithSubstituteNoteMessage;
+    }
+
+    private String getSubstituteMessage() {
+        if (substituteMessage == null) {
+            if (StringUtils.isNotBlank(ownerSubstituteName)) {
+                String message = " ";
+                if (messageSource != null) {
+                    message += messageSource.getMessage("workflow.task.substitute.summary", new String[] { ownerSubstituteName }, AppConstants.getDefaultLocale());
+                } else {
+                    message += MessageUtil.getMessage("task_substitute_summary", ownerSubstituteName);
+                }
+                substituteMessage = HtmlUtils.htmlEscape(message);
             } else {
-                substititeMessage += MessageUtil.getMessage("task_substitute_summary", substitute);
+                substituteMessage = "";
             }
         }
-        return getTaskOutcome() + HtmlUtils.htmlEscape(substititeMessage);
+
+        return substituteMessage;
     }
 
     public String getTaskComment() {
-        return task.getComment();
+        return taskComment;
     }
 
     public String getTaskStatus() {
-        return !isGroupBlockItem ? task.getStatus() : "";
+        return !isGroupBlockItem ? taskStatus : "";
     }
 
     public String getOwnerGroup() {
-        return task.getOwnerGroup();
+        return taskOwnerGroup;
     }
 
     public boolean isRaisedRights() {
@@ -203,8 +210,7 @@ public class WorkflowBlockItem implements Serializable {
     }
 
     public NodeRef getCompoundWorkflowNodeRef() {
-        Task tmpTask = task != null ? task : groupItems.get(0).getTask();
-        return tmpTask.getParent().getParent().getNodeRef();
+        return compoundWorkflowNodeRef;
     }
 
     public void setSeparator(boolean isSeparator) {
@@ -223,22 +229,15 @@ public class WorkflowBlockItem implements Serializable {
         return zebra;
     }
 
-    public boolean isTask() {
-        return !zebra && !separator;
-    }
-
-    public List<DueDateHistoryRecord> getDueDateHistoryRecords() {
-        if (isGroupBlockItem) {
-            return null;
-        }
-        return task.getDueDateHistoryRecords();
+    public String getSeparatorClass() {
+        return separator ? "workflow-separator" : "";
     }
 
     public String getDueDateHistoryModalId() {
         if (isGroupBlockItem) {
             return "";
         }
-        return DueDateHistoryModalComponent.getTaskExtensionHistoryModalId(task.getNodeRef().getId());
+        return DueDateHistoryModalComponent.getTaskExtensionHistoryModalId(taskNodeRef.getId());
     }
 
     public boolean isShowDueDateHistoryModal() {
@@ -251,8 +250,8 @@ public class WorkflowBlockItem implements Serializable {
             return "";
         }
         StringBuilder sb = new StringBuilder("");
-        List<DueDateHistoryRecord> dueDateHistoryRecords = task.getDueDateHistoryRecords();
-        if (!dueDateHistoryRecords.isEmpty()) {
+        List<DueDateHistoryRecord> dueDateHistoryRecords = getDueDateHistoryRecords();
+        if (CollectionUtils.isNotEmpty(dueDateHistoryRecords)) {
             sb.append("<a href=\"\" onclick=\"alert('");
             DateFormat dateFormat = new SimpleDateFormat("dd.M.yyyy");
             int recordCounter = 0;
@@ -277,7 +276,7 @@ public class WorkflowBlockItem implements Serializable {
     }
 
     public String getGroupName() {
-        return groupName;
+        return taskOwnerGroup;
     }
 
     public String getWorkflowGroupTasksUrl() {
@@ -288,44 +287,111 @@ public class WorkflowBlockItem implements Serializable {
         this.workflowGroupTasksUrl = workflowGroupTasksUrl;
     }
 
-    public int getGroupWorkflowIndex() {
-        return groupWorkflowIndex;
-    }
-
     public void setMessageSource(MessageSource messageSource) {
         this.messageSource = messageSource;
     }
 
-    public static final Comparator<WorkflowBlockItem> COMPARATOR;
-    static {
-        // ComparatorChain is not thread-safe at construction time, but it is thread-safe to perform multiple comparisons after all the setup operations are
-        // complete.
-        ComparatorChain chain = new ComparatorChain();
-        chain.addComparator(new TransformingComparator(new Transformer() {
-            @Override
-            public Object transform(Object input) {
-                return ((WorkflowBlockItem) input).getStartedDateTime();
-            }
-        }, new NullComparator()));
-        chain.addComparator(new TransformingComparator(new Transformer() {
-            @Override
-            public Object transform(Object input) {
-                return ((WorkflowBlockItem) input).getWorkflowIndex();
-            }
-        }, new NullComparator()));
-        // in case of assignment ant order assignment tasks, responsible tasks come first
-        chain.addComparator(new TransformingComparator(new Transformer() {
-            @Override
-            public Object transform(Object input) {
-                return ((WorkflowBlockItem) input).isCoResponsibleTask() ? 1 : 0;
-            }
-        }, new NullComparator()));
-        chain.addComparator(new TransformingComparator(new Transformer() {
-            @Override
-            public Object transform(Object input) {
-                return ((WorkflowBlockItem) input).getTaskIndexInWorkflow();
-            }
-        }, new NullComparator()));
-        COMPARATOR = chain;
+    public List<DueDateHistoryRecord> getDueDateHistoryRecords() {
+        return dueDateHistoryRecords;
+    }
+
+    public void setStartedDateTime(Date startedDateTime) {
+        this.startedDateTime = startedDateTime;
+    }
+
+    public void setCompletedDateTime(Date completedDateTime) {
+        this.completedDateTime = completedDateTime;
+    }
+
+    public void setDueDate(Date dueDate) {
+        this.dueDate = dueDate;
+    }
+
+    public void setCreatorName(String creatorName) {
+        this.creatorName = creatorName;
+    }
+
+    public void setTaskType(String taskType) {
+        this.taskType = taskType;
+    }
+
+    public void setResponsible(boolean isResponsible) {
+        this.isResponsible = isResponsible;
+    }
+
+    public void setProposedDueDate(Date proposedDueDate) {
+        this.proposedDueDate = proposedDueDate;
+    }
+
+    public void setTaskResolution(String taskResolution) {
+        this.taskResolution = taskResolution;
+    }
+
+    public void setTaskOutcome(String taskOutcome) {
+        this.taskOutcome = taskOutcome;
+    }
+
+    public void setTaskComment(String taskComment) {
+        this.taskComment = taskComment;
+    }
+
+    public void setOwnerSubstituteName(String ownerSubstituteName) {
+        this.ownerSubstituteName = ownerSubstituteName;
+    }
+
+    public void setTaskOwnerGroup(String taskOwnerGroup) {
+        this.taskOwnerGroup = taskOwnerGroup;
+    }
+
+    public void setTaskStatus(String taskStatus) {
+        this.taskStatus = taskStatus;
+    }
+
+    public void setDueDateHistoryRecords(List<DueDateHistoryRecord> dueDateHistoryRecords) {
+        this.dueDateHistoryRecords = dueDateHistoryRecords;
+    }
+
+    public void setIndexInWorkflow(int indexInWorkflow) {
+        this.indexInWorkflow = indexInWorkflow;
+    }
+
+    public int getIndexInWorkflow() {
+        return indexInWorkflow;
+    }
+
+    public void setNumberOfTasksInGroup(Integer numberOfTasksInGroup) {
+        this.numberOfTasksInGroup = numberOfTasksInGroup;
+    }
+
+    public Integer getNumberOfTasksInGroup() {
+        return numberOfTasksInGroup;
+    }
+
+    public NodeRef getTaskNodeRef() {
+        return taskNodeRef;
+    }
+
+    public NodeRef getWorkflowNodeRef() {
+        return workflowNodeRef;
+    }
+
+    public void setWorkflowNodeRef(NodeRef workflowNodeRef) {
+        this.workflowNodeRef = workflowNodeRef;
+    }
+
+    public Integer getRowNumber() {
+        return rowNumber;
+    }
+
+    public void setRowNumber(Integer rowNumber) {
+        this.rowNumber = rowNumber;
+    }
+
+    public String getWorkflowResolution() {
+        return workflowResolution;
+    }
+
+    public void setWorkflowResolution(String workflowResolution) {
+        this.workflowResolution = workflowResolution;
     }
 }

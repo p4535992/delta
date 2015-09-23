@@ -71,6 +71,22 @@ public class DocumentDynamic extends DynamicBase implements Cloneable, Comparabl
     public boolean isImapOrDvk() {
         return isDraftOrImapOrDvk() && !isDraft();
     }
+    
+    public boolean isDvk() {
+        return getPropBoolean(DocumentService.TransientProps.TEMP_DOCUMENT_IS_DVK_QNAME);
+    }
+    
+    public void setDvk(boolean isDvk) {
+        setProp(DocumentService.TransientProps.TEMP_DOCUMENT_IS_DVK_QNAME, isDvk);
+    }
+    
+    public boolean isForwardedDecDocument() {
+        return getPropBoolean(DocumentService.TransientProps.TEMP_DOCUMENT_IS_FORWARDED_DEC_DOCUMENT);
+    }
+
+    public void setForwardedDecDocument(boolean forwardedDecDocument) {
+        setProp(DocumentService.TransientProps.TEMP_DOCUMENT_IS_FORWARDED_DEC_DOCUMENT, forwardedDecDocument);
+    }
 
     public boolean isIncomingInvoice() {
         return getPropBoolean(DocumentService.TransientProps.TEMP_DOCUMENT_IS_INCOMING_INVOICE_QNAME);
@@ -169,6 +185,6 @@ public class DocumentDynamic extends DynamicBase implements Cloneable, Comparabl
         } else if (other.getRegNumber() == null) {
             return 1;
         }
-        return AppConstants.DEFAULT_COLLATOR.compare(getRegNumber(), other.getRegNumber());
+        return AppConstants.getNewCollatorInstance().compare(getRegNumber(), other.getRegNumber());
     }
 }

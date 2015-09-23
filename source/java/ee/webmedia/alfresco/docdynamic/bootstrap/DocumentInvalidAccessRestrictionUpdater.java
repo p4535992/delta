@@ -27,12 +27,12 @@ public class DocumentInvalidAccessRestrictionUpdater extends AbstractNodeUpdater
                         SearchUtil.generateTypeQuery(DocumentCommonModel.Types.DOCUMENT),
                         SearchUtil.generateAspectQuery(DocumentCommonModel.Aspects.SEARCHABLE)
                         ),
-                SearchUtil.joinQueryPartsOr(
-                        SearchUtil.generateStringExactQuery(AccessRestriction.OPEN.getValueName(), DocumentCommonModel.Props.ACCESS_RESTRICTION),
-                        SearchUtil.generateStringExactQuery(AccessRestriction.AK.getValueName(), DocumentCommonModel.Props.ACCESS_RESTRICTION),
-                        SearchUtil.generateStringExactQuery(AccessRestriction.INTERNAL.getValueName(), DocumentCommonModel.Props.ACCESS_RESTRICTION),
-                        SearchUtil.generateStringExactQuery(AccessRestriction.LIMITED.getValueName(), DocumentCommonModel.Props.ACCESS_RESTRICTION)
-                        )
+                        SearchUtil.joinQueryPartsOr(
+                                SearchUtil.generateStringExactQuery(AccessRestriction.OPEN.getValueName(), DocumentCommonModel.Props.ACCESS_RESTRICTION),
+                                SearchUtil.generateStringExactQuery(AccessRestriction.AK.getValueName(), DocumentCommonModel.Props.ACCESS_RESTRICTION),
+                                SearchUtil.generateStringExactQuery(AccessRestriction.INTERNAL.getValueName(), DocumentCommonModel.Props.ACCESS_RESTRICTION),
+                                SearchUtil.generateStringExactQuery(AccessRestriction.LIMITED.getValueName(), DocumentCommonModel.Props.ACCESS_RESTRICTION)
+                                )
                 );
         List<ResultSet> resultSets = new ArrayList<ResultSet>();
         for (StoreRef storeRef : generalService.getAllStoreRefsWithTrashCan()) {
@@ -45,7 +45,7 @@ public class DocumentInvalidAccessRestrictionUpdater extends AbstractNodeUpdater
     protected String[] updateNode(NodeRef nodeRef) throws Exception {
         QName type = nodeService.getType(nodeRef);
         if (!DocumentCommonModel.Types.DOCUMENT.equals(type)) {
-            return new String[] { "isNotDocumentType", type.toPrefixString(serviceRegistry.getNamespaceService()) };
+            return new String[] { "isNotDocumentType", type.toString() };
         }
         Map<QName, Serializable> props = nodeService.getProperties(nodeRef);
         String action;
@@ -69,12 +69,12 @@ public class DocumentInvalidAccessRestrictionUpdater extends AbstractNodeUpdater
             action = "notValidAndUnchanged";
         }
         return new String[] { action,
-                type.toPrefixString(serviceRegistry.getNamespaceService()),
+                type.toString(),
                 accessRestriction,
                 newAccessRestriction,
                 regDateTime == null ? null : dateFormat.format(regDateTime),
-                regNumber,
-                docName };
+                        regNumber,
+                        docName };
     }
 
     @Override

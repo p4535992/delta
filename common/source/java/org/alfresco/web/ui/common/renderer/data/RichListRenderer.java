@@ -34,7 +34,10 @@ import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 
+import ee.webmedia.alfresco.common.richlist.LazyListDataProvider;
+import ee.webmedia.alfresco.utils.ComponentUtil;
 import org.alfresco.web.ui.common.Utils;
+import org.alfresco.web.ui.common.component.UIPanel;
 import org.alfresco.web.ui.common.component.data.UIColumn;
 import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.alfresco.web.ui.common.renderer.BaseRenderer;
@@ -111,7 +114,7 @@ public class RichListRenderer extends BaseRenderer
          // prepare the component current row against the current page settings
          //NB! This has to be here (NOT at the beginning of the method) because otherwise the row index is changed and column sorting does not work
          richList.bind();
-         
+
          if (richList.isDataAvailable() == true)
          {
             while (richList.isDataAvailable() == true)

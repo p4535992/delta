@@ -39,7 +39,7 @@
 
    <%-- Main List --%>
    <a:richList id="documentList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-      width="100%" value="#{CompoundWorkflowAssocListDialog.documents}" var="r" binding="#{CompoundWorkflowAssocListDialog.richList}" refreshOnBind="true" >
+      width="100%" value="#{CompoundWorkflowAssocListDialog.documentList}" var="r" binding="#{CompoundWorkflowAssocListDialog.richList}" refreshOnBind="true" >
       
       <%-- Main document checkbox --%>
       <a:column id="col0" primary="true" >
@@ -146,7 +146,7 @@
          <f:facet name="header">
             <h:outputText id="col10-header" value="#{msg.document_allFiles}" styleClass="header" />
          </f:facet>
-          <wm:customChildrenContainer id="compound-workflow-document-files" childGenerator="#{DocumentListDialog.documentRowFileGenerator}" parameterList="#{r.files}"/>
+          <wm:customChildrenContainer id="compound-workflow-document-files" childGenerator="#{DocumentListDialog.documentRowFileGenerator}" parameterList="#{r}"/>
       </a:column>
       
       <a:column id="col-assoc-actions" actions="true" styleClass="actions-column2 #{r.cssStyleClass}">

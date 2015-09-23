@@ -55,6 +55,7 @@ import org.alfresco.web.bean.generator.BaseComponentGenerator;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.privilege.model.Privilege;
+import ee.webmedia.alfresco.utils.TextUtil;
 
 /**
  * Lighweight client side representation of a node held in the repository.
@@ -123,9 +124,17 @@ public class Node implements Serializable, NamespacePrefixResolverProvider
      */
     public Map<String, Object> getProperties()
     {
+        return getProperties(null, null);
+    }
+
+    /**
+     * @return All the properties known about this node.
+     */
+    public Map<String, Object> getProperties(Map<Long, QName> propertyTypes, Set<QName> propsToLoad)
+    {
         if (propsRetrieved == false)
         {
-            Map<QName, Serializable> props = getServiceRegistry().getNodeService().getProperties(nodeRef);
+            Map<QName, Serializable> props = getServiceRegistry().getNodeService().getProperties(nodeRef, propsToLoad, propertyTypes);
 
             for (QName qname : props.keySet())
             {
@@ -407,7 +416,7 @@ public class Node implements Serializable, NamespacePrefixResolverProvider
     private Set<Privilege> getCachedPermissions() {
         String currentUser = AuthenticationUtil.getRunAsUser();
         if (permissions == null || !currentUser.equals(permissionsUsername)) {
-            permissions = BeanHelper.getPrivilegeService().getAllCurrentUserPermissions(nodeRef, type);
+            permissions = BeanHelper.getPrivilegeService().getAllCurrentUserPermissions(nodeRef, type, properties);
             permissionsUsername = currentUser;
         }
         return permissions;
@@ -428,6 +437,18 @@ public class Node implements Serializable, NamespacePrefixResolverProvider
     /** Clear permissions cache - for example to validate that permission is not lost meanwhile */
     public void clearPermissionsCache() {
         permissions = null;
+    }
+
+    /** Print currently loaded permissions as list */
+    public String printLoadedPermissions() {
+        if (permissions == null) {
+            return permissionsUsername;
+        }
+        List<String> privilegeStrList = new ArrayList<>();
+        for (Privilege privilege : permissions) {
+            privilegeStrList.add(privilege.name());
+        }
+        return permissionsUsername + " privileges=" + TextUtil.joinNonBlankStringsWithComma(privilegeStrList);
     }
 
     /**

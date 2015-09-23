@@ -43,6 +43,7 @@ public abstract class BaseObject extends NodeBaseVO implements Cloneable {
      * when we only have node (for example in {@link ActionEvaluator#evaluate(org.alfresco.web.bean.repository.Node)} of the object
      */
     private static final QName PARENT_NODE_REF = RepoUtil.createTransientProp("parentNodeRef");
+    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(BaseObject.class);
 
     // Currently only node type, properties and children (child-assocs) are supported
     // Also, when creating a new object in memory, default properties and aspects are loaded from dictionaryService
@@ -86,7 +87,7 @@ public abstract class BaseObject extends NodeBaseVO implements Cloneable {
         }
     }
 
-    private <P extends BaseObject> void setParent(P parent) {
+    protected <P extends BaseObject> void setParent(P parent) {
         this.parent = parent;
     }
 
@@ -328,6 +329,11 @@ public abstract class BaseObject extends NodeBaseVO implements Cloneable {
             return add(getModifiableList().size());
         }
 
+        @Override
+        public void add(int index, T child) {
+            getModifiableList().add(index, child);
+        }
+
         public <S extends T> S add(Class<S> subClazz) {
             return add(getModifiableList().size(), subClazz);
         }
@@ -549,8 +555,11 @@ public abstract class BaseObject extends NodeBaseVO implements Cloneable {
 
     @Override
     public String toString() {
-        return WmNode.toString(this) + " [\n  node=" + StringUtils.replace(getNode().toString(), "\n", "\n  ") + "\n  parent=" + WmNode.toString(parent) + "\n  parentNodeRef="
-                + parentNodeRef + "\n  children=" + WmNode.toString(children) + "\n  removedChildren=" + WmNode.toString(removedChildren) + additionalToString() + "\n]";
+        if (LOG.isTraceEnabled()) {
+            return WmNode.toString(this) + " [\n  node=" + StringUtils.replace(getNode().toString(), "\n", "\n  ") + "\n  parent=" + WmNode.toString(parent) + "\n  parentNodeRef="
+                    + parentNodeRef + "\n  children=" + WmNode.toString(children) + "\n  removedChildren=" + WmNode.toString(removedChildren) + additionalToString() + "\n]";
+        }
+        return WmNode.toString(this) + "[\n nodeRef=" + getNodeRef() + " \n parentNodeRef=" + parentNodeRef + "]";
     }
 
     @Override

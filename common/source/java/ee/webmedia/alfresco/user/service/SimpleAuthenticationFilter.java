@@ -95,7 +95,7 @@ public class SimpleAuthenticationFilter extends AuthenticationFilter {
             NodeService nodeService = BeanHelper.getNodeService();
             String firstName = (String) nodeService.getProperty(personRef, ContentModel.PROP_FIRSTNAME);
             String lastName = (String) nodeService.getProperty(personRef, ContentModel.PROP_LASTNAME);
-            userFullName = UserUtil.getPersonFullName(userName, firstName, lastName, false);
+            userFullName = UserUtil.getPersonFullName(userName, firstName, lastName);
         }
         logService.addLogEntry(LogEntry.create(LogObject.LOG_IN_OUT, userName, userFullName, null, "applog_login_success"));
     }

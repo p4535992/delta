@@ -9,9 +9,12 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.alfresco.i18n.I18NUtil;
@@ -33,11 +36,13 @@ import org.alfresco.service.cmr.search.SearchParameters;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
+import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.analysis.Token;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.search.BooleanQuery;
 
+import ee.webmedia.alfresco.common.service.BulkLoadNodeService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.parameters.model.Parameters;
@@ -54,6 +59,7 @@ public abstract class AbstractSearchServiceImpl {
     protected SearchService searchService;
     protected ParametersService parametersService;
     protected LuceneConfig config;
+    protected BulkLoadNodeService bulkLoadNodeService;
 
     protected LuceneAnalyser luceneAnalyser;
 
@@ -75,7 +81,6 @@ public abstract class AbstractSearchServiceImpl {
     public String generateStringWordsWildcardQuery(String value, boolean leftWildcard, boolean rightWildcard, int minTextLength, QName... documentPropNames) {
         return SearchUtil.generateStringWordsWildcardQuery(parseQuickSearchWords(value, minTextLength), leftWildcard, rightWildcard, documentPropNames);
     }
-
 
     /**
      * Default is without left wildcard and with right wildcard.
@@ -162,12 +167,26 @@ public abstract class AbstractSearchServiceImpl {
     }
 
     protected Pair<List<NodeRef>, Boolean> searchNodes(String query, int limit, String queryName, Collection<StoreRef> storeRefs) {
+        return searchNodes(query, limit, queryName, storeRefs, true);
+    }
+
+    protected Pair<List<NodeRef>, Boolean> searchNodes(String query, int limit, String queryName, Collection<StoreRef> storeRefs, boolean checkExists) {
         return searchGeneralImplWithoutSort(query, limit, queryName, new SearchCallback<NodeRef>() {
             @Override
             public NodeRef addResult(ResultSetRow row) {
                 return row.getNodeRef();
             }
-        }, storeRefs);
+        }, storeRefs, checkExists);
+    }
+
+    protected <T> Pair<List<T>, Boolean> searchProperty(String query, int limit, String queryName, final QName property, final Class<T> propertyClass) {
+        Pair<List<NodeRef>, Boolean> nodeRefs = searchNodes(query, limit, queryName, null, false);
+        Map<NodeRef, Node> propsMap = bulkLoadNodeService.loadNodes(nodeRefs.getFirst(), new HashSet<>(Arrays.asList(property)));
+        List<T> properties = new ArrayList<>();
+        for (Node value : propsMap.values()) {
+            properties.add((T) value.getProperties().get(property));
+        }
+        return Pair.newInstance(properties, nodeRefs.getSecond());
     }
 
     protected interface SearchCallback<E> {
@@ -180,13 +199,13 @@ public abstract class AbstractSearchServiceImpl {
 
     protected <E extends Comparable<? super E>> Pair<List<E>, Boolean> searchGeneralImpl( //
             String query, int limit, String queryName, SearchCallback<E> callback, Collection<StoreRef> storeRefs) {
-        final Pair<List<E>, Boolean> extractResults = searchGeneralImplWithoutSort(query, limit, queryName, callback, storeRefs);
+        final Pair<List<E>, Boolean> extractResults = searchGeneralImplWithoutSort(query, limit, queryName, callback, storeRefs, true);
         Collections.sort(extractResults.getFirst());
         return extractResults;
     }
 
     protected <E> Pair<List<E>, Boolean> searchGeneralImplWithoutSort( //
-            String query, int limit, String queryName, SearchCallback<E> callback, Collection<StoreRef> storeRefs) {
+            String query, int limit, String queryName, SearchCallback<E> callback, Collection<StoreRef> storeRefs, boolean checkExists) {
         if (StringUtils.isBlank(query)) {
             return new Pair<List<E>, Boolean>(new ArrayList<E>(), false);
         }
@@ -203,13 +222,12 @@ public abstract class AbstractSearchServiceImpl {
         } else {
             resultSets = doSearches(query, limit, queryName, storeRefs);
         }
-        final Pair<List<E>, Boolean> extractResults = extractResults(callback, startTime, resultSets, limit);
+        final Pair<List<E>, Boolean> extractResults = extractResults(callback, startTime, resultSets, limit, checkExists);
         return extractResults;
     }
 
-    private <E> Pair<List<E>, Boolean> extractResults(SearchCallback<E> callback, long startTime, final List<ResultSet> resultSets, int limit) {
+    private <E> Pair<List<E>, Boolean> extractResults(SearchCallback<E> callback, long startTime, final List<ResultSet> resultSets, int limit, boolean checkExists) {
         try {
-            List<E> result = new ArrayList<E>();
             boolean resultsGotLimited = false;
             if (log.isDebugEnabled()) {
                 long resultsCount = 0;
@@ -220,22 +238,37 @@ public abstract class AbstractSearchServiceImpl {
                 startTime = System.currentTimeMillis();
             }
 
+            Map<NodeRef, E> resultMap = new HashMap<>();
             FILL_RESULT: for (ResultSet resultSet : resultSets) {
                 for (ResultSetRow row : resultSet) {
-                    if (!nodeService.exists(row.getNodeRef())) {
-                        continue;
-                    }
+                    NodeRef nodeRef = row.getNodeRef();
                     E item = callback.addResult(row);
                     if (item == null) {
                         continue;
                     }
-                    if (limit > -1 && result.size() + 1 > limit) {
+                    if (limit > -1 && resultMap.size() + 1 > limit) {
                         resultsGotLimited = true;
                         break FILL_RESULT;
                     }
-                    result.add(item);
+                    resultMap.put(nodeRef, item);
                 }
             }
+            if (checkExists && !resultMap.isEmpty()) {
+                List<NodeRef> nodeRefsToRemove = new ArrayList<>();
+                List<NodeRef> existingNodeRefs = BeanHelper.getBulkLoadNodeService().loadNodeRefs(new ArrayList<>(resultMap.keySet()));
+                // In case of ~700k nodeRefs, calling ArrayList.contains() on each of them will take forever (dont't have exact estimate but easily over 15 min)
+                // but calling HashSet.contains() will take about ~500ms
+                Collection<NodeRef> existing = existingNodeRefs.size() > 10000 ? new HashSet<>(existingNodeRefs) : existingNodeRefs;
+                for (NodeRef nodeRefToCheck : resultMap.keySet()) {
+                    if (!existing.contains(nodeRefToCheck)) {
+                        nodeRefsToRemove.add(nodeRefToCheck);
+                    }
+                }
+                for (NodeRef nodeRefToRemove : nodeRefsToRemove) {
+                    resultMap.remove(nodeRefToRemove);
+                }
+            }
+            List<E> result = new ArrayList<>(resultMap.values());
 
             if (log.isDebugEnabled()) {
                 log.debug("Results construction time " + (System.currentTimeMillis() - startTime) + " ms, final results: " + result.size());
@@ -254,7 +287,7 @@ public abstract class AbstractSearchServiceImpl {
 
     /**
      * Sets up search parameters and queries
-     * 
+     *
      * @param query
      * @param limited if true, only 100 first results are returned
      * @return query resultset
@@ -521,7 +554,7 @@ public abstract class AbstractSearchServiceImpl {
         }
 
         Collections.sort(list, new Comparator<org.apache.lucene.analysis.Token>()
-        {
+                {
 
             @Override
             public int compare(Token o1, Token o2)
@@ -533,7 +566,7 @@ public abstract class AbstractSearchServiceImpl {
                 }
                 return o2.getPositionIncrement() - o1.getPositionIncrement();
             }
-        });
+                });
 
         // Combined * and ? based strings - should redo the tokeniser
 
@@ -693,7 +726,7 @@ public abstract class AbstractSearchServiceImpl {
         // reorder by start position and increment
 
         Collections.sort(fixed, new Comparator<org.apache.lucene.analysis.Token>()
-        {
+                {
 
             @Override
             public int compare(Token o1, Token o2)
@@ -705,8 +738,12 @@ public abstract class AbstractSearchServiceImpl {
                 }
                 return o2.getPositionIncrement() - o1.getPositionIncrement();
             }
-        });
+                });
         return fixed;
+    }
+
+    public void setBulkLoadNodeService(BulkLoadNodeService bulkLoadNodeService) {
+        this.bulkLoadNodeService = bulkLoadNodeService;
     }
 
 }
