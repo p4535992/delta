@@ -527,6 +527,10 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
         this.defaultFilterIndex = defaultFilterIndex;
         filterIndex = defaultFilterIndex;
     }
+    
+    public void setFilters(SelectItem[] filters) {
+    	this.filters = filters;
+    }
 
     /**
      * @return Returns the addButtonLabel.

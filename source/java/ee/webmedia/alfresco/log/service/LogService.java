@@ -9,6 +9,7 @@ import ee.webmedia.alfresco.filter.service.FilterService;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogFilter;
 import ee.webmedia.alfresco.log.model.LogSetup;
+import ee.webmedia.alfresco.log.model.LoggedNotification;
 
 /**
  * Delta business logic specific logging service.
@@ -78,5 +79,17 @@ public interface LogService extends FilterService {
     void clearPastIdSuffixCache();
 
     long retrieveLogSequenceNextval();
+    
+    long retrieveNotificationLogSequenceNextval();
+    
+    /**
+     * Register notification and build its user groups
+     * @param userGroups names, separated by ;; - group1;;group2;;group3 etc
+     * @return notificationGroupLogId
+     */
+    void buildLogUserGroups(long notificationLogId, String userGroups);
 
+    void confirmNotificationSending(Long notificationId);
+    
+    LoggedNotification getLoggedNotification(long notificationLogId, String userGroup);
 }

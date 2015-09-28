@@ -47,6 +47,8 @@ import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGener
 import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.model.DocumentChildModel;
 import ee.webmedia.alfresco.document.model.Document;
+import ee.webmedia.alfresco.log.model.LoggedNotificatedUser;
+import ee.webmedia.alfresco.log.model.LoggedNotification;
 import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.utils.ComparableTransformer;
@@ -107,7 +109,8 @@ public class PrintTableServlet extends HttpServlet {
         /** Used only internally for printing compound workflow object block */
         COMPOUND_WORKFLOW_OBJECT_BLOCK,
         /** Used only internally for printing compound workflow url block */
-        COMPOUND_WORKFLOW_URL_BLOCK
+        COMPOUND_WORKFLOW_URL_BLOCK,
+        NOTIFICATION_LOG
     }
 
     @Override
@@ -124,6 +127,8 @@ public class PrintTableServlet extends HttpServlet {
 
             if (TableMode.COMPOUND_WORKFLOW == mode) {
                 printCompoundWorkflow(request, mode, out, pageTag);
+            } else if (TableMode.NOTIFICATION_LOG == mode) {
+            	printNotificationLogGroup(request,out,pageTag);
             } else {
                 pageTag.setTitle(getPageTitle(mode));
                 pageTag.doStartTag(request, out, request.getSession());
@@ -147,6 +152,40 @@ public class PrintTableServlet extends HttpServlet {
             throw new RuntimeException("Failed", e);
         }
     }
+    
+	private void printNotificationLogGroup(HttpServletRequest request, PrintWriter out, PageTag pageTag) throws JspException {
+		String userGroup = request.getParameter("userGroup");
+		String pageTitle = MessageUtil.getMessage("notificationLog_header", userGroup);
+
+		Long notificationLogId = (Long.valueOf(request.getParameter("notificationLogId")));
+		String userGroupHash = request.getParameter("userGroupHash");
+		LoggedNotification loggedNotification = BeanHelper.getLogService().getLoggedNotification(notificationLogId, userGroupHash);
+
+		pageTag.setTitle(pageTitle);
+		pageTag.doStartTag(request, out, request.getSession());
+		String outerDiv = "<div class='panel view-mode' style='padding: 10px; word-wrap: break-word;' id='metadata-panel'>";
+		out.println(outerDiv + "<h2 class='title-icon'>" + pageTitle + "</h2></div>");
+		String formattedTimeStamp = loggedNotification.getNotificationDate() == null ? null : dateTimeFormatSec.format(loggedNotification.getNotificationDate());
+		renderTableStart(out, TableMode.NOTIFICATION_LOG, true, formattedTimeStamp);
+
+		List<Row> rows = new ArrayList<PrintTableServlet.Row>();
+		for (LoggedNotificatedUser user : loggedNotification.getNotificatedUsers()) {
+			List<String> cells = new ArrayList<String>();
+			cells.add(user.getLastName());
+			cells.add(user.getFisrtName());
+			cells.add(user.getEmail());
+			cells.add(user.getIdCode());
+			Row row = new Row();
+			row.setCells(cells);
+			rows.add(row);
+		}
+
+		if (!rows.isEmpty()) {
+			renderRows(out, rows);
+		}
+		renderTableEnd(out);
+		renderTableEnd(out);
+	}
 
     public void printCompoundWorkflow(HttpServletRequest request, TableMode mode, PrintWriter out, PageTag pageTag) throws JspException {
         CompoundWorkflow compoundWorkflow = BeanHelper.getCompoundWorkflowDialog().getWorkflow();
@@ -286,16 +325,18 @@ public class PrintTableServlet extends HttpServlet {
             return MessageUtil.getMessage("workflow_group_tasks", parameters);
         case COMPOUND_WORKFLOW:
             return MessageUtil.getMessage("compoundWorkflow_table_title", parameters);
+        case NOTIFICATION_LOG:
+        		return MessageUtil.getMessage(parameters[0] == null ?  "notificationLog_table_title_fail" : "notificationLog_table_title", parameters);
         }
         return "";
     }
 
-    private void renderTableStart(PrintWriter out, TableMode mode, boolean renderTitle) {
+    private void renderTableStart(PrintWriter out, TableMode mode, boolean renderTitle, Object... parameters) {
         StringBuilder sb = new StringBuilder(
                 "<div class='panel view-mode' style='padding: 10px;' id='metadata-panel'>"
                         +
                         "<div class='panel-wrapper'>"
-                        + (renderTitle ? "<h3>" + getPageTitle(mode) + "&nbsp;&nbsp;</h3>" : "")
+                        + (renderTitle ? "<h3>" + getPageTitle(mode, parameters) + "&nbsp;&nbsp;</h3>" : "")
                         + "<div class='panel-border' id='metadata-panel-panel-border'><div id='dialog:dialog-body:doc-metatada_container'><table width='100%' cellspacing='0' cellpadding='0'><thead><tr>\n");
 
         List<String> columnNames = getColumnNames(mode);
@@ -341,6 +382,8 @@ public class PrintTableServlet extends HttpServlet {
         } else if (TableMode.COMPOUND_WORKFLOW_URL_BLOCK == mode) {
             return Arrays.asList("compoundWorkflow_relatedUrl_url", "compoundWorkflow_relatedUrl_urlComment", "compoundWorkflow_relatedUrl_urlCreatorName",
                     "compoundWorkflow_relatedUrl_created");
+        } else if (TableMode.NOTIFICATION_LOG == mode) {
+          return Arrays.asList("notificationLog_lastName", "notificationLog_firstName", "notificationLog_email", "notificationLog_idCode");
         }
 
         return Collections.<String> emptyList();

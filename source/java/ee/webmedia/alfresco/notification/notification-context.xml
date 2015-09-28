@@ -43,7 +43,7 @@
       <property name="logService" ref="LogService" />
       <property name="dispositionNotificationUsergroup" value="${conf.disposition-notification.usergroup}" />
       <property name="applicationConstantsBean" ref="applicationConstantsBean"/>
-      <property name="bulkLoadNodeService" ref="BulkLoadNodeService" />
+      <property name="bulkLoadNodeService" ref="BulkLoadNodeService" />      
    </bean>
 
    <bean id="NotificationService" class="org.springframework.aop.framework.ProxyFactoryBean">

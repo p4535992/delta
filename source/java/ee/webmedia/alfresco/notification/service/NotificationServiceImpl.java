@@ -5,6 +5,8 @@ import static ee.webmedia.alfresco.utils.RepoUtil.sliceList;
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
 
 import java.io.Serializable;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -34,9 +36,11 @@ import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.MD5;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.joda.time.LocalDate;
@@ -520,16 +524,31 @@ public class NotificationServiceImpl implements NotificationService {
         addTaskIndependentCompoundWorkflowNotification(task.getParent().getParent(), notifications, usernamesToCheck, NotificationModel.NotificationType.TASK_CANCELLED_ORDERED);
         return notifications;
     }
-
+    
     @Override
-    public void sendForInformationNotification(final List<Authority> authorities, final Node docNode, final String emailTemplate, final String subject, final String content) {
-        generalService.runOnBackground(new RunAsWork<Void>() {
+    public Long sendForInformationNotification(final List<Authority> authorities, final Node docNode, final String emailTemplate, final String subject, final String content) {
+    	final StringBuilder groupAuthorityNames = new StringBuilder();
 
+    	for (Authority authority : authorities) {
+    		if (authority.isGroup()) {
+    			if (groupAuthorityNames.length() > 0) {
+    				groupAuthorityNames.append(";-;");
+    			}
+    			groupAuthorityNames.append(authority.getName());
+     			groupAuthorityNames.append(";+;");
+     			groupAuthorityNames.append(MD5.Digest(authority.getName().getBytes()));
+    		}
+    	}
+      final String userGroups = groupAuthorityNames.toString();
+    	final boolean groupNotiication = !userGroups.isEmpty();
+    	final Long nootificationLogId = logService.retrieveNotificationLogSequenceNextval();
+      generalService.runOnBackground(new RunAsWork<Void>() {
+        	
             @Override
             public Void doWork() throws Exception {
-                Set<Pair<String, String>> recipientEmailsAndNames = new HashSet<Pair<String, String>>();
-                for (Authority authority : authorities) {
-                    if (authority.isGroup()) {
+                Set<Pair<String, String>> recipientEmailsAndNames = new HashSet<Pair<String, String>>();                
+                for (Authority authority : authorities) {                	
+                    if (authority.isGroup()) {                    	
                         for (String username : userService.getUserNamesInGroup(authority.getAuthority())) {
                             addUserEmail(recipientEmailsAndNames, username);
                         }
@@ -537,7 +556,12 @@ public class NotificationServiceImpl implements NotificationService {
                         addUserEmail(recipientEmailsAndNames, authority.getAuthority());
                     }
                 }
-                if (!recipientEmailsAndNames.isEmpty()) {
+                
+                if (groupNotiication) {
+                	logService.buildLogUserGroups(nootificationLogId, userGroups);
+                }
+                
+                if (!recipientEmailsAndNames.isEmpty() || true) {//just for test
                     List<String> recipientEmails = new ArrayList<String>();
                     List<String> recipientNames = new ArrayList<String>();
                     for (Pair<String, String> pair : recipientEmailsAndNames) {
@@ -554,6 +578,9 @@ public class NotificationServiceImpl implements NotificationService {
                         NodeRef docRef = docNode.getNodeRef();
                         emailService.sendEmail(notification.getToEmails(), notification.getToNames(), null, null, notification.getSenderEmail(), notification.getSubject(),
                                 content, true, docRef, null);
+                        if (groupNotiication) {
+                        	logService.confirmNotificationSending(nootificationLogId);
+                        }                        
                     } catch (EmailException e) {
                         log.error("Failed to send email notification " + notification, e);
                     }
@@ -561,6 +588,7 @@ public class NotificationServiceImpl implements NotificationService {
                 return null;
             }
         }, "sendDocumentForInformation", true);
+        return nootificationLogId;
     }
 
     public void addUserEmail(Set<Pair<String, String>> emailsAndNames, String username) {
@@ -1025,9 +1053,9 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     /**
-     * // assignmentTask -> assignmentTaskCompletedByCoResponsible-> workflow block -> task[aspect responsible: active == true] ownerId (Kas saab mitu aktiivset
-     * täitjat olla? Ei)
-     */
+	* // assignmentTask -> assignmentTaskCompletedByCoResponsible-> workflow block -> task[aspect responsible: active == true] ownerId (Kas saab mitu aktiivset
+	* täitjat olla? Ei)
+	*/
     private List<Notification> processAssignmentTask(Task task, List<Notification> notifications) {
         Workflow workflow = task.getParent();
 

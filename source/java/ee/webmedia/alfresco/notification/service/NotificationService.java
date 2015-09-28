@@ -83,7 +83,7 @@ public interface NotificationService {
 
     void notifyCompoundWorkflowStoppedAutomatically(Workflow workflow, NotificationCache notificationCache);
 
-    void sendForInformationNotification(List<Authority> authorities, Node docNode, String emailTemplate, String subject, String content);
+    Long sendForInformationNotification(List<Authority> authorities, Node docNode, String emailTemplate, String subject, String content);
 
     void addNotificationAssocForCurrentUser(NodeRef targetNodeRef, QName assocQName, QName aspectQName);
 

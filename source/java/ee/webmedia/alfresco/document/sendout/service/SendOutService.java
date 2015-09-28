@@ -82,7 +82,7 @@ public interface SendOutService {
 
     boolean hasDocumentSendInfos(NodeRef document);
 
-    void sendForInformation(List<String> authorityIds, Node docNode, String emailTemplate, String subject, String content);
+    Long sendForInformation(List<String> authorityIds, Node docNode, String emailTemplate, String subject, String content);
 
     Date getEarliestSendInfoDate(NodeRef docRef);
 

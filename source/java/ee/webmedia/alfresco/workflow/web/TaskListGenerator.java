@@ -23,6 +23,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -46,6 +47,7 @@ import javax.faces.el.MethodBinding;
 import javax.faces.el.ValueBinding;
 import javax.faces.event.ActionEvent;
 import javax.faces.event.ValueChangeEvent;
+import javax.faces.model.SelectItem;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
@@ -65,6 +67,8 @@ import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
+import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.common.propertysheet.classificatorselector.ValueBindingsWrapper;
 import ee.webmedia.alfresco.common.propertysheet.datepicker.DateTimePicker;
 import ee.webmedia.alfresco.common.propertysheet.datepicker.DateTimePickerGenerator;
@@ -75,6 +79,7 @@ import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.propertysheet.search.SearchRenderer;
 import ee.webmedia.alfresco.common.propertysheet.workflow.TaskListContainer;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.ComponentUtil;
@@ -1009,7 +1014,13 @@ public class TaskListGenerator extends BaseComponentGenerator {
             picker.setFilterByTaskOwnerStructUnit(!searchType.equals(TaskOwnerSearchType.TASK_OWNER_SEARCH_REVIEW)
                     || !BeanHelper.getWorkflowConstantsBean().isReviewToOtherOrgEnabled()
                     || !info.independentWorkflow);
-            picker.setValueBinding("filters", createPickerValueBinding(application, searchType));
+
+            SelectItem[] filters = getFilters(info.workflowBlockType, searchType);
+            if (filters == null) {
+              picker.setValueBinding("filters", createPickerValueBinding(application, searchType, info));
+            } else {
+            	picker.setFilters(filters);
+            }
         }
         return picker;
     }
@@ -1031,7 +1042,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
         picker.setActionListener(application.createMethodBinding(searchProcessingB, UIActions.ACTION_CLASS_ARGS));
     }
 
-    protected ValueBinding createPickerValueBinding(Application application, TaskOwnerSearchType searchType) {
+    protected ValueBinding createPickerValueBinding(Application application, TaskOwnerSearchType searchType, TaskListInfo info) {
         if (TaskOwnerSearchType.TASK_OWNER_SEARCH_RESPONSIBLE.equals(searchType)) {
             return application.createValueBinding("#{OwnerSearchBean.responsibleOwnerSearchFilters}");
         } else if (TaskOwnerSearchType.TASK_OWNER_SEARCH_REVIEW.equals(searchType)) {
@@ -1103,6 +1114,86 @@ public class TaskListGenerator extends BaseComponentGenerator {
         return row;
     }
 
+	private SelectItem[] getFilters(QName workflowBlockType, TaskOwnerSearchType taskOwnerSearchType) {
+		if (workflowBlockType.isMatch(WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW) || workflowBlockType.isMatch(WorkflowSpecificModel.Types.SIGNATURE_TASK)) {
+			return getFilters("signatureWorkflowRecipient");
+		}
+
+		if (workflowBlockType.isMatch(WorkflowSpecificModel.Types.OPINION_WORKFLOW) || workflowBlockType.isMatch(WorkflowSpecificModel.Types.OPINION_TASK)) {
+			return getFilters("opinionWorkflowRecipient");
+		}
+
+		if (workflowBlockType.isMatch(WorkflowSpecificModel.Types.REVIEW_WORKFLOW) || workflowBlockType.isMatch(WorkflowSpecificModel.Types.REVIEW_TASK)) {
+			return getFilters("reviewWorkflowRecipient");
+		}
+
+		if (workflowBlockType.isMatch(WorkflowSpecificModel.Types.INFORMATION_WORKFLOW) || workflowBlockType.isMatch(WorkflowSpecificModel.Types.INFORMATION_TASK)) {
+			return getFilters("informationWorkflowRecipient");
+		}
+
+		if (workflowBlockType.isMatch(WorkflowSpecificModel.Types.CONFIRMATION_WORKFLOW) || workflowBlockType.isMatch(WorkflowSpecificModel.Types.CONFIRMATION_TASK)) {
+			return getFilters("confirmationWorkflowRecipient");
+		}
+
+		if (workflowBlockType.isMatch(WorkflowSpecificModel.Types.GROUP_ASSIGNMENT_WORKFLOW) || workflowBlockType.isMatch(WorkflowSpecificModel.Types.GROUP_ASSIGNMENT_WORKFLOW)) {
+			return getFilters("groupAssignmentWorkflowRecipient");
+		}
+
+		if (workflowBlockType.isMatch(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW)) {
+			return getFilters(taskOwnerSearchType == TaskOwnerSearchType.TASK_OWNER_SEARCH_RESPONSIBLE ? "assignmentWorkflowRespRecipient" : "assignmentWorkflowRecipient");
+		}
+
+		if (workflowBlockType.isMatch(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW)) {
+			return getFilters(taskOwnerSearchType == TaskOwnerSearchType.TASK_OWNER_SEARCH_RESPONSIBLE ? "orderAssignmentWorkflowRespRecipient" : "orderAssignmentWorkflowRecipient");
+		}
+		return null;
+	}
+
+	protected SelectItem[] getFilters(String classificatorValue) {
+		ClassificatorService classificatorService = BeanHelper.getClassificatorService();
+		List<ClassificatorValue> values = new ArrayList<ClassificatorValue>();
+
+		for (ClassificatorValue value : classificatorService.getAllClassificatorValues(classificatorValue)) {
+			if (value.isActive()) {
+				values.add(value);
+			}
+		}
+
+		Collections.sort(values, new Comparator<ClassificatorValue>() {
+
+			@Override
+			public int compare(ClassificatorValue o1, ClassificatorValue o2) {
+				return o1.isByDefault() ? -1 : o1.compareTo(o2);
+			}
+		});
+
+		
+		
+		List<SelectItem> result = new ArrayList<SelectItem>();
+		for (ClassificatorValue value : values) {
+			result.add(generateItem(value.getValueName()));
+		}
+		return result.toArray(new SelectItem[] {});
+	}
+
+	private SelectItem generateItem(String classificatorValue) {
+		if (classificatorValue.equalsIgnoreCase("kasutajad")) {
+			return new SelectItem(UserContactGroupSearchBean.USERS_FILTER, MessageUtil.getMessage("task_owner_users"));
+		}
+		if (classificatorValue.equalsIgnoreCase("kasutajagrupid")) {
+			return new SelectItem(UserContactGroupSearchBean.USER_GROUPS_FILTER, MessageUtil.getMessage("task_owner_usergroups"));
+		}
+		if (classificatorValue.equalsIgnoreCase("kontaktid")) {
+			return new SelectItem(UserContactGroupSearchBean.CONTACTS_FILTER, MessageUtil.getMessage("task_owner_contacts"));
+		}
+		if (classificatorValue.equalsIgnoreCase("kontaktgrupid")) {
+			return new SelectItem(UserContactGroupSearchBean.CONTACT_GROUPS_FILTER, MessageUtil.getMessage("task_owner_contactgroups"));
+		}
+		throw new RuntimeException("Unable to generate SelectItem based on "+classificatorValue);
+	}
+		
+		
+	
     protected static class TaskListRow implements Serializable, Comparable<TaskListRow> {
         private static final long serialVersionUID = 1L;
         private final Integer taskIndex;
