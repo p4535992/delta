@@ -290,7 +290,7 @@ public class SendOutServiceImpl implements SendOutService {
     }
 
     @Override
-    public void sendForInformation(List<String> authorityIds, Node docNode, String emailTemplate, String subject, String content) {
+    public Long sendForInformation(List<String> authorityIds, Node docNode, String emailTemplate, String subject, String content) {
         List<Authority> authorities = new ArrayList<Authority>();
         PrivilegeService privilegeService = BeanHelper.getPrivilegeService();
         UserService userService = BeanHelper.getUserService();
@@ -308,7 +308,7 @@ public class SendOutServiceImpl implements SendOutService {
                 privilegeService.setPermissions(docRef, authorityStr, privilegesToAdd);
             }
         }
-        BeanHelper.getNotificationService().sendForInformationNotification(authorities, docNode, emailTemplate, subject, content);
+        return BeanHelper.getNotificationService().sendForInformationNotification(authorities, docNode, emailTemplate, subject, content);
     }
 
     @Override

@@ -59,7 +59,7 @@ public class LogBlockBean implements DocumentDynamicBlock {
         } else {
             throw new IllegalArgumentException("Unexpected type of parent node for logging block. type='" + parentNodeType + "'");
         }
-        logs = new LogEntryDataProvider(filter);
+        logs = new LogEntryDataProvider(filter, false);
     }
 
     private LogFilter getDocumentLogFilter() {
@@ -102,7 +102,7 @@ public class LogBlockBean implements DocumentDynamicBlock {
     }
 
     public boolean isRendered() {
-        return logs != null && logs.getListSize() > 0;
+        return logs != null;
     }
 
     public String getListTitle() {

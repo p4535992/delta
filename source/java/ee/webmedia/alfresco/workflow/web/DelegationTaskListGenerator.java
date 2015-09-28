@@ -25,6 +25,7 @@ import javax.faces.component.html.HtmlPanelGroup;
 import javax.faces.context.FacesContext;
 import javax.faces.el.ValueBinding;
 import javax.faces.event.ActionEvent;
+import javax.faces.model.SelectItem;
 
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.ui.common.ComponentConstants;
@@ -151,6 +152,7 @@ public class DelegationTaskListGenerator extends TaskListGenerator {
             if (!displayResolutionField) {
                 createSingleResolutionRow(genContext, taskListContainer);
             }
+
             createUserPicker(genContext, taskListContainer);
             createTaskListHeadings(genContext);
             int rows = createTaskListRows(genContext);
@@ -204,6 +206,7 @@ public class DelegationTaskListGenerator extends TaskListGenerator {
         picker.setShowSelectButton(true);
         picker.setFilterByTaskOwnerStructUnit(true);
         picker.setWidth(400);
+        
         setPickerBindings(picker, genContext.dTaskType, genContext.application);
         ComponentUtil.putAttribute(picker, ATTRIB_DELEGATE_TASK_TYPE, genContext.dTaskType);
         ComponentUtil.putAttribute(picker, DelegationBean.ATTRIB_DELEGATABLE_TASK_INDEX, genContext.delegatableTaskIndex);
@@ -211,6 +214,34 @@ public class DelegationTaskListGenerator extends TaskListGenerator {
         return picker;
     }
 
+    private SelectItem[] getFilters(DelegatableTaskType dTaskType) {
+    	switch (dTaskType) {
+    	case ASSIGNMENT_RESPONSIBLE:
+    		return getFilters("assignmentWorkflowRespRecipient");
+    		
+    	case ORDER_ASSIGNMENT_RESPONSIBLE:
+    		return getFilters("orderAssignmentWorkflowRespRecipient");
+    		
+    	case ASSIGNMENT_NOT_RESPONSIBLE:
+    		return getFilters("assignmentWorkflowRecipient");
+    		
+    	case ORDER_ASSIGNMENT_NOT_RESPONSIBLE:
+    		return getFilters("orderAssignmentWorkflowRecipient");    		
+    		
+    	case INFORMATION:
+    		return getFilters("informationWorkflowRecipient");
+    		
+    	case OPINION:
+    		return getFilters("opinionWorkflowRecipient");
+    		
+    	case REVIEW:
+    		return getFilters("reviewWorkflowRecipient");
+    		
+    	default:
+    		return null;
+    	}
+    }
+    
     private void createTaskListHeadings(GenerationContext genContext) {
         Application app = genContext.application;
         final List<UIComponent> taskGridChildren = addChildren(genContext.taskGrid, createColumnHeading("workflow_task_owner_name", app));
@@ -531,7 +562,7 @@ public class DelegationTaskListGenerator extends TaskListGenerator {
         return result;
     }
 
-    private static void setPickerBindings(UIGenericPicker picker, DelegatableTaskType dTaskType, Application application) {
+    private void setPickerBindings(UIGenericPicker picker, DelegatableTaskType dTaskType, Application application) {
         String getOwnerSearchFiltersB; // from what groups owners can be searched
         String executeSearchCallbackB; // search from selected group
         String selectedSearchProcessingB; // processes selected results
@@ -544,6 +575,14 @@ public class DelegationTaskListGenerator extends TaskListGenerator {
             executeSearchCallbackB = "#{CompoundWorkflowDialog.executeTaskOwnerSearch}";
             selectedSearchProcessingB = "#{DelegationBean.processOwnerSearchResults}";
         }
+        
+        SelectItem[] filters = getFilters(dTaskType);
+        if (filters == null) {
+          picker.setValueBinding("filters", application.createValueBinding(getOwnerSearchFiltersB));
+        } else {
+        	picker.setFilters(filters);
+        }
+        
         picker.setValueBinding("filters", application.createValueBinding(getOwnerSearchFiltersB));
         picker.setQueryCallback(application.createMethodBinding(executeSearchCallbackB, GenericPickerTag.QUERYCALLBACK_CLASS_ARGS));
         picker.setActionListener(application.createMethodBinding(selectedSearchProcessingB, UIActions.ACTION_CLASS_ARGS));

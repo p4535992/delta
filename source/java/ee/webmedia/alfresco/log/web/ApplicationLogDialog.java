@@ -65,6 +65,7 @@ public class ApplicationLogDialog extends AbstractSearchFilterBlockBean<LogServi
 
     public void searchWorkflowEntries(ActionEvent event) {
         LogFilter filter = new LogFilter();
+        filter.setExactObjectId(true);
         filter.setObjectId(Collections.singletonList(ActionUtil.getParam(event, COMPOUND_WORKFLOW_PARAM)));
         getAppLogListDialog().search(filter);
     }
