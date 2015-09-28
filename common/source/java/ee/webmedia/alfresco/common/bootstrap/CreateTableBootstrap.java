@@ -22,6 +22,10 @@ public abstract class CreateTableBootstrap extends AbstractModuleComponent {
 
     private DataSource dataSource;
 
+    protected String getSeparator() {
+    	return ";";
+    }
+    
     @Override
     protected void executeInternal() throws Exception {
         Connection con = null;
@@ -34,7 +38,7 @@ public abstract class CreateTableBootstrap extends AbstractModuleComponent {
 
             LOG.info("Creating " + (getTablesLogName() != null ? getTablesLogName().toLowerCase() : "") + " tables...");
             stmt = con.createStatement();
-            for (String stmtSql : IOUtils.toString(getSqlStatementsInputStream()).split(";")) {
+            for (String stmtSql : IOUtils.toString(getSqlStatementsInputStream()).split(getSeparator())) {
                 stmt.executeUpdate(stmtSql);
             }
             stmt.close();

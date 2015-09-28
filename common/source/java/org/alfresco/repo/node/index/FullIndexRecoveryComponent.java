@@ -112,7 +112,7 @@ public class FullIndexRecoveryComponent extends AbstractReindexComponent
     public FullIndexRecoveryComponent()
     {
         recoveryMode = RecoveryMode.VALIDATE;
-        maxTransactionsPerLuceneCommit = 100;
+		maxTransactionsPerLuceneCommit = 100;
     }
 
     /**
@@ -291,7 +291,8 @@ public class FullIndexRecoveryComponent extends AbstractReindexComponent
         IndexTransactionTrackerListener trackerListener = new IndexTransactionTrackerListener()
         {
             long lastLogged = 0L;
-            public void indexedTransactions(long fromTimeInclusive, long toTimeExclusive)
+            @Override
+						public void indexedTransactions(long fromTimeInclusive, long toTimeExclusive)
             {
                 long now = System.currentTimeMillis();
                 if (now - lastLogged < 10000L)
@@ -432,7 +433,8 @@ public class FullIndexRecoveryComponent extends AbstractReindexComponent
         
         RetryingTransactionCallback<Object> reindexWork = new RetryingTransactionCallback<Object>()
         {
-            public Object execute() throws Exception
+            @Override
+						public Object execute() throws Exception
             {
                 // get the node references pertinent to the transaction
                 List<NodeRef> nodeRefs = nodeDaoService.getTxnChanges(txnId);
