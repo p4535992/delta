@@ -53,6 +53,7 @@ import org.alfresco.util.GUID;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
@@ -235,6 +236,11 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         if (definition == null) {
             WmNode node = getNode(nodeRef, WorkflowCommonModel.Types.COMPOUND_WORKFLOW_DEFINITION, false, false);
             definition = new CompoundWorkflowDefinition(node, parentRef);
+            List<ChildAssociationRef> childAssocs = ListUtils.emptyIfNull(getWorkflows(nodeRef));
+            int workflowIndex = 0;
+            for (ChildAssociationRef childAssoc : childAssocs) {
+                addWorkflow(definition, false, workflowIndex++, childAssoc, false);
+            }
             compoundWorkflowDefinitionsCache.put(nodeRef, definition);
         }
         return definition;
@@ -255,7 +261,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         NodeRef root = getRoot();
         Set<NodeRef> definitionRefs = bulkLoadNodeService.loadChildRefs(root, WorkflowCommonModel.Props.TYPE, workflowType.name(),
                 WorkflowCommonModel.Types.COMPOUND_WORKFLOW_DEFINITION);
-        List<CompoundWorkflowDefinition> compoundWorkflowDefinitions = new ArrayList<CompoundWorkflowDefinition>(definitionRefs.size());
+        List<CompoundWorkflowDefinition> compoundWorkflowDefinitions = new ArrayList<>(definitionRefs.size());
         for (NodeRef ref : definitionRefs) {
             CompoundWorkflowDefinition compoundWorkflowDefinition = getCompoundWorkflowDefinition(ref, root);
             if (compoundWorkflowDefinition == null) {
@@ -1211,61 +1217,61 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         UnsavedTaskCommonData unsavedTaskCommonData = null;
         ReviewFromOtherOrgCommonData reviewCommonData = workflow.isType(WorkflowSpecificModel.Types.REVIEW_WORKFLOW) && workflowConstantsBean.isReviewToOtherOrgEnabled()
                 ? collectReviewTaskCommonData() : null;
-                Map<QName, PropertyDefinition> propertyDefinitions = new HashMap<>();
-                Connection connection = null;
-                try {
+        Map<QName, PropertyDefinition> propertyDefinitions = new HashMap<>();
+        Connection connection = null;
+        try {
 
-                    connection = dataSource.getConnection();
-                    for (Task task : workflow.getTasks()) {
-                        task.setTaskIndexInWorkflow(index);
-                        if (documentTypeFromTaskParent == null && !documentTypeNotFound && isUnsavedAndNotLinkedReview(task)) {
-                            documentTypeFromTaskParent = getDocumentTypeFromTaskParent(parentRef);
-                            if (documentTypeFromTaskParent == null) {
-                                documentTypeNotFound = true;
-                            }
-                        }
-                        if (unsavedTaskCommonData == null && isUnsavedAndNotLinkedReview(task)) {
-                            unsavedTaskCommonData = collectNewTaskCommonData();
-                        }
-                        Map<QName, Serializable> propsToSave = prepareTaskForSaving(task, documentTypeFromTaskParent, propertyDefinitions, unsavedTaskCommonData, reviewCommonData);
-
-                        if (task.isUnsaved()) {
-                            NodeRef nodeRef = new NodeRef(parentRef.getStoreRef(), GUID.generate());
-                            task.getNode().updateNodeRef(nodeRef);
-                            TaskUpdateInfo info = workflowDbService.verifyTaskAndGetUpdateInfoOnCreate(task, (linkedReviewTaskSpace.equals(parentRef) ? null : parentRef), connection);
-                            info.setPostSaveProperties(propsToSave);
-
-                            tasksToCreate.add(info);
-                            createTaskUsedFieldNames.addAll(info.getUnmodifiableFieldNames());
-
-                            if (tasksToCreate.size() >= batchSize) {
-                                processCreateTaskBatch(parentRef, tasksToCreate, createTaskUsedFieldNames);
-                            }
-                        } else {
-                            verifyRequiredStatusOnUpdate(task, propsToSave);
-                            TaskUpdateInfo info = workflowDbService.verifyTaskAndGetUpdateInfoOnUpdate(task, (linkedReviewTaskSpace.equals(parentRef) ? null : parentRef), propsToSave,
-                            connection);
-                            info.setPostSaveProperties(propsToSave);
-
-                            taskToUpdate.add(info);
-                            updateTaskUsedFieldNames.addAll(info.getUnmodifiableFieldNames());
-
-                            if (taskToUpdate.size() >= batchSize) {
-                                processUpdateTaskBatch(parentRef, taskToUpdate, updateTaskUsedFieldNames);
-                            }
-                        }
-                        index++;
+            connection = dataSource.getConnection();
+            for (Task task : workflow.getTasks()) {
+                task.setTaskIndexInWorkflow(index);
+                if (documentTypeFromTaskParent == null && !documentTypeNotFound && isUnsavedAndNotLinkedReview(task)) {
+                    documentTypeFromTaskParent = getDocumentTypeFromTaskParent(parentRef);
+                    if (documentTypeFromTaskParent == null) {
+                        documentTypeNotFound = true;
                     }
-                } catch (SQLException e) {
-                    log.error("Error saving task ", e);
-                    throw new RuntimeException(e);
-                } finally {
-                    WorkflowUtil.closeConnection(connection);
                 }
+                if (unsavedTaskCommonData == null && isUnsavedAndNotLinkedReview(task)) {
+                    unsavedTaskCommonData = collectNewTaskCommonData();
+                }
+                Map<QName, Serializable> propsToSave = prepareTaskForSaving(task, documentTypeFromTaskParent, propertyDefinitions, unsavedTaskCommonData, reviewCommonData);
 
-                // Eat the leftovers
-                processUpdateTaskBatch(parentRef, taskToUpdate, updateTaskUsedFieldNames);
-                processCreateTaskBatch(parentRef, tasksToCreate, createTaskUsedFieldNames);
+                if (task.isUnsaved()) {
+                    NodeRef nodeRef = new NodeRef(parentRef.getStoreRef(), GUID.generate());
+                    task.getNode().updateNodeRef(nodeRef);
+                    TaskUpdateInfo info = workflowDbService.verifyTaskAndGetUpdateInfoOnCreate(task, (linkedReviewTaskSpace.equals(parentRef) ? null : parentRef), connection);
+                    info.setPostSaveProperties(propsToSave);
+
+                    tasksToCreate.add(info);
+                    createTaskUsedFieldNames.addAll(info.getUnmodifiableFieldNames());
+
+                    if (tasksToCreate.size() >= batchSize) {
+                        processCreateTaskBatch(parentRef, tasksToCreate, createTaskUsedFieldNames);
+                    }
+                } else {
+                    verifyRequiredStatusOnUpdate(task, propsToSave);
+                    TaskUpdateInfo info = workflowDbService.verifyTaskAndGetUpdateInfoOnUpdate(task, (linkedReviewTaskSpace.equals(parentRef) ? null : parentRef), propsToSave,
+                            connection);
+                    info.setPostSaveProperties(propsToSave);
+
+                    taskToUpdate.add(info);
+                    updateTaskUsedFieldNames.addAll(info.getUnmodifiableFieldNames());
+
+                    if (taskToUpdate.size() >= batchSize) {
+                        processUpdateTaskBatch(parentRef, taskToUpdate, updateTaskUsedFieldNames);
+                    }
+                }
+                index++;
+            }
+        } catch (SQLException e) {
+            log.error("Error saving task ", e);
+            throw new RuntimeException(e);
+        } finally {
+            WorkflowUtil.closeConnection(connection);
+        }
+
+        // Eat the leftovers
+        processUpdateTaskBatch(parentRef, taskToUpdate, updateTaskUsedFieldNames);
+        processCreateTaskBatch(parentRef, tasksToCreate, createTaskUsedFieldNames);
     }
 
     private void processCreateTaskBatch(NodeRef parentRef, List<TaskUpdateInfo> tasksToCreate, Set<String> createTaskUsedFieldNames) {
@@ -1345,9 +1351,29 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     @Override
     public CompoundWorkflow delegate(Task originalTask) {
         CompoundWorkflow compoundWorkflow = preprocessAndCopyCompoundWorkflow(originalTask);
+        reorderDelegatedTasks(compoundWorkflow);
         WorkflowEventQueue queue = getNewEventQueue();
         setDelegatedTasksInProgress(compoundWorkflow, queue);
         return saveCompoundWorkflow(compoundWorkflow, queue, true);
+    }
+
+    private void reorderDelegatedTasks(CompoundWorkflow compoundWorkflow) {
+        List<Workflow> workflows = compoundWorkflow.getWorkflows();
+        for (Workflow wf : workflows) {
+            List<Task> tasks = wf.getModifiableTasks();
+            List<Task> tasksInValidOrder = new ArrayList<>();
+            List<Task> generatedTasks = new ArrayList<>();
+            for (Task t : tasks) {
+                if (t.isGeneratedByDelegation()) {
+                    generatedTasks.add(t);
+                } else {
+                    tasksInValidOrder.add(t);
+                }
+            }
+            tasksInValidOrder.addAll(generatedTasks);
+            tasks.clear();
+            tasks.addAll(tasksInValidOrder);
+        }
     }
 
     private void setDelegatedTasksInProgress(CompoundWorkflow compoundWorkflow, WorkflowEventQueue queue) {

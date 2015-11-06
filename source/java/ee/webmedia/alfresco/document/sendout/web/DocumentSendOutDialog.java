@@ -224,8 +224,8 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         model = new SendOutModel();
         model.setNodeRef(node.getNodeRef());
         boolean bdocExists = false;
-        List<String> selectedFiles = new ArrayList<String>();
-        SortedMap<String, String> files = new TreeMap<String, String>();
+        List<String> selectedFiles = new ArrayList<>();
+        SortedMap<String, String> files = new TreeMap<>();
         final List<File> allFiles = getFileService().getAllActiveFiles(node.getNodeRef());
         ByteSizeConverter converter = (ByteSizeConverter) context.getApplication().createConverter(ByteSizeConverter.CONVERTER_ID);
         for (File file : allFiles) {
@@ -238,7 +238,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             boolean isBdoc = file.isBdoc();
             if (isBdoc) {
                 if (!bdocExists) {
-                    selectedFiles = new ArrayList<String>();
+                    selectedFiles = new ArrayList<>();
                 }
                 selectedFiles.add(fileRef);
             } else if (!bdocExists) {
@@ -255,7 +255,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         model.setSendoutInfo(getParametersService().getStringParameter(Parameters.DOC_SENDOUT_INFO));
         model.setSubject(model.getDocName());
         model.setDocAccessRestriction(AccessRestriction.valueNameOf((String) props.get(DocumentCommonModel.Props.ACCESS_RESTRICTION)));
-        Map<String, List<String>> properties = new HashMap<String, List<String>>();
+        Map<String, List<String>> properties = new HashMap<>();
 
         String defaultSendMode = "";
         String sendModeByStorageType = "";
@@ -334,17 +334,17 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             }
 
             if (names.size() == 1 && emails.size() == 1 && StringUtils.isBlank(names.get(0)) && StringUtils.isBlank(emails.get(0))) {
-                names = new ArrayList<String>();
-                idCodes = new ArrayList<String>();
-                emails = new ArrayList<String>();
-                groups = new ArrayList<String>();
+                names = new ArrayList<>();
+                idCodes = new ArrayList<>();
+                emails = new ArrayList<>();
+                groups = new ArrayList<>();
             }
 
-            addAdditionalRecipients(props, idCodes, names, emails, groups);
         }
+        addAdditionalRecipients(props, idCodes, names, emails, groups);
         removeEmptyValuesLeavingOneEmptyLineIfNeeded(names, idCodes, emails, groups);
 
-        List<String> recSendModes = new ArrayList<String>(names.size());
+        List<String> recSendModes = new ArrayList<>(names.size());
         for (int i = 0; i < names.size(); i++) {
             if (StringUtils.isNotBlank(names.get(i)) || StringUtils.isNotBlank(emails.get(i))) {
                 recSendModes.add(defaultSendMode);
@@ -442,7 +442,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
 
     public List<SelectItem> getSendModes() {
         if (sendModes == null) {
-            sendModes = new ArrayList<SelectItem>();
+            sendModes = new ArrayList<>();
             sendModes.add(new SelectItem("", MessageUtil.getMessage(FacesContext.getCurrentInstance(), "document_choose")));
             Classificator classificator = getClassificatorService().getClassificatorByName("sendMode");
             List<ClassificatorValue> values = getClassificatorService().getActiveClassificatorValues(classificator);
@@ -456,7 +456,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
 
     public List<SelectItem> getEmailTemplates() {
         if (emailTemplates == null) {
-            emailTemplates = new ArrayList<SelectItem>();
+            emailTemplates = new ArrayList<>();
             emailTemplates.add(new SelectItem("", MessageUtil.getMessage(FacesContext.getCurrentInstance(), "document_choose")));
             for (UnmodifiableDocumentTemplate template : getDocumentTemplateService().getEmailTemplates()) {
                 String templateName = FilenameUtils.getBaseName(template.getName());
@@ -479,7 +479,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
 
     public void updateTemplate(@SuppressWarnings("unused") ActionEvent event) {
         if (StringUtils.isNotBlank(model.getTemplate())) {
-            LinkedHashMap<String, NodeRef> nodeRefs = new LinkedHashMap<String, NodeRef>();
+            LinkedHashMap<String, NodeRef> nodeRefs = new LinkedHashMap<>();
             nodeRefs.put(null, model.getNodeRef());
             ProcessedEmailTemplate template = getDocumentTemplateService().getProcessedEmailTemplate(nodeRefs, new NodeRef(model.getTemplate()));
             model.setContent(template.getContent());
@@ -503,7 +503,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         String name = UserUtil.getPersonFullName1(personProps);
         String id = (String) personProps.get(ContentModel.PROP_USERNAME);
         String email = (String) personProps.get(ContentModel.PROP_EMAIL);
-        List<String> data = new ArrayList<String>();
+        List<String> data = new ArrayList<>();
         data.add(name);
         data.add(id);
         data.add(email);
@@ -533,8 +533,8 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         List<String> idCodes = trimAndGetIdCodes();
         List<String> emails = model.getProperties().get(PROP_KEYS[2]);
         List<String> modes = model.getProperties().get(PROP_KEYS[3]);
-        List<Pair<String, String>> dvkRecipients = new ArrayList<Pair<String, String>>();
-        Set<String> idCodesToCheck = new HashSet<String>();
+        List<Pair<String, String>> dvkRecipients = new ArrayList<>();
+        Set<String> idCodesToCheck = new HashSet<>();
         for (int i = 0; i < names.size(); i++) {
             String name = names.get(i);
             String idCode = idCodes.get(i);
@@ -555,11 +555,11 @@ public class DocumentSendOutDialog extends BaseDialogBean {
                     hasMissingIdCodes = true;
                 } else {
                     idCodesToCheck.add(idCode);
-                    dvkRecipients.add(new Pair<String, String>(name, mode));
+                    dvkRecipients.add(new Pair<>(name, mode));
                 }
             }
             if (StringUtils.isNotBlank(mode) && SendMode.EMAIL_DVK.equals(mode)) {
-                dvkRecipients.add(new Pair<String, String>(name, mode));
+                dvkRecipients.add(new Pair<>(name, mode));
             }
             if (StringUtils.isNotBlank(email)) {
                 if (!emailValidator.isValid(email)) {
@@ -618,7 +618,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         }
 
         if (valid && model.isEncrypt()) {
-            List<String> encryptionForbidden = new ArrayList<String>();
+            List<String> encryptionForbidden = new ArrayList<>();
             List<String> dvkCapableOrgs = BeanHelper.getAddressbookService().getDvkCapableOrgNames();
             for (Pair<String, String> nameAndSendMode : dvkRecipients) {
                 String name = nameAndSendMode.getFirst();
@@ -655,7 +655,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
 
     private List<String> trimAndGetIdCodes() {
         List<String> idCodes = model.getProperties().get(PROP_KEYS[1]);
-        List<String> trimmedIdCodes = new ArrayList<String>(idCodes.size());
+        List<String> trimmedIdCodes = new ArrayList<>(idCodes.size());
         for (int i = 0; i < idCodes.size(); i++) {
             trimmedIdCodes.add(i, StringUtils.trim(idCodes.get(i)));
         }
@@ -666,10 +666,10 @@ public class DocumentSendOutDialog extends BaseDialogBean {
     private boolean sendOut(FacesContext context) {
         boolean result = true;
         boolean isEncrypt = model.isEncrypt();
-        List<String> names = new ArrayList<String>();
-        List<String> idCodes = new ArrayList<String>();
-        List<String> emails = new ArrayList<String>();
-        List<String> modes = new ArrayList<String>();
+        List<String> names = new ArrayList<>();
+        List<String> idCodes = new ArrayList<>();
+        List<String> emails = new ArrayList<>();
+        List<String> modes = new ArrayList<>();
         List<String> encryptionIdCodes = null;
 
         names.addAll(model.getProperties().get(PROP_KEYS[0]));
@@ -678,7 +678,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         modes.addAll(model.getProperties().get(PROP_KEYS[3]));
 
         if (isEncrypt) {
-            encryptionIdCodes = new ArrayList<String>();
+            encryptionIdCodes = new ArrayList<>();
             for (EncryptionRecipient encryptionRecipient : getEncryptionRecipients()) {
                 if (StringUtils.isBlank(encryptionRecipient.getIdCode())) {
                     MessageUtil.addErrorMessage("document_send_out_encryptionRecipient_idCode_mandatory");
@@ -730,7 +730,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
     public static List<String> newListIfNull(List<String> list, boolean checkEmpty) {
         List<String> result = list;
         if (result == null) {
-            result = new ArrayList<String>();
+            result = new ArrayList<>();
         }
         if (result.isEmpty() && checkEmpty) {
             result.add("");
@@ -787,7 +787,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         children.add(modal);
         modalId = modal.getClientId(context) + "_popup";
 
-        Map<Pair<String /* name */, String /* email */>, String /* idCode */> idCodesByNameAndEmail = new HashMap<Pair<String, String>, String>();
+        Map<Pair<String /* name */, String /* email */>, String /* idCode */> idCodesByNameAndEmail = new HashMap<>();
         for (Node contact : getAddressbookService().listOrganizationAndPerson()) {
             String name = AddressbookUtil.getContactFullName(RepoUtil.toQNameProperties(contact.getProperties()), contact.getType());
             String email = (String) contact.getProperties().get(AddressbookModel.Props.EMAIL.toString());
@@ -802,7 +802,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             }
         }
 
-        encryptionRecipients = new ArrayList<EncryptionRecipient>();
+        encryptionRecipients = new ArrayList<>();
         List<String> names = model.getProperties().get(PROP_KEYS[0]);
         List<String> idCodes = model.getProperties().get(PROP_KEYS[1]);
         List<String> emails = model.getProperties().get(PROP_KEYS[2]);

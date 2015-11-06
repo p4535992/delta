@@ -21,6 +21,7 @@ public class NotificationCache {
     private final Map<String, Template> cachedTemplates = new HashMap<>();
     private final Map<NodeRef, Node> cachedProps = new HashMap<>();
     private final Map<NodeRef, List<EmailAttachment>> attachments = new HashMap<>();
+    private final Map<NodeRef, List<EmailAttachment>> zippedAttachments = new HashMap<>();
 
     public Map<NodeRef, Map<String, String>> getFormulas() {
         return cachedFormulas;
@@ -44,6 +45,10 @@ public class NotificationCache {
 
     public Map<NodeRef, List<EmailAttachment>> getAttachments() {
         return attachments;
+    }
+
+    public Map<NodeRef, List<EmailAttachment>> getZippedAttachments() {
+        return zippedAttachments;
     }
 
     public Template getTemplate(String templateName) {

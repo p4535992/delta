@@ -713,4 +713,8 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         this.compoundWorkflowNodeRef = compoundWorkflowNodeRef;
     }
 
+    public boolean isGeneratedByDelegation() {
+        return Boolean.TRUE.equals(getProp(BaseWorkflowObject.TMP_ADDED_BY_DELEGATION));
+    }
+
 }

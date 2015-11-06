@@ -104,13 +104,13 @@ public class DocumentSendForInformationDialog extends BaseDialogBean {
 
     protected void createLogEntry(long notificationLogId) {
         UserService userService = BeanHelper.getUserService();
+        String logContent = content.replaceAll("(?s)<!--.*?-->", "").replaceAll("\\<.*?\\>", "");
         BeanHelper.getLogService().addLogEntry(
                 LogEntry.create(getLogObject(), userService, contentNode.getNodeRef(), getLogMessage(), getUsersAndGroups(userService, notificationLogId),
-                        StringEscapeUtils.unescapeHtml(content.replaceAll("\\<.*?\\>", ""))));
+                        StringEscapeUtils.unescapeHtml(logContent)));
     }
 
-
-		protected String getUsersAndGroups(UserService userService, long notificationLogId) {
+	protected String getUsersAndGroups(UserService userService, long notificationLogId) {
         List<String> usersAndGroups = new ArrayList<String>();
         for (String authorityId : authorities) {
             Authority authority = userService.getAuthorityOrNull(authorityId);
@@ -200,7 +200,7 @@ public class DocumentSendForInformationDialog extends BaseDialogBean {
             ProcessedEmailTemplate template = BeanHelper.getDocumentTemplateService().getProcessedEmailTemplate(nodeRefs, selectedTemplate);
             content = template.getContent();
             String templateSubject = template.getSubject();
-            if (templateSubject != null) {
+            if (StringUtils.isBlank(subject) && StringUtils.isNotBlank(templateSubject)) {
                 subject = templateSubject;
             }
         }

@@ -370,7 +370,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                 }
             }
         }
-        List<ActionDefinition> actionDefinitions = new ArrayList<ActionDefinition>(workflowDefs.size());
+        List<ActionDefinition> actionDefinitions = new ArrayList<>(workflowDefs.size());
         if (CompoundWorkflowType.DOCUMENT_WORKFLOW.equals(compoundWorkflowType)) {
             boolean showCWorkflowDefsWith1Workflow = false;
             Map<NodeRef, List<NodeRef>> childWorkflowNodeRefsByCompoundWorkflow = getWorkflowService().getChildWorkflowNodeRefsByCompoundWorkflow(compoundWorkflows);
