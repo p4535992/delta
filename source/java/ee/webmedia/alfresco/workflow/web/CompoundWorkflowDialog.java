@@ -636,7 +636,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     }
 
     private List<String> getConfirmationMessages(boolean checkDocumentDueDate, String workflowBlockCallback) {
-        List<String> messages = new ArrayList<String>();
+        List<String> messages = new ArrayList<>();
         NodeService nodeService = BeanHelper.getNodeService();
         NodeRef docRef = compoundWorkflow.getParent();
         Date invoiceDueDate = null;
@@ -924,7 +924,9 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         initBlocks();
     }
 
-    /** @param event */
+    /**
+     * @param event
+     */
     public void saveasCompoundWorkflowDefinition(ActionEvent event) {
         String userId = AuthenticationUtil.getRunAsUser();
         if (validateSaveasData()) {
@@ -953,6 +955,20 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                 return false;
             }
         }
+        if (!isWorkflowsValid()) {
+            return false;
+        }
+        return true;
+    }
+
+    private boolean isWorkflowsValid() {
+        for (Workflow wf : compoundWorkflow.getWorkflows()) {
+            Boolean parallelTasks = wf.getParallelTasks();
+            if (parallelTasks == null) {
+                MessageUtil.addErrorMessage("compoundWorkflow_definition_saveas_error_invalid_field_type");
+                return false;
+            }
+        }
         return true;
     }
 
@@ -967,7 +983,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
 
     @SuppressWarnings("unchecked")
     public List<SelectItem> getUserCompoundWorkflowDefinitions(FacesContext context, UIInput component) {
-        List<SelectItem> userCompoundWorkflowDefinitions = new ArrayList<SelectItem>();
+        List<SelectItem> userCompoundWorkflowDefinitions = new ArrayList<>();
         for (CompoundWorkflowDefinition compoundWorkflowDefinition : getWorkflowService().getUserCompoundWorkflowDefinitions(AuthenticationUtil.getRunAsUser())) {
             userCompoundWorkflowDefinitions.add(new SelectItem(compoundWorkflowDefinition.getName()));
         }
@@ -1247,7 +1263,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     @Override
     protected Map<String, QName> getSortedTypes() {
         if (sortedTypes == null) {
-            Map<String, QName> sortedTypes = new TreeMap<String, QName>();
+            Map<String, QName> sortedTypes = new TreeMap<>();
             if (compoundWorkflow != null) {
                 Document doc = getParentDocument();
                 String docStatus = doc != null ? doc.getDocStatus() : null;
@@ -1584,7 +1600,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                     valid = false;
                     final String missingOwnerMessageKey = getMissingOwnerMessageKey(blockType);
                     if (missingOwnerMessageKeys == null) {
-                        missingOwnerMessageKeys = new HashSet<String>(2);
+                        missingOwnerMessageKeys = new HashSet<>(2);
                     }
                     missingOwnerMessageKeys.add(missingOwnerMessageKey);
                 }
@@ -1644,14 +1660,12 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                 MessageUtil.addErrorMessage(context, "task_name_required", taskOwnerMsg);
                 return false;
             }
-        }
-        else if (taskType.equals(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)) {
+        } else if (taskType.equals(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)) {
             if (StringUtils.isBlank(task.getInstitutionName()) || task.getDueDate() == null) {
                 MessageUtil.addErrorMessage(context, "task_name_and_due_required", taskOwnerMsg);
                 return false;
             }
-        }
-        else if (StringUtils.isBlank(task.getOwnerName()) || task.getDueDate() == null) {
+        } else if (StringUtils.isBlank(task.getOwnerName()) || task.getDueDate() == null) {
             MessageUtil.addErrorMessage(context, "task_name_and_due_required", taskOwnerMsg);
             return false;
         }
@@ -1701,7 +1715,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             Workflow blockFirstWorkflow = block.get(0);
             boolean checkTasksInsideBlock = !blockFirstWorkflow.isParallelTasks();
             Assert.isTrue(!checkTasksInsideBlock || block.size() == 1, "Not parallel tasks inside parallel block are not allowed.");
-            Pair<Date, Date> minMaxDateInBlock = getCheckAndGetMaxDueDate(block, minAllowedDueDate, checkTasksInsideBlock);
+            Pair<Date, Date> minMaxDateInBlock = getCheckAndGetMaxDueDate(block, checkTasksInsideBlock);
             if (minMaxDateInBlock == null) {
                 return false;
             }
@@ -1720,7 +1734,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     }
 
     /** Return null indicating that regression inside the workflow block was wrong */
-    private Pair<Date, Date> getCheckAndGetMaxDueDate(List<Workflow> block, Date minAllowedDueDate, boolean checkTasksInsideBlock) {
+    private Pair<Date, Date> getCheckAndGetMaxDueDate(List<Workflow> block, boolean checkTasksInsideBlock) {
         Date minDueDate = null;
         Date maxDueDate = null;
         Date previousDueDate = null;
@@ -1748,7 +1762,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                 }
             }
         }
-        return new Pair<Date, Date>(minDueDate, maxDueDate);
+        return new Pair<>(minDueDate, maxDueDate);
     }
 
     /**
@@ -1757,8 +1771,8 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
      * and may need comparing within single workflow depending on the workflow type
      */
     private List<List<Workflow>> collectParallelWorkflowBlocks(List<Workflow> workflows) {
-        List<List<Workflow>> parallelWorkflowBlocks = new ArrayList<List<Workflow>>();
-        List<Workflow> currentBlock = new ArrayList<Workflow>();
+        List<List<Workflow>> parallelWorkflowBlocks = new ArrayList<>();
+        List<Workflow> currentBlock = new ArrayList<>();
         for (Workflow currentWorkflow : workflows) {
             if (!currentBlock.isEmpty()) {
                 Workflow previousWorkflow = currentBlock.get(currentBlock.size() - 1);
@@ -1766,7 +1780,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                     currentBlock.add(currentWorkflow);
                 } else {
                     parallelWorkflowBlocks.add(currentBlock);
-                    currentBlock = new ArrayList<Workflow>();
+                    currentBlock = new ArrayList<>();
                     currentBlock.add(currentWorkflow);
                 }
             } else {
@@ -1803,8 +1817,8 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             return true;
         }
         boolean valid = true;
-        List<Pair<String, String>> errorMessages = new ArrayList<Pair<String, String>>();
-        List<String> addedErrorKeys = new ArrayList<String>();
+        List<Pair<String, String>> errorMessages = new ArrayList<>();
+        List<String> addedErrorKeys = new ArrayList<>();
         for (Transaction transaction : transactions) {
             Map<String, Object> props = transaction.getNode().getProperties();
             for (Map.Entry<String, Object> entry : props.entrySet()) {
@@ -1819,7 +1833,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                 MessageUtil.addErrorMessage("workflow_start_failed_transaction_mandatory_not_filled", validationMsg.getSecond());
             }
         }
-        List<String> errorMessageKeys = new ArrayList<String>();
+        List<String> errorMessageKeys = new ArrayList<>();
         Double totalSum = (Double) docProps.get(DocumentSpecificModel.Props.INVOICE_SUM);
         EInvoiceUtil.checkTotalSum(errorMessageKeys, "workflow_start_failed_", totalSum, transactions, null, false);
         if (!errorMessageKeys.isEmpty()) {

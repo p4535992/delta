@@ -995,7 +995,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
 
     private UIGenericPicker createOwnerPickerComponent(FacesContext context, TaskListInfo info) {
         Application application = context.getApplication();
-
+        
         UIGenericPicker picker = (UIGenericPicker) application.createComponent("org.alfresco.faces.GenericPicker");
         picker.setId("task-picker-" + info.listId);
         picker.setShowFilter(false);
@@ -1015,7 +1015,8 @@ public class TaskListGenerator extends BaseComponentGenerator {
                     || !BeanHelper.getWorkflowConstantsBean().isReviewToOtherOrgEnabled()
                     || !info.independentWorkflow);
 
-            SelectItem[] filters = getFilters(info.workflowBlockType, searchType);
+            boolean responsible = info.responsible != null && info.responsible.booleanValue();
+            SelectItem[] filters = getFilters(info.workflowBlockType, searchType, responsible);
             if (filters == null) {
               picker.setValueBinding("filters", createPickerValueBinding(application, searchType, info));
             } else {
@@ -1114,7 +1115,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
         return row;
     }
 
-	private SelectItem[] getFilters(QName workflowBlockType, TaskOwnerSearchType taskOwnerSearchType) {
+	private SelectItem[] getFilters(QName workflowBlockType, TaskOwnerSearchType taskOwnerSearchType, boolean responsible) {
 		if (workflowBlockType.isMatch(WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW) || workflowBlockType.isMatch(WorkflowSpecificModel.Types.SIGNATURE_TASK)) {
 			return getFilters("signatureWorkflowRecipient");
 		}
@@ -1144,7 +1145,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
 		}
 
 		if (workflowBlockType.isMatch(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW)) {
-			return getFilters(taskOwnerSearchType == TaskOwnerSearchType.TASK_OWNER_SEARCH_RESPONSIBLE ? "orderAssignmentWorkflowRespRecipient" : "orderAssignmentWorkflowRecipient");
+			return getFilters(taskOwnerSearchType == TaskOwnerSearchType.TASK_OWNER_SEARCH_RESPONSIBLE || responsible ? "orderAssignmentWorkflowRespRecipient" : "orderAssignmentWorkflowRecipient");
 		}
 		return null;
 	}
