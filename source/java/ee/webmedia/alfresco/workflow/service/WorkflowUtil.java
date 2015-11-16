@@ -73,13 +73,13 @@ public class WorkflowUtil {
     private static Schema deltaKKJaxbSchema = initSchema("deltaKK.xsd", DeltaKKRootType.class);
 
     static {
-        Map<CompoundWorkflowType, String> tmpMap = new HashMap<CompoundWorkflowType, String>();
+        Map<CompoundWorkflowType, String> tmpMap = new HashMap<>();
         tmpMap.put(CompoundWorkflowType.CASE_FILE_WORKFLOW, "caseFile");
         tmpMap.put(CompoundWorkflowType.DOCUMENT_WORKFLOW, "");
         tmpMap.put(CompoundWorkflowType.INDEPENDENT_WORKFLOW, "independent");
         compoundWorkflowTemplateSuffixes = tmpMap;
 
-        Set<Privilege> privileges = new HashSet<Privilege>();
+        Set<Privilege> privileges = new HashSet<>();
         privileges.add(Privilege.VIEW_DOCUMENT_META_DATA);
         privileges.add(Privilege.VIEW_DOCUMENT_FILES);
         independentWorkflowDefaultDocPermissions = privileges;
@@ -275,7 +275,7 @@ public class WorkflowUtil {
                 sb.append(constraint).append("{");
                 if (types != null) {
                     sb.append("types(");
-                    List<String> typesStr = new ArrayList<String>(statuses.length);
+                    List<String> typesStr = new ArrayList<>(statuses.length);
                     for (QName type : types) {
                         typesStr.add(type.getLocalName());
                     }
@@ -289,7 +289,7 @@ public class WorkflowUtil {
 
         private void addStatusesInfo(Status... statuses) {
             if (LOG.isDebugEnabled()) {
-                List<String> parts = new ArrayList<String>(statuses.length);
+                List<String> parts = new ArrayList<>(statuses.length);
                 for (Status status : statuses) {
                     parts.add(status.getName());
                 }
@@ -452,7 +452,7 @@ public class WorkflowUtil {
     }
 
     private static String getNotValidInProgressOrStoppedMsg(CompoundWorkflow compoundWorkflow, Status cWfStatus, Status[] allowedStatuses) {
-        List<String> statusNames = new ArrayList<String>();
+        List<String> statusNames = new ArrayList<>();
         for (Status status : allowedStatuses) {
             statusNames.add(status.name());
         }
@@ -520,7 +520,7 @@ public class WorkflowUtil {
     // ========================================================================
 
     public static List<Task> getFinishedTasks(List<CompoundWorkflow> compoundWorkflows, QName taskType) {
-        List<Task> finishedTasks = new ArrayList<Task>();
+        List<Task> finishedTasks = new ArrayList<>();
         for (CompoundWorkflow compoundWorkflow : compoundWorkflows) {
             List<Workflow> workflows = compoundWorkflow.getWorkflows();
             for (Workflow workflow : workflows) {
@@ -570,7 +570,7 @@ public class WorkflowUtil {
      * Gets all workflows from compoundWorkflows, filters out WorkflowSpecificModel.Types.DOC_REGISTRATION_WORKFLOW
      */
     public static List<Workflow> getVisibleWorkflows(List<CompoundWorkflow> compoundWorkflows) {
-        List<Workflow> workflows = new ArrayList<Workflow>();
+        List<Workflow> workflows = new ArrayList<>();
         for (CompoundWorkflow compoundWorkflow : compoundWorkflows) {
             for (Workflow workflow : compoundWorkflow.getWorkflows()) {
                 if (!workflow.getNode().getType().equals(WorkflowSpecificModel.Types.DOC_REGISTRATION_WORKFLOW)) {
@@ -582,7 +582,7 @@ public class WorkflowUtil {
     }
 
     public static List<NodeRef> getExcludedNodeRefsOnFinishWorkflows(CompoundWorkflow compoundWorkflow) {
-        List<NodeRef> excludedNodeRefs = new ArrayList<NodeRef>();
+        List<NodeRef> excludedNodeRefs = new ArrayList<>();
         for (Workflow workflow : compoundWorkflow.getWorkflows()) {
             if (WorkflowSpecificModel.Types.INFORMATION_WORKFLOW.equals(workflow.getNode().getType())) {
                 excludedNodeRefs.add(workflow.getNodeRef());
@@ -614,7 +614,7 @@ public class WorkflowUtil {
     }
 
     private static void removeEmptyTasks(Workflow workflow) {
-        ArrayList<Integer> emptyTaskIndexes = new ArrayList<Integer>();
+        ArrayList<Integer> emptyTaskIndexes = new ArrayList<>();
         int index = 0;
         for (Task task : workflow.getTasks()) {
             if (task.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)) {
@@ -654,9 +654,9 @@ public class WorkflowUtil {
      * @return
      */
     public static Set<Pair<String, QName>> haveSameTask(CompoundWorkflow compoundWorkflow, List<CompoundWorkflow> otherCompoundWorkflows) {
-        Set<Pair<String, QName>> ownerNameTypeSet = new HashSet<Pair<String, QName>>();
-        Map<QName, Set<String>> thisTasks = new HashMap<QName, Set<String>>();
-        Set<String> firstTasks = new HashSet<String>();
+        Set<Pair<String, QName>> ownerNameTypeSet = new HashSet<>();
+        Map<QName, Set<String>> thisTasks = new HashMap<>();
+        Set<String> firstTasks = new HashSet<>();
         // collect all new task types by user from current compound workflow
         for (Workflow wf : compoundWorkflow.getWorkflows()) {
             QName workflowType = wf.getType();
@@ -670,7 +670,7 @@ public class WorkflowUtil {
                 }
                 Set<String> users = thisTasks.get(workflowType);
                 if (users == null) {
-                    users = new HashSet<String>();
+                    users = new HashSet<>();
                     thisTasks.put(workflowType, users);
                 }
                 if (!users.contains(ownerId)) {
@@ -709,7 +709,7 @@ public class WorkflowUtil {
                 }
                 QName taskType = task.getType();
                 if ((!isCurrentWorkflow || !firstTasks.contains(task.getNode().getProperties().get(TMP_GUID))) && entry.getValue().contains(ownerId)) {
-                    ownerNameTypeSet.add(new Pair<String, QName>(getTaskOwnerName(task), taskType));
+                    ownerNameTypeSet.add(new Pair<>(getTaskOwnerName(task), taskType));
                 }
             }
         }
@@ -830,7 +830,7 @@ public class WorkflowUtil {
     }
 
     public static String getCompoundWorkflowsState(List<CompoundWorkflow> compoundWorkflows, boolean onlyInProgress) {
-        List<String> compoundWorkflowState = new ArrayList<String>(10);
+        List<String> compoundWorkflowState = new ArrayList<>(10);
         for (CompoundWorkflow compoundWorkflow : compoundWorkflows) {
             compoundWorkflowState.add(getCompoundWorkflowState(compoundWorkflow, onlyInProgress));
         }
@@ -848,12 +848,12 @@ public class WorkflowUtil {
     }
 
     private static String getCompoundWorkflowState(CompoundWorkflow compoundWorkflow, boolean onlyInProgress) {
-        List<String> workflowStates = new ArrayList<String>();
+        List<String> workflowStates = new ArrayList<>();
         for (Workflow workflow : compoundWorkflow.getWorkflows()) {
             if (onlyInProgress && !Status.IN_PROGRESS.equals(workflow.getStatus())) {
                 continue;
             }
-            List<String> taskOwners = new ArrayList<String>();
+            List<String> taskOwners = new ArrayList<>();
             for (Task task : workflow.getTasks()) {
                 if (task.isStatus(Status.IN_PROGRESS)) {
                     taskOwners.add(task.getOwnerName());
@@ -885,7 +885,7 @@ public class WorkflowUtil {
     }
 
     public static Map<QName, Serializable> getTaskSearchableProps(Map<QName, Serializable> compoundWorkflowProps) {
-        Map<QName, Serializable> taskSearchableProps = new HashMap<QName, Serializable>();
+        Map<QName, Serializable> taskSearchableProps = new HashMap<>();
         if (compoundWorkflowProps != null) {
             taskSearchableProps.put(WorkflowSpecificModel.Props.COMPOUND_WORKFLOW_TITLE, compoundWorkflowProps.get(WorkflowCommonModel.Props.TITLE));
             taskSearchableProps.put(WorkflowSpecificModel.Props.SEARCHABLE_COMPOUND_WORKFLOW_CREATED_DATE_TIME,
@@ -907,7 +907,7 @@ public class WorkflowUtil {
     }
 
     public static void removeEmptyWorkflowsGeneratedByDelegation(CompoundWorkflow compoundWorkflow) {
-        ArrayList<Integer> emptyWfIndexes = new ArrayList<Integer>();
+        ArrayList<Integer> emptyWfIndexes = new ArrayList<>();
         int wfIndex = 0;
         for (Workflow workflow : compoundWorkflow.getWorkflows()) {
             if (WorkflowUtil.isGeneratedByDelegation(workflow) && workflow.getTasks().isEmpty()) {
@@ -923,7 +923,7 @@ public class WorkflowUtil {
 
     public static void removeTasksGeneratedByDelegation(CompoundWorkflow compoundWorkflow) {
         for (Workflow workflow : compoundWorkflow.getWorkflows()) {
-            ArrayList<Integer> delegatedTaskIndexes = new ArrayList<Integer>();
+            ArrayList<Integer> delegatedTaskIndexes = new ArrayList<>();
             int taskIndex = 0;
             for (Task task : workflow.getTasks()) {
                 if (WorkflowUtil.isGeneratedByDelegation(task)) {

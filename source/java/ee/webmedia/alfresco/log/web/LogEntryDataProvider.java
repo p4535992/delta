@@ -22,14 +22,20 @@ public class LogEntryDataProvider extends LazyListDataProvider<String, LogEntry>
     private final LogFilter logFilter;
 
     public LogEntryDataProvider() {
-        logFilter = null;
+        this(null, false);
     }
 
     public LogEntryDataProvider(LogFilter logFilter) {
-        this.logFilter = logFilter;
-        // Load initial keys
-        loadOrderFromDb("createdDateTime", false);
+    	this(logFilter, true);
+  }
+    
+    public LogEntryDataProvider(LogFilter logFilter, boolean preloadKeys) {
+      this.logFilter = logFilter;
+      if (preloadKeys) {
+      	loadOrderFromDb("createdDateTime", false);
+      }
     }
+    
 
     @Override
     protected boolean loadOrderFromDb(String column, boolean descending) {

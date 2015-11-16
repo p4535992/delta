@@ -182,7 +182,14 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
 
     @Override
     public Map<NodeRef, List<SimpleFile>> loadActiveFiles(List<NodeRef> parentNodeRefs, Map<Long, QName> propertyTypes) {
+    	loadFiles(parentNodeRefs, propertyTypes, SIMPLE_FILE_PROPS, getSimpleFileCallback(), FilesLoadStrategy.ACTIVE);
+    	
         return loadFiles(parentNodeRefs, propertyTypes, SIMPLE_FILE_PROPS, getSimpleFileCallback(), FilesLoadStrategy.ACTIVE);
+    }
+    
+    @Override
+    public Map<NodeRef, List<SimpleFileWithOrder>> loadActiveFilesWithOrder(List<NodeRef> parentNodeRefs) {
+        return loadFiles(parentNodeRefs, null, SIMPLE_FILE_PROPS_WITH_FILE_ORDER, getSimpleFileWithOrderCallback(), FilesLoadStrategy.ACTIVE);
     }
 
     @Override

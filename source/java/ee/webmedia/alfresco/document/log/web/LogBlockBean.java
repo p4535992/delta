@@ -49,17 +49,19 @@ public class LogBlockBean implements DocumentDynamicBlock {
         restore();
     }
 
-    @SuppressWarnings("unchecked")
     public void restore() {
         LogFilter filter;
+        boolean isDoc = false; // FIXME: This solution is a quickfix to resolve issue with missing log entries. (See DELTA-880)
+        // It will cause LogBlockBean#loadOrderFromDb to be called twice in some cases.
         if (SeriesModel.Types.SERIES.equals(parentNodeType)) {
             filter = getSeriesLogFilter();
         } else if (getDictionaryService().isSubClass(parentNodeType, DocumentCommonModel.Types.DOCUMENT)) {
             filter = getDocumentLogFilter();
+            isDoc = true;
         } else {
             throw new IllegalArgumentException("Unexpected type of parent node for logging block. type='" + parentNodeType + "'");
         }
-        logs = new LogEntryDataProvider(filter);
+        logs = new LogEntryDataProvider(filter, isDoc);
     }
 
     private LogFilter getDocumentLogFilter() {
@@ -102,7 +104,7 @@ public class LogBlockBean implements DocumentDynamicBlock {
     }
 
     public boolean isRendered() {
-        return logs != null && logs.getListSize() > 0;
+        return logs != null;
     }
 
     public String getListTitle() {

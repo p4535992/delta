@@ -24,7 +24,7 @@ public class ApplicationLogListDialog extends BaseDialogBean {
     private LogEntryDataProvider logEntries;
 
     public void search(LogFilter filter) {
-        logEntries = new LogEntryDataProvider(filter);
+        logEntries = new LogEntryDataProvider(filter, false);
     }
 
     public LogEntryDataProvider getLogEntries() {
