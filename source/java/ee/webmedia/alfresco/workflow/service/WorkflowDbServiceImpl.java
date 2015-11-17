@@ -150,7 +150,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             arguments.add(limit);
         }
 
-        final List<WorkflowBlockItem> items = jdbcTemplate.query(sql, new WorkflowBlockItemMapper(null, null), arguments.toArray());
+        final List<WorkflowBlockItem> items = jdbcTemplate.query(sql, new WorkflowBlockItemMapper(null, null, false), arguments.toArray());
         Set<String> taskIds = new HashSet<>();
         for (WorkflowBlockItem item : items) {
             taskIds.add(item.getTaskNodeRef().getId());
@@ -174,13 +174,18 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
 
     @Override
     public List<WorkflowBlockItem> getWorkflowBlockItems(List<NodeRef> compoundWorkflows, final Map<NodeRef, Boolean> checkWorkflowRights, final String workflowGroupTasksUrl) {
-        return getWorkflowBlockItems(compoundWorkflows, checkWorkflowRights, workflowGroupTasksUrl, Collections.<Integer> emptyList());
+        return getWorkflowBlockItems(compoundWorkflows, checkWorkflowRights, workflowGroupTasksUrl, Collections.<Integer> emptyList(), false);
     }
 
     @Override
     public List<WorkflowBlockItem> getWorkflowBlockItems(List<NodeRef> compoundWorkflows, final Map<NodeRef, Boolean> checkWorkflowRights, final String workflowGroupTasksUrl,
             List<Integer> rowsToLoad) {
-        WorkflowBlockItemMapper rowMapper = new WorkflowBlockItemMapper(checkWorkflowRights, workflowGroupTasksUrl);
+        return getWorkflowBlockItems(compoundWorkflows, checkWorkflowRights, workflowGroupTasksUrl, rowsToLoad, true);
+    }
+
+    private List<WorkflowBlockItem> getWorkflowBlockItems(List<NodeRef> compoundWorkflows, final Map<NodeRef, Boolean> checkWorkflowRights, final String workflowGroupTasksUrl,
+            List<Integer> rowsToLoad, boolean useWfResolutionIfNoTaskResolution) {
+        WorkflowBlockItemMapper rowMapper = new WorkflowBlockItemMapper(checkWorkflowRights, workflowGroupTasksUrl, useWfResolutionIfNoTaskResolution);
         return getWorkflowBlockItems(compoundWorkflows, rowsToLoad, rowMapper);
     }
 
@@ -1885,11 +1890,13 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
 
         private final Map<NodeRef, Boolean> checkWorkflowRights;
         private final String workflowGroupTasksUrl;
+        private final boolean useWfResolutionIfNoTaskResolution;
         private NodeRef previousCompoundWorkflow;
 
-        public WorkflowBlockItemMapper(Map<NodeRef, Boolean> checkWorkflowRights, String workflowGroupTasksUrl) {
+        public WorkflowBlockItemMapper(Map<NodeRef, Boolean> checkWorkflowRights, String workflowGroupTasksUrl, boolean useWfResolutionIfNoTaskResolution) {
             this.checkWorkflowRights = checkWorkflowRights;
             this.workflowGroupTasksUrl = workflowGroupTasksUrl;
+            this.useWfResolutionIfNoTaskResolution = useWfResolutionIfNoTaskResolution;
         }
 
         @Override
@@ -1924,6 +1931,9 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             item.setProposedDueDate(rs.getTimestamp("wfs_proposed_due_date"));
             item.setTaskResolution(rs.getString("wfs_resolution"));
             item.setWorkflowResolution(rs.getString("wfs_workflow_resolution"));
+            if (useWfResolutionIfNoTaskResolution && StringUtils.isBlank(item.getTaskResolution())) {
+                item.setTaskResolution(item.getWorkflowResolution());
+            }
             item.setTaskOutcome(rs.getString("wfc_outcome"));
             item.setTaskComment(rs.getString("wfs_comment"));
             item.setOwnerSubstituteName(rs.getString("wfc_owner_substitute_name"));

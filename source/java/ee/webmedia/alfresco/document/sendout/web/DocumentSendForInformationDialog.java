@@ -13,6 +13,8 @@ import javax.faces.model.SelectItem;
 
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.util.MD5;
+import org.alfresco.util.URLEncoder;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
@@ -21,6 +23,7 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.web.evaluator.DocumentSendForInformationEvaluator;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
@@ -41,7 +44,15 @@ public class DocumentSendForInformationDialog extends BaseDialogBean {
     protected Node contentNode;
     protected String subject;
     protected String content;
-
+    private static String requestContextPath;
+    
+    static {
+      requestContextPath = FacesContext.getCurrentInstance().getExternalContext().getRequestContextPath();
+      if (!StringUtils.endsWith(requestContextPath, "/")) {
+          requestContextPath += "/";
+      }
+    }
+    
     public String init() {
         Node contentNode = getNode();
         contentNode.clearPermissionsCache();
@@ -79,9 +90,9 @@ public class DocumentSendForInformationDialog extends BaseDialogBean {
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         if (validate()) {
-            BeanHelper.getSendOutService().sendForInformation(authorities, contentNode, selectedEmailTemplate, subject, content);
+            long notificationId = BeanHelper.getSendOutService().sendForInformation(authorities, contentNode, selectedEmailTemplate, subject, content);
             addSuccessMessage();
-            createLogEntry();
+            createLogEntry(notificationId);
             return outcome;
         }
         return null;
@@ -91,14 +102,15 @@ public class DocumentSendForInformationDialog extends BaseDialogBean {
         MessageUtil.addInfoMessage("document_send_for_information_success");
     }
 
-    protected void createLogEntry() {
+    protected void createLogEntry(long notificationLogId) {
         UserService userService = BeanHelper.getUserService();
+        String logContent = content.replaceAll("(?s)<!--.*?-->", "").replaceAll("\\<.*?\\>", "");
         BeanHelper.getLogService().addLogEntry(
-                LogEntry.create(getLogObject(), userService, contentNode.getNodeRef(), getLogMessage(), getUsersAndGroups(userService),
-                        StringEscapeUtils.unescapeHtml(content.replaceAll("\\<.*?\\>", ""))));
+                LogEntry.create(getLogObject(), userService, contentNode.getNodeRef(), getLogMessage(), getUsersAndGroups(userService, notificationLogId),
+                        StringEscapeUtils.unescapeHtml(logContent)));
     }
 
-    protected String getUsersAndGroups(UserService userService) {
+	protected String getUsersAndGroups(UserService userService, long notificationLogId) {
         List<String> usersAndGroups = new ArrayList<String>();
         for (String authorityId : authorities) {
             Authority authority = userService.getAuthorityOrNull(authorityId);
@@ -106,7 +118,20 @@ public class DocumentSendForInformationDialog extends BaseDialogBean {
                 continue;
             }
             if (authority.isGroup()) {
-                usersAndGroups.add(authority.getName());
+            	String authorityName = authority.getName();
+            	StringBuilder htmlLogEntry = new StringBuilder();                        	
+            	htmlLogEntry.append("<a href=\"");
+            	htmlLogEntry.append(requestContextPath);
+            	htmlLogEntry.append("printTable?tableMode=NOTIFICATION_LOG&notificationLogId=");
+            	htmlLogEntry.append(notificationLogId);
+            	htmlLogEntry.append("&userGroup=");
+            	htmlLogEntry.append(URLEncoder.encode(authorityName));            	
+            	htmlLogEntry.append("&userGroupHash=");
+            	htmlLogEntry.append(MD5.Digest(authorityName.getBytes()));
+            	htmlLogEntry.append("\" target='_blank'>");
+            	htmlLogEntry.append(authorityName);
+            	htmlLogEntry.append("</a>");
+              usersAndGroups.add(htmlLogEntry.toString());
             } else {
                 usersAndGroups.add(userService.getUserFullName(authorityId));
             }
@@ -134,6 +159,10 @@ public class DocumentSendForInformationDialog extends BaseDialogBean {
         reset();
         try {
             initNodeValue(event);
+            String header = (String) contentNode.getProperties().get(DocumentCommonModel.Props.DOC_NAME);
+            if (StringUtils.isNotBlank(header)) {
+            	subject = header;
+            }
         } catch (InvalidNodeRefException e) {
             MessageUtil.addErrorMessage("document_sendOut_error_docDeleted");
             return;
@@ -163,7 +192,7 @@ public class DocumentSendForInformationDialog extends BaseDialogBean {
         reset();
     }
 
-    public void updateTemplate(@SuppressWarnings("unused") ActionEvent event) {
+    public void updateTemplate(ActionEvent event) {
         NodeRef selectedTemplate = getSelectedTemplateNodeRef();
         if (StringUtils.isNotBlank(selectedEmailTemplate) && selectedTemplate != null) {
             Map<String, NodeRef> nodeRefs = new LinkedHashMap<String, NodeRef>();
@@ -171,7 +200,7 @@ public class DocumentSendForInformationDialog extends BaseDialogBean {
             ProcessedEmailTemplate template = BeanHelper.getDocumentTemplateService().getProcessedEmailTemplate(nodeRefs, selectedTemplate);
             content = template.getContent();
             String templateSubject = template.getSubject();
-            if (templateSubject != null) {
+            if (StringUtils.isBlank(subject) && StringUtils.isNotBlank(templateSubject)) {
                 subject = templateSubject;
             }
         }

@@ -169,6 +169,10 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
         if (ylemYksusId != null) {
             org.getProperties().put(OrganizationStructureModel.Props.SUPER_UNIT_ID, ylemYksusId.toString());
         }
+        String email = yksus.getEmail();
+        if (email != null) {
+            org.getProperties().put(OrganizationStructureModel.Props.GROUP_EMAIL, email);
+        }
         Serializable organizationPath = (Serializable) UserUtil.formatYksusRadaToOrganizationPath(yksus.getYksusRada());
         org.getProperties().put(OrganizationStructureModel.Props.ORGANIZATION_PATH, organizationPath);
         return org;

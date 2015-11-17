@@ -485,7 +485,7 @@ public class MyTasksBean extends BaseDialogBean {
             reviewTasks = new TaskAndDocumentDataProvider(taskLists.get(WorkflowSpecificModel.Types.REVIEW_TASK));
         }
         if (tasksToLoad.contains(WorkflowSpecificModel.Types.LINKED_REVIEW_TASK)) {
-            reviewTasks = new TaskAndDocumentDataProvider(taskLists.get(WorkflowSpecificModel.Types.LINKED_REVIEW_TASK));
+            linkedReviewTasks = new TaskAndDocumentDataProvider(taskLists.get(WorkflowSpecificModel.Types.LINKED_REVIEW_TASK));
         }
         if (tasksToLoad.contains(WorkflowSpecificModel.Types.SIGNATURE_TASK)) {
             signatureTasks = new TaskAndDocumentDataProvider(taskLists.get(WorkflowSpecificModel.Types.SIGNATURE_TASK));

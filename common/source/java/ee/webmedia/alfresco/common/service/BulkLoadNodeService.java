@@ -74,6 +74,8 @@ public interface BulkLoadNodeService {
     List<SimpleFile> loadAllFiles(NodeRef parentRef);
 
     Map<NodeRef, List<SimpleFile>> loadActiveFiles(List<NodeRef> parentNodeRefs, Map<Long, QName> propertyTypes);
+    
+    Map<NodeRef, List<SimpleFileWithOrder>> loadActiveFilesWithOrder(List<NodeRef> parentNodeRefs);
 
     Map<NodeRef, Map<NodeRef, Map<QName, Serializable>>> loadChildNodes(Collection<NodeRef> parentNodes, Set<QName> propsToLoad);
 

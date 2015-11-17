@@ -53,6 +53,9 @@
             <property name="os:institutionRegCode">
                <type>d:text</type>
             </property>
+            <property name="os:groupEmail">
+               <type>d:text</type>
+            </property>
          </properties>
       </type>
    </types>

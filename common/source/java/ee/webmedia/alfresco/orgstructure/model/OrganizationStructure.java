@@ -22,8 +22,9 @@ public class OrganizationStructure implements Serializable {
     private String superUnitId;
     private List<String> organizationPath;
     private String institutionRegCode;
+    private String groupEmail;
 
-    @AlfrescoModelProperty(isMappable = false)
+	@AlfrescoModelProperty(isMappable = false)
     private NodeRef nodeRef;
     @AlfrescoModelProperty(isMappable = false)
     private String superValueName;
@@ -87,6 +88,14 @@ public class OrganizationStructure implements Serializable {
     public void setInstitutionRegCode(String institutionRegCode) {
         this.institutionRegCode = institutionRegCode;
     }
+    
+    public String getGroupEmail() {
+		return groupEmail;
+	}
+
+	public void setGroupEmail(String groupEmail) {
+		this.groupEmail = groupEmail;
+	}
 
     @Override
     public String toString() {
@@ -98,6 +107,7 @@ public class OrganizationStructure implements Serializable {
         sb.append("\n  name=").append(name);
         sb.append("\n  organizationPath=").append(organizationPath == null ? null : StringUtils.join(organizationPath, '|'));
         sb.append("\n  institutionRegCode=").append(institutionRegCode);
+        sb.append("\n  groupEmail=").append(groupEmail);
         sb.append("\n]");
         return sb.toString();
     }

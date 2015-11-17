@@ -27,6 +27,7 @@ public interface OrganizationStructureModel {
         QName UNIT_ID = QName.createQName(URI, "unitId");
         QName SUPER_UNIT_ID = QName.createQName(URI, "superUnitId");
         QName INSTITUTION_REG_CODE = QName.createQName(URI, "institutionRegCode");
+        QName GROUP_EMAIL = QName.createQName(URI, "groupEmail");
     }
 
 }

@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -42,6 +43,7 @@ import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.file.model.MDeltaFile;
 import ee.webmedia.alfresco.document.file.model.SimpleFile;
+import ee.webmedia.alfresco.document.file.model.SimpleFileWithOrder;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.dvk.model.DvkModel;
@@ -58,7 +60,7 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
     private static final QName MAIN_DOCUMENT_PROP = RepoUtil.createTransientProp("mainDocument");
     private static final QName DOCUMENT_TO_SIGN_PROP = RepoUtil.createTransientProp("documentToSign");
     private static final Set<QName> MDELTA_FILE_PROPS = new HashSet<QName>(Arrays.asList(FileModel.Props.DISPLAY_NAME, DvkModel.Props.DVK_ID,
-            ContentModel.PROP_NAME, ContentModel.PROP_CONTENT, FileModel.Props.ACTIVE));
+            ContentModel.PROP_NAME, ContentModel.PROP_CONTENT, FileModel.Props.ACTIVE, FileModel.Props.FILE_ORDER_IN_LIST));
 
     private static final long serialVersionUID = 1L;
 
@@ -621,20 +623,30 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
     public List<SimpleFile> getFiles(Map<Long, QName> propertyTypes) {
         if (isMDeltaFiles || files == null) {
             isMDeltaFiles = false;
+            files = new ArrayList<SimpleFile>();
             // probably not the best idea to call service from model, but alternatives get probably too complex
             BulkLoadNodeService bulkLoadNodeService = BeanHelper.getBulkLoadNodeService();
             try {
-                files = bulkLoadNodeService.loadActiveFiles(getNodeRef(), propertyTypes);
+            	List<SimpleFileWithOrder> filesWithOrder = bulkLoadNodeService.loadActiveFilesWithOrder(getNodeRef());
+            	Collections.sort(filesWithOrder, Collections.reverseOrder(new Comparator<SimpleFileWithOrder>() {
+            	    public int compare(SimpleFileWithOrder s1, SimpleFileWithOrder s2){
+            	    	Long o1 = s1.getFileOrderInList();
+            	    	Long o2 = s2.getFileOrderInList();
+            	    	return o1==null?Integer.MAX_VALUE:o2==null?Integer.MIN_VALUE:o2.compareTo(o1);
+            	    }
+        		}));
+                files.addAll(filesWithOrder);
             } catch (InvalidNodeRefException e) {
                 // Document has been deleted between initial transaction (that constructed document list)
                 // and this transaction (JSF rendering phase, value-binding from JSP is being resolved).
                 // Removing a row at current stage would be too complicated and displaying an error message too confusing,
                 // so just silence the exception - user sees document row with no file icons.
-                files = new ArrayList<SimpleFile>();
+                //files = new ArrayList<SimpleFile>();
             }
         }
         return files;
     }
+    
 
     /**
      * Never call this method and {@link #getFiles(Map)} on the same object.
@@ -657,7 +669,8 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
                         }
                         String readOnlyUrl = DownloadContentServlet.generateDownloadURL((NodeRef) fileProps.get(ContentModel.PROP_NODE_REF), displayName);
                         long size = DefaultTypeConverter.INSTANCE.convert(ContentData.class, fileProps.get(ContentModel.PROP_CONTENT)).getSize();
-                        MDeltaFile file = new MDeltaFile(displayName, readOnlyUrl, size, nodeRef);
+                        Long fileOrderInList = (Long) fileProps.get(FileModel.Props.FILE_ORDER_IN_LIST);
+                        MDeltaFile file = new MDeltaFile(displayName, readOnlyUrl, size, nodeRef, fileOrderInList);
                         boolean viewDocumentFiles = privilegeService.hasPermission(nodeRef, userName, Privilege.VIEW_DOCUMENT_FILES);
                         file.setViewDocumentFilesPermission(viewDocumentFiles);
                         return file;
@@ -665,6 +678,13 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
                 };
                 files = new ArrayList<>();
                 List<MDeltaFile> filez = bulkLoadNodeService.loadActiveFiles(nodeRef, null, MDELTA_FILE_PROPS, callback);
+                Collections.sort(filez, Collections.reverseOrder(new Comparator<MDeltaFile>() {
+            	    public int compare(MDeltaFile s1, MDeltaFile s2){
+            	    	Long o1 = s1.getFileOrderInList();
+            	    	Long o2 = s2.getFileOrderInList();
+            	    	return o1==null?Integer.MAX_VALUE:o2==null?Integer.MIN_VALUE:o2.compareTo(o1);
+            	    }
+        		}));
                 files.addAll(filez);
             } catch (InvalidNodeRefException e) {
                 files = new ArrayList<>();
@@ -686,6 +706,13 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
                             }
 
                         });
+                Collections.sort(inactiveFiles, Collections.reverseOrder(new Comparator<File>() {
+            	    public int compare(File s1, File s2){
+            	    	Long o1 = s1.getFileOrderInList();
+            	    	Long o2 = s2.getFileOrderInList();
+            	    	return o1==null?Integer.MAX_VALUE:o2==null?Integer.MIN_VALUE:o2.compareTo(o1);
+            	    }
+        		}));
             } catch (InvalidNodeRefException e) {
                 // Document has been deleted between initial transaction (that constructed document list)
                 // and this transaction (JSF rendering phase, value-binding from JSP is being resolved).

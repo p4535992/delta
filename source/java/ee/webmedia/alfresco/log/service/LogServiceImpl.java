@@ -38,6 +38,8 @@ import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogFilter;
 import ee.webmedia.alfresco.log.model.LogLevel;
 import ee.webmedia.alfresco.log.model.LogSetup;
+import ee.webmedia.alfresco.log.model.LoggedNotificatedUser;
+import ee.webmedia.alfresco.log.model.LoggedNotification;
 
 /**
  * Main implementation of {@link LogService}. This class does not rely on Alfresco, and exchanges data with the database using JDBC(Template) directly.
@@ -487,5 +489,53 @@ public class LogServiceImpl implements LogService, InitializingBean {
     public void setUseClientIpFromXForwardedForHttpHeader(boolean useClientIpFromXForwardedForHttpHeader) {
         this.useClientIpFromXForwardedForHttpHeader = useClientIpFromXForwardedForHttpHeader;
     }
+
+		@Override
+		public long retrieveNotificationLogSequenceNextval() {
+			return jdbcTemplate.queryForObject("SELECT nextval('DELTA_NOTIFICATION_LOG_ID')", Long.class);
+		}
+    
+    @Override
+		public void buildLogUserGroups(long notificationLogId, String userGroups) {
+    	LOG.debug("Going to build notification user groups");
+    	long startTime = System.currentTimeMillis();
+    	jdbcTemplate.queryForObject("SELECT * FROM FN_LOG_USER_GROUPS_NOTIFICATIONS(?,?)", new Object[] { notificationLogId, userGroups }, String.class);
+    	LOG.debug("Notification user groups build, time spent " + (System.currentTimeMillis() - startTime));
+	}
+
+    @Override
+    public void confirmNotificationSending(Long notificationId) {
+    	if (notificationId == null) {
+    		return;
+    	}
+    	
+    	String sql = "UPDATE delta_notification_group_log SET notification_date_time = ? WHERE notification_log_id = ?";
+    	jdbcTemplate.update(sql, new Object[] { new Date(), notificationId });
+	}
+
+		@Override
+	public LoggedNotification getLoggedNotification(long notificationLogId, String userGroupHash) {
+		LoggedNotification loggedNotification = new LoggedNotification();
+		String sql = "SELECT notification_date_time FROM delta_notification_group_log WHERE notification_log_id = ? AND user_group_hash = ?";
+		Object[] args = new Object[] { notificationLogId, userGroupHash };
+		Date notificationDate = jdbcTemplate.queryForObject(sql, args, Date.class);
+		loggedNotification.setNotificationDate(notificationDate);
+
+		sql = "SELECT * FROM fn_get_log_notificated_users(?, ?)";
+		List<LoggedNotificatedUser> notificatedUsers = jdbcTemplate.query(sql, args, new RowMapper<LoggedNotificatedUser>() {
+
+			@Override
+			public LoggedNotificatedUser mapRow(ResultSet rs, int arg1) throws SQLException {
+				LoggedNotificatedUser user = new LoggedNotificatedUser();
+				user.setFisrtName(rs.getString("first_name"));
+				user.setLastName(rs.getString("last_name"));
+				user.setEmail(rs.getString("email"));
+				user.setIdCode(rs.getString("id_code"));
+				return user;
+			}
+		});
+		loggedNotification.setNotificatedUsers(notificatedUsers);
+		return loggedNotification;
+		}
 
 }

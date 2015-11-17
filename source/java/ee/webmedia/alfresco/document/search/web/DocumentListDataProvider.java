@@ -24,6 +24,7 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.file.model.SimpleFile;
+import ee.webmedia.alfresco.document.file.model.SimpleFileWithOrder;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
@@ -118,7 +119,6 @@ public class DocumentListDataProvider extends LazyListDataProvider<NodeRef, Docu
         return new PageLoadCallback<NodeRef, Document>() {
 
             private static final long serialVersionUID = 1L;
-            private final Map<Long, QName> propertyTypes = new HashMap<Long, QName>();
 
             @Override
             public void doWithPageItems(Map<NodeRef, Document> loadedRows) {
@@ -129,10 +129,20 @@ public class DocumentListDataProvider extends LazyListDataProvider<NodeRef, Docu
                     }
                 }
                 if (!documentsToLoadFiles.isEmpty()) {
-                    Map<NodeRef, List<SimpleFile>> documentsFiles = BeanHelper.getBulkLoadNodeService().loadActiveFiles(documentsToLoadFiles, propertyTypes);
+                    Map<NodeRef, List<SimpleFileWithOrder>> documentsFiles = BeanHelper.getBulkLoadNodeService().loadActiveFilesWithOrder(documentsToLoadFiles);
                     for (Map.Entry<NodeRef, Document> entry : loadedRows.entrySet()) {
                         NodeRef docRef = entry.getKey();
-                        entry.getValue().setFiles(documentsFiles.get(docRef));
+                        List <SimpleFile> files = new ArrayList<SimpleFile>();
+                        List<SimpleFileWithOrder> filesWithOrder = documentsFiles.get(docRef);
+                    	Collections.sort(filesWithOrder, Collections.reverseOrder(new Comparator<SimpleFileWithOrder>() {
+                    	    public int compare(SimpleFileWithOrder s1, SimpleFileWithOrder s2){
+                    	    	Long o1 = s1.getFileOrderInList();
+                    	    	Long o2 = s2.getFileOrderInList();
+                    	    	return o1==null?Integer.MAX_VALUE:o2==null?Integer.MIN_VALUE:o2.compareTo(o1);
+                    	    }
+                		}));
+                        files.addAll(filesWithOrder);
+                        entry.getValue().setFiles(files);
                     }
                 }
             }

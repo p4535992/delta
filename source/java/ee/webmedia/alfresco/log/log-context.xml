@@ -36,6 +36,46 @@
       </property>
       <property name="dataSource" ref="dataSource" />
    </bean>
+   
+   <bean id="logTableAlterIndexesBootstrap2" parent="executeStatementsBootstrap" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dataSource" ref="dataSource" />
+      <property name="resourceName" value="ee/webmedia/alfresco/log/bootstrap/delta_log_table_alter_indexes2.sql" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="logTableBootstrap2" />
+         </list>
+      </property>
+   </bean>    
+   
+   <bean id="logNotificatedUsersBootstrap" class="ee.webmedia.alfresco.log.bootstrap.LogNotificatedUserTablesBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dataSource" ref="dataSource" />
+   </bean>  
+   
+   <bean id="logNotificatedUsersFunctionsBootstrap" class="ee.webmedia.alfresco.log.bootstrap.LogNotificatedUserFunctionsBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dataSource" ref="dataSource" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="logNotificatedUsersBootstrap" />
+         </list>
+      </property>      
+   </bean>
+   
+   <bean id="logNotificatedUsersFunctionsUpdateBootstrap" class="ee.webmedia.alfresco.log.bootstrap.LogNotificatedUserFunctionsUpdateBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dataSource" ref="dataSource" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="logNotificatedUsersBootstrap" />
+         </list>
+      </property>      
+   </bean>    
 
    <bean id="logDateAndSequenceBootstrap" class="ee.webmedia.alfresco.log.bootstrap.LogDateAndSequenceBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="common" />

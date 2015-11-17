@@ -323,6 +323,9 @@
             <property name="cm:authorityDisplayName">
                <type>d:text</type>
             </property>
+            <property name="cm:authorityEmail">
+               <type>d:text</type>
+            </property>
          </properties>
          <associations>
             <child-association name="cm:member">
