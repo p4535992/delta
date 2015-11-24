@@ -573,28 +573,46 @@ public class NotificationServiceImpl implements NotificationService {
                     logService.buildLogUserGroups(nootificationLogId, userGroups);
                 }
 
-                if (!recipientEmailsAndNames.isEmpty() || true) {// just for test
+                if (!recipientEmailsAndNames.isEmpty()) {
+                	Long maxEmailRecipients = parametersService.getLongParameter(Parameters.MAX_EMAIL_RECIPIENTS);
+                	
+                	List<Pair<List<String>,List<String>>> emailPacks = new ArrayList<>();
                     List<String> recipientEmails = new ArrayList<>();
                     List<String> recipientNames = new ArrayList<>();
+                    int counter = 1;
                     for (Pair<String, String> pair : recipientEmailsAndNames) {
                         recipientEmails.add(pair.getFirst());
                         recipientNames.add(pair.getSecond());
+                        
+                        if (maxEmailRecipients != null && maxEmailRecipients == counter) {
+                        	counter = 1;
+                        	emailPacks.add(new Pair<List<String>,List<String>> (recipientNames, recipientEmails));
+                        	recipientEmails = new ArrayList<>();
+                        	recipientNames = new ArrayList<>();
+                    	} else {
+                    		counter++;
+                    	}
                     }
-                    Notification notification = setupNotification(new Notification(), NotificationModel.NotificationType.DOCUMENT_SEND_FOR_INFORMATION, -1,
-                            Parameters.DOC_SENDER_EMAIL, null);
-                    notification.setTemplateName(emailTemplate);
-                    notification.setToEmails(recipientEmails);
-                    notification.setToNames(recipientNames);
-                    notification.setSubject(subject);
-                    try {
-                        NodeRef docRef = docNode.getNodeRef();
-                        emailService.sendEmail(notification.getToEmails(), notification.getToNames(), null, null, notification.getSenderEmail(), notification.getSubject(),
-                                content, true, docRef, null);
-                        if (groupNotiication) {
-                            logService.confirmNotificationSending(nootificationLogId);
-                        }
-                    } catch (EmailException e) {
-                        log.error("Failed to send email notification " + notification, e);
+                    if (!recipientEmails.isEmpty()) {
+                    	emailPacks.add(new Pair<List<String>,List<String>> (recipientNames, recipientEmails));
+                    }
+                    for (Pair<List<String>,List<String>> emailPack: emailPacks) {
+	                    Notification notification = setupNotification(new Notification(), NotificationModel.NotificationType.DOCUMENT_SEND_FOR_INFORMATION, -1,
+	                            Parameters.DOC_SENDER_EMAIL, null);
+	                    notification.setTemplateName(emailTemplate);
+	                    notification.setToEmails(emailPack.getSecond());
+	                    notification.setToNames(emailPack.getFirst());
+	                    notification.setSubject(subject);
+	                    try {
+	                        NodeRef docRef = docNode.getNodeRef();
+	                        emailService.sendEmail(notification.getToEmails(), notification.getToNames(), null, null, notification.getSenderEmail(), notification.getSubject(),
+	                                content, true, docRef, null);
+	                        if (groupNotiication) {
+	                            logService.confirmNotificationSending(nootificationLogId);
+	                        }
+	                    } catch (EmailException e) {
+	                        log.error("Failed to send email notification " + notification, e);
+	                    }
                     }
                 }
                 return null;
@@ -602,7 +620,10 @@ public class NotificationServiceImpl implements NotificationService {
         }, "sendDocumentForInformation", true);
         return nootificationLogId;
     }
-
+    
+    
+    
+    
     public void addUserEmail(Set<Pair<String, String>> emailsAndNames, String username) {
         String email = userService.getUserEmail(username);
         if (StringUtils.isNotBlank(email)) {
@@ -752,7 +773,8 @@ public class NotificationServiceImpl implements NotificationService {
 
     }
 
-    private List<Notification> processNotification(Task task, boolean isGroupAssignmentTaskFinishedAutomatically, Task orderAssignmentFinishTriggeringTask, boolean sentOverDvk) {
+    @SuppressWarnings("deprecation")
+	private List<Notification> processNotification(Task task, boolean isGroupAssignmentTaskFinishedAutomatically, Task orderAssignmentFinishTriggeringTask, boolean sentOverDvk) {
         List<Notification> notifications = new ArrayList<>();
         if (task.isStatus(Status.IN_PROGRESS)) {
             processNewTask(task, notifications, sentOverDvk);

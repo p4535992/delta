@@ -643,23 +643,26 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
 
         for (String nodeRefStr : selected) {
             NodeRef nodeRef = new NodeRef(nodeRefStr);
-            File file = getFileService().getFile(nodeRef);
-            Assert.notNull(file, "Selected file was not found.");
-            String fileName = file.getName();
-            try {
-                checkEncryptedFile(fileName);
-                checkFileSize(nodeRef, fileName);
-                checkDigiDoc(nodeRef, fileName);
-            } catch (UnableToPerformException e) {
-                Utils.addErrorMessage(MessageUtil.getMessage(e.getMessageKey(), e.getMessageValuesForHolders()));
+            if (!selectedFileNodeRef.contains(nodeRef)) {
+	            File file = getFileService().getFile(nodeRef);
+	            Assert.notNull(file, "Selected file was not found.");
+	            String fileName = file.getName();
+	            try {
+	                checkEncryptedFile(fileName);
+	                checkFileSize(nodeRef, fileName);
+	                checkDigiDoc(nodeRef, fileName);
+	            } catch (UnableToPerformException e) {
+	                Utils.addErrorMessage(MessageUtil.getMessage(e.getMessageKey(), e.getMessageValuesForHolders()));
+	            }
+	            
+	            selectedFileNodeRef.add(nodeRef);
+	            selectedFileName.add(fileName);
+	            selectedFileNameWithoutExtension.add(FilenameUtils.getBaseName(fileName));
+	            boolean associateWithMetadata = AddFileDialog.BOUND_METADATA_EXTENSIONS.contains(FilenameUtils.getExtension(fileName));
+	            selectedAssociatedWithMetaData.add(associateWithMetadata);
+	            long orderNr = isActiveFileDialog() ? ++activeFilesCount : ++inactiveFilesCount;
+	            selectedFileOrderInList.add(orderNr);
             }
-            selectedFileNodeRef.add(nodeRef);
-            selectedFileName.add(fileName);
-            selectedFileNameWithoutExtension.add(FilenameUtils.getBaseName(fileName));
-            boolean associateWithMetadata = AddFileDialog.BOUND_METADATA_EXTENSIONS.contains(FilenameUtils.getExtension(fileName));
-            selectedAssociatedWithMetaData.add(associateWithMetadata);
-            long orderNr = isActiveFileDialog() ? ++activeFilesCount : ++inactiveFilesCount;
-            selectedFileOrderInList.add(orderNr);
         }
 
         isFileSelected = (selectedFileNodeRef.size() > 0);
