@@ -1,0 +1,131 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Delta Test Suite">
+	
+	
+	<test name="Menus and login/logout">
+		<classes>
+			<class name="com.nortal.alfresco.test.selenium.Menu.TestMenus">
+			</class>
+			<class name="com.nortal.alfresco.test.selenium.Menu.DoLoginLogOut">
+			</class>
+		</classes>
+	</test>
+	
+	<test name="com.nortal.alfresco.test.selenium.Administration">
+		<classes>
+			<class name="com.nortal.alfresco.test.selenium.Administration.PredefinedCW">
+			</class>
+		</classes>
+	</test>
+	
+	<test name="com.nortal.alfresco.test.selenium.Asjatoimikud">
+		<classes>
+			<class name="com.nortal.alfresco.test.selenium.Asjatoimikud.BeginAndTegevused">
+			</class>
+			<class name="com.nortal.alfresco.test.selenium.Asjatoimikud.WorkflowsRights">
+			</class>
+		</classes>
+	</test>
+	
+	<test name="Dokumendi compound workflow">
+		<classes>
+			<class name="com.nortal.alfresco.test.selenium.CompoundWorkflow.InformationWorkflow">
+			</class>
+			<class name="com.nortal.alfresco.test.selenium.CompoundWorkflow.ReviewTask">
+			</class>
+		</classes>
+	</test>
+	
+	<test name="com.nortal.alfresco.test.selenium.Contact menu">
+		<classes>
+			<class name="com.nortal.alfresco.test.selenium.Contact.AddOrganisation">
+			</class>
+			<class name="com.nortal.alfresco.test.selenium.Contact.AddEraisik">
+			</class>
+			<class name="com.nortal.alfresco.test.selenium.Contact.ContactToGroup">
+			</class>
+			<class name="com.nortal.alfresco.test.selenium.Contact.CreateGroup">
+			</class>
+		</classes>
+	</test>
+	
+	<test name="Mina menu">
+		<classes>
+			<class name="com.nortal.alfresco.test.selenium.Me.SubstituteView">
+			</class>
+			<class name="com.nortal.alfresco.test.selenium.Me.Substitution">
+			</class>
+		</classes>
+	</test>
+	
+	<test name="Dokumendiregister">
+		<classes>
+			<class name="com.nortal.alfresco.test.selenium.DocRegister.NewPath">
+			</class>
+		</classes>
+	</test>
+	
+	<test name="Tegevused dokumendi ekraanivormil">
+		<classes>
+			<class name="com.nortal.alfresco.test.selenium.DocumentView.AddToFavorite">
+			</class>
+			<class name="com.nortal.alfresco.test.selenium.DocumentView.BeginDiscuss">
+			</class>
+			<class name="com.nortal.alfresco.test.selenium.DocumentView.CreateDoc">
+			</class>
+			<class name="com.nortal.alfresco.test.selenium.DocumentView.GoToDocChangeView">
+			</class>
+			<class name="com.nortal.alfresco.test.selenium.DocumentView.SendForInfo">
+			</class>
+			<class name="com.nortal.alfresco.test.selenium.DocumentView.AddVastusJarg">
+			</class>
+			<class name="com.nortal.alfresco.test.selenium.DocumentView.AddErrandOrderAbroadandStartITTV">
+			</class>
+			<class name="com.nortal.alfresco.test.selenium.DocumentView.ChangeDocLiik">
+			</class>
+			<class name="com.nortal.alfresco.test.selenium.DocumentView.LukustaMuutmisel">
+			</class>
+		</classes>
+	</test>
+	
+	<test name="ITTV">
+		<classes>
+			<class name="com.nortal.alfresco.test.selenium.IndependentCW.StartITTV">
+			</class>
+			<class name="com.nortal.alfresco.test.selenium.IndependentCW.SignWithMobilID">
+			</class>
+		</classes>
+	</test>
+	
+	<test name="Rights management">
+		<classes>
+			<class name="com.nortal.alfresco.test.selenium.RightsManage.DocRights">
+			</class>
+		</classes>
+	</test>
+	
+	<test name="Arhivaalide loetelus Otsetee">
+		<classes>
+			<class name="com.nortal.alfresco.test.selenium.Tips.Otsetee">
+			</class>
+		</classes>
+	</test>
+	
+	<test name="Otsing">
+		<classes>
+			<class name="com.nortal.alfresco.test.selenium.Search.DocSearch">
+			</class>
+		</classes>
+	</test>
+	
+	<test name="Kustuta testimisel tekkinud dokumendid">
+		<classes>
+			<class name="com.nortal.alfresco.test.selenium.DocumentView.DeleteDoc">
+			</class>
+			<class name="com.nortal.alfresco.test.selenium.DocumentView.YmberLiigitamine">
+			</class>
+		</classes>
+	</test>
+	
+	
+</suite>

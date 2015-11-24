@@ -112,7 +112,7 @@
          <list>
             <ref bean="taskCapablePropertyUpdater4"/>
              <!-- This dependency is here to ensure seriesUpdater2 starts at the beginning of updater execution process; taskCapablePropertyRemoverOnPeople has no functional dependency on seriesUpdater2 -->
-            <ref bean="seriesUpdater2" />
+            <ref bean="seriesUpdater3" />
          </list>
       </property>
    </bean>     

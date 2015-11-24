@@ -70,7 +70,7 @@
 <!--       Dependencies are set to ensure that all major updaters have been run before this updater -->
       <property name="dependsOn">
          <list>
-            <ref bean="seriesUpdater2" />
+            <ref bean="seriesUpdater3" />
             <ref bean="workflow25To313DynamicDocTypeUpdater" />
             <ref bean="convertToDynamicDocumentsUpdater" />
             <ref bean="generatedFileFieldUpdater" />
@@ -86,7 +86,7 @@
          </list>
       </property>
       <property name="enabled" value="${updater.version25To313.enabled}" />
-      <property name="seriesUpdater" ref="seriesUpdater2" />
+      <property name="seriesUpdater" ref="seriesUpdater3" />
    </bean>
 
    <bean id="createDocListMaterializedViewsBootstrap" parent="executeStatementsBootstrap" >

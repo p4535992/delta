@@ -26,6 +26,8 @@ public enum Parameters {
     DOC_SENDER_EMAIL("docSenderEmail"),
     // Info message for document sendout view
     DOC_SENDOUT_INFO("docSendoutInfo"),
+    // Default max number of email recipients
+    MAX_EMAIL_RECIPIENTS("maxEmailRecipients"),
     // Default sender email value when sending out a task
     TASK_SENDER_EMAIL("taskSenderEmail"),
     // Maximum total size of attachments when sending out a document

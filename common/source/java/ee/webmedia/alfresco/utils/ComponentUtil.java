@@ -1444,15 +1444,16 @@ public class ComponentUtil {
         return getDocumentRowFileGenerator(application, -1);
     }
 
-    public static CustomChildrenCreator getDocumentRowFileGenerator(final Application application, final int limit) {
+    public static CustomChildrenCreator getDocumentRowFileGenerator(final Application application, final int digiDocFilelimit) {
         final Map<Long, QName> propertyTypes = new HashMap<>();
-        final boolean limited = limit >= 0;
+        final boolean limited = digiDocFilelimit >= 0;
         return new CustomChildrenCreator() {
 
             @Override
             public List<UIComponent> createChildren(Object params, int rowCounter) {
                 List<UIComponent> components = new ArrayList<UIComponent>();
                 if (params != null) {
+                    int digiDocFileCounter = 0;
                     int fileCounter = 0;
                     Document document = null;
                     if (params instanceof Document) {
@@ -1466,6 +1467,14 @@ public class ComponentUtil {
                     boolean canViewFiles = document.hasPermission(Privilege.VIEW_DOCUMENT_FILES);
                     for (SimpleFile file : document.getFiles(propertyTypes)) {
                         String fileName = file.getDisplayName();
+                        if (FilenameUtil.isDigiDocFile(fileName)) {
+                        	if (limited && digiDocFileCounter >= digiDocFilelimit) {
+                                continue;
+                            }
+                        	digiDocFileCounter++;
+                        }
+                        
+                        
                         String imageText = file.getImagePath();
                         if (canViewFiles) {
                             UIActionLink fileAllowLink = generateFileReadOnlyLink(application, rowCounter, fileCounter, file.getReadOnlyUrl(), fileName, imageText);
@@ -1479,9 +1488,6 @@ public class ComponentUtil {
                             components.add(image);
                         }
                         fileCounter++;
-                        if (limited && fileCounter == limit) {
-                            break;
-                        }
                     }
                     rowCounter++;
                 }
