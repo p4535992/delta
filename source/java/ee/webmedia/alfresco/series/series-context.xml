@@ -30,7 +30,8 @@
    <!-- Used to update series volume types values. CL task: 177957 -->
    <bean id="seriesUpdater3" class="ee.webmedia.alfresco.series.bootstrap.SeriesUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
-       <property name="dependsOn">
+      <property name="executeOnceOnly" value="false" />
+      <property name="dependsOn">
          <list>
             <ref bean="archivalsStoresBootstrap" />
             <ref bean="SeriesDocNumberPatternUpdater" />
@@ -51,7 +52,7 @@
 	
 	<bean id="volumeCaseFileVolumeAssociationUpdater" class="ee.webmedia.alfresco.series.bootstrap.VolumeCaseFileVolumeAssociationUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
+      <property name="executeOnceOnly" value="false" />
       <property name="dependsOn">
          <list>
             <ref bean="archivalsStoresBootstrap" />
