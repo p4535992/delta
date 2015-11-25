@@ -46,6 +46,7 @@
       <property name="bulkLoadNodeService" ref="bulkLoadNodeService" />
       <property name="batchSize" value="1" />
       <property name="executeInBackground" value="${updater.version25To313.enabled}" />
+      <property name="enabled" value="${updater.series.enabled}" />
    </bean>
 	
 	<bean id="volumeCaseFileVolumeAssociationUpdater" class="ee.webmedia.alfresco.series.bootstrap.VolumeCaseFileVolumeAssociationUpdater" parent="abstractNodeUpdater" >
@@ -57,6 +58,7 @@
             <ref bean="SeriesDocNumberPatternUpdater" />
          </list>
       </property>
+      <property name="enabled" value="${updater.volumeassoc.enabled}" />
    </bean>
 	
    <bean id="seriesService" class="ee.webmedia.alfresco.series.service.SeriesServiceImpl">
