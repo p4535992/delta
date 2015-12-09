@@ -30,7 +30,8 @@
    <!-- Used to update series volume types values. CL task: 177957 -->
    <bean id="seriesUpdater3" class="ee.webmedia.alfresco.series.bootstrap.SeriesUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
-       <property name="dependsOn">
+      <property name="executeOnceOnly" value="false" />
+      <property name="dependsOn">
          <list>
             <ref bean="archivalsStoresBootstrap" />
             <ref bean="SeriesDocNumberPatternUpdater" />
@@ -46,17 +47,19 @@
       <property name="bulkLoadNodeService" ref="bulkLoadNodeService" />
       <property name="batchSize" value="1" />
       <property name="executeInBackground" value="${updater.version25To313.enabled}" />
+      <property name="enabled" value="${updater.series.enabled}" />
    </bean>
 	
 	<bean id="volumeCaseFileVolumeAssociationUpdater" class="ee.webmedia.alfresco.series.bootstrap.VolumeCaseFileVolumeAssociationUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
+      <property name="executeOnceOnly" value="false" />
       <property name="dependsOn">
          <list>
             <ref bean="archivalsStoresBootstrap" />
             <ref bean="SeriesDocNumberPatternUpdater" />
          </list>
       </property>
+      <property name="enabled" value="${updater.volumeassoc.enabled}" />
    </bean>
 	
    <bean id="seriesService" class="ee.webmedia.alfresco.series.service.SeriesServiceImpl">

@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.workflow.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getCompoundWorkflowFavoritesService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocLockService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getJsfBindingHelper;
@@ -39,6 +40,9 @@ import javax.faces.model.SelectItem;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.repo.transaction.RetryingTransactionHelper;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
+import org.alfresco.service.cmr.lock.LockStatus;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -47,6 +51,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.dialog.DialogState;
+import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.config.DialogsConfigElement.DialogButtonConfig;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.repo.component.UIActions;
@@ -266,22 +271,34 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     }
 
     protected String saveWorkflow(FacesContext context, String workflowBlockCallback, List<Pair<String, Object>> params, String outcome) {
-        boolean isInProgress = WorkflowUtil.isStatus(compoundWorkflow, Status.IN_PROGRESS);
-        preprocessWorkflow();
-        boolean checkConfirmations = !finishImplConfirmed;
-        finishImplConfirmed = false;
-        if (isInProgress && hasOwnerWithNoEmail("workflow_compound_save_failed_owner_without_email")) {
-            return null;
-        }
-        boolean hasWorkflowBlockCallback = workflowBlockCallback != null;
-        if (validate(context, isInProgress, false, hasWorkflowBlockCallback)) {
-            List<String> confirmationMessages = checkConfirmations ? getConfirmationMessages(false, workflowBlockCallback) : null;
-
-            if (CollectionUtils.isNotEmpty(confirmationMessages)) {
-                updatePanelGroup(confirmationMessages, hasWorkflowBlockCallback ? workflowBlockCallback : SAVE_VALIDATED_WORKFLOW, true, true, params, !hasWorkflowBlockCallback);
-                return null;
-            }
-            return saveOrConfirmValidatedWorkflow(!isDocumentWorkflow() ? null : outcome, hasWorkflowBlockCallback);
+    	boolean locked = false;
+    	if (compoundWorkflow.getNodeRef() != null) {
+    		locked = setLock(context, "workflow_compond_locked_for_save");
+    	}
+        if (compoundWorkflow.getNodeRef() == null || locked) {
+        	try {
+		    	boolean isInProgress = WorkflowUtil.isStatus(compoundWorkflow, Status.IN_PROGRESS);
+		        preprocessWorkflow();
+		        boolean checkConfirmations = !finishImplConfirmed;
+		        finishImplConfirmed = false;
+		        if (isInProgress && hasOwnerWithNoEmail("workflow_compound_save_failed_owner_without_email")) {
+		            return null;
+		        }
+		        boolean hasWorkflowBlockCallback = workflowBlockCallback != null;
+		        if (validate(context, isInProgress, false, hasWorkflowBlockCallback)) {
+		            List<String> confirmationMessages = checkConfirmations ? getConfirmationMessages(false, workflowBlockCallback) : null;
+		
+		            if (CollectionUtils.isNotEmpty(confirmationMessages)) {
+		                updatePanelGroup(confirmationMessages, hasWorkflowBlockCallback ? workflowBlockCallback : SAVE_VALIDATED_WORKFLOW, true, true, params, !hasWorkflowBlockCallback);
+		                return null;
+		            }
+		            return saveOrConfirmValidatedWorkflow(!isDocumentWorkflow() ? null : outcome, hasWorkflowBlockCallback);
+		        }
+        	} finally {
+        		if (compoundWorkflow.getNodeRef() != null) {
+        			getDocLockService().unlockIfOwner(compoundWorkflow.getNodeRef());
+        		}
+        	}
         }
         return null;
     }
@@ -342,6 +359,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
 
     private boolean hasOwnerWithNoEmail(String messageKey) {
         List<String> ownersWithNoEmail = getWorkflowService().checkAndAddMissingOwnerEmails(compoundWorkflow);
+        // comment/uncomment this whether not need/need mail validation
         if (!ownersWithNoEmail.isEmpty()) {
             for (String owner : ownersWithNoEmail) {
                 MessageUtil.addErrorMessage(messageKey, owner);
@@ -349,6 +367,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             MessageUtil.addErrorMessage("workflow_compound_contact_administrator");
             return true;
         }
+        
         return false;
     }
 
@@ -713,22 +732,30 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
      */
     public void stopWorkflow(@SuppressWarnings("unused") ActionEvent event) {
         log.debug("stopWorkflow");
+        
         try {
-            preprocessWorkflow();
-            if (validate(FacesContext.getCurrentInstance(), false, false, false)) {
-                List<String> confirmationMessages = getConfirmationMessages(false);
-                if (confirmationMessages != null && !confirmationMessages.isEmpty()) {
-                    updatePanelGroup(confirmationMessages, STOP_VALIDATED_WORKFLOW, true, true, null, true);
-                    return;
-                }
-                // clear panelGroup to avoid memory issues when working with large worflows
-                resetPanelGroup(true);
-                compoundWorkflow = getWorkflowService().stopCompoundWorkflow(compoundWorkflow);
-                setReviewTaskDvkInfoMessages();
-                MessageUtil.addInfoMessage("workflow_compound_stop_success");
+        	boolean locked = setLock(FacesContext.getCurrentInstance(), "workflow_compond_locked_for_stop");
+            if (locked) {
+		        preprocessWorkflow();
+		        if (validate(FacesContext.getCurrentInstance(), false, false, false)) {
+		            List<String> confirmationMessages = getConfirmationMessages(false);
+		            if (confirmationMessages != null && !confirmationMessages.isEmpty()) {
+		                updatePanelGroup(confirmationMessages, STOP_VALIDATED_WORKFLOW, true, true, null, true);
+		                return;
+		            }
+		            // clear panelGroup to avoid memory issues when working with large worflows
+		            resetPanelGroup(true);
+		            compoundWorkflow = getWorkflowService().stopCompoundWorkflow(compoundWorkflow);
+		            setReviewTaskDvkInfoMessages();
+		            MessageUtil.addInfoMessage("workflow_compound_stop_success");
+		        }
             }
         } catch (Exception e) {
             handleException(e, "workflow_compound_stop_workflow_failed");
+        } finally {
+        	if (compoundWorkflow.getNodeRef() != null) {
+        		getDocLockService().unlockIfOwner(compoundWorkflow.getNodeRef());
+        	}
         }
         updatePanelGroup(false);
         initBlocks();
@@ -811,16 +838,23 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     public void finishWorkflow(@SuppressWarnings("unused") ActionEvent event) {
         log.debug("finishWorkflow");
         try {
-            preprocessWorkflow();
-            if (validate(FacesContext.getCurrentInstance(), false, true, false)) {
-                // clear panelGroup to avoid memory issues when working with large worflows
-                resetPanelGroup(true);
-                compoundWorkflow = getWorkflowService().finishCompoundWorkflow(compoundWorkflow);
-                setReviewTaskDvkInfoMessages();
-                MessageUtil.addInfoMessage("workflow_compound_finish_success");
+        	boolean locked = setLock(FacesContext.getCurrentInstance(), "workflow_compond_locked_for_finish");
+            if (locked) {
+	            preprocessWorkflow();
+	            if (validate(FacesContext.getCurrentInstance(), false, true, false)) {
+	                // clear panelGroup to avoid memory issues when working with large worflows
+	                resetPanelGroup(true);
+	                compoundWorkflow = getWorkflowService().finishCompoundWorkflow(compoundWorkflow);
+	                setReviewTaskDvkInfoMessages();
+	                MessageUtil.addInfoMessage("workflow_compound_finish_success");
+	            }
             }
         } catch (Exception e) {
             handleException(e, "workflow_compound_finish_workflow_failed");
+        } finally {
+        	if (compoundWorkflow.getNodeRef() != null) {
+        		getDocLockService().unlockIfOwner(compoundWorkflow.getNodeRef());
+        	}
         }
         updatePanelGroup(false);
         initBlocks();
@@ -1942,6 +1976,35 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                     + " - not sure if it should be displayed or not when configuring compound workflow bound to document");
         }
         return addLinkForThisWorkflow;
+    }
+    
+    /**
+     * Sets compound workflow lock
+     * @return
+     */
+    private boolean setLock(final FacesContext context, final String errorMsgKey) {
+    	RetryingTransactionHelper txnHelper = Repository.getRetryingTransactionHelper(context);
+        RetryingTransactionCallback<Boolean> callback = new RetryingTransactionCallback<Boolean>()
+        {
+           public Boolean execute() throws Throwable
+           {
+        	   LockStatus lockStatus = getDocLockService().setLockIfFree(compoundWorkflow.getNodeRef());
+               boolean result;
+               
+	           	if (lockStatus == LockStatus.LOCK_OWNER) {
+	           		result = true;
+	            } else {
+	               	String lockOwner = StringUtils.substringBefore(getDocLockService().getLockOwnerIfLocked(compoundWorkflow.getNodeRef()), "_");
+	                String lockOwnerName = getUserService().getUserFullNameAndId(lockOwner);
+	               	MessageUtil.addErrorMessage(context, errorMsgKey, lockOwnerName);
+	               	result = false;
+               }
+               return result;
+           }
+        };
+        
+        return txnHelper.doInTransaction(callback, false, true);
+    	
     }
 
     public void updateCompoundWorkflowMainDoc(NodeRef mainDocRef, NodeRef removedDocumentToSign) {

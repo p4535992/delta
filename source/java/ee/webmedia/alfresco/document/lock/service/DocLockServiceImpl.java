@@ -23,6 +23,7 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.file.service.FileService;
@@ -30,6 +31,8 @@ import ee.webmedia.alfresco.document.lock.model.Lock;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.workflow.model.CompoundWorkflowType;
+import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
 public class DocLockServiceImpl extends LockServiceImpl implements DocLockService {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocLockServiceImpl.class);
@@ -77,21 +80,41 @@ public class DocLockServiceImpl extends LockServiceImpl implements DocLockServic
 
         Lock lock = new Lock(nodeRef);
         NodeRef docNodeRef = null;
-        QName type = nodeService.getType(nodeRef);
-        if (DocumentCommonModel.Types.DOCUMENT.equals(type)) {
-            docNodeRef = nodeRef;
-        } else if (ContentModel.TYPE_CONTENT.equals(type)) { // a file
-            docNodeRef = nodeService.getPrimaryParent(nodeRef).getParentRef();
-            lock.setFileName((String) nodeService.getProperty(nodeRef, FileModel.Props.DISPLAY_NAME));
-            lock.setFileUrl(getFileService().generateURL(nodeRef));
+        
+        String compoundWfTypeStr = (String) nodeService.getProperty(nodeRef, WorkflowCommonModel.Props.TYPE);
+        CompoundWorkflowType compoundWfType = StringUtils.isNotBlank(compoundWfTypeStr) ? CompoundWorkflowType.valueOf(compoundWfTypeStr) : null;
+        if (compoundWfType != null) {
+        	if (CompoundWorkflowType.INDEPENDENT_WORKFLOW.equals(compoundWfType)) {
+        		lock.setCompoundWfName((String) nodeService.getProperty(nodeRef, WorkflowCommonModel.Props.TITLE));
+        	} else if (CompoundWorkflowType.DOCUMENT_WORKFLOW.equals(compoundWfType)) {
+        		docNodeRef = nodeService.getPrimaryParent(nodeRef).getParentRef();
+        		lock.setCompoundWfName((String) nodeService.getProperty(docNodeRef, DocumentCommonModel.Props.DOC_NAME));
+        		lock.setDocRegNr((String) nodeService.getProperty(docNodeRef, DocumentCommonModel.Props.REG_NUMBER));
+        	} else if (CompoundWorkflowType.CASE_FILE_WORKFLOW.equals(compoundWfType)) {
+        		docNodeRef = nodeService.getPrimaryParent(nodeRef).getParentRef();
+        		lock.setCompoundWfName((String) nodeService.getProperty(docNodeRef, DocumentDynamicModel.Props.DOC_TITLE));
+        	} else {
+        		return null;
+        	}
+        	lock.setDocName(lock.getCompoundWfName());
         } else {
-            return null;
+	        QName type = nodeService.getType(nodeRef);
+	        if (DocumentCommonModel.Types.DOCUMENT.equals(type)) {
+	            docNodeRef = nodeRef;
+	        } else if (ContentModel.TYPE_CONTENT.equals(type)) { // a file
+	            docNodeRef = nodeService.getPrimaryParent(nodeRef).getParentRef();
+	            lock.setFileName((String) nodeService.getProperty(nodeRef, FileModel.Props.DISPLAY_NAME));
+	            lock.setFileUrl(getFileService().generateURL(nodeRef));
+	        } else {
+	            return null;
+	        }
+	        
+	        lock.setDocName((String) nodeService.getProperty(docNodeRef, DocumentCommonModel.Props.DOC_NAME));
+	        lock.setDocRegDate((Date) nodeService.getProperty(docNodeRef, DocumentCommonModel.Props.REG_DATE_TIME));
+	        lock.setDocRegNr((String) nodeService.getProperty(docNodeRef, DocumentCommonModel.Props.REG_NUMBER));
         }
 
         lock.setDocNodeRef(docNodeRef);
-        lock.setDocName((String) nodeService.getProperty(docNodeRef, DocumentCommonModel.Props.DOC_NAME));
-        lock.setDocRegDate((Date) nodeService.getProperty(docNodeRef, DocumentCommonModel.Props.REG_DATE_TIME));
-        lock.setDocRegNr((String) nodeService.getProperty(docNodeRef, DocumentCommonModel.Props.REG_NUMBER));
         String lockOwner = StringUtils.substringBefore(getLockOwnerIfLocked(nodeRef), "_");
         lock.setLockedBy(userService.getUserFullNameAndId(lockOwner));
 

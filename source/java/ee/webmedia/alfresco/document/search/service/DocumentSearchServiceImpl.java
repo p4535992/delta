@@ -49,6 +49,7 @@ import javax.faces.context.FacesContext;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.repo.workflow.WorkflowModel;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.search.ResultSet;
@@ -171,7 +172,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     @Override
     public List<NodeRef> searchActiveLocks() {
         String query = SearchUtil.joinQueryPartsAnd(SearchUtil.generateAspectQuery(ContentModel.ASPECT_LOCKABLE),
-                SearchUtil.generateTypeQuery(DocumentCommonModel.Types.DOCUMENT, ContentModel.TYPE_CONTENT),
+                SearchUtil.generateTypeQuery(DocumentCommonModel.Types.DOCUMENT, ContentModel.TYPE_CONTENT, WorkflowCommonModel.Types.COMPOUND_WORKFLOW),
                 SearchUtil.generatePropertyNotNullQuery(ContentModel.PROP_LOCK_OWNER),
                 SearchUtil.generateDatePropertyRangeQuery(new Date(), null, ContentModel.PROP_EXPIRY_DATE));
 

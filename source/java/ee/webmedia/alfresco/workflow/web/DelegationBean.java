@@ -1,7 +1,9 @@
 package ee.webmedia.alfresco.workflow.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocLockService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getParametersService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.TASK_INDEX;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.markAsGeneratedByDelegation;
 
@@ -27,12 +29,16 @@ import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.transaction.RetryingTransactionHelper;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
+import org.alfresco.service.cmr.lock.LockStatus;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
+import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
 import org.apache.commons.collections4.CollectionUtils;
@@ -504,29 +510,77 @@ public class DelegationBean implements Serializable {
 
     private void delegateTaskConfirmed() {
         FacesContext context = FacesContext.getCurrentInstance();
-        try {
-            CompoundWorkflow newCWF = getWorkflowService().delegate(initialTask);
-            QName type = initialTask.getType();
-            String taskType = type.getLocalName();
-            workflowBlockBean.refreshCompoundWorkflowAndRestore(newCWF, "delegate");
-            workflowBlockBean.notifyDialogsIfNeeded();
-            if (WorkflowSpecificModel.Types.INFORMATION_TASK.equals(type)) {
-                MessageUtil.addInfoMessage("task_finish_success_defaultMsg");
-            }
-            MessageUtil.addInfoMessage("delegated_successfully_" + taskType);
-        } catch (UnableToPerformMultiReasonException e) {
-            MessageUtil.addStatusMessages(context, e.getMessageDataWrapper());
-        } catch (UnableToPerformException e) {
-            MessageUtil.addStatusMessage(context, e);
-        } catch (NodeLockedException e) {
-            LOG.debug("Compound workflow action failed: document locked!", e);
-            MessageUtil.addErrorMessage(context, "workflow_compound_save_failed_docLocked");
-        } catch (WorkflowChangedException e) {
-            CompoundWorkflowDialog.handleException(e, null);
-        } catch (Exception e) {
-            LOG.error("Compound workflow action failed!", e);
-            MessageUtil.addErrorMessage(context, "workflow_compound_save_failed_general");
+        NodeRef cWorkflowOriginalNodeRef = null;
+        if (initialTask != null) {
+        	Workflow workflowOriginal = initialTask.getParent();
+        	if (workflowOriginal != null) {
+        		CompoundWorkflow cWorkflowOriginal = workflowOriginal.getParent();
+        		if (cWorkflowOriginal != null) {
+        			cWorkflowOriginalNodeRef = cWorkflowOriginal.getNodeRef();
+        		}
+        	}
         }
+        boolean locked = (cWorkflowOriginalNodeRef != null)?setLock(context, cWorkflowOriginalNodeRef, "workflow_compond_locked_for_delegate"):false;
+        if (cWorkflowOriginalNodeRef == null || locked) {
+	        try {
+	        	
+	            CompoundWorkflow newCWF = getWorkflowService().delegate(initialTask);
+	            QName type = initialTask.getType();
+	            String taskType = type.getLocalName();
+	            workflowBlockBean.refreshCompoundWorkflowAndRestore(newCWF, "delegate");
+	            workflowBlockBean.notifyDialogsIfNeeded();
+	            if (WorkflowSpecificModel.Types.INFORMATION_TASK.equals(type)) {
+	                MessageUtil.addInfoMessage("task_finish_success_defaultMsg");
+	            }
+	            MessageUtil.addInfoMessage("delegated_successfully_" + taskType);
+	        } catch (UnableToPerformMultiReasonException e) {
+	            MessageUtil.addStatusMessages(context, e.getMessageDataWrapper());
+	        } catch (UnableToPerformException e) {
+	            MessageUtil.addStatusMessage(context, e);
+	        } catch (NodeLockedException e) {
+	            LOG.debug("Compound workflow action failed: document locked!", e);
+	            MessageUtil.addErrorMessage(context, "workflow_compound_save_failed_docLocked");
+	        } catch (WorkflowChangedException e) {
+	            CompoundWorkflowDialog.handleException(e, null);
+	        } catch (Exception e) {
+	            LOG.error("Compound workflow action failed!", e);
+	            MessageUtil.addErrorMessage(context, "workflow_compound_save_failed_general");
+	        } finally {
+	    		if (cWorkflowOriginalNodeRef != null) {
+	    			getDocLockService().unlockIfOwner(cWorkflowOriginalNodeRef);
+	    		}
+	    	}
+	    }
+    }
+    
+    /**
+     * Sets compound workflow lock
+     * @return
+     */
+    private boolean setLock(final FacesContext context, final NodeRef compoundWfNodeRef, final String lockMsgKey) {
+    	RetryingTransactionHelper txnHelper = Repository.getRetryingTransactionHelper(context);
+        RetryingTransactionCallback<Boolean> callback = new RetryingTransactionCallback<Boolean>()
+        {
+           public Boolean execute() throws Throwable
+           {
+        	   
+        	   LockStatus lockStatus = getDocLockService().setLockIfFree(compoundWfNodeRef);
+               boolean result;
+               
+	           	if (lockStatus == LockStatus.LOCK_OWNER) {
+	           		result = true;
+	            } else {
+	            	String lockOwner = StringUtils.substringBefore(getDocLockService().getLockOwnerIfLocked(compoundWfNodeRef), "_");
+	                String lockOwnerName = getUserService().getUserFullNameAndId(lockOwner);
+	               	MessageUtil.addErrorMessage(context, lockMsgKey, lockOwnerName);
+	               	result = false;
+                }
+                return result;
+           }
+        };
+        
+        return txnHelper.doInTransaction(callback, false, true);
+    	
     }
 
     public boolean delegate(Task task, boolean delegateAndFinish) {
