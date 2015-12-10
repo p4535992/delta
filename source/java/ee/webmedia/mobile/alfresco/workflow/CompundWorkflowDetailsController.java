@@ -1,5 +1,6 @@
 package ee.webmedia.mobile.alfresco.workflow;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocLockService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowDbService;
 import static ee.webmedia.alfresco.workflow.web.WorkflowBlockBean.isMobileIdOutcome;
@@ -28,6 +29,7 @@ import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.servlet.UploadFileBaseServlet;
@@ -102,7 +104,6 @@ public class CompundWorkflowDetailsController extends AbstractCompoundWorkflowCo
     private static Map<Integer, String> reviewTaskOutcomes;
     @Resource
     private SigningFlowHolder signingFlowHolder;
-
     @Resource
     private WorkflowDbService workflowDbService;
     @Resource
@@ -429,17 +430,33 @@ public class CompundWorkflowDetailsController extends AbstractCompoundWorkflowCo
         String userId = form.getUserId();
         String extenderUserFullname = getUserService().getUserFullName(userId);
         ee.webmedia.alfresco.workflow.service.Task initiatingTask = workflowService.getTaskWithParents(taskRef);
-        workflowService.createDueDateExtension(
-                form.getReason(),
-                form.getNewDueDate(),
-                form.getExtensionDueDate(),
-                initiatingTask,
-                cwfRef,
-                userId,
-                extenderUserFullname);
-
-        addRedirectInfoMsg(redirectAttributes, "workflow.task.dueDate.extension.submitted");
-        return redirectToCompoundWorkflow(compoundWorkflowNodeId);
+        
+     // set lock
+        boolean locked = (compoundWorkflowNodeId != null)?setLock(new NodeRef(cwfRef.getStoreRef(), compoundWorkflowNodeId), "workflow_compond.locked", redirectAttributes):false;
+        if (locked) {
+	        try {
+		        workflowService.createDueDateExtension(
+		                form.getReason(),
+		                form.getNewDueDate(),
+		                form.getExtensionDueDate(),
+		                initiatingTask,
+		                cwfRef,
+		                userId,
+		                extenderUserFullname);
+		
+		        addRedirectInfoMsg(redirectAttributes, "workflow.task.dueDate.extension.submitted");
+	        } finally {
+	        	// unlock
+	        	if (compoundWorkflowNodeId != null) {
+        			getDocLockService().unlockIfOwner(new NodeRef(StoreRef.STORE_REF_WORKSPACE_SPACESSTORE, compoundWorkflowNodeId));
+        		}
+	        }
+	        
+	        return redirectToCompoundWorkflow(compoundWorkflowNodeId);
+        } else {
+        	return redirectToDueDateExtensionView(compoundWorkflowNodeId, taskId);
+        }
+        
     }
 
     @RequestMapping(value = COMPOUND_WORKFLOW_DETAILS_MAPPING + "/{compoundWorkflowNodeId}", method = POST)
@@ -448,58 +465,71 @@ public class CompundWorkflowDetailsController extends AbstractCompoundWorkflowCo
         if (inProgressTasksForm == null) {
             return redirectToCompoundWorkflow(compoundWorkflowNodeId);
         }
-        Map<String, String> formActions = inProgressTasksForm.getActions();
-        if (!formActions.isEmpty()) {
-            boolean redirectToTaskList = continueCurrentSigning(inProgressTasksForm, redirectAttributes, formActions, session);
-            if (redirectToTaskList) {
-                return redirectToTaskList(WorkflowSpecificModel.Types.SIGNATURE_TASK);
-            }
-            return redirectToCompoundWorkflow(compoundWorkflowNodeId);
-        }
-        Task taskToFinish = null;
-        int outcomeIndex = -1;
-        boolean saveOnly = false;
-        NodeRef extensionTaskRef = null;
-        for (Task task : inProgressTasksForm.getInProgressTasks().values()) {
-            for (Map.Entry<String, String> entry : task.getActions().entrySet()) {
-                if (StringUtils.isNotBlank(entry.getValue())) {
-                    taskToFinish = task;
-                    String taskAction = entry.getKey();
-                    if (ACTION_SAVE.equals(taskAction)) {
-                        saveOnly = true;
-                        break;
-                    }
-                    if (DELEGATE_TASK.equals(taskAction)) {
-                        return redirectToTaskDelegation(compoundWorkflowNodeId, task);
-                    }
-                    if (EXTEND_DUE_DATE.equals(taskAction)) {
-                        extensionTaskRef = task.getNodeRef();
-                        break;
-                    }
-                    outcomeIndex = Integer.valueOf(taskAction);
-                    break;
-                }
-            }
-        }
-
-        if (taskToFinish == null || (outcomeIndex < 0 && !saveOnly && extensionTaskRef == null)) {
-            addRedirectErrorMsg(redirectAttributes, "workflow.task.finish.error.workflow.task.save.failed");
-        } else if (saveOnly) {
-            saveTask(taskToFinish, redirectAttributes, session);
-        } else if (extensionTaskRef != null) {
-            return redirectToDueDateExtensionView(compoundWorkflowNodeId, extensionTaskRef.getId());
-        }
-        else {
-            QName taskType = workflowService.getNodeRefType(taskToFinish.getNodeRef());
-            if (isMobileIdOutcome(taskType, outcomeIndex)) {
-                startSigning(inProgressTasksForm, redirectAttributes, taskToFinish, session);
-            } else {
-                boolean finishSuccess = finishTask(taskToFinish, taskType, outcomeIndex, redirectAttributes, session);
-                if (finishSuccess) {
-                    return redirectToTaskList(taskType);
-                }
-            }
-        }
+        NodeRef cwfRef = WebUtil.getNodeRefFromNodeId(compoundWorkflowNodeId);
+        // set lock
+        boolean locked = (compoundWorkflowNodeId != null)?setLock(new NodeRef(cwfRef.getStoreRef(), compoundWorkflowNodeId), "workflow_compond.locked", redirectAttributes):false;
+        if (locked) {
+	        try {
+		        Map<String, String> formActions = inProgressTasksForm.getActions();
+		        if (!formActions.isEmpty()) {
+		            boolean redirectToTaskList = continueCurrentSigning(inProgressTasksForm, redirectAttributes, formActions, session);
+		            if (redirectToTaskList) {
+		                return redirectToTaskList(WorkflowSpecificModel.Types.SIGNATURE_TASK);
+		            }
+		            return redirectToCompoundWorkflow(compoundWorkflowNodeId);
+		        }
+		        Task taskToFinish = null;
+		        int outcomeIndex = -1;
+		        boolean saveOnly = false;
+		        NodeRef extensionTaskRef = null;
+		        for (Task task : inProgressTasksForm.getInProgressTasks().values()) {
+		            for (Map.Entry<String, String> entry : task.getActions().entrySet()) {
+		                if (StringUtils.isNotBlank(entry.getValue())) {
+		                    taskToFinish = task;
+		                    String taskAction = entry.getKey();
+		                    if (ACTION_SAVE.equals(taskAction)) {
+		                        saveOnly = true;
+		                        break;
+		                    }
+		                    if (DELEGATE_TASK.equals(taskAction)) {
+		                        return redirectToTaskDelegation(compoundWorkflowNodeId, task);
+		                    }
+		                    if (EXTEND_DUE_DATE.equals(taskAction)) {
+		                        extensionTaskRef = task.getNodeRef();
+		                        break;
+		                    }
+		                    outcomeIndex = Integer.valueOf(taskAction);
+		                    break;
+		                }
+		            }
+		        }
+		
+		        if (taskToFinish == null || (outcomeIndex < 0 && !saveOnly && extensionTaskRef == null)) {
+		            addRedirectErrorMsg(redirectAttributes, "workflow.task.finish.error.workflow.task.save.failed");
+		        } else if (saveOnly) {
+		            saveTask(taskToFinish, redirectAttributes, session);
+		        } else if (extensionTaskRef != null) {
+		            return redirectToDueDateExtensionView(compoundWorkflowNodeId, extensionTaskRef.getId());
+		        }
+		        else {
+		            QName taskType = workflowService.getNodeRefType(taskToFinish.getNodeRef());
+		            if (isMobileIdOutcome(taskType, outcomeIndex)) {
+		                startSigning(inProgressTasksForm, redirectAttributes, taskToFinish, session);
+		            } else {
+		                boolean finishSuccess = finishTask(taskToFinish, taskType, outcomeIndex, redirectAttributes, session);
+		                if (finishSuccess) {
+		                    return redirectToTaskList(taskType);
+		                }
+		            }
+		        }
+		        
+	        } finally {
+	        	// unlock
+	        	if (compoundWorkflowNodeId != null) {
+        			getDocLockService().unlockIfOwner(new NodeRef(StoreRef.STORE_REF_WORKSPACE_SPACESSTORE, compoundWorkflowNodeId));
+        		}
+	        }
+    	}
         return redirectToCompoundWorkflow(compoundWorkflowNodeId);
     }
 
@@ -731,5 +761,7 @@ public class CompundWorkflowDetailsController extends AbstractCompoundWorkflowCo
         }
 
     }
+    
+    
 
 }

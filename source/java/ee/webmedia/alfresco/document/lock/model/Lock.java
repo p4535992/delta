@@ -20,8 +20,9 @@ public class Lock implements Serializable, Comparable<Lock> {
     private String fileName;
     private String fileUrl;
     private String lockedBy;
+    private String compoundWfName;
 
-    public Lock() {
+	public Lock() {
         // Default constructor
     }
 
@@ -92,14 +93,27 @@ public class Lock implements Serializable, Comparable<Lock> {
     public void setLockedBy(String lockedBy) {
         this.lockedBy = lockedBy;
     }
+    
+    public boolean isCompoundWf() {
+        return compoundWfName != null;
+    }
 
     public boolean isFile() {
         return fileName != null;
     }
 
     public boolean isDocument() {
-        return !isFile();
+        return !isFile() && !isCompoundWf();
     }
+    
+    public String getCompoundWfName() {
+		return compoundWfName;
+	}
+
+	public void setCompoundWfName(String compoundWfName) {
+		this.compoundWfName = compoundWfName;
+	}
+
 
     @Override
     public int compareTo(Lock o) {
@@ -108,9 +122,13 @@ public class Lock implements Serializable, Comparable<Lock> {
             if (docNameCompare != 0) {
                 return docNameCompare;
             }
+            if (compoundWfName != null && o.compoundWfName != null) {
+                return compoundWfName.compareTo(o.compoundWfName);
+            }
             if (fileName != null && o.fileName != null) {
                 return fileName.compareTo(o.fileName);
             }
+            
         }
         return 0;
     }
