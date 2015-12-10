@@ -245,6 +245,10 @@ public class AuthorityServiceImpl implements AuthorityService, InitializingBean
         }
         authorityDAO.addAuthority(parentName, childName);
     }
+    
+    public void addAuthorityEmail(String authorityName, String authorityEmail) {
+    	authorityDAO.addAuthorityEmail(authorityName, authorityEmail);
+    }
 
     private void checkTypeIsMutable(AuthorityType type)
     {
@@ -345,9 +349,15 @@ public class AuthorityServiceImpl implements AuthorityService, InitializingBean
     public String createAuthority(AuthorityType type, String shortName, String authorityDisplayName,
             Set<String> authorityZones)
     {
+        return createAuthority(type, shortName, authorityDisplayName, null, authorityZones);
+    }
+    
+    public String createAuthority(AuthorityType type, String shortName, String authorityDisplayName, String authorityEmail, 
+            Set<String> authorityZones)
+    {
         checkTypeIsMutable(type);
         String name = getName(type, shortName);
-        authorityDAO.createAuthority(name, authorityDisplayName, authorityZones);
+        authorityDAO.createAuthority(name, authorityDisplayName, authorityEmail, authorityZones);
         return name;
     }
 
@@ -359,6 +369,12 @@ public class AuthorityServiceImpl implements AuthorityService, InitializingBean
             displayName = getShortName(name);
         }
         return displayName;
+    }
+    
+    public String getAuthorityEmail(String name)
+    {
+        String email = authorityDAO.getAuthorityEmail(name);
+        return email;
     }
 
     public void setAuthorityDisplayName(String authorityName, String authorityDisplayName)

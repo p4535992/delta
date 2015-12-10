@@ -43,7 +43,8 @@
       <property name="logService" ref="LogService" />
       <property name="dispositionNotificationUsergroup" value="${conf.disposition-notification.usergroup}" />
       <property name="applicationConstantsBean" ref="applicationConstantsBean"/>
-      <property name="bulkLoadNodeService" ref="BulkLoadNodeService" />      
+      <property name="bulkLoadNodeService" ref="BulkLoadNodeService" />
+      <property name="authorityService" ref="authorityService" />     
    </bean>
 
    <bean id="NotificationService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -131,16 +132,12 @@
       </property>
    </bean>
    
-   <bean id="notificationParametersBootstrap5" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent" abstract="true">
-      <property name="moduleId" value="common" />
-      <property name="executeOnceOnly" value="true" />
+   <bean id="notificationParametersBootstrap5" parent="notificationImportBootstrap">
       <property name="dependsOn">
          <list>
-            <ref bean="parametersSpacesBootstrap" />
             <ref bean="deleteDocManagerEmailBootstrap" />
          </list>
       </property>
-      <property name="importer" ref="spacesBootstrap" />
       <property name="bootstrapViews">
          <list>
             <props>

@@ -32,7 +32,7 @@
    <a:panel id="groups-panel" label="#{msg.groups}" styleClass="with-pager" rendered="#{not empty DialogManager.bean.groups}">
 
       <a:richList id="groups-list" binding="#{DialogManager.bean.groupsRichList}" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow"
-         altRowStyleClass="odd" width="100%" value="#{DialogManager.bean.groups}" var="r" initialSortColumn="id" refreshOnBind="true">
+         altRowStyleClass="odd" width="100%" value="#{DialogManager.bean.groups}" var="r" initialSortColumn="displayName" refreshOnBind="true">
          
          <%-- Primary column for details view mode --%>
          <a:column primary="true" style="padding:2px;text-align:left">
@@ -48,6 +48,14 @@
                <f:param name="id" value="#{r.id}" />
             </a:actionLink>
          </a:column>
+         
+         <%-- Column with group email --%>
+	      <a:column style="padding:2px;text-align:left">
+	         <f:facet name="header">
+	            <a:sortLink label="#{msg.addressbook_group_email}" value="groupEmail" mode="case-insensitive" styleClass="header" />
+	         </f:facet>
+	         <h:outputText value="#{r.groupEmail}" />
+	      </a:column>
          
          <%-- Actions column --%>
          <a:column actions="true" style="text-align:left">

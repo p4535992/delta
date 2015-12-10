@@ -8,11 +8,13 @@ public class MDeltaFile extends SimpleFile {
     private final long size;
     private final NodeRef parentRef;
     private boolean viewDocumentFilesPermission;
+    private final Long fileOrderInList;
 
-    public MDeltaFile(String displayName, String readOnlyUrl, long size, NodeRef parentRef) {
+    public MDeltaFile(String displayName, String readOnlyUrl, long size, NodeRef parentRef, Long fileOrderInList) {
         super(displayName, readOnlyUrl);
         this.size = size;
         this.parentRef = parentRef;
+        this.fileOrderInList = fileOrderInList;
     }
 
     public long getSize() {
@@ -25,6 +27,10 @@ public class MDeltaFile extends SimpleFile {
 
     public boolean isViewDocumentFilesPermission() {
         return viewDocumentFilesPermission;
+    }
+    
+    public Long getFileOrderInList() {
+        return fileOrderInList;
     }
 
     public void setViewDocumentFilesPermission(boolean viewDocumentFilesPermission) {

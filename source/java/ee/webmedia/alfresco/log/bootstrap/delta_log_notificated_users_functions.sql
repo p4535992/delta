@@ -1,13 +1,14 @@
-CREATE OR REPLACE FUNCTION fn_get_group_users(usergroup text)  RETURNS SETOF delta_notification_user_log_item AS
+CREATE OR REPLACE FUNCTION fn_get_group_users(usergroup text, groupEmail text)  RETURNS SETOF delta_notification_user_log_item AS
 $BODY$
 DECLARE
 	qnIdAuthorityDisplayName bigint;		
 	qnIdFisrtName bigint;	
 	qnIdLastName bigint;	
-	qnIdEmail bigint;	
+	qnIdEmail bigint;
 	qnIdCode bigint;			
 	userNodeId bigint;			
 	resultItem delta_notification_user_log_item;
+	groupNodeId bigint;
 BEGIN
 	SELECT id INTO qnIdAuthorityDisplayName
 	FROM alf_qname WHERE local_name = 'authorityDisplayName';
@@ -20,27 +21,31 @@ BEGIN
 
 	SELECT id INTO qnIdEmail
 	FROM alf_qname WHERE local_name = 'email';
-
+	
 	SELECT id INTO qnIdCode
 	FROM alf_qname WHERE local_name = 'userName';				
+	
+	SELECT node_id INTO groupNodeId
+	FROM alf_node_properties
+	WHERE string_value = usergroup AND qname_id = qnIdAuthorityDisplayName;
 	
 	FOR userNodeId IN
 		SELECT child_node_id
 		FROM alf_child_assoc
-		WHERE parent_node_id IN (
-			SELECT node_id
-			FROM alf_node_properties
-			WHERE string_value = userGroup AND qname_id = qnIdAuthorityDisplayName 
-			)
+		WHERE parent_node_id = groupNodeId
 	LOOP
 		SELECT string_value INTO resultItem.first_name
 		FROM alf_node_properties WHERE node_id = userNodeId AND qname_id = qnIdFisrtName;
 		
 		SELECT string_value INTO resultItem.last_name
 		FROM alf_node_properties WHERE node_id = userNodeId AND qname_id = qnIdLastName;
-
-		SELECT string_value INTO resultItem.email
-		FROM alf_node_properties WHERE node_id = userNodeId AND qname_id = qnIdEmail;		
+		
+		IF (groupEmail LIKE '%@%') THEN
+			resultItem.email = groupEmail;
+		ELSE
+			SELECT string_value INTO resultItem.email
+			FROM alf_node_properties WHERE node_id = userNodeId AND qname_id = qnIdEmail;
+		END IF;
 
 		SELECT string_value INTO resultItem.id_code
 		FROM alf_node_properties WHERE node_id = userNodeId AND qname_id = qnIdCode;				
@@ -75,7 +80,7 @@ BEGIN
 		
 		loggedUserIds = '';
 		FOR actualUser IN 
-			SELECT * FROM fn_get_group_users(groupNameHash[1])
+			SELECT * FROM fn_get_group_users(groupNameHash[1], groupNameHash[3])
 		 LOOP
 			SELECT id INTO loggedUserId FROM DELTA_NOTIFICATION_USER_LOG 
 			WHERE first_name = actualUser.first_name

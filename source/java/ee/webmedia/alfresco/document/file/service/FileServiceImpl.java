@@ -222,10 +222,12 @@ public class FileServiceImpl implements FileService {
 
     private void updateOrder(List<File> files, Map<NodeRef, Long> initialOrders) {
         for (File f : files) {
-            Long previousOrderNr = initialOrders.get(getFileNodeRef(f));
-            if (previousOrderNr == null || !previousOrderNr.equals(f.getFileOrderInList())) {
+            //Long previousOrderNr = initialOrders.get(getFileNodeRef(f));
+            //if (previousOrderNr == null || !previousOrderNr.equals(f.getFileOrderInList())) {
+            	String nodeRefstr = getFileNodeRef(f).toString();
+            	long ord = f.getFileOrderInList();
                 nodeService.setProperty(getFileNodeRef(f), FileModel.Props.FILE_ORDER_IN_LIST, f.getFileOrderInList());
-            }
+            //}
         }
     }
 

@@ -40,6 +40,25 @@
       </property>
    </bean>
    
+   <bean id="sendOutParametersBootstrap3" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="path">/param:parameters</prop>
+               <prop key="location">ee/webmedia/alfresco/document/sendout/bootstrap/send-out-parameters3.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+   
    <bean id="docSendOutInfoParameterUpdater" class="ee.webmedia.alfresco.document.sendout.bootstrap.DocSendOutInfoParameterUpdater" parent="module.baseComponent" >
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />

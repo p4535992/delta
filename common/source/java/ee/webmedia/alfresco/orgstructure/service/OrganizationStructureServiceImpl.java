@@ -120,6 +120,7 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
             String organizationPath = os.getOrganizationDisplayPath();
             String groupName = StringUtils.isBlank(organizationPath) ? os.getName() : organizationPath;
             String groupAuthority = AuthorityType.GROUP.getPrefixString() + groupName;
+            String authorityEmail = os.getGroupEmail();
 
             // User has manually created a group that is named after an organization structure
             boolean isGeneratedGroupAuthority = generatedGroups.contains(groupAuthority);
@@ -130,8 +131,17 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
 
             // Create the groups from AMR
             if (!isGeneratedGroupAuthority) {
-                groupAuthority = authorityService.createAuthority(AuthorityType.GROUP, groupName, groupName,
+                groupAuthority = authorityService.createAuthority(AuthorityType.GROUP, groupName, groupName, authorityEmail,
                         new HashSet<String>(Arrays.asList(STRUCT_UNIT_BASED, AuthorityService.ZONE_AUTH_ALFRESCO, AuthorityService.ZONE_APP_DEFAULT)));
+            }
+            
+            // update group email
+            if (isGeneratedGroupAuthority) {
+            	String oldAuthorityEmail = authorityService.getAuthorityEmail(groupAuthority);
+            	
+            	if (StringUtils.isNotBlank(authorityEmail) && (StringUtils.isBlank(oldAuthorityEmail) || StringUtils.isNotBlank(oldAuthorityEmail) && !oldAuthorityEmail.equals(authorityEmail))) {
+            		authorityService.addAuthorityEmail(groupAuthority, authorityEmail);
+            	}
             }
 
             // Get current users for this group

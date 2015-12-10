@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.workflow.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getClassificatorService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocLockService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentService;
@@ -52,6 +53,9 @@ import javax.servlet.http.HttpSession;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.repo.transaction.RetryingTransactionHelper;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
+import org.alfresco.service.cmr.lock.LockStatus;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -205,8 +209,11 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
 
     private String dueDateExtenderUsername;
     private String dueDateExtenderUserFullname;
+    
 
     private RequestCacheBean requestCacheBean;
+    
+    private NodeRef lockedCompoundWorkflowNodeRef;
 
     @Override
     public void resetOrInit(DialogDataProvider provider) {
@@ -370,7 +377,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                 }
             }
         }
-        List<ActionDefinition> actionDefinitions = new ArrayList<ActionDefinition>(workflowDefs.size());
+        List<ActionDefinition> actionDefinitions = new ArrayList<>(workflowDefs.size());
         if (CompoundWorkflowType.DOCUMENT_WORKFLOW.equals(compoundWorkflowType)) {
             boolean showCWorkflowDefsWith1Workflow = false;
             Map<NodeRef, List<NodeRef>> childWorkflowNodeRefsByCompoundWorkflow = getWorkflowService().getChildWorkflowNodeRefsByCompoundWorkflow(compoundWorkflows);
@@ -585,31 +592,52 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     }
 
     public void saveTask(ActionEvent event) {
-        // Save all changes to independent workflow before updating task.
         Integer index = ActionUtil.hasParam(event, ATTRIB_INDEX) ? ActionUtil.getParam(event, ATTRIB_INDEX, Integer.class) : (Integer) event.getComponent().getAttributes()
                 .get(ATTRIB_INDEX);
-        List<Pair<String, Object>> params = new ArrayList<Pair<String, Object>>();
-        params.add(new Pair<String, Object>(ATTRIB_INDEX, index));
-        if (!saveIfIndependentWorkflow(params, SAVE_TASK, event)) {
-            return;
-        }
-
-        try {
-            Task task = reloadWorkflow(index);
-            addRemovedFiles(task);
-            boolean opinionFilesUploaded = WorkflowSpecificModel.Types.OPINION_TASK.equals(task.getType()) && hasUploadedFiles(task);
-            getWorkflowService().saveInProgressTask(task);
-            // as service operates on copy of task, we need to clear files lists here also
-            // force reloading files
-            task.clearFiles();
-            // clear removed files
-            task.getRemovedFiles().clear();
-            MessageUtil.addInfoMessage("save_success");
-            if (opinionFilesUploaded) {
-                MessageUtil.addInfoMessage("task_save_opinionTask_files_uploaded");
-            }
-        } catch (WorkflowChangedException e) {
-            handleWorkflowChangedException(e, "Saving task failed", "workflow_task_save_failed", log);
+        
+        NodeRef compoundWfNodeRef = null;
+    	try {
+    		if (compoundWorkflow != null && compoundWorkflow.getNodeRef() != null) {
+    			compoundWfNodeRef = compoundWorkflow.getNodeRef();
+    		} else {
+    			compoundWfNodeRef = new NodeRef(getMyTasks().get(index).getStoreRef() + "/" + getMyTasks().get(index).getCompoundWorkflowId());
+    		}
+    	} catch (Throwable t) {
+    		log.error("Error getting compoundWfNodeRef: " + t.getMessage());
+    	}
+    	boolean locked = (compoundWfNodeRef != null)?setLock(FacesContext.getCurrentInstance(), compoundWfNodeRef, "workflow_compond_locked_for_change"):false;
+        if (compoundWfNodeRef == null || locked) {
+        	try {
+        		
+		        List<Pair<String, Object>> params = new ArrayList<Pair<String, Object>>();
+		        params.add(new Pair<String, Object>(ATTRIB_INDEX, index));
+		        // Save all changes to independent workflow before updating task.
+		        if (!saveIfIndependentWorkflow(params, SAVE_TASK, event)) {
+		            return;
+		        }
+		
+		        try {
+		            Task task = reloadWorkflow(index);
+		            addRemovedFiles(task);
+		            boolean opinionFilesUploaded = WorkflowSpecificModel.Types.OPINION_TASK.equals(task.getType()) && hasUploadedFiles(task);
+		            getWorkflowService().saveInProgressTask(task);
+		            // as service operates on copy of task, we need to clear files lists here also
+		            // force reloading files
+		            task.clearFiles();
+		            // clear removed files
+		            task.getRemovedFiles().clear();
+		            MessageUtil.addInfoMessage("save_success");
+		            if (opinionFilesUploaded) {
+		                MessageUtil.addInfoMessage("task_save_opinionTask_files_uploaded");
+		            }
+		        } catch (WorkflowChangedException e) {
+		            handleWorkflowChangedException(e, "Saving task failed", "workflow_task_save_failed", log);
+		        }
+        	} finally {
+        		if (compoundWfNodeRef != null) {
+        			getDocLockService().unlockIfOwner(compoundWfNodeRef);
+        		}
+        	}
         }
         notifyDialogsIfNeeded();
     }
@@ -629,88 +657,148 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         return true; // CaseFile and Document workflows
 
     }
-
-    public void finishTask(ActionEvent event) throws Exception {
-        Integer index = ActionUtil.getEventParamOrAttirbuteValue(event, ATTRIB_INDEX, Integer.class);
-        Integer outcomeIndex = ActionUtil.getEventParamOrAttirbuteValue(event, ATTRIB_OUTCOME_INDEX, Integer.class);
-        Integer delegableTaskIndex = ActionUtil.getEventParamOrAttirbuteValue(event, DelegationBean.ATTRIB_DELEGATABLE_TASK_INDEX, Integer.class);
-
-        if (delegableTaskIndex != null && delegationBean.hasTasksForDelegation(getMyTasks().get(index).getNodeRef())) {
-            delegationBean.delegate(event, delegableTaskIndex);
-            return;
-        }
-
-        List<Pair<String, Object>> params = new ArrayList<>();
-        params.add(new Pair<String, Object>(ATTRIB_INDEX, index));
-        params.add(new Pair<String, Object>(ATTRIB_OUTCOME_INDEX, outcomeIndex));
-
-        if (!saveIfIndependentWorkflow(params, FINISH_TASK, event)) {
-            return;
-        }
-
-        // saving independent compound workflow has succeeded at this point,
-        // we need to update blocks no matter if saving task succeeds or not
-
-        Task task = reloadWorkflow(index);
-        if (task == null) {
-            return;
-        }
-        QName taskType = task.getNode().getType();
-
-        if (WorkflowSpecificModel.Types.REVIEW_TASK.equals(taskType)
-                || WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK.equals(taskType)) {
-            Integer nodeOutcome = (Integer) task.getNode().getProperties().get(WorkflowSpecificModel.Props.TEMP_OUTCOME.toString());
-            if (nodeOutcome != null) {
-                outcomeIndex = nodeOutcome;
-            }
-        } else if (WorkflowSpecificModel.Types.SIGNATURE_TASK.equals(taskType)) {
-            if (SignatureTaskOutcome.SIGNED_IDCARD.equals((int) outcomeIndex) || SignatureTaskOutcome.SIGNED_MOBILEID.equals((int) outcomeIndex)) {
-                prepareSigning(outcomeIndex, task, false);
-                return;
-            }
-        } else if (task.isType(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK) && outcomeIndex == DueDateExtensionWorkflowType.DUE_DATE_EXTENSION_OUTCOME_NOT_ACCEPTED) {
-            task.setConfirmedDueDate(null);
-        } else if (task.isType(WorkflowSpecificModel.Types.OPINION_TASK) && CollectionUtils.isEmpty(task.getFiles())) {
-            BeanHelper.getWorkflowService().loadTaskFiles(task);
-        }
-
-        List<Pair<String, String>> validationMsgs = null;
-        if ((validationMsgs = validate(task, outcomeIndex)) != null) {
-            for (Pair<String, String> validationMsg : validationMsgs) {
-                if (validationMsg.getSecond() == null) {
-                    MessageUtil.addErrorMessage(validationMsg.getFirst());
-                } else {
-                    MessageUtil.addErrorMessage(validationMsg.getFirst(), validationMsg.getSecond());
+    
+    /**
+     * Sets compound workflow lock
+     * @return
+     */
+    private boolean setLock(final FacesContext context, final NodeRef compoundWfNodeRef, final String lockMsgKey) {
+    	RetryingTransactionHelper txnHelper = Repository.getRetryingTransactionHelper(context);
+        RetryingTransactionCallback<Boolean> callback = new RetryingTransactionCallback<Boolean>()
+        {
+           public Boolean execute() throws Throwable
+           {
+        	   
+        	   LockStatus lockStatus = getDocLockService().setLockIfFree(compoundWfNodeRef);
+               boolean result;
+               
+	           	if (lockStatus == LockStatus.LOCK_OWNER) {
+	           		result = true;
+	            } else {
+	            	String lockOwner = StringUtils.substringBefore(getDocLockService().getLockOwnerIfLocked(compoundWfNodeRef), "_");
+	                String lockOwnerName = getUserService().getUserFullNameAndId(lockOwner);
+	               	MessageUtil.addErrorMessage(context, lockMsgKey, lockOwnerName);
+	               	result = false;
                 }
-
-            }
-            return;
+                return result;
+           }
+        };
+        
+        return txnHelper.doInTransaction(callback, false, true);
+    	
+    }
+    
+    public void finishTask(ActionEvent event) throws Exception {
+    	String lockMsgKey = "workflow_compond_locked_for_change";
+    	Integer index = ActionUtil.getEventParamOrAttirbuteValue(event, ATTRIB_INDEX, Integer.class);
+    	Integer delegableTaskIndex = ActionUtil.getEventParamOrAttirbuteValue(event, DelegationBean.ATTRIB_DELEGATABLE_TASK_INDEX, Integer.class);
+		
+        if (delegableTaskIndex != null && delegationBean.hasTasksForDelegation(getMyTasks().get(index).getNodeRef())) {
+        	lockMsgKey = "workflow_compond_locked_for_delegate";
         }
-        // finish the task
-        try {
-            addRemovedFiles(task);
-            boolean opinionFilesUploaded = false;
-            if (WorkflowSpecificModel.Types.OPINION_TASK.equals(taskType)) {
-                opinionFilesUploaded = CollectionUtils.isNotEmpty(task.getFiles());
-            }
-            getWorkflowService().finishInProgressTask(task, outcomeIndex);
-            MessageUtil.addInfoMessage("task_finish_success_defaultMsg");
-            if (opinionFilesUploaded) {
-                MessageUtil.addInfoMessage("task_finish_opinionTask_files_uploaded");
-            }
-        } catch (InvalidNodeRefException e) {
-            final FacesContext context = FacesContext.getCurrentInstance();
-            MessageUtil.addErrorMessage(context, "task_finish_error_docDeleted");
-            WebUtil.navigateTo(AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME, context);
-            return;
-        } catch (NodeLockedException e) {
-            log.error("Finishing task failed", e);
-            BeanHelper.getDocumentLockHelperBean().handleLockedNode("task_finish_error_document_locked", e);
-        } catch (WorkflowChangedException e) {
-            CompoundWorkflowDialog.handleWorkflowChangedException(e, "Finishing task failed", "workflow_task_save_failed", log);
-        } catch (WorkflowActiveResponsibleTaskException e) {
-            log.debug("Finishing task failed: more than one active responsible task!", e);
-            MessageUtil.addErrorMessage("workflow_compound_save_failed_responsible");
+
+    	NodeRef compoundWfNodeRef = null;
+    	try {
+    		if (compoundWorkflow != null && compoundWorkflow.getNodeRef() != null) {
+    			compoundWfNodeRef = compoundWorkflow.getNodeRef();
+    		} else {
+    			compoundWfNodeRef = new NodeRef(getMyTasks().get(index).getStoreRef() + "/" + getMyTasks().get(index).getCompoundWorkflowId());
+    		}
+    	} catch (Throwable t) {
+    		log.error("Error getting compoundWfNodeRef: " + t.getMessage());
+    	}
+    	
+    	boolean locked = (compoundWfNodeRef != null)?setLock(FacesContext.getCurrentInstance(), compoundWfNodeRef, lockMsgKey):false;
+        if (compoundWfNodeRef == null || locked) {
+        	boolean canUnlock = true; // signing tasks will be unlocked later
+        	lockedCompoundWorkflowNodeRef = compoundWfNodeRef;
+        	try {
+        		
+		        Integer outcomeIndex = ActionUtil.getEventParamOrAttirbuteValue(event, ATTRIB_OUTCOME_INDEX, Integer.class);
+		
+		        if (delegableTaskIndex != null && delegationBean.hasTasksForDelegation(getMyTasks().get(index).getNodeRef())) {
+		            delegationBean.delegate(event, delegableTaskIndex);
+		            return;
+		        }
+		
+		        List<Pair<String, Object>> params = new ArrayList<>();
+		        params.add(new Pair<String, Object>(ATTRIB_INDEX, index));
+		        params.add(new Pair<String, Object>(ATTRIB_OUTCOME_INDEX, outcomeIndex));
+		
+		        if (!saveIfIndependentWorkflow(params, FINISH_TASK, event)) {
+		            return;
+		        }
+		
+		        // saving independent compound workflow has succeeded at this point,
+		        // we need to update blocks no matter if saving task succeeds or not
+		
+		        Task task = reloadWorkflow(index);
+		        if (task == null) {
+		            return;
+		        }
+		        QName taskType = task.getNode().getType();
+		
+		        if (WorkflowSpecificModel.Types.REVIEW_TASK.equals(taskType)
+		                || WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK.equals(taskType)) {
+		            Integer nodeOutcome = (Integer) task.getNode().getProperties().get(WorkflowSpecificModel.Props.TEMP_OUTCOME.toString());
+		            if (nodeOutcome != null) {
+		                outcomeIndex = nodeOutcome;
+		            }
+		        } else if (WorkflowSpecificModel.Types.SIGNATURE_TASK.equals(taskType)) {
+		            if (SignatureTaskOutcome.SIGNED_IDCARD.equals((int) outcomeIndex) || SignatureTaskOutcome.SIGNED_MOBILEID.equals((int) outcomeIndex)) {
+		                canUnlock = false;
+		            	prepareSigning(outcomeIndex, task, false);
+		                return;
+		            }
+		        } else if (task.isType(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK) && outcomeIndex == DueDateExtensionWorkflowType.DUE_DATE_EXTENSION_OUTCOME_NOT_ACCEPTED) {
+		            task.setConfirmedDueDate(null);
+		        } else if (task.isType(WorkflowSpecificModel.Types.OPINION_TASK) && CollectionUtils.isEmpty(task.getFiles())) {
+		            BeanHelper.getWorkflowService().loadTaskFiles(task);
+		        }
+		
+		        List<Pair<String, String>> validationMsgs = null;
+		        if ((validationMsgs = validate(task, outcomeIndex)) != null) {
+		            for (Pair<String, String> validationMsg : validationMsgs) {
+		                if (validationMsg.getSecond() == null) {
+		                    MessageUtil.addErrorMessage(validationMsg.getFirst());
+		                } else {
+		                    MessageUtil.addErrorMessage(validationMsg.getFirst(), validationMsg.getSecond());
+		                }
+		
+		            }
+		            return;
+		        }
+		        // finish the task
+		        try {
+		            addRemovedFiles(task);
+		            boolean opinionFilesUploaded = false;
+		            if (WorkflowSpecificModel.Types.OPINION_TASK.equals(taskType)) {
+		                opinionFilesUploaded = CollectionUtils.isNotEmpty(task.getFiles());
+		            }
+		            getWorkflowService().finishInProgressTask(task, outcomeIndex);
+		            MessageUtil.addInfoMessage("task_finish_success_defaultMsg");
+		            if (opinionFilesUploaded) {
+		                MessageUtil.addInfoMessage("task_finish_opinionTask_files_uploaded");
+		            }
+		        } catch (InvalidNodeRefException e) {
+		            final FacesContext context = FacesContext.getCurrentInstance();
+		            MessageUtil.addErrorMessage(context, "task_finish_error_docDeleted");
+		            WebUtil.navigateTo(AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME, context);
+		            return;
+		        } catch (NodeLockedException e) {
+		            log.error("Finishing task failed", e);
+		            BeanHelper.getDocumentLockHelperBean().handleLockedNode("task_finish_error_document_locked", e);
+		        } catch (WorkflowChangedException e) {
+		            CompoundWorkflowDialog.handleWorkflowChangedException(e, "Finishing task failed", "workflow_task_save_failed", log);
+		        } catch (WorkflowActiveResponsibleTaskException e) {
+		            log.debug("Finishing task failed: more than one active responsible task!", e);
+		            MessageUtil.addErrorMessage("workflow_compound_save_failed_responsible");
+		        }
+        	} finally {
+        		if (canUnlock && compoundWfNodeRef != null) {
+        			getDocLockService().unlockIfOwner(compoundWfNodeRef);
+        		}
+        	}
         }
         notifyDialogsIfNeeded();
     }
@@ -785,6 +873,9 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         signingFlow = new SigningFlowContainer(((SignatureTask) task).clone(), signTogether, compoundWorkflow != null ? compoundWorkflow.getNodeRef() : null, containerRef);
         boolean signingPrepared = signingFlow.prepareSigning();
         if (!signingPrepared) {
+        	if (lockedCompoundWorkflowNodeRef != null) {
+            	getDocLockService().unlockIfOwner(lockedCompoundWorkflowNodeRef);
+            }
             return;
         }
         if (SignatureTaskOutcome.SIGNED_IDCARD.equals((int) outcomeIndex)) {
@@ -853,21 +944,42 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             extender = ActionUtil.getParam(event, MODAL_KEY_EXTENDER);
             extenderFullName = ActionUtil.getParam(event, MODAL_KEY_EXTENDER_FULL_NAME);
         }
+        NodeRef compoundWfNodeRef = null;
+    	try {
+    		if (compoundWorkflow != null && compoundWorkflow.getNodeRef() != null) {
+    			compoundWfNodeRef = compoundWorkflow.getNodeRef();
+    		} else {
+    			compoundWfNodeRef = new NodeRef(getMyTasks().get(taskIndex).getStoreRef() + "/" + getMyTasks().get(taskIndex).getCompoundWorkflowId());
+    		}
+    	} catch (Throwable t) {
+    		log.error("Error getting compoundWfNodeRef: " + t.getMessage());
+    	}
+    	
+    	boolean locked = (compoundWfNodeRef != null)?setLock(FacesContext.getCurrentInstance(), compoundWfNodeRef, "workflow_compond_locked_for_change"):false;
+        if (compoundWfNodeRef == null || locked) {
+        	try {
 
-        // Save independent workflow first
-        if (!saveIfIndependentWorkflow(params, SEND_TASK_DUE_DATE_EXTENSION_REQUEST, event)) {
-            return;
-        }
-
-        if (StringUtils.isBlank(reason) || newDate == null || dueDate == null || taskIndex == null || taskIndex < 0) {
-            return;
-        }
-
-        Task initiatingTask = reloadWorkflow(taskIndex);
-
-        getWorkflowService().createDueDateExtension(reason, newDate, dueDate, initiatingTask, containerRef, extender, extenderFullName);
-
-        MessageUtil.addInfoMessage("task_sendDueDateExtensionRequest_success_defaultMsg");
+		        // Save independent workflow first
+		        if (!saveIfIndependentWorkflow(params, SEND_TASK_DUE_DATE_EXTENSION_REQUEST, event)) {
+		            return;
+		        }
+		
+		        if (StringUtils.isBlank(reason) || newDate == null || dueDate == null || taskIndex == null || taskIndex < 0) {
+		            return;
+		        }
+		
+		        Task initiatingTask = reloadWorkflow(taskIndex);
+		
+		        getWorkflowService().createDueDateExtension(reason, newDate, dueDate, initiatingTask, containerRef, extender, extenderFullName);
+		
+		        MessageUtil.addInfoMessage("task_sendDueDateExtensionRequest_success_defaultMsg");
+        	
+	        } finally {
+	    		if (compoundWfNodeRef != null) {
+	    			getDocLockService().unlockIfOwner(compoundWfNodeRef);
+	    		}
+	    	}
+	    }
         notifyDialogsIfNeeded();
     }
 
@@ -1036,6 +1148,10 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             } else {
                 showModalOrSign();
             }
+            // unlock if compound wf was locked
+            if (lockedCompoundWorkflowNodeRef != null) {
+            	getDocLockService().unlockIfOwner(lockedCompoundWorkflowNodeRef);
+            }
         }
     }
 
@@ -1097,6 +1213,10 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                     + "});</script>";
             if (!signingStarted) {
                 resetSigningData();
+                // unlock if compound wf was locked
+                if (lockedCompoundWorkflowNodeRef != null) {
+                	getDocLockService().unlockIfOwner(lockedCompoundWorkflowNodeRef);
+                }
             }
         } finally {
             getMobileIdPhoneNrModal().setRendered(false);
@@ -1129,6 +1249,10 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                 resetSigningData();
             } else {
                 showMobileIdModalOrSign();
+            }
+            // unlock if compound wf was locked
+            if (lockedCompoundWorkflowNodeRef != null) {
+            	getDocLockService().unlockIfOwner(lockedCompoundWorkflowNodeRef);
             }
         }
     }

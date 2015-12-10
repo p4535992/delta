@@ -1,5 +1,6 @@
 package ee.webmedia.mobile.alfresco.workflow;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocLockService;
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
@@ -20,6 +21,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -187,20 +189,35 @@ public class TaskDelegationController extends AbstractCompoundWorkflowController
         NodeRef originalTaskRef = new NodeRef(cwfRef.getStoreRef(), taskId);
 
         QName type = resolveToQName(taskType);
-
-        boolean success = true;
-        if (WorkflowSpecificModel.Types.ASSIGNMENT_TASK.equals(type)) {
-            success = delegateMultipleTaskTypes(form, redirectAttributes, originalTaskRef);
-        } else if (WorkflowSpecificModel.Types.INFORMATION_TASK.equals(type)
-                || WorkflowSpecificModel.Types.OPINION_TASK.equals(type)
-                || WorkflowSpecificModel.Types.REVIEW_TASK.equals(type)) {
-            success = delegateSingleTaskTypeAndAddTasksToInitialTaskWorkflow(form, redirectAttributes, originalTaskRef);
+        // set lock
+        boolean locked = (compoundWorkflowNodeId != null)?setLock(new NodeRef(cwfRef.getStoreRef(), compoundWorkflowNodeId), "workflow_compond.locked", redirectAttributes):false;
+        if (locked) {
+	        boolean success = true;
+	        
+	        try {
+		        if (WorkflowSpecificModel.Types.ASSIGNMENT_TASK.equals(type)) {
+		            success = delegateMultipleTaskTypes(form, redirectAttributes, originalTaskRef);
+		        } else if (WorkflowSpecificModel.Types.INFORMATION_TASK.equals(type)
+		                || WorkflowSpecificModel.Types.OPINION_TASK.equals(type)
+		                || WorkflowSpecificModel.Types.REVIEW_TASK.equals(type)) {
+		            success = delegateSingleTaskTypeAndAddTasksToInitialTaskWorkflow(form, redirectAttributes, originalTaskRef);
+		        }
+		        if (!success) {
+		            return redirectToCompoundWorkflowOrHomePage(originalTaskRef, compoundWorkflowNodeId);
+		        }
+	        } finally {
+	        	// unlock
+	        	if (compoundWorkflowNodeId != null) {
+	    			getDocLockService().unlockIfOwner(new NodeRef(StoreRef.STORE_REF_WORKSPACE_SPACESSTORE, compoundWorkflowNodeId));
+	    		}
+	        }
+	        
+	        return redirectToTaskList(type);
+        } else {
+        	return redirectToCompoundWorkflow(compoundWorkflowNodeId) + String.format("/%s/delegation/%s", originalTaskRef.getId(), taskType);
         }
-        if (!success) {
-            return redirectToCompoundWorkflowOrHomePage(originalTaskRef, compoundWorkflowNodeId);
-        }
 
-        return redirectToTaskList(type);
+        
     }
 
     private String redirectToCompoundWorkflowOrHomePage(NodeRef originalTaskRef, String compoundWorkflowNodeId) {

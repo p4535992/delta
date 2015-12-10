@@ -58,11 +58,16 @@
             <h:outputText value="&nbsp;" escape="false" />
          </f:facet>
          <a:actionLink id="act1" value="#{msg.lock_release}" image="/images/icons/revert.gif" showLink="false"
+            actionListener="#{ManageLocksDialog.release}" tooltip="#{msg.lock_release}" rendered="#{l.compoundWf}">
+            <f:param name="object" value="#{l.object}" />
+            <f:param name="all" value="false" />
+         </a:actionLink>
+         <a:actionLink id="act2" value="#{msg.lock_release}" image="/images/icons/revert.gif" showLink="false"
             actionListener="#{ManageLocksDialog.release}" tooltip="#{msg.lock_release}" rendered="#{l.file}">
             <f:param name="object" value="#{l.object}" />
             <f:param name="all" value="false" />
          </a:actionLink>
-         <a:actionLink id="act2" value="#{msg.lock_release_all}" image="/images/icons/revert_all.gif" showLink="false"
+         <a:actionLink id="act3" value="#{msg.lock_release_all}" image="/images/icons/revert_all.gif" showLink="false"
             actionListener="#{ManageLocksDialog.release}" tooltip="#{msg.lock_release_all}" rendered="#{l.document}">
             <f:param name="object" value="#{l.object}" />
             <f:param name="all" value="true" />

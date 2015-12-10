@@ -179,6 +179,26 @@ public interface AuthorityService
      */
     @Auditable(parameters = { "type", "shortName", "authorityDisplayName", "authorityZones" })
     public String createAuthority(AuthorityType type, String shortName, String authorityDisplayName, Set<String> authorityZones);
+    
+    /**
+     * Create an authority with a display name and zone.
+     *
+     * @param type
+     *            the type of the authority
+     * @param shortName
+     *            the short name of the authority to create
+     * @param authorityDisplayName
+     *            the display name for the authority
+     * @param authorityZone
+     *            identifier for external user registry owning the authority or <code>null</code> if not applicable
+     * @param authorityEmail
+     * 				common email for the group authority 
+     * @return the full name of the authority (this will be the prefix, if any associated with the type appended with
+     *         the short name)
+     */
+    @Auditable(parameters = { "type", "shortName", "authorityDisplayName", "authorityEmail", "authorityZones" })
+    public String createAuthority(AuthorityType type, String shortName, String authorityDisplayName, String authorityEmail, Set<String> authorityZones);
+
 
     /**
      * Set an authority to include another authority. For example, adding a
@@ -191,7 +211,16 @@ public interface AuthorityService
      */
     @Auditable(parameters = { "parentName", "childName" })
     public void addAuthority(String parentName, String childName);
-
+    
+    /**
+     * Add an authority email.
+     * 
+     * @param authorityName
+     * @param authorityEmail
+     */
+    @Auditable(parameters = { "authorityName", "authorityEmail" })
+    void addAuthorityEmail(String authorityName, String authorityEmail);
+    
     /**
      * Remove an authority as a member of another authority. The child authority
      * will still exist. If the child authority was not created as a root
@@ -298,6 +327,15 @@ public interface AuthorityService
      */
     @Auditable(parameters = { "name" })
     public String getAuthorityDisplayName(String name);
+    
+    /**
+     * Get the email for the given authority.
+     *
+     * @param name - the full authority string including any prefix (e.g. GROUP_woof)
+     * @return - the email
+     */
+    @Auditable(parameters = { "name" })
+    public String getAuthorityEmail(String name);
 
     /**
      * Set the display name for the given authority.

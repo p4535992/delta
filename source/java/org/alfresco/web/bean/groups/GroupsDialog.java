@@ -29,6 +29,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -39,7 +40,6 @@ import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 import javax.transaction.UserTransaction;
 
-import ee.webmedia.alfresco.common.richlist.LazyListDataProvider;
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.security.AuthorityService;
@@ -64,6 +64,7 @@ import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import ee.webmedia.alfresco.common.richlist.LazyListDataProvider;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -724,7 +725,12 @@ public class GroupsDialog extends BaseDialogBean
         }
 
         public GroupDataProvider(Set<String> authorities) {
-            objectKeys = new ArrayList<>(authorities);
+            objectKeys = new ArrayList<String>(authorities);
+            Collections.sort(objectKeys, new Comparator<String>() {
+        	    public int compare(String s1, String s2){
+        	        return s1.compareToIgnoreCase(s2);
+        	    }
+    		});
         }
 
         @Override

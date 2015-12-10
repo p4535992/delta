@@ -424,7 +424,7 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
     }
 
     public CustomChildrenCreator getDocumentRowFileGenerator() {
-        return ComponentUtil.getDocumentRowFileGenerator(FacesContext.getCurrentInstance().getApplication());
+        return ComponentUtil.getDocumentRowFileGenerator(FacesContext.getCurrentInstance().getApplication(), 5);
     }
 
     @Override

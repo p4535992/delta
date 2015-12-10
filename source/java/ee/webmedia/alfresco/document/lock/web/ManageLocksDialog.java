@@ -37,7 +37,7 @@ public class ManageLocksDialog extends BaseDialogBean {
         Lock l = getLocks().get(indexOf);
         if (!ActionUtil.hasParam(event, "confirmed")) {
             String msgKey = releaseAll ? "lock_release_all_confirm" : "lock_release_confirm";
-            String objectName = releaseAll ? l.getDocName() : l.getFileName();
+            String objectName = releaseAll ? l.getDocName() : (l.getCompoundWfName() != null) ?l.getCompoundWfName() : l.getFileName();
 
             Map<String, String> params = new HashMap<String, String>(2);
             params.put("confirmed", Boolean.TRUE.toString());

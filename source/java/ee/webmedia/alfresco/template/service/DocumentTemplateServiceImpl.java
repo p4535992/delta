@@ -758,7 +758,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
 
     @Override
     public Map<String, String> getDocumentFormulas(NodeRef objectRef) {
-        Map<String, String> formulas = new LinkedHashMap<String, String>();
+        Map<String, String> formulas = new LinkedHashMap<>();
         if (objectRef == null) {
             return formulas;
         }
@@ -800,8 +800,8 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                     } else if (SystematicFieldGroupNames.THESAURI.equals(name)) {
                         String fieldId1 = DocumentDynamicModel.Props.FIRST_KEYWORD_LEVEL.getLocalName();
                         String fieldId2 = DocumentDynamicModel.Props.SECOND_KEYWORD_LEVEL.getLocalName();
-                        List<String> firstLevelKeywords = new ArrayList<String>();
-                        List<String> secondLevelKeywords = new ArrayList<String>();
+                        List<String> firstLevelKeywords = new ArrayList<>();
+                        List<String> secondLevelKeywords = new ArrayList<>();
                         for (Entry<String, Field> entry : group.getFieldsByOriginalId().entrySet()) {
                             if (fieldId1.equals(entry.getKey())) {
                                 fieldId1 = entry.getValue().getFieldId();
@@ -843,8 +843,11 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                     if (isList) {
                         @SuppressWarnings("unchecked")
                         List<Date> dateList = (List<Date>) propValue;
-                        List<String> dates = new ArrayList<String>();
+                        List<String> dates = new ArrayList<>();
                         for (Date d : dateList) {
+                            if (d == null) {
+                                continue;
+                            }
                             dates.add(dateFormat.format(d));
                         }
                         date = StringUtils.join(dates, "; ");
@@ -896,7 +899,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
 
     @SuppressWarnings("unchecked")
     private Map<String, String> getEmailFormulas(NodeRef objectRef, Map<String, Object> props, boolean isTask) {
-        Map<String, String> formulas = new LinkedHashMap<String, String>();
+        Map<String, String> formulas = new LinkedHashMap<>();
 
         // All properties
         for (Entry<String, Object> entry : props.entrySet()) {
@@ -909,7 +912,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                 List<?> list = (List<?>) propValue;
                 String separator = RECIPIENT_PROPS.contains(propName) ? "\n" : ", ";
 
-                List<String> items = new ArrayList<String>(list.size());
+                List<String> items = new ArrayList<>(list.size());
                 for (Object object : list) {
                     String itemValue = getTypeSpecificReplacement(object, false);
                     if (StringUtils.isNotBlank(itemValue)) {
@@ -1096,7 +1099,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         } else if (endDates != null) {
             size = endDates.size();
         }
-        List<String> substitutes = new ArrayList<String>(size);
+        List<String> substitutes = new ArrayList<>(size);
         for (int i = 0; i < size; i++) {
             String name = names != null && i < names.size() ? names.get(i) : "";
             Date startDate = startDates != null && i < startDates.size() ? startDates.get(i) : null;
@@ -1124,7 +1127,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         } else if (emails != null) {
             size = emails.size();
         }
-        List<String> rows = new ArrayList<String>(size);
+        List<String> rows = new ArrayList<>(size);
         for (int i = 0; i < size; i++) {
             String name = null;
             if (names != null && i < names.size()) {
@@ -1203,7 +1206,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     @Override
     public List<SelectItem> getReportTemplates(TemplateReportType typeId) {
         Assert.notNull(typeId, "Parameter typeId is mandatory.");
-        List<SelectItem> result = new ArrayList<SelectItem>();
+        List<SelectItem> result = new ArrayList<>();
         String typeStr = typeId.toString();
         for (UnmodifiableDocumentTemplate template : getUnmodifiableTemplates()) {
             if (template.hasAspect(DocumentTemplateModel.Aspects.TEMPLATE_REPORT) && typeStr.equals(template.getReportType())) {
@@ -1224,7 +1227,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                 if (outputType != null) {
                     String templateOutputType = outputType.toString();
                     SelectItem item = new SelectItem(template.getName());
-                    result.add(new Pair<SelectItem, String>(item, templateOutputType));
+                    result.add(new Pair<>(item, templateOutputType));
                 }
             }
         }

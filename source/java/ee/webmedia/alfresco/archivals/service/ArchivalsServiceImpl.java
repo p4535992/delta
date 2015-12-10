@@ -1407,6 +1407,10 @@ public class ArchivalsServiceImpl implements ArchivalsService {
                     if (!dictionaryService.isSubClass(nodeService.getType(nodeRef), DocumentCommonModel.Types.DOCUMENT)) {
                         return null;
                     }
+                    if (isInvalidNode(nodeRef)) {
+                        LOG.warn("Cannot delete node because provided nodeRef is invalid: " + nodeRef);
+                        return null;
+                    }
                     adrService.addDeletedDocument(nodeRef);
                     // mark for permanent delete
                     nodeService.addAspect(nodeRef, DocumentCommonModel.Aspects.DELETE_PERMANENT, null);
@@ -1416,6 +1420,10 @@ public class ArchivalsServiceImpl implements ArchivalsService {
 
             }, false, true);
         }
+    }
+
+    private boolean isInvalidNode(NodeRef nodeRef) {
+        return nodeRef == null || !nodeService.exists(nodeRef);
     }
 
     @Override

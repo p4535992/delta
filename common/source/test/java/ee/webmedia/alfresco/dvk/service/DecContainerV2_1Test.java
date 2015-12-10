@@ -130,7 +130,7 @@ public class DecContainerV2_1Test extends TestCase {
         Pair<DocumentType, DocumentTypeVersion> mockPair = new Pair<DocumentType, DocumentTypeVersion>(null, documentTypeVersionMock);
 
         DocumentConfigService configService = createMockServiceWithMockMethod(DocumentConfigServiceImpl.class, "getDocumentTypeAndVersion", Node.class);
-        EasyMock.expect(configService.getDocumentTypeAndVersion(mockNode)).andReturn(mockPair);
+        EasyMock.expect(configService.getDocumentTypeAndVersion(mockNode, true)).andReturn(mockPair);
 
         DocumentAdminService adminService = createMockServiceWithMockMethod(DocumentAdminServiceImpl.class, "getDocumentTypeName", Node.class);
         EasyMock.expect(adminService.getDocumentTypeName(mockNode)).andReturn(DocumentSubtypeModel.Types.INSTRUMENT_OF_DELIVERY_AND_RECEIPT.getLocalName());
@@ -315,10 +315,10 @@ public class DecContainerV2_1Test extends TestCase {
     }
 
     public void testDocIsSentOverDvkIfOrgIsDecTaskCapableAndViaEmailOtherwise() throws Exception {
-        Object result = getMockDvkService(true).sendTaskNotificationDocument(getMockTask());
+        Object result = getMockDvkService(true).sendTaskNotificationDocument(getMockTask(), null);
         assertNotNull(result);
 
-        Object result2 = getMockDvkService(false).sendTaskNotificationDocument(getMockTask());
+        Object result2 = getMockDvkService(false).sendTaskNotificationDocument(getMockTask(), null);
         assertNull("sendTaskNotificationDocument() must return null when DEC_TASK_CAPABLE is false", result2);
     }
 
