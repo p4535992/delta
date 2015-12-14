@@ -246,7 +246,38 @@
      delegation.setChoice(delegatableTaskType);
      
      $("#taskDelegationForm").on("submit", function(event) {
-        if(delegation.isConfirmed()) {
+    	 var cwfRef = $("#compoundWorkflowRef").val();
+         var lockResult = false;
+         $.ajaxq('lock', {
+            type: 'POST',
+            queue: true,
+            url: getContextPath() + '/m/ajax/cwf/lockdelegate',
+            async: false,
+            dataType: 'json',
+            data: JSON.stringify ({compoundWorkflowRef: cwfRef}),
+            contentType: 'application/json',
+            success: function(result) {
+               if(result.messages.length > 0) {
+                  var combinedMessage = '';
+                  $.each(result.messages, function(i, message) {
+                     combinedMessage += message + '\n';
+                  });
+                  addMessage(combinedMessage, "error", true);
+                  lockResult = false;
+               } else {
+            	   lockResult = true; 
+               }
+            },
+            error: function() {
+               addMessage("Failed to get response from server", "error", true);
+               lockResult = false;
+            }
+         });
+    	 
+        if (!lockResult) {
+        	return false;
+        }
+    	if(delegation.isConfirmed()) {
            return true;
         }
         var valid = true;

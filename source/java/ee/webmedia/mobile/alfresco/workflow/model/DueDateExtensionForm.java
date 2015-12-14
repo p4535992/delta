@@ -3,6 +3,7 @@ package ee.webmedia.mobile.alfresco.workflow.model;
 import java.io.Serializable;
 import java.util.Date;
 
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.springframework.format.annotation.DateTimeFormat;
 
 public class DueDateExtensionForm implements Serializable {
@@ -17,6 +18,7 @@ public class DueDateExtensionForm implements Serializable {
     private String userId;
     private String userName;
     private String initialExtensionDueDate;
+    private NodeRef compoundWorkflowRef;
 
     public Date getNewDueDate() {
         return newDueDate;
@@ -64,6 +66,14 @@ public class DueDateExtensionForm implements Serializable {
 
     public void setInitialExtensionDueDate(String initialExtensionDueDate) {
         this.initialExtensionDueDate = initialExtensionDueDate;
+    }
+    
+    public NodeRef getCompoundWorkflowRef() {
+        return compoundWorkflowRef;
+    }
+
+    public void setCompoundWorkflowRef(NodeRef compoundWorkflowRef) {
+        this.compoundWorkflowRef = compoundWorkflowRef;
     }
 
 }

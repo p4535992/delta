@@ -2,7 +2,9 @@ package ee.webmedia.mobile.alfresco.workflow;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocLockService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
+import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,14 +19,18 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.MediaType;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import ee.webmedia.alfresco.workflow.service.DelegationHistoryUtil;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.mobile.alfresco.common.AbstractBaseController;
 import ee.webmedia.mobile.alfresco.workflow.model.DelegationHistoryItem;
+import ee.webmedia.mobile.alfresco.workflow.model.LockMessage;
 
 public abstract class AbstractCompoundWorkflowController extends AbstractBaseController {
 
@@ -36,7 +42,7 @@ public abstract class AbstractCompoundWorkflowController extends AbstractBaseCon
     protected WorkflowService workflowService;
     
     @Resource(name = "retryingTransactionHelper")
-    private RetryingTransactionHelper txnHelper;
+    protected RetryingTransactionHelper txnHelper;
 
     protected void setupDelegationHistoryBlock(Model model, List<ee.webmedia.alfresco.workflow.service.Task> delegationTasks) {
         if (CollectionUtils.isEmpty(delegationTasks)) {
@@ -97,5 +103,5 @@ public abstract class AbstractCompoundWorkflowController extends AbstractBaseCon
         return txnHelper.doInTransaction(callback, false, true);
     	
     }
-
+    
 }
