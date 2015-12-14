@@ -8,6 +8,7 @@ import static ee.webmedia.alfresco.workflow.web.WorkflowBlockBean.isMobileIdOutc
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -26,6 +27,8 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
+import org.alfresco.service.cmr.lock.LockStatus;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -78,6 +81,7 @@ import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
 import ee.webmedia.mobile.alfresco.common.AbstractBaseController;
 import ee.webmedia.mobile.alfresco.workflow.model.DueDateExtensionForm;
 import ee.webmedia.mobile.alfresco.workflow.model.InProgressTasksForm;
+import ee.webmedia.mobile.alfresco.workflow.model.LockMessage;
 import ee.webmedia.mobile.alfresco.workflow.model.MobileIdSignatureAjaxRequest;
 import ee.webmedia.mobile.alfresco.workflow.model.Task;
 import ee.webmedia.mobile.alfresco.workflow.model.TaskFile;
@@ -401,12 +405,46 @@ public class CompundWorkflowDetailsController extends AbstractCompoundWorkflowCo
         model.addAttribute("groupName", currentItem.getGroupName());
         return "compound-workflow/task-group-details";
     }
-
+    
+    @RequestMapping(value = "/ajax/cwf/lockduedate", method = POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public LockMessage setCompoundWorkflowLockDuedate(@RequestBody LockMessage message) throws ParseException {
+        
+        final NodeRef cwfRef = message.getCompoundWorkflowRef();
+        List<String> messages = new ArrayList<>(2);
+        message.setMessages(messages);
+        RetryingTransactionCallback<String> callback = new RetryingTransactionCallback<String>()
+        {
+           public String execute() throws Throwable
+           {
+        	   
+        	   LockStatus lockStatus = getDocLockService().setLockIfFree(cwfRef);
+        	   String result;
+               
+	           	if (lockStatus == LockStatus.LOCK_OWNER) {
+	           		result = null;
+	            } else {
+	            	String lockOwner = StringUtils.substringBefore(getDocLockService().getLockOwnerIfLocked(cwfRef), "_");
+	                String lockOwnerName = getUserService().getUserFullNameAndId(lockOwner);
+	                result = translate("workflow_compond.locked", lockOwnerName);
+                }
+                return result;
+           }
+        };
+        
+        String lockError = txnHelper.doInTransaction(callback, false, true);
+        if (StringUtils.isNotBlank(lockError)) {
+        	messages.add(lockError);
+        }
+        return message;
+    }
+    
     @RequestMapping(value = COMPOUND_WORKFLOW_DETAILS_MAPPING + "/{compoundWorkflowNodeId}/{taskId}/extension", method = GET)
     public String dueDateExtension(@PathVariable String compoundWorkflowNodeId, @PathVariable String taskId, Model model, HttpServletRequest request) {
         super.setupWithoutSidebarMenu(model, request);
         DueDateExtensionForm form = new DueDateExtensionForm();
         NodeRef cwfRef = WebUtil.getNodeRefFromNodeId(compoundWorkflowNodeId);
+        form.setCompoundWorkflowRef(cwfRef);
         NodeRef taskRef = new NodeRef(cwfRef.getStoreRef(), taskId);
         String taskCreatorId = (String) getWorkflowDbService().getTaskProperty(taskRef, WorkflowSpecificModel.Props.CREATOR_ID);
         String currentUser = AuthenticationUtil.getRunAsUser();
@@ -435,6 +473,15 @@ public class CompundWorkflowDetailsController extends AbstractCompoundWorkflowCo
         boolean locked = (compoundWorkflowNodeId != null)?setLock(new NodeRef(cwfRef.getStoreRef(), compoundWorkflowNodeId), "workflow_compond.locked", redirectAttributes):false;
         if (locked) {
 	        try {
+	        	//TODO: REMOVE ME
+        		if (locked) {
+	        		try {
+	                    Thread.sleep(15000); // 15 sec
+	                }
+	                catch (InterruptedException ie) {
+	                    // Handle the exception
+	                }
+        		}
 		        workflowService.createDueDateExtension(
 		                form.getReason(),
 		                form.getNewDueDate(),
@@ -470,6 +517,15 @@ public class CompundWorkflowDetailsController extends AbstractCompoundWorkflowCo
         boolean locked = (compoundWorkflowNodeId != null)?setLock(new NodeRef(cwfRef.getStoreRef(), compoundWorkflowNodeId), "workflow_compond.locked", redirectAttributes):false;
         if (locked) {
 	        try {
+	        	//TODO: REMOVE ME
+        		if (locked) {
+	        		try {
+	                    Thread.sleep(15000); // 15 sec
+	                }
+	                catch (InterruptedException ie) {
+	                    // Handle the exception
+	                }
+        		}
 		        Map<String, String> formActions = inProgressTasksForm.getActions();
 		        if (!formActions.isEmpty()) {
 		            boolean redirectToTaskList = continueCurrentSigning(inProgressTasksForm, redirectAttributes, formActions, session);

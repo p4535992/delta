@@ -1,6 +1,7 @@
 package ee.webmedia.mobile.alfresco.workflow;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocLockService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
@@ -19,6 +20,8 @@ import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
+import org.alfresco.service.cmr.lock.LockStatus;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
@@ -46,6 +49,7 @@ import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.alfresco.workflow.web.DelegationBean;
 import ee.webmedia.alfresco.workflow.web.DelegationTaskListGenerator.DelegatableTaskType;
 import ee.webmedia.mobile.alfresco.workflow.model.DelegationMessage;
+import ee.webmedia.mobile.alfresco.workflow.model.LockMessage;
 import ee.webmedia.mobile.alfresco.workflow.model.TaskDelegationForm;
 import ee.webmedia.mobile.alfresco.workflow.model.TaskDelegationForm.TaskElement;
 
@@ -195,6 +199,15 @@ public class TaskDelegationController extends AbstractCompoundWorkflowController
 	        boolean success = true;
 	        
 	        try {
+	        	//TODO: REMOVE ME
+        		if (locked) {
+	        		try {
+	                    Thread.sleep(15000); // 15 sec
+	                }
+	                catch (InterruptedException ie) {
+	                    // Handle the exception
+	                }
+        		}
 		        if (WorkflowSpecificModel.Types.ASSIGNMENT_TASK.equals(type)) {
 		            success = delegateMultipleTaskTypes(form, redirectAttributes, originalTaskRef);
 		        } else if (WorkflowSpecificModel.Types.INFORMATION_TASK.equals(type)
@@ -391,6 +404,39 @@ public class TaskDelegationController extends AbstractCompoundWorkflowController
             DelegationBean.addDuplicateTaskMessage(messages, docRef, taskType, taskOwners);
         } else {
             throw new RuntimeException("Unexpected compound workflow type: " + type.name());
+        }
+        return message;
+    }
+    
+    @RequestMapping(value = "/ajax/cwf/lockdelegate", method = POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public LockMessage setCompoundWorkflowLockDelegate(@RequestBody LockMessage message) throws ParseException {
+        
+        final NodeRef cwfRef = message.getCompoundWorkflowRef();
+        List<String> messages = new ArrayList<>(2);
+        message.setMessages(messages);
+        RetryingTransactionCallback<String> callback = new RetryingTransactionCallback<String>()
+        {
+           public String execute() throws Throwable
+           {
+        	   
+        	   LockStatus lockStatus = getDocLockService().setLockIfFree(cwfRef);
+        	   String result;
+               
+	           	if (lockStatus == LockStatus.LOCK_OWNER) {
+	           		result = null;
+	            } else {
+	            	String lockOwner = StringUtils.substringBefore(getDocLockService().getLockOwnerIfLocked(cwfRef), "_");
+	                String lockOwnerName = getUserService().getUserFullNameAndId(lockOwner);
+	                result = translate("workflow_compond.locked", lockOwnerName);
+                }
+                return result;
+           }
+        };
+        
+        String lockError = txnHelper.doInTransaction(callback, false, true);
+        if (StringUtils.isNotBlank(lockError)) {
+        	messages.add(lockError);
         }
         return message;
     }
