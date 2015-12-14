@@ -608,7 +608,15 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     	boolean locked = (compoundWfNodeRef != null)?setLock(FacesContext.getCurrentInstance(), compoundWfNodeRef, "workflow_compond_locked_for_change"):false;
         if (compoundWfNodeRef == null || locked) {
         	try {
-        		
+        		//TODO: REMOVE ME
+        		if (locked) {
+	        		try {
+	                    Thread.sleep(15000); // 15 sec
+	                }
+	                catch (InterruptedException ie) {
+	                    // Handle the exception
+	                }
+        		}
 		        List<Pair<String, Object>> params = new ArrayList<Pair<String, Object>>();
 		        params.add(new Pair<String, Object>(ATTRIB_INDEX, index));
 		        // Save all changes to independent workflow before updating task.
@@ -713,7 +721,15 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         	boolean canUnlock = true; // signing tasks will be unlocked later
         	lockedCompoundWorkflowNodeRef = compoundWfNodeRef;
         	try {
-        		
+        		//TODO: REMOVE ME
+        		if (locked) {
+	        		try {
+	                    Thread.sleep(15000); // 15 sec
+	                }
+	                catch (InterruptedException ie) {
+	                    // Handle the exception
+	                }
+        		}
 		        Integer outcomeIndex = ActionUtil.getEventParamOrAttirbuteValue(event, ATTRIB_OUTCOME_INDEX, Integer.class);
 		
 		        if (delegableTaskIndex != null && delegationBean.hasTasksForDelegation(getMyTasks().get(index).getNodeRef())) {
@@ -958,6 +974,15 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     	boolean locked = (compoundWfNodeRef != null)?setLock(FacesContext.getCurrentInstance(), compoundWfNodeRef, "workflow_compond_locked_for_change"):false;
         if (compoundWfNodeRef == null || locked) {
         	try {
+        		//TODO: REMOVE ME
+        		if (locked) {
+	        		try {
+	                    Thread.sleep(15000); // 15 sec
+	                }
+	                catch (InterruptedException ie) {
+	                    // Handle the exception
+	                }
+        		}
 
 		        // Save independent workflow first
 		        if (!saveIfIndependentWorkflow(params, SEND_TASK_DUE_DATE_EXTENSION_REQUEST, event)) {
