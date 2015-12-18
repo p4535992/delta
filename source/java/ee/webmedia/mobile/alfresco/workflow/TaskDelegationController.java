@@ -199,15 +199,6 @@ public class TaskDelegationController extends AbstractCompoundWorkflowController
 	        boolean success = true;
 	        
 	        try {
-	        	//TODO: REMOVE ME
-        		if (locked) {
-	        		try {
-	                    Thread.sleep(15000); // 15 sec
-	                }
-	                catch (InterruptedException ie) {
-	                    // Handle the exception
-	                }
-        		}
 		        if (WorkflowSpecificModel.Types.ASSIGNMENT_TASK.equals(type)) {
 		            success = delegateMultipleTaskTypes(form, redirectAttributes, originalTaskRef);
 		        } else if (WorkflowSpecificModel.Types.INFORMATION_TASK.equals(type)

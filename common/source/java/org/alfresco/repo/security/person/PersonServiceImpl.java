@@ -24,6 +24,9 @@
  */
 package org.alfresco.repo.security.person;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocLockService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,6 +54,7 @@ import org.alfresco.repo.transaction.AlfrescoTransactionSupport.TxnReadState;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.repo.transaction.TransactionListenerAdapter;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
+import org.alfresco.service.cmr.lock.LockStatus;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -735,7 +739,8 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
                         homeFolderManager.onCreateNode(ref);
                         return null;
                     }
-                }, false, transactionService.isReadOnly());
+                }, false, true);
+                
             }
         }
     }

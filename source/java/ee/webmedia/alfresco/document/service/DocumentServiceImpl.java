@@ -1839,7 +1839,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
         docNode.clearPermissionsCache(); // permissions might have been lost after rendering registration button
         if (!isRelocating) {
             if (!RegisterDocumentEvaluator.canRegisterWithLog(docNode, false, log)) {
-                throw new UnableToPerformException("document_registerDoc_error_noPermission");
+                throw new UnableToPerformException("document_registerDoc_error_document_changed");
             }
         } else {
             // when relocating, this is the only check from RegisterDocumentEvaluator.canRegister, that we need to perform

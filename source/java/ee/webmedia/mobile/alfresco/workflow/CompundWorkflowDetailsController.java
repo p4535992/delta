@@ -406,9 +406,9 @@ public class CompundWorkflowDetailsController extends AbstractCompoundWorkflowCo
         return "compound-workflow/task-group-details";
     }
     
-    @RequestMapping(value = "/ajax/cwf/lockduedate", method = POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/ajax/cwf/locktask", method = POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public LockMessage setCompoundWorkflowLockDuedate(@RequestBody LockMessage message) throws ParseException {
+    public LockMessage setCompoundWorkflowLockTask(@RequestBody LockMessage message) throws ParseException {
         
         final NodeRef cwfRef = message.getCompoundWorkflowRef();
         List<String> messages = new ArrayList<>(2);
@@ -473,15 +473,6 @@ public class CompundWorkflowDetailsController extends AbstractCompoundWorkflowCo
         boolean locked = (compoundWorkflowNodeId != null)?setLock(new NodeRef(cwfRef.getStoreRef(), compoundWorkflowNodeId), "workflow_compond.locked", redirectAttributes):false;
         if (locked) {
 	        try {
-	        	//TODO: REMOVE ME
-        		if (locked) {
-	        		try {
-	                    Thread.sleep(15000); // 15 sec
-	                }
-	                catch (InterruptedException ie) {
-	                    // Handle the exception
-	                }
-        		}
 		        workflowService.createDueDateExtension(
 		                form.getReason(),
 		                form.getNewDueDate(),
@@ -517,15 +508,6 @@ public class CompundWorkflowDetailsController extends AbstractCompoundWorkflowCo
         boolean locked = (compoundWorkflowNodeId != null)?setLock(new NodeRef(cwfRef.getStoreRef(), compoundWorkflowNodeId), "workflow_compond.locked", redirectAttributes):false;
         if (locked) {
 	        try {
-	        	//TODO: REMOVE ME
-        		if (locked) {
-	        		try {
-	                    Thread.sleep(15000); // 15 sec
-	                }
-	                catch (InterruptedException ie) {
-	                    // Handle the exception
-	                }
-        		}
 		        Map<String, String> formActions = inProgressTasksForm.getActions();
 		        if (!formActions.isEmpty()) {
 		            boolean redirectToTaskList = continueCurrentSigning(inProgressTasksForm, redirectAttributes, formActions, session);
