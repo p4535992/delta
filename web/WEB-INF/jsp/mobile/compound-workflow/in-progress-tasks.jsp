@@ -81,8 +81,8 @@
       </script>
 	</c:if>
 
-	<input name="compoundWorkflowRef" value="${ inProgressTasksForm.compoundWorkflowRef }" type="hidden"  />
-	<input name="containerRef" value="${ inProgressTasksForm.containerRef }" type="hidden" />
+	<input id="compoundWorkflowRef" name="compoundWorkflowRef" value="${ inProgressTasksForm.compoundWorkflowRef }" type="hidden"  />
+	<input id="containerRef" name="containerRef" value="${ inProgressTasksForm.containerRef }" type="hidden" />
 	<input id="signingFlowId" name="signingFlowId" value="${ inProgressTasksForm.signingFlowId }" type="hidden" />
 	<input id="mobileIdChallengeId" name="mobileIdChallengeId" value="${ inProgressTasksForm.mobileIdChallengeId }" type="hidden" />
 	<c:if test="${not empty inProgressTasksForm.inProgressTasks }">
@@ -136,5 +136,45 @@
 		</c:forEach>
 	</c:if>
 </form:form>
+<script src="<c:url value="/mobile/js/delegation.js" />" type="text/javascript"></script>
+<script type="text/javascript">
+         $(document).ready(function() {
+        	 $("#inProgressTasksForm").on("submit", function(event) {
+            	  var cwfRef = $("#compoundWorkflowRef").val();
+            	 var lockResult = false;
+                 $.ajaxq('lock', {
+                    type: 'POST',
+                    queue: true,
+                    url: getContextPath() + '/m/ajax/cwf/locktask',
+                    async: false,
+                    dataType: 'json',
+                    data: JSON.stringify ({compoundWorkflowRef: cwfRef}),
+                    contentType: 'application/json',
+                    success: function(result) {
+                       if(result.messages.length > 0) {
+                          var combinedMessage = '';
+                          $.each(result.messages, function(i, message) {
+                             combinedMessage += message + '\n';
+                          });
+                          addMessage(combinedMessage, "error", true);
+                          lockResult = false;
+                       } else {
+                    	   lockResult = true; 
+                       }
+                    },
+                    error: function() {
+                       addMessage("Failed to get response from server", "error", true);
+                       lockResult = false;
+                    }
+                 });
+            	 
+                if (!lockResult) {
+                	return false;
+                } else {
+               	 	return true;
+                }
+             });
+         });
+</script>
 
 

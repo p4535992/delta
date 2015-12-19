@@ -7,7 +7,6 @@ import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -51,9 +50,9 @@ import org.apache.cxf.jaxws.JaxWsProxyFactoryBean;
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1Primitive;
+import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DERObjectIdentifier;
 import org.bouncycastle.asn1.DEROctetString;
-import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.x509.X509Name;
 import org.bouncycastle.jce.PrincipalUtil;
 import org.bouncycastle.jce.X509Principal;
@@ -971,8 +970,8 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
                 if (derObject instanceof DEROctetString) {
                     derObject = toDerObject(((DEROctetString) derObject).getOctets());
                 }
-                if (derObject instanceof DERSequence) {
-                    collectObjectIdentifiers((DERSequence) derObject, objectIdentifiers);
+                if (derObject instanceof ASN1Sequence) {
+                    collectObjectIdentifiers((ASN1Sequence) derObject, objectIdentifiers);
                 }
             }
             return objectIdentifiers;
@@ -985,13 +984,13 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         return new ASN1InputStream(new ByteArrayInputStream(data)).readObject();
     }
 
-    private static void collectObjectIdentifiers(DERSequence sequence, List<String> objectIdentifiers) {
+    private static void collectObjectIdentifiers(ASN1Sequence sequence, List<String> objectIdentifiers) {
         for (Enumeration<?> enumeration = sequence.getObjects(); enumeration.hasMoreElements();) {
             Object element = enumeration.nextElement();
             if (element instanceof DERObjectIdentifier) {
                 objectIdentifiers.add(((DERObjectIdentifier) element).getId());
-            } else if (element instanceof DERSequence) {
-                collectObjectIdentifiers((DERSequence) element, objectIdentifiers);
+            } else if (element instanceof ASN1Sequence) {
+                collectObjectIdentifiers((ASN1Sequence) element, objectIdentifiers);
             }
         }
     }

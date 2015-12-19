@@ -71,6 +71,10 @@ public class TextPatternUtil {
                 }
                 previousNotEmpty = true;
             }
+            if (StringUtils.isNotBlank(replacementValue)) { 
+            	replacementValue = StringUtils.replace(replacementValue, "\\", "");
+            	replacementValue = StringUtils.replace(replacementValue, "$", "\\$");
+            }
             formulaMatcher.appendReplacement(result, replacementValue);
         }
         formulaMatcher.appendTail(result);

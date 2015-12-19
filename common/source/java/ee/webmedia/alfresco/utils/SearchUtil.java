@@ -451,12 +451,12 @@ public class SearchUtil {
      * @param userId - if null, use current user
      */
     public static String generateDocAccess(List<NodeRef> restrictedSeriesRefs, String userId) {
-        if (restrictedSeriesRefs.isEmpty() || getUserService().isAdministrator()) {
-            return null;
-        }
-
-        if (userId == null) {
+    	if (userId == null) {
             userId = AuthenticationUtil.getRunAsUser();
+        }
+    	
+    	if (restrictedSeriesRefs.isEmpty() || getUserService().isAdministrator(userId)) {
+            return null;
         }
 
         Set<String> userGroups = new HashSet<String>();

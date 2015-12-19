@@ -277,15 +277,6 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     	}
         if (compoundWorkflow.getNodeRef() == null || locked) {
         	try {
-        		//TODO: REMOVE ME
-        		if (locked) {
-	        		try {
-	                    Thread.sleep(15000); // 15 sec
-	                }
-	                catch (InterruptedException ie) {
-	                    // Handle the exception
-	                }
-        		}
 		    	boolean isInProgress = WorkflowUtil.isStatus(compoundWorkflow, Status.IN_PROGRESS);
 		        preprocessWorkflow();
 		        boolean checkConfirmations = !finishImplConfirmed;
@@ -745,15 +736,6 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         try {
         	boolean locked = setLock(FacesContext.getCurrentInstance(), "workflow_compond_locked_for_stop");
             if (locked) {
-            	//TODO: REMOVE ME
-        		if (locked) {
-	        		try {
-	                    Thread.sleep(15000); // 15 sec
-	                }
-	                catch (InterruptedException ie) {
-	                    // Handle the exception
-	                }
-        		}
 		        preprocessWorkflow();
 		        if (validate(FacesContext.getCurrentInstance(), false, false, false)) {
 		            List<String> confirmationMessages = getConfirmationMessages(false);
@@ -858,15 +840,6 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         try {
         	boolean locked = setLock(FacesContext.getCurrentInstance(), "workflow_compond_locked_for_finish");
             if (locked) {
-            	//TODO: REMOVE ME
-        		if (locked) {
-	        		try {
-	                    Thread.sleep(15000); // 15 sec
-	                }
-	                catch (InterruptedException ie) {
-	                    // Handle the exception
-	                }
-        		}
 	            preprocessWorkflow();
 	            if (validate(FacesContext.getCurrentInstance(), false, true, false)) {
 	                // clear panelGroup to avoid memory issues when working with large worflows
