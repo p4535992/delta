@@ -22,7 +22,7 @@ public class CreateWordFileFromTemplateEvaluator extends SharedResourceEvaluator
     @Override
     public boolean evaluate(Node node) {
         if (!node.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)
-                || BeanHelper.getDocumentDialogHelperBean().isInEditMode()) {
+                || BeanHelper.getDocumentDialogHelperBean().isInEditMode() || BeanHelper.getUserService().isGuest()) {
             return false;
         }
         Map<String, Object> properties = node.getProperties();
@@ -39,7 +39,7 @@ public class CreateWordFileFromTemplateEvaluator extends SharedResourceEvaluator
     @Override
     public boolean evaluate() {
         DocumentDynamicActionsGroupResources resource = (DocumentDynamicActionsGroupResources) sharedResource;
-        if (!resource.isWorkspaceNode() || resource.isInEditMode()) {
+        if (!resource.isWorkspaceNode() || resource.isInEditMode() || BeanHelper.getUserService().isGuest()) {
             return false;
         }
         if (!resource.isInStatus(DocumentStatus.WORKING)

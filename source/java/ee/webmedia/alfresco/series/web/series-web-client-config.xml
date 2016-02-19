@@ -110,6 +110,9 @@
          <show-property name="ser:structUnit" display-label-id="series_structUnit" component-generator="SearchGenerator"
             pickerCallback="#{OrganizationStructureListDialog.searchOrgstructs}" converter="ee.webmedia.alfresco.orgstructure.web.OrganizationStructureConverter"
             dialogTitleId="series_structUnit_popUpInfo" />
+         <show-property  name="ser:relatedUsersGroups" display-label-id="series_relatedUsersGroups"  component-generator="SearchGenerator"
+            pickerCallback="#{UserContactGroupSearchBean.searchAllWithAdminsAndDocManagers}" showFilter="true" filters="#{UserContactGroupSearchBean.usersGroupsFilters}"
+           	dataMultiValued="true" converter="ee.webmedia.alfresco.user.web.AuthorityConverter" dialogTitleId="series_relatedUsersGroups_popUpInfo" />
          <show-property name="ser:eventPlan" display-label-id="series_eventPlan" component-generator="GeneralSelectorGenerator"
             selectionItems="#{SeriesDetailsDialog.getEventPlans}" converter="ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter" />
       </property-sheet>

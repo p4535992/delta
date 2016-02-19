@@ -49,7 +49,6 @@ import javax.faces.context.FacesContext;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
-import org.alfresco.repo.workflow.WorkflowModel;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.search.ResultSet;
@@ -108,6 +107,7 @@ import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.search.service.AbstractSearchServiceImpl;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.series.model.UnmodifiableSeries;
@@ -1047,6 +1047,37 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         long startTime = System.currentTimeMillis();
         String query = generateCompoundWorkflowSearchQuery(filter);
         Pair<List<NodeRef>, Boolean> results = searchNodes(query, limit, /* queryName */"compoundWorkflowByFilter", null, false);
+        
+        // in case of GUESTS users do extra filtering
+        if (userService.isGuest() && results != null && results.getFirst() != null && !results.getFirst().isEmpty()) {
+        	String currentUserName = AuthenticationUtil.getRunAsUser();
+	        Set<String> currentUserGroups = userService.getUsersGroups(currentUserName);
+	        if (currentUserGroups == null) {
+	        	currentUserGroups = new HashSet<>();
+	        }
+	        currentUserGroups.add(currentUserName);
+	        List<NodeRef> filteredCWRefs = new ArrayList<>();
+	        List<NodeRef> foundCWRefs = results.getFirst();
+	        for (NodeRef cWRef: foundCWRefs) {
+	        	String cWType = (String) nodeService.getProperty(cWRef, WorkflowCommonModel.Props.TYPE);
+	            CompoundWorkflowType type = StringUtils.isNotBlank(cWType) ? CompoundWorkflowType.valueOf(cWType) : null;
+	        	if (CompoundWorkflowType.DOCUMENT_WORKFLOW.equals(type)) {
+	        		NodeRef docNode = nodeService.getPrimaryParent(cWRef).getParentRef();
+		        	List<String> authorities = BeanHelper.getPrivilegeService().getAuthoritiesWithPrivilege(docNode, Privilege.VIEW_DOCUMENT_META_DATA);
+		        	String ownerId = (String) nodeService.getProperty(docNode, DocumentCommonModel.Props.OWNER_ID);
+		        	if (StringUtils.isNotBlank(ownerId)) {
+		        		authorities.add(ownerId);
+		        	}
+		            for (String authority : authorities) {
+		            	if (currentUserGroups.contains(authority)) {
+		            		filteredCWRefs.add(cWRef);
+		            		break;
+		            	}
+		            }
+	        	}
+	        }
+	        results.setFirst(filteredCWRefs);
+        }
         if (log.isDebugEnabled()) {
             log.debug("CompoundWorkflow search total time " + (System.currentTimeMillis() - startTime) + " ms");
         }
@@ -1135,7 +1166,40 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         }
         return count;
     }
-
+    
+    /**
+     * query documents with storeRefs provided
+     * @param filter
+     * @param limit
+     * @param storeRefs
+     * @return
+     */
+    private List<NodeRef> queryDocuments(Node filter, int limit, List<StoreRef> storeRefs) {
+        long startTime = System.currentTimeMillis();
+        Map<String, Object> properties = filter.getProperties();
+        
+        String query = generateDocumentSearchQuery(filter, storeRefs);
+        if (StringUtils.isBlank(query)) {
+            throw new UnableToPerformException(UnableToPerformException.MessageSeverity.INFO, "docSearch_error_noInput");
+        }
+        try {
+            Pair<List<NodeRef>, Boolean> results = searchDocumentsImpl(query, limit, /* queryName */"documentsByFilter", storeRefs);
+            
+            
+            if (log.isDebugEnabled()) {
+                log.debug("Documents search total time " + (System.currentTimeMillis() - startTime) + " ms");
+            }
+            return results.getFirst();
+        } catch (RuntimeException e) {
+            Map<QName, Serializable> filterProps = RepoUtil.getNotEmptyProperties(RepoUtil.toQNameProperties(properties));
+            log.error("Document search failed: "
+                    + e.getMessage()
+                    + "\n  searchFilter=" + WmNode.toString(filterProps, namespaceService)
+                    + "\n  query=" + query, e);
+            throw e;
+        }
+    }
+    
     @Override
     public Pair<List<NodeRef>, Boolean> queryDocuments(Node filter, int limit) {
         long startTime = System.currentTimeMillis();
@@ -1152,6 +1216,8 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         }
         try {
             Pair<List<NodeRef>, Boolean> results = searchDocumentsImpl(query, limit, /* queryName */"documentsByFilter", storeRefs);
+            
+            
             if (log.isDebugEnabled()) {
                 log.debug("Documents search total time " + (System.currentTimeMillis() - startTime) + " ms");
             }
@@ -1186,8 +1252,12 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         if (log.isDebugEnabled()) {
             log.debug("Documents by parent query: " + query);
         }
-
-        return searchNodes(query, limit, "allDocumentsByParentRef", Collections.singletonList(parentRef.getStoreRef()));
+        Pair<List<NodeRef>, Boolean> results = searchNodes(query, limit, "allDocumentsByParentRef", Collections.singletonList(parentRef.getStoreRef()));
+     // in case of GUEST user take out open for all documents if guest user or group is not set
+        if (results != null && userService.isGuest()) {
+        	results.setFirst(filterDocumentsForGuest(results.getFirst()));
+        }
+        return results;
     }
 
     @Override
@@ -1207,7 +1277,10 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         }
 
         Pair<List<NodeRef>, Boolean> result = searchNodes(query, limit, "allDocumentsByParentRef", Collections.singletonList(parentRef.getStoreRef()));
-
+        // in case of GUEST user take out open for all documents if guest user or group is not set
+        if (result != null && userService.isGuest()) {
+        	result.setFirst(filterDocumentsForGuest(result.getFirst()));
+        }
         List<NodeRef> childrenFromDb = bulkLoadNodeService.loadChildDocNodeRefs(parentRef);
         for (Iterator<NodeRef> i = result.getFirst().iterator(); i.hasNext();) {
             if (!childrenFromDb.contains(i.next())) {
@@ -1228,6 +1301,39 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         }
         try {
             Pair<List<VolumeOrCaseFile>, Boolean> results = searchVolumesImpl(query, limit, /* queryName */"volumesByFilter", storeRefs);
+            
+            // in case of GUESTS users do extra filtering
+            if (userService.isGuest() && results != null && results.getFirst() != null && !results.getFirst().isEmpty()) {
+            	List<VolumeOrCaseFile> foundVolumeOrCaseFiles = results.getFirst();
+            	List<VolumeOrCaseFile> filteredVolumeOrCaseFiles = new ArrayList<>();
+            	List<NodeRef> docNodeRefs = queryDocuments(filter, -1, storeRefs);
+            	Set<NodeRef> volumeCaseFileRefs = new HashSet<>();
+            	for (NodeRef docRef: docNodeRefs) {
+            		NodeRef volRef = (NodeRef) nodeService.getProperty(docRef, DocumentCommonModel.Props.VOLUME);
+            		NodeRef caseFileRef = (NodeRef) nodeService.getProperty(docRef, DocumentCommonModel.Props.CASE);
+            		if (volRef != null) {
+            			volumeCaseFileRefs.add(volRef);
+            		}
+            		if (caseFileRef != null) {
+            			volumeCaseFileRefs.add(caseFileRef);
+            		}
+            	}
+            	if (!volumeCaseFileRefs.isEmpty()) {
+            		for (VolumeOrCaseFile volOrCasefile: foundVolumeOrCaseFiles) {
+            			NodeRef nodeRef = null;
+            			if (volOrCasefile instanceof CaseFile) {
+            				nodeRef = ((CaseFile)volOrCasefile).getNodeRef();
+            			} else if (volOrCasefile instanceof Volume) {
+            				nodeRef = ((Volume)volOrCasefile).getNodeRef();
+            			}
+            			if (nodeRef != null && volumeCaseFileRefs.contains(nodeRef)) {
+            				filteredVolumeOrCaseFiles.add(volOrCasefile);
+            			}
+            		}
+            	}
+            	results.setFirst(filteredVolumeOrCaseFiles);
+            }
+            
             if (log.isDebugEnabled()) {
                 log.debug("Volumes search total time " + (System.currentTimeMillis() - startTime) + " ms");
             }
@@ -1589,6 +1695,10 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                     generateMultiStringExactQuery(documentTypes, DocumentAdminModel.Props.OBJECT_TYPE_ID),
                     functionQuery, seriesQuery, volumeQuery));
             List<NodeRef> resultNodeRefs = searchAssociatedObjects(query, storeRefs);
+            // in case of GUEST user take out open for all documents if guest user or group is not set
+            if (resultNodeRefs != null && userService.isGuest()) {
+            	resultNodeRefs = filterDocumentsForGuest(resultNodeRefs);
+            }
             for (NodeRef nodeRef : resultNodeRefs) {
                 results.add(new AssocBlockObject(documentService.getDocumentByNodeRef(nodeRef)));
             }
@@ -1599,6 +1709,36 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                     generateStringWordsWildcardQuery(objectTitle, CaseModel.Props.TITLE),
                     functionQuery, seriesQuery, volumeQuery));
             List<NodeRef> resultNodeRefs = searchAssociatedObjects(query, storeRefs);
+            
+            // in case of GUESTS users do extra filtering
+            if (userService.isGuest() && resultNodeRefs != null && !resultNodeRefs.isEmpty()) {
+            	String docQuery = joinQueryPartsAnd(Arrays.asList(
+                        generateTypeQuery(DocumentCommonModel.Types.DOCUMENT),
+                        generateAspectQuery(DocumentCommonModel.Aspects.SEARCHABLE),
+                        documentModelQuickSearchQuery,
+                        generateDatePropertyRangeQuery(docCreatedStart, docCreatedEnd, ContentModel.PROP_CREATED),
+                        generateDatePropertyRangeQuery(docRegisteredStart, docRegisteredEnd, DocumentCommonModel.Props.REG_DATE_TIME),
+                        generateMultiStringExactQuery(documentTypes, DocumentAdminModel.Props.OBJECT_TYPE_ID),
+                        functionQuery, seriesQuery, volumeQuery));
+            	List<NodeRef> docNodeRefs = searchDocumentsImpl(docQuery, -1, "documentsByFilter", storeRefs).getFirst();
+            	List<NodeRef> filteredCaseFiles = new ArrayList<>();
+            	Set<NodeRef> caseFileRefs = new HashSet<>();
+            	for (NodeRef docRef: docNodeRefs) {
+            		NodeRef caseFileRef = (NodeRef) nodeService.getProperty(docRef, DocumentCommonModel.Props.CASE);
+            		if (caseFileRef != null) {
+            			caseFileRefs.add(caseFileRef);
+            		}
+            	}
+            	if (!caseFileRefs.isEmpty()) {
+            		for (NodeRef caseRef: resultNodeRefs) {
+            			if (caseFileRefs.contains(caseRef)) {
+            				filteredCaseFiles.add(caseRef);
+            			}
+            		}
+            	}
+            	resultNodeRefs = filteredCaseFiles;
+            }
+            
             for (NodeRef nodeRef : resultNodeRefs) {
                 results.add(new AssocBlockObject(BeanHelper.getCaseService().getCaseByNoderef(nodeRef)));
             }
@@ -1620,6 +1760,36 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                     generateStringWordsWildcardQuery(objectTitle, DocumentDynamicModel.Props.TITLE),
                     functionQuery, seriesQuery, volumeQuery));
             resultNodeRefs = searchAssociatedObjects(query, storeRefs);
+            
+            // in case of GUESTS users do extra filtering
+            if (userService.isGuest() && resultNodeRefs != null && !resultNodeRefs.isEmpty()) {
+            	String docQuery = joinQueryPartsAnd(Arrays.asList(
+                        generateTypeQuery(DocumentCommonModel.Types.DOCUMENT),
+                        generateAspectQuery(DocumentCommonModel.Aspects.SEARCHABLE),
+                        documentModelQuickSearchQuery,
+                        generateDatePropertyRangeQuery(docCreatedStart, docCreatedEnd, ContentModel.PROP_CREATED),
+                        generateDatePropertyRangeQuery(docRegisteredStart, docRegisteredEnd, DocumentCommonModel.Props.REG_DATE_TIME),
+                        generateMultiStringExactQuery(documentTypes, DocumentAdminModel.Props.OBJECT_TYPE_ID),
+                        functionQuery, seriesQuery, volumeQuery));
+            	List<NodeRef> docNodeRefs = searchDocumentsImpl(docQuery, -1, "documentsByFilter", storeRefs).getFirst();
+            	List<NodeRef> filteredVolumes = new ArrayList<>();
+            	Set<NodeRef> volumeRefs = new HashSet<>();
+            	for (NodeRef docRef: docNodeRefs) {
+            		NodeRef volRef = (NodeRef) nodeService.getProperty(docRef, DocumentCommonModel.Props.VOLUME);
+            		if (volRef != null) {
+            			volumeRefs.add(volRef);
+            		}
+            	}
+            	if (!volumeRefs.isEmpty()) {
+            		for (NodeRef volRef: resultNodeRefs) {
+            			if (volRef != null && volumeRefs.contains(volRef)) {
+            				filteredVolumes.add(volRef);
+            			}
+            		}
+            	}
+            	resultNodeRefs = filteredVolumes;
+            }
+            
             for (NodeRef nodeRef : resultNodeRefs) {
                 results.add(new AssocBlockObject(BeanHelper.getVolumeService().getVolumeByNodeRef(nodeRef, propertyTypes)));
             }
@@ -2523,7 +2693,59 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     }
 
     private Pair<List<NodeRef>, Boolean> searchDocumentsImpl(String query, int limit, String queryName, Collection<StoreRef> storeRefs) {
-        return searchNodes(query, limit, queryName, storeRefs, false);
+    	Pair<List<NodeRef>, Boolean> results = searchNodes(query, limit, queryName, storeRefs, false);
+    	
+    	// in case of GUEST user take out open for all documents if guest user or group is not set
+        if (results != null && userService.isGuest()) {
+        	results.setFirst(filterDocumentsForGuest(results.getFirst()));
+        }
+        return results;
+    }
+    
+    /**
+     * Check all found documents for  Privilege.VIEW_DOCUMENT_META_DATA for current user
+     * @param foundResults
+     */
+    private List<NodeRef> filterDocumentsForGuest(List<NodeRef> foundResults) {
+    	if (foundResults != null && !foundResults.isEmpty()) {
+    		String currentUserName = AuthenticationUtil.getRunAsUser();
+	        Set<String> currentUserGroups = userService.getUsersGroups(currentUserName);
+	        if (currentUserGroups == null) {
+	        	currentUserGroups = new HashSet<>();
+	        }
+	        currentUserGroups.add(currentUserName);
+    		List<NodeRef> filteredResults = new ArrayList<>();
+    		for (NodeRef docNode: foundResults) {
+    			/*
+    			NodeRef seriesRef = (NodeRef) nodeService.getProperty(docNode, DocumentCommonModel.Props.SERIES);
+                if (seriesRef != null && !nodeService.exists(seriesRef)) {
+                    log.warn("Document " + docNode + " references nonexistent series " + seriesRef);
+                    seriesRef = null;
+                }
+                if (seriesRef != null && Boolean.TRUE.equals(nodeService.getProperty(seriesRef, SeriesModel.Props.DOCUMENTS_VISIBLE_FOR_USERS_WITHOUT_ACCESS))) {
+                */
+    				
+                	List<String> authorities = BeanHelper.getPrivilegeService().getAuthoritiesWithPrivilege(docNode, Privilege.VIEW_DOCUMENT_META_DATA);
+                	String ownerId = (String) nodeService.getProperty(docNode, DocumentCommonModel.Props.OWNER_ID);
+                	if (StringUtils.isNotBlank(ownerId)) {
+                		authorities.add(ownerId);
+                	}
+                    for (String authority : authorities) {
+                    	if (currentUserGroups.contains(authority)) {
+                    		filteredResults.add(docNode);
+                    		break;
+                    	}
+                    }
+                /*    
+                } else {
+                	filteredResults.add(docNode);
+                }
+                */
+    		}
+    		return filteredResults;
+    		
+    	}
+    	return foundResults;
     }
 
     private Pair<List<VolumeOrCaseFile>, Boolean> searchVolumesImpl(String query, int limit, String queryName, Collection<StoreRef> storeRefs) {

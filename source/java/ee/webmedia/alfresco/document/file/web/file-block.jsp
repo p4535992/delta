@@ -19,7 +19,7 @@
 
 <h:panelGroup id="files-panel-facets">
    <f:facet name="title">
-      <r:actions id="acts_add_content" value="addFileMenu" context="#{DocumentDialogHelperBean.node}" showLink="false" rendered="#{DialogManager.bean != AddFileDialog and DialogManager.bean != ChangeFileDialog}" />
+      <r:actions id="acts_add_content" value="addFileMenu" context="#{DocumentDialogHelperBean.node}" showLink="false" rendered="#{FileBlockBean.guest == false and DialogManager.bean != AddFileDialog and DialogManager.bean != ChangeFileDialog}" />
    </f:facet>
 </h:panelGroup>
 <h:panelGroup id="inactive-files-panel-facets">

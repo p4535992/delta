@@ -28,7 +28,7 @@ public class SendOutActionEvaluator extends SharedResourceEvaluator {
     @Override
     public boolean evaluate(Node node) {
         NodeRef nodeRef = node.getNodeRef();
-        if (!nodeRef.getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE) || BeanHelper.getDocumentDialogHelperBean().isInEditMode()) {
+        if (!nodeRef.getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE) || BeanHelper.getDocumentDialogHelperBean().isInEditMode() || BeanHelper.getUserService().isGuest()) {
             return false;
         }
         boolean result = !BeanHelper.getDocumentDynamicService().isDraftOrImapOrDvk(nodeRef)
@@ -54,7 +54,7 @@ public class SendOutActionEvaluator extends SharedResourceEvaluator {
     @Override
     public boolean evaluate() {
         DocumentDynamicActionsGroupResources resource = (DocumentDynamicActionsGroupResources) sharedResource;
-        if (!resource.isWorkspaceNode() || resource.isInEditMode()) {
+        if (!resource.isWorkspaceNode() || resource.isInEditMode() || BeanHelper.getUserService().isGuest()) {
             return false;
         }
         boolean result = !resource.isDraftOrImapOrDvk() && resource.isNotInDraftsFunction() && resource.hasEditPermission();

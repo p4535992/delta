@@ -51,6 +51,10 @@
                <type>d:text</type><!-- viide asutuse struktuuriüksus(t)ele; üksuse unitId -->
                <multiple>true</multiple>
             </property>
+            <property name="ser:relatedUsersGroups">
+               <type>d:text</type><!-- link to authority; authorityId -->
+               <multiple>true</multiple>
+            </property>
             <property name="ser:docType">
                <type>d:text</type>
                <mandatory enforced="true">true</mandatory>

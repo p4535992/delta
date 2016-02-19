@@ -51,6 +51,7 @@ import org.alfresco.repo.security.permissions.PermissionServiceSPI;
 import org.alfresco.repo.tenant.TenantService;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport.TxnReadState;
+import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.repo.transaction.TransactionListenerAdapter;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
@@ -731,6 +732,14 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
             if (homeFolder == null)
             {
                 final ChildAssociationRef ref = nodeService.getPrimaryParent(person);
+
+
+                boolean requiresNew = false;
+
+                if (AlfrescoTransactionSupport.getTransactionReadState() != TxnReadState.TXN_READ_WRITE) {
+                    requiresNew = true;
+                }
+                
                 transactionService.getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Object>()
                 {
                     @Override
@@ -739,7 +748,7 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
                         homeFolderManager.onCreateNode(ref);
                         return null;
                     }
-                }, false, true);
+                }, false, requiresNew);
                 
             }
         }

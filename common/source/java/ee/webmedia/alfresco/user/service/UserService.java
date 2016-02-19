@@ -26,18 +26,21 @@ public interface UserService {
     String ACCOUNTANTS_GROUP = "ACCOUNTANTS";
     String SUPERVISION_GROUP = "SUPERVISION";
     String ARCHIVIST_GROUP = "ARCHIVISTS";
+    String GUESTS_GROUP = "GUESTS";
 
     String AUTH_DOCUMENT_MANAGERS_GROUP = AuthorityType.GROUP.getPrefixString() + DOCUMENT_MANAGERS_GROUP;
     String AUTH_ADMINISTRATORS_GROUP = AuthorityType.GROUP.getPrefixString() + ADMINISTRATORS_GROUP;
     String AUTH_ACCOUNTANTS_GROUP = AuthorityType.GROUP.getPrefixString() + ACCOUNTANTS_GROUP;
     String AUTH_SUPERVISION_GROUP = AuthorityType.GROUP.getPrefixString() + SUPERVISION_GROUP;
     String AUTH_ARCHIVIST_GROUP = AuthorityType.GROUP.getPrefixString() + ARCHIVIST_GROUP;
+    String AUTH_GUESTS_GROUP = AuthorityType.GROUP.getPrefixString() + GUESTS_GROUP;
 
     String DOCUMENT_MANAGERS_DISPLAY_NAME = "document_managers_display_name";
     String ALFRESCO_ADMINISTRATORS_DISPLAY_NAME = "alfresco_administrators_display_name";
     String ACCOUNTANTS_DISPLAY_NAME = "accountants_display_name";
     String SUPERVISION_DISPLAY_NAME = "supervision_display_name";
     String ARCHIVISTS_DISPLAY_NAME = "archivists_display_name";
+    String GUESTS_DISPLAY_NAME = "guests_display_name";
 
     /**
      * Fetches the node reference, where user preferences are kept,
@@ -69,6 +72,21 @@ public interface UserService {
     boolean isArchivist();
 
     /**
+     * Checks if user is guest
+     *
+     * @return true if has
+     */
+    @Cacheable
+    boolean isGuest();
+    
+    /**
+     * Checks if provided user is guest
+     *
+     * @return true if has
+     */
+    boolean isGuest(String username);
+    
+    /**
      * Checks if user belongs to document managers group or is an administrator, because administrators have document managers privileges.
      *
      * @return true if belongs
@@ -92,6 +110,13 @@ public interface UserService {
      * @return group name with group type prefix
      */
     String getAdministratorsGroup();
+    
+    /**
+     * Return group name for Alfresco guest group
+     *
+     * @return group name with group type prefix
+     */
+    String getGuestsGroup();
 
     /**
      * Searches for users by first name and last name. If {@code input} is empty, all users are returned if {@code returnAllUsers} is {@code true}, otherwise an

@@ -16,7 +16,7 @@ public class AddFilesEvaluator extends BaseActionEvaluator {
     @Override
     public boolean evaluate(Node docNode) {
         return docNode.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)
-                && docNode.hasPermission(Privilege.EDIT_DOCUMENT)
+                && (docNode.hasPermission(Privilege.EDIT_DOCUMENT) || docNode.hasPermissionEveryone(Privilege.EDIT_DOCUMENT))
                 && !Boolean.TRUE.equals(docNode.getProperties().get(DocumentCommonModel.Props.NOT_EDITABLE))
                 && !getWorkflowService().hasInprogressCompoundWorkflows(docNode.getNodeRef());
     }

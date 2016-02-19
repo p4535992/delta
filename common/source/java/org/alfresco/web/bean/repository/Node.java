@@ -66,7 +66,9 @@ public class Node implements Serializable, NamespacePrefixResolverProvider
 {
     private static final org.apache.commons.logging.Log logger = org.apache.commons.logging.LogFactory.getLog(Node.class);
     private static final long serialVersionUID = 3544390322739034170L;
-
+    
+    public static final String GROUP_EVERYONE = "GROUP_EVERYONE";
+    
     protected NodeRef nodeRef;
     protected String name;
     protected QName type;
@@ -411,6 +413,17 @@ public class Node implements Serializable, NamespacePrefixResolverProvider
     public boolean hasPermission(Privilege... permission)
     {
         return getCachedPermissions().containsAll(Arrays.asList(permission));
+    }
+    
+    /**
+     * Return whether the current user has the specified access permission on this Node
+     *
+     * @param permission Permission to validate against
+     * @return true if the permission is applied to the node for this user, false otherwise
+     */
+    public boolean hasPermissionEveryone(Privilege... permission)
+    {
+        return BeanHelper.getPrivilegeService().hasPermission(nodeRef, GROUP_EVERYONE, permission);
     }
 
     private Set<Privilege> getCachedPermissions() {

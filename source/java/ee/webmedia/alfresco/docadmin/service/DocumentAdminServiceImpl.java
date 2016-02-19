@@ -735,11 +735,36 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
     @Override
     public List<FieldDefinition> saveOrUpdateFieldDefinitions(Collection<FieldDefinition> fieldDefinitions, boolean isDocumentTypesImport) {
-        FieldDefinitionReorderHelper.reorderDocSearchAndVolSearchProps(fieldDefinitions, !isDocumentTypesImport);
+    	List<FieldDefinition> allFds = baseService.getChildren(getFieldDefinitionsRoot(), FieldDefinition.class);
+    	FieldDefinitionReorderHelper.markBaseStateDocSearchAndVolSearchProps(allFds);
+    	if (fieldDefinitions != null) {
+        	for (FieldDefinition fieldDef: fieldDefinitions) {
+        		for (FieldDefinition fieldDefFromAll: allFds) {
+        			if (fieldDefFromAll.getFieldId().equals(fieldDef.getFieldId())) {
+        				fieldDefFromAll.setProp(DocumentAdminModel.Props.PARAMETER_ORDER_IN_VOL_SEARCH, fieldDef.getProp(DocumentAdminModel.Props.PARAMETER_ORDER_IN_VOL_SEARCH));
+        				fieldDefFromAll.setProp(DocumentAdminModel.Props.PARAMETER_ORDER_IN_DOC_SEARCH, fieldDef.getProp(DocumentAdminModel.Props.PARAMETER_ORDER_IN_DOC_SEARCH));
+        				break;
+        			}
+        		}
+        	}
+        }
+        FieldDefinitionReorderHelper.reorderDocSearchAndVolSearchProps(fieldDefinitions, allFds, !isDocumentTypesImport);
         List<FieldDefinition> saved = new ArrayList<FieldDefinition>();
 
-        for (FieldDefinition fieldDefinition : fieldDefinitions) {
-            saved.add(saveOrUpdateFieldInternal(fieldDefinition));
+        for (FieldDefinition fieldDefinition : allFds) {
+        	boolean isInFieldDefinitions = false;
+        	for (FieldDefinition fieldDef: fieldDefinitions) { 
+        		if (fieldDefinition.getFieldId().equals(fieldDef.getFieldId())) {
+        			isInFieldDefinitions = true;
+        			break;
+    			}
+        	}
+        	if (isInFieldDefinitions) {
+        		saved.add(saveOrUpdateFieldInternal(fieldDefinition));
+        	} else {
+        		saveOrUpdateFieldInternal(fieldDefinition);
+        	}
+        	
         }
         return saved;
     }
@@ -757,7 +782,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
             });
             Collections.sort(fd, byNameComparator);
         }
-        FieldDefinitionReorderHelper.reorderDocSearchAndVolSearchProps(fd, false);
+        FieldDefinitionReorderHelper.reorderDocSearchAndVolSearchProps(null, fd, false);
         return fd;
     }
 
@@ -766,8 +791,18 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
      */
     private static class FieldDefinitionReorderHelper {
 
-        static void reorderDocSearchAndVolSearchProps(Collection<FieldDefinition> fd, boolean markBaseCalled) {
-            Predicate<FieldDefinition> isParameterInDocSearchPredicate = new Predicate<FieldDefinition>() {
+        static void reorderDocSearchAndVolSearchProps(Collection<FieldDefinition> fd, Collection<FieldDefinition> allFds, boolean markBaseCalled) {
+            if (fd != null) {
+            	for (FieldDefinition fieldDef: fd) {
+            		for (FieldDefinition fieldDefFromAll: allFds) {
+            			if (fieldDefFromAll.getFieldId().equals(fieldDef.getFieldId())) {
+            				fieldDefFromAll = fieldDef;
+            				break;
+            			}
+            		}
+            	}
+            }
+        	Predicate<FieldDefinition> isParameterInDocSearchPredicate = new Predicate<FieldDefinition>() {
                 @Override
                 public boolean eval(FieldDefinition o) {
                     return o.isParameterInDocSearch();
@@ -779,8 +814,46 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                     return o.isParameterInVolSearch();
                 }
             };
-            reorderAndMarkBaseState(fd, getByDocSearchOrderModifier(), markBaseCalled, isParameterInDocSearchPredicate);
-            reorderAndMarkBaseState(fd, getByVolSearchOrderModifier(), markBaseCalled, isParameterInVolSearchPredicate);
+            reorderAndMarkBaseState(allFds, getByDocSearchOrderModifier(), markBaseCalled, isParameterInDocSearchPredicate);
+            reorderAndMarkBaseState(allFds, getByVolSearchOrderModifier(), markBaseCalled, isParameterInVolSearchPredicate);
+            if (fd != null) {
+	            for (FieldDefinition fieldDef: fd) {
+	        		for (FieldDefinition fieldDefFromAll: allFds) {
+	        			if (fieldDefFromAll.getFieldId().equals(fieldDef.getFieldId())) {
+	        				fieldDef = fieldDefFromAll;
+	        				break;
+	        			}
+	        		}
+	        	}
+            }
+        }
+        
+        static void markBaseStateDocSearchAndVolSearchProps(Collection<FieldDefinition> fd) {
+            
+        	Predicate<FieldDefinition> isParameterInDocSearchPredicate = new Predicate<FieldDefinition>() {
+                @Override
+                public boolean eval(FieldDefinition o) {
+                    return o.isParameterInDocSearch();
+                }
+            };
+            Predicate<FieldDefinition> isParameterInVolSearchPredicate = new Predicate<FieldDefinition>() {
+                @Override
+                public boolean eval(FieldDefinition o) {
+                    return o.isParameterInVolSearch();
+                }
+            };
+            markBaseState(fd, getByDocSearchOrderModifier(), isParameterInDocSearchPredicate);
+            markBaseState(fd, getByVolSearchOrderModifier(), isParameterInVolSearchPredicate);
+            
+        }
+        
+        /**
+         * Helps to mark bsase state or reorder only items selected by includedItemsPredicate - so that other items will not receive automatically order
+         */
+        private static void markBaseState(Collection<FieldDefinition> items, BaseObjectOrderModifier<FieldDefinition> modifier,
+                Predicate<FieldDefinition> includedItemsPredicate) {
+            List<FieldDefinition> docSearchFieldsList = select(items, includedItemsPredicate, new ArrayList<FieldDefinition>());
+            modifier.markBaseState(docSearchFieldsList);
         }
 
         private static BaseObjectOrderModifier<FieldDefinition> getByVolSearchOrderModifier() {

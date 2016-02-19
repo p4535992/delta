@@ -309,6 +309,10 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
     public boolean isInWorkspace() {
         return docRef.getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE);
     }
+    
+    public boolean isGuest() {
+    	return BeanHelper.getUserService().isGuest();
+    }
 
     // START: getters / setters
 

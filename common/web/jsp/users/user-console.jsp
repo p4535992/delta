@@ -165,7 +165,7 @@
    </h:panelGrid>
 </a:panel>
 
-<a:panel label="#{msg.user_management}" id="man-panel" rendered="#{NavigationBean.isGuest == false}" border="white" bgcolor="white" titleBorder="lbgrey"
+<a:panel label="#{msg.user_management}" id="man-panel" rendered="#{NavigationBean.isGuest == false && NavigationBean.isDeltaGuest == false}" border="white" bgcolor="white" titleBorder="lbgrey"
    expandedTitleBorder="dotted" titleBgcolor="white" styleClass="column panel-35">
 
    <h:panelGrid id="usage-quota" columns="2" columnClasses="propertiesLabel" rendered="#{UsersBeanProperties.usagesEnabled == true}">
