@@ -29,6 +29,9 @@ public class RegisterDocumentEvaluator extends SharedResourceEvaluator {
 
     @Override
     public boolean evaluate(Node docNode) {
+    	if (BeanHelper.getUserService().isGuest()) {
+        	return false;
+        }
         NodeRef docTypeRef = getDocTypeRef(docNode);
         return docNode.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)
                 && new DocumentNotInDraftsFunctionActionEvaluator().evaluate(docNode)
@@ -125,6 +128,9 @@ public class RegisterDocumentEvaluator extends SharedResourceEvaluator {
 
     @Override
     public boolean evaluate() {
+    	if (BeanHelper.getUserService().isGuest()) {
+        	return false;
+        }
         DocumentDynamicActionsGroupResources resource = (DocumentDynamicActionsGroupResources) sharedResource;
         return resource.isWorkspaceNode() && !resource.isInEditMode()
                 && resource.isNotInDraftsFunction()

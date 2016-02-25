@@ -33,7 +33,9 @@ public interface SeriesService {
     List<UnmodifiableSeries> getAllSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status, Set<String> docTypeIds);
 
     List<UnmodifiableSeries> getAllSeriesByFunctionForStructUnit(NodeRef functionNodeRef, String structUnitId);
-
+    
+    List<UnmodifiableSeries> getAllSeriesByFunctionForRelatedUsersGroups(NodeRef functionNodeRef, String username);
+    
     Node getSeriesNodeByRef(NodeRef seriesNodeRef);
 
     Series getSeriesByNodeRef(NodeRef nodeRef);

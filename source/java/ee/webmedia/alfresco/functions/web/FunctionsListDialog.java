@@ -7,8 +7,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.faces.context.FacesContext;
@@ -16,6 +18,7 @@ import javax.faces.event.ActionEvent;
 import javax.servlet.http.HttpServletResponse;
 
 import org.alfresco.repo.exporter.ACPExportPackageHandler;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.MimetypeService;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -296,17 +299,36 @@ public class FunctionsListDialog extends BaseDialogBean {
     public List<UnmodifiableFunction> getMySeriesFunctions() {
         List<UnmodifiableFunction> seriesFunctions = new ArrayList<UnmodifiableFunction>(functions.size());
         String currentUsersStructUnitId = getUserService().getCurrentUsersStructUnitId();
-        if (StringUtils.isNotBlank(currentUsersStructUnitId)) {
-            for (UnmodifiableFunction function : getFunctions()) {
-                List<ChildAssociationRef> childAssocs = getNodeService().getChildAssocs(function.getNodeRef());
-                for (ChildAssociationRef caRef : childAssocs) {
+        String currentUserName = AuthenticationUtil.getRunAsUser();
+        Set<String> currentUserGroups = getUserService().getUsersGroups(currentUserName);
+        if (currentUserGroups == null) {
+        	currentUserGroups = new HashSet<>();
+        }
+        currentUserGroups.add(currentUserName);
+        for (UnmodifiableFunction function : getFunctions()) {
+            List<ChildAssociationRef> childAssocs = getNodeService().getChildAssocs(function.getNodeRef());
+            for (ChildAssociationRef caRef : childAssocs) {
+            	boolean contains = false;
+            	if (StringUtils.isNotBlank(currentUsersStructUnitId)) {
                     @SuppressWarnings("unchecked")
                     List<String> structUnits = (List<String>) getNodeService().getProperty(caRef.getChildRef(), SeriesModel.Props.STRUCT_UNIT);
-                    boolean contains = structUnits != null && structUnits.contains(currentUsersStructUnitId);
-                    if (contains) {
-                        seriesFunctions.add(function);
-                        break;
+                    contains = structUnits != null && structUnits.contains(currentUsersStructUnitId);
+            	}
+                if (!contains) {
+                	@SuppressWarnings("unchecked")
+                    List<String> relatedUsersGroups = (List<String>) getNodeService().getProperty(caRef.getChildRef(), SeriesModel.Props.RELATED_USERS_GROUPS);
+                    if (relatedUsersGroups != null && !relatedUsersGroups.isEmpty()) {
+	                    for (String group: currentUserGroups) {
+	                    	if (relatedUsersGroups.contains(group)) {
+	                    		contains = true;
+	                    		break;
+	                    	}
+	                    }
                     }
+                }
+                if (contains) {
+                    seriesFunctions.add(function);
+                    break;
                 }
             }
         }

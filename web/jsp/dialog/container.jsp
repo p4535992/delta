@@ -157,7 +157,7 @@
                   <f:verbatim></li></f:verbatim>
                </f:subview>
 
-               <f:subview id="more-actions-panel-replies" rendered="#{DialogManager.currentDialog.name eq 'documentDynamicDialog' and DocumentDialogHelperBean.inWorkspace and AssocsBlockBean.repliesAssocsBindingName != null and DocumentDialogHelperBean.inEditMode == false}">
+               <f:subview id="more-actions-panel-replies" rendered="#{DialogManager.currentDialog.name eq 'documentDynamicDialog' and DocumentDialogHelperBean.inWorkspace and DocumentDialogHelperBean.guest == false and AssocsBlockBean.repliesAssocsBindingName != null and DocumentDialogHelperBean.inEditMode == false}">
                   <f:verbatim><li></f:verbatim>
                      <a:menu id="replies_menu" style="white-space:nowrap" menuStyleClass="dropdown-menu right"
                         label="#{AssocsBlockBean.addRepliesLabel}" image="/images/icons/arrow-down.png" rendered="#{AssocsBlockBean.addRepliesMenuSize gt 1}">
@@ -172,7 +172,7 @@
                <f:verbatim></li></f:verbatim>
                </f:subview>
 
-               <f:subview id="more-actions-panel-followups" rendered="#{DialogManager.currentDialog.name eq 'documentDynamicDialog' and DocumentDialogHelperBean.inWorkspace and AssocsBlockBean.followupAssocsBindingName != null and DocumentDialogHelperBean.inEditMode == false}">
+               <f:subview id="more-actions-panel-followups" rendered="#{DialogManager.currentDialog.name eq 'documentDynamicDialog' and DocumentDialogHelperBean.inWorkspace and DocumentDialogHelperBean.guest == false and AssocsBlockBean.followupAssocsBindingName != null and DocumentDialogHelperBean.inEditMode == false}">
                   <f:verbatim><li></f:verbatim>
                      <a:menu id="followups_menu" style="white-space:nowrap" menuStyleClass="dropdown-menu right"
                         label="#{AssocsBlockBean.addFollowUpsLabel}"  image="/images/icons/arrow-down.png" rendered="#{AssocsBlockBean.addFollowupsMenuSize gt 1}" >
@@ -187,7 +187,7 @@
                <f:verbatim></li></f:verbatim>
                </f:subview>
 
-               <f:subview id="more-actions-panel-independent-workflow" rendered="#{(DialogManager.currentDialog.name eq 'document' or DialogManager.currentDialog.name eq 'documentDynamicDialog') and DocumentDialogHelperBean.inWorkspace and WorkflowBlockBean.independentWorkflowMethodBindingName != null and DocumentDialogHelperBean.inEditMode == false}">
+               <f:subview id="more-actions-panel-independent-workflow" rendered="#{(DialogManager.currentDialog.name eq 'document' or DialogManager.currentDialog.name eq 'documentDynamicDialog') and DocumentDialogHelperBean.inWorkspace and DocumentDialogHelperBean.guest == false and WorkflowBlockBean.independentWorkflowMethodBindingName != null and DocumentDialogHelperBean.inEditMode == false}">
                   <f:verbatim><li></f:verbatim>
                      <a:menu id="workflow_menu" style="white-space:nowrap" menuStyleClass="dropdown-menu right"
                         label="#{WorkflowBlockBean.workflowMenuLabel}" image="/images/icons/arrow-down.png" tooltip="#{WorkflowBlockBean.independentWorkflowMenuTooltip}" > 
@@ -363,7 +363,7 @@
                   </f:verbatim>   
                      <a:menu id="footer-workflow_menu" style="white-space:nowrap" menuStyleClass="dropdown-menu right"
                         label="#{WorkflowBlockBean.workflowMenuLabel}" image="/images/icons/arrow-down.png" 
-                        rendered="#{(((DialogManager.currentDialog.name eq 'document' or DialogManager.currentDialog.name eq 'documentDynamicDialog') and DocumentDialogHelperBean.inWorkspace and DocumentDialogHelperBean.inEditMode == false)
+                        rendered="#{DocumentDialogHelperBean.guest == false and (((DialogManager.currentDialog.name eq 'document' or DialogManager.currentDialog.name eq 'documentDynamicDialog') and DocumentDialogHelperBean.inWorkspace and DocumentDialogHelperBean.inEditMode == false)
                         			or (DialogManager.currentDialog.name eq 'caseFileDialog' and DialogManager.bean.inWorkspace and DialogManager.bean.inEditMode == false))
                          			and WorkflowBlockBean.workflowMethodBindingName != null}">
                         <%-- Here the method call of the value parameter is actually returning a string in the form "#{method binding}"

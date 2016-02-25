@@ -1,11 +1,13 @@
 package ee.webmedia.alfresco.casefile.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getApplicationService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getArchivalsService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getCaseFileLogService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getCaseFileService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentLockHelperBean;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getMenuBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNotificationService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPropertySheetStateBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getSendOutService;
@@ -15,6 +17,7 @@ import static ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog.validate
 import static ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog.validatePermissionWithErrorMessage;
 import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.isAdminOrDocmanagerWithPermission;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -25,6 +28,7 @@ import javax.faces.component.UIComponent;
 import javax.faces.component.UIPanel;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
+import javax.servlet.http.HttpServletRequest;
 
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
@@ -33,6 +37,7 @@ import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
+import org.alfresco.web.app.servlet.BaseServlet;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.config.PropertySheetConfigElement;
 import org.alfresco.web.ui.common.component.data.UIRichList;
@@ -73,6 +78,7 @@ import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.document.web.DocumentListDialog;
 import ee.webmedia.alfresco.document.web.FavoritesModalComponent;
 import ee.webmedia.alfresco.document.web.FavoritesModalComponent.AddToFavoritesEvent;
+import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
 import ee.webmedia.alfresco.user.model.UserModel;
@@ -172,6 +178,7 @@ BlockBeanProviderProvider {
 
     public void open(NodeRef caseFileRef, boolean inEditMode) {
         if (!validateOpen(getCaseFileService().getCaseFile(caseFileRef), inEditMode)) {
+        	redirectToHome(getApplicationService().getServerUrl());
             return;
         }
         createSnapshot(new CaseFileDialogSnapshot());
@@ -180,6 +187,7 @@ BlockBeanProviderProvider {
 
     private void open(NodeRef caseFileRef, CaseFile caseFile, boolean inEditMode) {
         if (!validateOpen(caseFile, inEditMode)) {
+        	redirectToHome(getApplicationService().getServerUrl());
             return;
         }
         createSnapshot(new CaseFileDialogSnapshot());
@@ -852,4 +860,25 @@ BlockBeanProviderProvider {
                 && (isOpen && validatePermissionWithErrorMessage(caseFile.getNodeRef(), Privilege.EDIT_CASE_FILE) || isClosed
                         && getUserService().isAdministrator());
     }
+    
+    private static void redirectToHome(String serverUrl) {
+        FacesContext fc = FacesContext.getCurrentInstance();
+
+        MenuBean.clearViewStack(String.valueOf(MenuBean.MY_TASKS_AND_DOCUMENTS_ID), null);
+        getMenuBean().reset();
+
+        WebUtil.navigateTo("myalfresco", fc);
+        fc.responseComplete();
+        try {
+            // todo: find better solution
+            String redir = serverUrl +
+                    ((HttpServletRequest) fc.getExternalContext().getRequest()).getContextPath() +
+                    BaseServlet.FACES_SERVLET + fc.getViewRoot().getViewId();
+            fc.getExternalContext().redirect(redir);
+            fc.responseComplete();
+        } catch (IOException ioe) {
+            throw new RuntimeException("Redirecting failed", ioe);
+        }
+    }
+
 }

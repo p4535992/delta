@@ -21,9 +21,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.faces.application.Application;
 import javax.faces.component.UIComponent;
@@ -554,7 +556,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             if (getSearchBlock().isShowSimilarDocumentsBlock() || getShowSaveAndRegisterButton()) {
                 buttons.add(new DialogButtonConfig("documentRegisterButton", null, "document_registerDoc_continue",
                         "#{DocumentDynamicDialog.saveAndRegisterContinue}", "false", null));
-            } else {
+            } else if (!BeanHelper.getUserService().isGuest()) {
                 buttons.add(new DialogButtonConfig("documentRegisterButton", null, "document_registerDoc", "#{DocumentDynamicDialog.saveAndRegister}", "false", null));
             }
         }
@@ -1308,9 +1310,30 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         if (exists && isDraft) {
             return true;
         }
+        
         if (!exists || !validateViewMetaDataPermission(docRef) || (inEditMode && !validateEditMetaDataPermission(docRef))
                 || (inEditMode && !getDocumentLockHelperBean().isLockable(docRef))) {
             return false;
+        }
+        // check validateGuest user
+        if (exists && BeanHelper.getUserService().isGuest()) {
+	        String currentUserName = AuthenticationUtil.getRunAsUser();
+	        Set<String> currentUserGroups = BeanHelper.getUserService().getUsersGroups(currentUserName);
+	        if (currentUserGroups == null) {
+	        	currentUserGroups = new HashSet<>();
+	        }
+	        currentUserGroups.add(currentUserName);
+	        List<String> authorities = BeanHelper.getPrivilegeService().getAuthoritiesWithPrivilege(docRef, Privilege.VIEW_DOCUMENT_META_DATA);
+	        String ownerId = (String) BeanHelper.getNodeService().getProperty(docRef, DocumentCommonModel.Props.OWNER_ID);
+        	if (StringUtils.isNotBlank(ownerId)) {
+        		authorities.add(ownerId);
+        	}
+	        for (String authority : authorities) {
+	        	if (currentUserGroups.contains(authority)) {
+	        		return true;
+	        	}
+	        }
+	        return false;
         }
         return true;
     }

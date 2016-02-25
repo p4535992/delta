@@ -605,6 +605,7 @@
    </bean> 
    
    <bean id="independentWorkflowTaskStatusChangeListener" class="ee.webmedia.alfresco.workflow.service.IndependentWorkflowTaskStatusChangeListener">
+      <property name="nodeService" ref="NodeService" />
       <property name="workflowService" ref="WmWorkflowService" />
       <property name="privilegeService" ref="PrivilegeService" />
       <property name="documentDynamicService" ref="DocumentDynamicService" />

@@ -158,7 +158,7 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
                 if (orgPath != null) {
                     for (String op : orgPath) {
                         if (StringUtils.equals(op, groupName)) {
-                            if (!isAlreadyGroupMember) {
+                            if (!isAlreadyGroupMember && getPersonService().personExists(username)) {
                                 authorityService.addAuthority(groupAuthority, username);
                             }
                             orgStructGroupMembers.remove(username);
@@ -177,7 +177,7 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
                     continue;
                 }
                 if (StringUtils.equals(groupName, orgStruct.getName())) {
-                    if (!isAlreadyGroupMember) {
+                    if (!isAlreadyGroupMember && getPersonService().personExists(username)) {
                         authorityService.addAuthority(groupAuthority, username);
                     }
                     orgStructGroupMembers.remove(username);

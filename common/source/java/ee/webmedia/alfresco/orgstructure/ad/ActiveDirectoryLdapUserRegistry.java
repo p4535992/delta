@@ -259,18 +259,30 @@ public class ActiveDirectoryLdapUserRegistry implements UserRegistry, Initializi
                     if (StringUtils.isBlank(name)) {
                         continue;
                     }
-                    systematicGroupsOriginalNames.add(name);
+                    
                     if (primaryGroup == null) {
-                        primaryGroup = group;
-                        name = PermissionService.GROUP_PREFIX + entry.getKey();
-                        group.getProperties().put(ContentModel.PROP_AUTHORITY_NAME, name);
-                        String groupDn = (String) group.getProperties().remove(groupDnProp);
-                        group.getChildAssociations().addAll(searchPersonIdCodes(ctx, groupDn));
-                        groupsByName.put(name, group);
+                    	systematicGroupsOriginalNames.add(name);
+                    	String groupDn = (String) group.getProperties().remove(groupDnProp);
+                    	
+                    	primaryGroup = new NodeDescription();
+                        primaryGroup.setLastModified(group.getLastModified());
+                        primaryGroup.getProperties().putAll(group.getProperties());
+                        String primaryName = PermissionService.GROUP_PREFIX + entry.getKey();
+                        primaryGroup.getProperties().put(ContentModel.PROP_AUTHORITY_NAME, primaryName);
+                        
+                        Set<String> personIdCodes = searchPersonIdCodes(ctx, groupDn);
+                        group.getChildAssociations().addAll(personIdCodes);
+                        primaryGroup.getChildAssociations().addAll(personIdCodes);
+                        //groupsByName.put(name, group);
+                        groupsByName.put(primaryName, primaryGroup);
                     } else {
                         // add members
                         String groupDn = (String) group.getProperties().remove(groupDnProp);
-                        primaryGroup.getChildAssociations().addAll(searchPersonIdCodes(ctx, groupDn));
+                        Set<String> personIdCodes = searchPersonIdCodes(ctx, groupDn);
+                        group.getChildAssociations().addAll(personIdCodes);
+                        // also add systematic ldap subgroups to synch
+                        groupsByName.put(name, group);
+                        primaryGroup.getChildAssociations().addAll(personIdCodes);
                     }
                 }
             }

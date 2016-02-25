@@ -85,14 +85,24 @@ public class ListReorderHelper {
                     throw new IllegalArgumentException("Original order is not set for object " + o2);
                 }
                 boolean o1OrderChanged = !ObjectUtils.equals(modifier.getOrder(o1), originalOrder1);
+                
                 boolean o2OrderChanged = !ObjectUtils.equals(modifier.getOrder(o2), originalOrder2);
                 if (o1OrderChanged == o2OrderChanged) {
                     return 0;
                 }
                 if (o1OrderChanged && !o2OrderChanged) {
-                    return -1;
+                	if (originalOrder1.compareTo(modifier.getOrder(o1)) > 0) {
+                		return -1;
+                	} else {
+                		return 1;
+                	}
                 }
-                return 1;
+                if (originalOrder2.compareTo(modifier.getOrder(o2)) > 0) {
+            		return 1;
+            	} else {
+            		return -1;
+            	}
+                //modifier.getOrder(o1).compareTo(originalOrder2);
             }
         });
         // 3) if there are several elements with same order and they all didn't have this order before

@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.series.web;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -81,7 +82,27 @@ public class SeriesListDialog extends BaseDialogBean {
 
     private void loadSeries() {
         if (disableActions) {
-            series = getSeriesService().getAllSeriesByFunctionForStructUnit(getFunctionRef(), activeStructUnit);
+        	if (activeStructUnit != null) {
+        		series = getSeriesService().getAllSeriesByFunctionForStructUnit(getFunctionRef(), activeStructUnit);
+        		// also add all series allowed for relatedUsersGroups
+    	        List<UnmodifiableSeries> seriesForUsersGroups = getSeriesService().getAllSeriesByFunctionForRelatedUsersGroups(getFunctionRef(), AuthenticationUtil.getRunAsUser());
+    	        	
+    	        if (seriesForUsersGroups != null && !seriesForUsersGroups.isEmpty()) {
+    	        	List<UnmodifiableSeries> missingSeries = new ArrayList<>();
+    	        	missingSeries.addAll(seriesForUsersGroups);
+    	        	for (UnmodifiableSeries serie: series) {
+    	        		for (UnmodifiableSeries serieForUsersGroups: seriesForUsersGroups) {
+    	            		if (serie.getNodeRef().equals(serieForUsersGroups.getNodeRef())) {
+    	            			missingSeries.remove(serieForUsersGroups);
+    	            			break;
+    	            		}
+    	            	}
+    	        	}
+    	        	series.addAll(missingSeries);
+    	        }
+        	} else {
+        		series = getSeriesService().getAllSeriesByFunctionForRelatedUsersGroups(getFunctionRef(), AuthenticationUtil.getRunAsUser());
+        	}
         } else {
             series = getSeriesService().getAllSeriesByFunction(getFunction().getNodeRef());
         }
@@ -92,10 +113,32 @@ public class SeriesListDialog extends BaseDialogBean {
         String userStructUnit = (String) userProperties.get(ContentModel.PROP_ORGID);
         showAllForStructUnit(new NodeRef(ActionUtil.getParam(event, "functionNodeRef")), userStructUnit);
     }
-
+    
     public void showAllForStructUnit(NodeRef functionRef, String structUnitId) {
         function = getFunctionsService().getUnmodifiableFunction(functionRef, null);
-        series = getSeriesService().getAllSeriesByFunctionForStructUnit(functionRef, structUnitId);
+        
+        if (structUnitId != null) {
+        	series = getSeriesService().getAllSeriesByFunctionForStructUnit(functionRef, structUnitId);
+    	
+	        // also add all series allowed for relatedUsersGroups
+	        List<UnmodifiableSeries> seriesForUsersGroups = getSeriesService().getAllSeriesByFunctionForRelatedUsersGroups(functionRef, AuthenticationUtil.getRunAsUser());
+	        	
+	        if (seriesForUsersGroups != null && !seriesForUsersGroups.isEmpty()) {
+	        	List<UnmodifiableSeries> missingSeries = new ArrayList<>();
+	        	missingSeries.addAll(seriesForUsersGroups);
+	        	for (UnmodifiableSeries serie: series) {
+	        		for (UnmodifiableSeries serieForUsersGroups: seriesForUsersGroups) {
+	            		if (serie.getNodeRef().equals(serieForUsersGroups.getNodeRef())) {
+	            			missingSeries.remove(serieForUsersGroups);
+	            			break;
+	            		}
+	            	}
+	        	}
+	        	series.addAll(missingSeries);
+	        }
+        } else {
+    		series = getSeriesService().getAllSeriesByFunctionForRelatedUsersGroups(functionRef, AuthenticationUtil.getRunAsUser());
+    	}
         activeStructUnit = structUnitId;
         disableActions = true;
     }

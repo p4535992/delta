@@ -19,11 +19,17 @@ public class CopyDocumentActionEvaluator extends SharedResourceEvaluator {
         if (!nodeRef.getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)) {
             return false;
         }
+        if (BeanHelper.getUserService().isGuest()) {
+        	return false;
+        }
         return !BeanHelper.getDocumentDialogHelperBean().isInEditMode() && !BeanHelper.getDocumentDynamicService().isDraftOrImapOrDvk(nodeRef);
     }
 
     @Override
     public boolean evaluate() {
+    	if (BeanHelper.getUserService().isGuest()) {
+        	return false;
+        }
         DocumentDynamicActionsGroupResources resource = (DocumentDynamicActionsGroupResources) sharedResource;
         return resource.isWorkspaceNode() && !resource.isInEditMode() && !resource.isDraftOrImapOrDvk();
     }

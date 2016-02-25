@@ -1259,6 +1259,9 @@ public class ReportServiceImpl implements ReportService {
                 boolean hasCountries = isNotEmptyList(document.getCountries());
                 boolean hasCounties = isNotEmptyList(document.getCounties());
                 boolean hasCities = isNotEmptyList(document.getCities());
+                if (rowsNeededForDocument.get(docRef) > 1) {
+                	rowIndex = 1;
+                }
                 while (rowIndex < rowsNeededForDocument.get(docRef)) {
                     Row row = rowProvider.getRow();
                     if (rowIndex > 0) {

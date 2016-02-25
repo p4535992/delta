@@ -650,7 +650,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                 response = compoundWorkflowDialog.saveOrConfirmValidatedWorkflow(null, true);
             } else {
                 params.add(new Pair<String, Object>(ATTRIB_FINISH_VALIDATED, Boolean.TRUE));
-                response = compoundWorkflowDialog.saveWorkflow(FacesContext.getCurrentInstance(), workflowBlockCallback, params, null);
+                response = compoundWorkflowDialog.saveWorkflow(FacesContext.getCurrentInstance(), workflowBlockCallback, params, null, false);
             }
             return StringUtils.isNotBlank(response);
         }
@@ -1140,6 +1140,11 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             boolean finishedSigning = signingFlow.signDocumentImpl(signatureHex);
             if (!finishedSigning) {
                 resetSigningData();
+            } else {
+            	// unlock if compound wf was locked
+                if (lockedCompoundWorkflowNodeRef != null) {
+                	getDocLockService().unlockIfOwner(lockedCompoundWorkflowNodeRef);
+                }
             }
             notifyDialogsIfNeeded(false, finishTask);
         } finally {
@@ -1148,10 +1153,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                 resetSigningData();
             } else {
                 showModalOrSign();
-            }
-            // unlock if compound wf was locked
-            if (lockedCompoundWorkflowNodeRef != null) {
-            	getDocLockService().unlockIfOwner(lockedCompoundWorkflowNodeRef);
             }
         }
     }
@@ -1242,6 +1243,11 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             boolean finishedMobileIdSigning = signingFlow.finishMobileIdSigning();
             if (!finishedMobileIdSigning) {
                 resetSigningData();
+            } else {
+            	// unlock if compound wf was locked
+                if (lockedCompoundWorkflowNodeRef != null) {
+                	getDocLockService().unlockIfOwner(lockedCompoundWorkflowNodeRef);
+                }
             }
             notifyDialogsIfNeeded(false, finishTask);
         } finally {
@@ -1250,10 +1256,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                 resetSigningData();
             } else {
                 showMobileIdModalOrSign();
-            }
-            // unlock if compound wf was locked
-            if (lockedCompoundWorkflowNodeRef != null) {
-            	getDocLockService().unlockIfOwner(lockedCompoundWorkflowNodeRef);
             }
         }
     }

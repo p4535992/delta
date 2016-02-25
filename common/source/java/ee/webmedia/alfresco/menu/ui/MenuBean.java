@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 
 import javax.faces.application.Application;
@@ -118,6 +119,19 @@ public class MenuBean implements Serializable {
             , "menu_my_responsibility"
             , "departmentDocuments"
             , "myDocuments"
+            );
+    
+    public static final List<String> HIDDEN_TO_GUESTS = Arrays.asList(
+            "documentRegister"
+            , "contact"
+            , "menuReports"
+            , "executedReports"
+            , "restrictedDelta"
+            , "regularDelta"
+            , "documentDynamicTypes"
+            , "newCaseFileOrWorkflow"
+            , "menu_my_responsibility"
+            , "departmentDocuments"
             );
 
     public static final List<String> HIDDEN_FROM_SUBSTITUTOR = Arrays.asList("documentDynamicTypes");
@@ -976,6 +990,12 @@ public class MenuBean implements Serializable {
         if (StringUtils.isBlank(menuItemId)) {
             return false;
         }
+        
+        if (HIDDEN_TO_GUESTS.contains(menuItemId)) {
+        	if (getUserService().isGuest()) {
+        		return true;
+        	} 
+        }
 
         if (HIDDEN_WHEN_EMPTY.contains(menuItemId)) {
             Boolean showEmpty = (Boolean) getUserService().getUserProperties(AuthenticationUtil.getRunAsUser()).get(ContentModel.SHOW_EMPTY_TASK_MENU);
@@ -993,7 +1013,7 @@ public class MenuBean implements Serializable {
         if (HIDDEN_TO_OTHER_STRUCT_UNIT_PEOPLE.contains(menuItemId)) {
             return !BeanHelper.getSubstitutionBean().isCurrentStructUnitUser();
         }
-
+        
         if ("volSearch".equals(menuItemId)) {
             return !BeanHelper.getApplicationConstantsBean().isCaseVolumeEnabled();
         }

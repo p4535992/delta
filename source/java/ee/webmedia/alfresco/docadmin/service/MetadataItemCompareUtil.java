@@ -12,6 +12,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.apache.commons.collections.comparators.ComparatorChain;
 import org.apache.commons.collections.comparators.NullComparator;
 import org.apache.commons.collections.comparators.TransformingComparator;
+import org.apache.log4j.Logger;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.base.BaseObject.ChildrenList;
@@ -25,6 +26,7 @@ import ee.webmedia.alfresco.utils.RepoUtil;
  * TODO DLSeadist - when double check is removed then it could be generalized from ChildrenList<MetadataItem> to ChildrenList<BaseObject>
  */
 public class MetadataItemCompareUtil {
+	private static Logger log = Logger.getLogger(MetadataItemCompareUtil.class);
     private static final Comparator<FieldGroup> FIELD_GROUP_COMPARATOR = getFieldGroupComparator();
     private static final Comparator<SeparatorLine> SEPARATOR_LINE_COMPARATOR_CHAIN = getSeparatorLineComparatorChain();
     private static final Comparator<Field> FIELD_COMPARATOR = getFieldComparator();
@@ -64,7 +66,13 @@ public class MetadataItemCompareUtil {
             if (propsEqual && savedMetadataItem instanceof FieldGroup) {
                 // maybe fields under fieldGroup have changed
                 FieldGroup savedFieldGroup = (FieldGroup) savedMetadataItem;
+                
                 FieldGroup unSavedFieldGroup = (FieldGroup) unSavedMetadataItem;
+                if (log.isDebugEnabled()) {
+                	//log.debug("DELTA-897 (unSavedFieldGroup): " + unSavedFieldGroup.getAdditionalInfo());
+                	//log.debug("DELTA-897 (savedFieldGroup): " + savedFieldGroup.getAdditionalInfo());
+                }
+               
                 ChildrenList<Field> savedFields = savedFieldGroup.getMetadata();
                 ChildrenList<Field> unSavedFields = unSavedFieldGroup.getMetadata();
                 propsEqual = !isClidrenListChanged(savedFields, unSavedFields);
