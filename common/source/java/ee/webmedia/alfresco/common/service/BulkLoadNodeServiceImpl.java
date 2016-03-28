@@ -1190,7 +1190,7 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
                 "where " +
                 " delta_task.wfc_status = '" + inProgressStatus + "'" +
                 " and status_prop.qname_id = " + getQNameDbId(WorkflowCommonModel.Props.STATUS) +
-                "and status_prop.string_value = '" + inProgressStatus + "'" +
+                " and status_prop.string_value = '" + inProgressStatus + "'" +
                 "order by compound_workflow.id, workflow_assoc.assoc_index, delta_task.index_in_workflow " +
                 ") as all_tasks " +
                 "group by uuid, store_id, workflow_id, workflow_label " +
