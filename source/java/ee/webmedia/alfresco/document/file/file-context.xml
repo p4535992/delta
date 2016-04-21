@@ -33,7 +33,7 @@
 
    <bean id="fileService" class="ee.webmedia.alfresco.document.file.service.FileServiceImpl">
       <property name="userService" ref="UserService" />
-      <property name="signatureService" ref="SignatureService" />
+      <property name="digiDoc4JSignatureService" ref="DigiDoc4JSignatureService" />
       <property name="nodeService" ref="NodeService" />
       <property name="authenticationService" ref="AuthenticationService" />
       <property name="contentService" ref="ContentService" />

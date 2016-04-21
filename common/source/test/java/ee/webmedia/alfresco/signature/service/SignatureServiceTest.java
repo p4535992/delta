@@ -24,6 +24,7 @@ public class SignatureServiceTest extends BaseAlfrescoSpringTest {
     public static final String TEST_DATA1 = "abcdef";
 
     private SignatureService signatureService;
+    private DigiDoc4JSignatureService digiDoc4JSignatureService;
 
     private NodeRef folderNodeRef;
     private NodeRef nodeRef;
@@ -35,8 +36,8 @@ public class SignatureServiceTest extends BaseAlfrescoSpringTest {
     protected void onSetUpInTransaction()
             throws Exception {
         super.onSetUpInTransaction();
-
         signatureService = (SignatureService) applicationContext.getBean("signatureService");
+        digiDoc4JSignatureService = (DigiDoc4JSignatureService) applicationContext.getBean(DigiDoc4JSignatureService.BEAN_NAME);
         ContentCreatorHelper contentCreator = new ContentCreatorHelper(applicationContext);
 
         // Create test folder and DigiDoc NodeRef
@@ -65,27 +66,27 @@ public class SignatureServiceTest extends BaseAlfrescoSpringTest {
     }
 
     public void testIsDigiDoc() {
-        assertTrue(signatureService.isDigiDocContainer(nodeRef));
-        assertFalse(signatureService.isDigiDocContainer(folderNodeRef));
-        assertFalse(signatureService.isDigiDocContainer(nodeRefList.get(0)));
+        assertTrue(digiDoc4JSignatureService.isDigiDocContainer(nodeRef));
+        assertFalse(digiDoc4JSignatureService.isDigiDocContainer(folderNodeRef));
+        assertFalse(digiDoc4JSignatureService.isDigiDocContainer(nodeRefList.get(0)));
     }
 
     public void testGetSignatureDigestFromNodeRef() throws Exception {
-        SignatureDigest digest = signatureService.getSignatureDigest(nodeRef, certHex);
+        SignatureDigest digest = digiDoc4JSignatureService.getSignatureDigest(nodeRef, certHex);
         assertNotNull(digest);
         assertNotNull(digest.getDigestHex());
         assertEquals(40, digest.getDigestHex().length());
     }
 
     public void testGetSignatureDigestFromNodeRefList() throws Exception {
-        SignatureDigest digest = signatureService.getSignatureDigest(nodeRefList, certHex);
+        SignatureDigest digest = digiDoc4JSignatureService.getSignatureDigest(nodeRefList, certHex);
         assertNotNull(digest);
         assertNotNull(digest.getDigestHex());
         assertEquals(40, digest.getDigestHex().length());
     }
 
     public void testGetDataItemsAndSignatureItems() throws Exception {
-        SignatureItemsAndDataItems items = signatureService.getDataItemsAndSignatureItems(nodeRef, true, true);
+        SignatureItemsAndDataItems items = digiDoc4JSignatureService.getDataItemsAndSignatureItems(nodeRef, true);
         assertTrue(items.getDataItems().size() >= 1);
         assertTrue(items.getSignatureItems().size() >= 0);
         assertNotNull(items.getDataItems().get(0).getData());
@@ -93,7 +94,7 @@ public class SignatureServiceTest extends BaseAlfrescoSpringTest {
 
     public void testGetDataItemsAndSignatureItemsFromStream() throws Exception {
         InputStream fileInputStream = new ClassPathResource(TEST_RESOURCE_PATH + "/" + TEST_DIGIDOC).getInputStream();
-        SignatureItemsAndDataItems items = signatureService.getDataItemsAndSignatureItems(fileInputStream, true, true);
+        SignatureItemsAndDataItems items = digiDoc4JSignatureService.getDataItemsAndSignatureItems(fileInputStream, true);
         assertTrue(items.getDataItems().size() >= 1);
         assertTrue(items.getSignatureItems().size() >= 0);
         assertNotNull(items.getDataItems().get(0).getData());

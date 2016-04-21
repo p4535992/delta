@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.workflow.service;
 
+import org.digidoc4j.DataToSign;
+
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.signature.model.SignatureChallenge;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
@@ -23,11 +25,10 @@ public class SignatureTask extends Task {
     protected <T extends BaseWorkflowObject> T copyImpl(T copy) {
         SignatureTask task = (SignatureTask) super.copyImpl(copy);
         if (signatureDigest != null) {
-            task.signatureDigest = new SignatureDigest(signatureDigest.getDigestHex(), signatureDigest.getCertHex(), signatureDigest.getDate());
+            task.signatureDigest = new SignatureDigest(signatureDigest.getDigestHex(), signatureDigest.getCertHex(), signatureDigest.getDate(), signatureDigest.getDataToSign());
         }
         if (signatureChallenge != null) {
-            task.signatureChallenge = new SignatureChallenge(signatureChallenge.getSesscode(), signatureChallenge.getChallengeId(), signatureChallenge.getDigestHexs(),
-                    signatureChallenge.getSignatureId(), signatureChallenge.getFormat(), signatureChallenge.getVersion());
+            task.signatureChallenge = new SignatureChallenge(signatureChallenge.getSesscode(), signatureChallenge.getChallengeId(), signatureChallenge.getDataToSign());
         }
         @SuppressWarnings("unchecked")
         T result = (T) task;

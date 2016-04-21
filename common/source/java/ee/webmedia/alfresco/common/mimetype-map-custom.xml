@@ -2,6 +2,8 @@
    <config condition="Mimetype Map" evaluator="string-compare">
       <mimetypes>
          <mimetype display="DigiDoc" mimetype="application/digidoc">
+            <extension>asice</extension>
+            <extension>sce</extension>
             <extension>bdoc</extension>
             <extension>ddoc</extension>
          </mimetype>

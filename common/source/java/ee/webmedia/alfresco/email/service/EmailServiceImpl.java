@@ -45,6 +45,7 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.email.model.EmailAttachment;
 import ee.webmedia.alfresco.monitoring.MonitoredService;
 import ee.webmedia.alfresco.monitoring.MonitoringUtil;
+import ee.webmedia.alfresco.signature.service.DigiDoc4JSignatureService;
 import ee.webmedia.alfresco.signature.service.SignatureService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.MimeUtil;
@@ -59,6 +60,7 @@ public class EmailServiceImpl implements EmailService {
     private FileFolderService fileFolderService;
     private GeneralService generalService;
     private SignatureService _signatureService;
+    private DigiDoc4JSignatureService _digiDoc4JSignatureService;
     private MimetypeService mimetypeService;
     private static String messageCopyFolder = null;
 
@@ -243,7 +245,7 @@ public class EmailServiceImpl implements EmailService {
             if (encrypt) {
                 DeflaterOutputStream zipOutput = new DeflaterOutputStream(tmpOutput);
                 try {
-                    getSignatureService().writeContainer(zipOutput, fileRefs);
+                	getDigiDoc4JSignatureService().writeContainer(zipOutput, fileRefs);
                 } finally {
                     IOUtils.closeQuietly(zipOutput);
                 }
@@ -336,6 +338,13 @@ public class EmailServiceImpl implements EmailService {
             _signatureService = BeanHelper.getSignatureService();
         }
         return _signatureService;
+    }
+    
+    private DigiDoc4JSignatureService getDigiDoc4JSignatureService() {
+        if (_digiDoc4JSignatureService == null) {
+        	_digiDoc4JSignatureService = BeanHelper.getDigiDoc4JSignatureService();
+        }
+        return _digiDoc4JSignatureService;
     }
 
     public class AlfrescoContentSource implements InputStreamSource {

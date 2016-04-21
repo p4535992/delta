@@ -1045,39 +1045,21 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     @Override
     public Pair<List<NodeRef>, Boolean> queryCompoundWorkflows(Node filter, int limit) {
         long startTime = System.currentTimeMillis();
-        String query = generateCompoundWorkflowSearchQuery(filter);
-        Pair<List<NodeRef>, Boolean> results = searchNodes(query, limit, /* queryName */"compoundWorkflowByFilter", null, false);
         
-        // in case of GUESTS users do extra filtering
-        if (userService.isGuest() && results != null && results.getFirst() != null && !results.getFirst().isEmpty()) {
-        	String currentUserName = AuthenticationUtil.getRunAsUser();
-	        Set<String> currentUserGroups = userService.getUsersGroups(currentUserName);
-	        if (currentUserGroups == null) {
-	        	currentUserGroups = new HashSet<>();
-	        }
-	        currentUserGroups.add(currentUserName);
-	        List<NodeRef> filteredCWRefs = new ArrayList<>();
-	        List<NodeRef> foundCWRefs = results.getFirst();
-	        for (NodeRef cWRef: foundCWRefs) {
-	        	String cWType = (String) nodeService.getProperty(cWRef, WorkflowCommonModel.Props.TYPE);
-	            CompoundWorkflowType type = StringUtils.isNotBlank(cWType) ? CompoundWorkflowType.valueOf(cWType) : null;
-	        	if (CompoundWorkflowType.DOCUMENT_WORKFLOW.equals(type)) {
-	        		NodeRef docNode = nodeService.getPrimaryParent(cWRef).getParentRef();
-		        	List<String> authorities = BeanHelper.getPrivilegeService().getAuthoritiesWithPrivilege(docNode, Privilege.VIEW_DOCUMENT_META_DATA);
-		        	String ownerId = (String) nodeService.getProperty(docNode, DocumentCommonModel.Props.OWNER_ID);
-		        	if (StringUtils.isNotBlank(ownerId)) {
-		        		authorities.add(ownerId);
-		        	}
-		            for (String authority : authorities) {
-		            	if (currentUserGroups.contains(authority)) {
-		            		filteredCWRefs.add(cWRef);
-		            		break;
-		            	}
-		            }
-	        	}
-	        }
-	        results.setFirst(filteredCWRefs);
+        Pair<List<NodeRef>, Boolean> results;
+        
+        if (userService.isGuest()) {
+        	Pair<String, List<Object>> queryAndArguments = generateTaskSearchQuery(filter);
+            if (queryAndArguments == null) {
+                return new Pair<>(Collections.<NodeRef> emptyList(), Boolean.FALSE);
+            }
+            results = BeanHelper.getWorkflowDbService().searchTaskCompoundWorkflowsNodeRefs(queryAndArguments.getFirst(), AuthenticationUtil.getRunAsUser(), queryAndArguments.getSecond(), limit);
+        } else {
+        	String query = generateCompoundWorkflowSearchQuery(filter);
+        	results = searchNodes(query, limit, /* queryName */"compoundWorkflowByFilter", null, false);
         }
+        
+        
         if (log.isDebugEnabled()) {
             log.debug("CompoundWorkflow search total time " + (System.currentTimeMillis() - startTime) + " ms");
         }
@@ -1292,6 +1274,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
 
     @Override
     public Pair<List<VolumeOrCaseFile>, Boolean> queryVolumes(Node filter, int limit) {
+    	int startFrom = 0;
         long startTime = System.currentTimeMillis();
         Map<String, Object> properties = filter.getProperties();
         List<StoreRef> storeRefs = getVolumeSearchStoreRefs(properties);
@@ -1300,13 +1283,39 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
             throw new UnableToPerformException(UnableToPerformException.MessageSeverity.INFO, "volSearch_error_noInput");
         }
         try {
-            Pair<List<VolumeOrCaseFile>, Boolean> results = searchVolumesImpl(query, limit, /* queryName */"volumesByFilter", storeRefs);
+            Pair<List<VolumeOrCaseFile>, Boolean> results = searchVolumesImpl(query, startFrom, limit, /* queryName */"volumesByFilter", storeRefs);
             
             // in case of GUESTS users do extra filtering
             if (userService.isGuest() && results != null && results.getFirst() != null && !results.getFirst().isEmpty()) {
             	List<VolumeOrCaseFile> foundVolumeOrCaseFiles = results.getFirst();
-            	List<VolumeOrCaseFile> filteredVolumeOrCaseFiles = new ArrayList<>();
-            	List<NodeRef> docNodeRefs = queryDocuments(filter, -1, storeRefs);
+            	Set<VolumeOrCaseFile> filteredVolumeOrCaseFiles = new HashSet<>();
+            	Date dateCreatedBegin = new Date();
+            	for (VolumeOrCaseFile volumeOrCaseFile: foundVolumeOrCaseFiles) {
+            		if (dateCreatedBegin.after(volumeOrCaseFile.getValidFrom())) {
+            			dateCreatedBegin = volumeOrCaseFile.getValidFrom();
+            		}
+            	}
+            	
+            	List<String> queryParts = new ArrayList<>();
+                Date dateCreatedEnd = new Date();
+                queryParts.add(generateDatePropertyRangeQuery(dateCreatedBegin, dateCreatedEnd, ContentModel.PROP_CREATED));
+            	String docQuery = generateDocumentSearchQuery(queryParts, storeRefs, null);
+            	List<NodeRef> docNodeRefs = new ArrayList<>();
+            	try {
+                    Pair<List<NodeRef>, Boolean> docResults = searchDocumentsImpl(docQuery, -1, /* queryName */"documentsByFilter", storeRefs);
+                    
+                    if (log.isDebugEnabled()) {
+                        log.debug("Documents search total time " + (System.currentTimeMillis() - startTime) + " ms");
+                    }
+                    docNodeRefs = docResults.getFirst();
+                } catch (RuntimeException e) {
+                    Map<QName, Serializable> filterProps = RepoUtil.getNotEmptyProperties(RepoUtil.toQNameProperties(properties));
+                    log.error("Document search failed: "
+                            + e.getMessage()
+                            + "\n  searchFilter=" + WmNode.toString(filterProps, namespaceService)
+                            + "\n  query=" + query, e);
+                    throw e;
+                }
             	Set<NodeRef> volumeCaseFileRefs = new HashSet<>();
             	for (NodeRef docRef: docNodeRefs) {
             		NodeRef volRef = (NodeRef) nodeService.getProperty(docRef, DocumentCommonModel.Props.VOLUME);
@@ -1319,19 +1328,36 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
             		}
             	}
             	if (!volumeCaseFileRefs.isEmpty()) {
-            		for (VolumeOrCaseFile volOrCasefile: foundVolumeOrCaseFiles) {
-            			NodeRef nodeRef = null;
-            			if (volOrCasefile instanceof CaseFile) {
-            				nodeRef = ((CaseFile)volOrCasefile).getNodeRef();
-            			} else if (volOrCasefile instanceof Volume) {
-            				nodeRef = ((Volume)volOrCasefile).getNodeRef();
-            			}
-            			if (nodeRef != null && volumeCaseFileRefs.contains(nodeRef)) {
-            				filteredVolumeOrCaseFiles.add(volOrCasefile);
-            			}
+            		boolean needMoreSearch = true;
+            		while (needMoreSearch) {
+	            		if (foundVolumeOrCaseFiles.size() >= limit) {
+	            			needMoreSearch = true;
+	            		} else {
+	            			needMoreSearch = false;
+	            		}
+	            		for (VolumeOrCaseFile volOrCasefile: foundVolumeOrCaseFiles) {
+	            			NodeRef nodeRef = null;
+	            			if (volOrCasefile instanceof CaseFile) {
+	            				nodeRef = ((CaseFile)volOrCasefile).getNodeRef();
+	            			} else if (volOrCasefile instanceof Volume) {
+	            				nodeRef = ((Volume)volOrCasefile).getNodeRef();
+	            			}
+	            			if (nodeRef != null && volumeCaseFileRefs.contains(nodeRef)) {
+	            				if (filteredVolumeOrCaseFiles.size() >= limit) {
+	            					needMoreSearch = false;
+	            					break;
+	            				}
+	            				filteredVolumeOrCaseFiles.add(volOrCasefile);
+	            			}
+	            		}
+	            		if (needMoreSearch) {
+	            			startFrom += limit;
+	            			results = searchVolumesImpl(query, startFrom, limit, /* queryName */"volumesByFilter", storeRefs);
+	            			foundVolumeOrCaseFiles = results.getFirst();
+	            		}
             		}
             	}
-            	results.setFirst(filteredVolumeOrCaseFiles);
+            	results.setFirst(new ArrayList<>(filteredVolumeOrCaseFiles));
             }
             
             if (log.isDebugEnabled()) {
@@ -1344,6 +1370,66 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         // this is never reached because handleVolumeSearchFailure throws RuntimeException
         return null;
     }
+    /*
+    private boolean isValidVolumeCaseFile(VolumeOrCaseFile volOrCasefile, Node filter) {
+    	long startTime = System.currentTimeMillis();
+    	boolean valid = true;
+        Map<QName, Serializable> props = RepoUtil.toQNameProperties(filter.getProperties(), true);
+
+        @SuppressWarnings("unchecked")
+        List<String> volTypes = (List<String>) props.get(VolumeSearchModel.Props.VOLUME_TYPE);
+        if (!volTypes.isEmpty()) {
+        	boolean found = false;
+        	for (String type: volTypes) {
+        		if (type.equals(volOrCasefile.getType())) {
+        			found = true;
+        		}
+        	}
+        	valid = found;
+        }
+        if (!valid) {
+        	return false;
+        }
+        
+        @SuppressWarnings("unchecked")
+        List<String> caseFileTypes = (List<String>) props.get(VolumeSearchModel.Props.CASE_FILE_TYPE);
+        if (!volTypes.isEmpty()) {
+        	boolean found = false;
+        	for (String type: caseFileTypes) {
+        		if (type.equals((String)volOrCasefile.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID))) {
+        			found = true;
+        		}
+        	}
+        	valid = found;
+        }
+        if (!valid) {
+        	return false;
+        }
+
+        // Märksõnad
+        generateHierarchicalKeywordQuery(queryParts, props, getDocumentAdminService().getSearchableVolumeFieldDefinitions());
+
+        fillQueryFromProps(queryParts, props, getVolumeSearchStoreRefs(filter.getProperties()));
+
+        String searchFilter = WmNode.toHumanReadableStringIfPossible(RepoUtil.getNotEmptyProperties(props), namespaceService, BeanHelper.getDocumentAdminService());
+        log.info("Volumes search filter: " + searchFilter);
+        logService.addLogEntry(LogEntry.create(LogObject.SEARCH_VOLUMES, userService, "applog_search_volumes", searchFilter));
+
+        // Quick search (Otsisõna)
+        String quickSearchInput = (String) props.get(VolumeSearchModel.Props.INPUT);
+        if (StringUtils.isNotBlank(quickSearchInput)) {
+            List<String> quickSearchWords = parseQuickSearchWords(quickSearchInput);
+            log.info("Quick search (document) - words: " + quickSearchWords.toString() + ", from string '" + quickSearchInput + "'");
+            queryParts.addAll(generateQuickSearchDocumentQuery(quickSearchWords));
+        }
+
+        String query = generateVolumeOrCaseFileSearchQuery(queryParts);
+        if (log.isDebugEnabled()) {
+            log.debug("Volumes search query construction time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
+        }
+    	return false;
+    }
+    */
 
     public void handleFilterSearchFailure(Map<String, Object> properties, String query, String logMessagePrefix, RuntimeException e) {
         Map<QName, Serializable> filterProps = RepoUtil.getNotEmptyProperties(RepoUtil.toQNameProperties(properties));
@@ -2597,7 +2683,9 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         addDateQueryPartsAndArguments(queryParts, arguments, props, TaskSearchModel.Props.STOPPED_DATE_TIME_BEGIN, TaskSearchModel.Props.STOPPED_DATE_TIME_END,
                 WorkflowCommonModel.Props.STOPPED_DATE_TIME);
         List<QName> types = (List<QName>) props.get(TaskSearchModel.Props.TASK_TYPE);
-        addTaskTypeFieldExactQueryPartsAndArguments(queryParts, arguments, types.toArray(new QName[types.size()]));
+        if (types != null) {
+        	addTaskTypeFieldExactQueryPartsAndArguments(queryParts, arguments, types.toArray(new QName[types.size()]));
+        }
         String searchFilter = WmNode.toHumanReadableStringIfPossible(RepoUtil.getNotEmptyProperties(RepoUtil.toQNameProperties(props)), namespaceService, null);
         log.info("Tasks search filter: " + searchFilter);
 
@@ -2748,9 +2836,9 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     	return foundResults;
     }
 
-    private Pair<List<VolumeOrCaseFile>, Boolean> searchVolumesImpl(String query, int limit, String queryName, Collection<StoreRef> storeRefs) {
+    private Pair<List<VolumeOrCaseFile>, Boolean> searchVolumesImpl(String query, int startFrom, int limit, String queryName, Collection<StoreRef> storeRefs) {
         final Map<Long, QName> propertyTypes = new HashMap<Long, QName>();
-        return searchGeneralImpl(query, limit, queryName, new SearchCallback<VolumeOrCaseFile>() {
+        return searchGeneralImpl(query, startFrom, limit, queryName, new SearchCallback<VolumeOrCaseFile>() {
 
             @Override
             public VolumeOrCaseFile addResult(ResultSetRow row) {

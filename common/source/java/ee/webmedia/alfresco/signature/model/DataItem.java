@@ -7,9 +7,8 @@ import org.alfresco.repo.web.scripts.FileTypeImageUtils;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.ObjectUtils;
-
-import ee.sk.digidoc.DataFile;
-import ee.sk.digidoc.DigiDocException;
+import org.digidoc4j.exceptions.DigiDoc4JException;
+import org.digidoc4j.DataFile;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.servlet.DownloadDigiDocContentServlet;
 
@@ -17,7 +16,7 @@ public class DataItem implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    protected int id;
+    protected String id;
     protected String name;
     protected String mimeType;
     protected String encoding;
@@ -25,10 +24,7 @@ public class DataItem implements Serializable {
     protected DataFile dataFile;
     protected String downloadUrl;
 
-    public DataItem(NodeRef nodeRef, int id, String name, String mimeType, String encoding, long size, DataFile dataFile) {
-        if (id < 0) {
-            throw new IllegalArgumentException("DataItem id must not be negative");
-        }
+    public DataItem(NodeRef nodeRef, String id, String name, String mimeType, String encoding, long size, DataFile dataFile) {
         this.id = id;
         this.name = name;
         this.mimeType = mimeType;
@@ -39,12 +35,20 @@ public class DataItem implements Serializable {
             downloadUrl = DownloadDigiDocContentServlet.generateUrl(nodeRef, id, name);
         }
     }
-
-    public DataItem(NodeRef nodeRef, int id, String name, String mimeType, String encoding, long size) {
-        this(nodeRef, id, name, mimeType, encoding, size, null);
+    
+    public DataItem(NodeRef nodeRef, String id, String name, String mimeType, long size, DataFile dataFile) {
+    	this(nodeRef, id, name, mimeType, null, size, dataFile);
     }
 
-    public int getId() {
+    public DataItem(NodeRef nodeRef, String id, String name, String mimeType, String encoding, long size) {
+        this(nodeRef, id, name, mimeType, encoding, size, null);
+    }
+    
+    public DataItem(NodeRef nodeRef, String id, String name, String mimeType, long size) {
+        this(nodeRef, id, name, mimeType, null, size, null);
+    }
+
+    public String getId() {
         return id;
     }
 
@@ -78,8 +82,8 @@ public class DataItem implements Serializable {
     public InputStream getData() throws SignatureException {
         InputStream inputStream = null;
         try {
-            inputStream = dataFile.getBodyAsStream();
-        } catch (DigiDocException e) {
+            inputStream = dataFile.getStream();
+        } catch (DigiDoc4JException e) {
             throw new SignatureException("Error getting data, " + toString(), e);
         }
         if (inputStream == null) {

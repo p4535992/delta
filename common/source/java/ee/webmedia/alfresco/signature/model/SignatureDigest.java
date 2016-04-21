@@ -3,10 +3,14 @@ package ee.webmedia.alfresco.signature.model;
 import java.io.Serializable;
 import java.util.Date;
 
+import org.antlr.grammar.v3.ANTLRv3Parser.rewrite_alternative_return;
+import org.digidoc4j.DataToSign;
+
 public class SignatureDigest implements Serializable {
 
     private static final long serialVersionUID = 1L;
-
+    
+    private DataToSign dataToSign;
     private final String digestHex;
     private final String certHex;
     private final Date date;
@@ -15,6 +19,13 @@ public class SignatureDigest implements Serializable {
         this.digestHex = digestHex;
         this.certHex = certHex;
         this.date = date;
+    }
+    
+    public SignatureDigest(String digestHex, String certHex, Date date, DataToSign dataToSign) {
+        this.digestHex = digestHex;
+        this.certHex = certHex;
+        this.date = date;
+        this.dataToSign = dataToSign;
     }
 
     public String getDigestHex() {
@@ -27,6 +38,14 @@ public class SignatureDigest implements Serializable {
 
     public Date getDate() {
         return date;
+    }
+    
+    public void setDataToSign(DataToSign dataToSign) {
+    	this.dataToSign = dataToSign;
+    }
+    
+    public DataToSign getDataToSign() {
+    	return dataToSign;
     }
 
     @Override
