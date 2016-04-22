@@ -17,7 +17,7 @@ import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.model.DataItem;
 import ee.webmedia.alfresco.signature.model.SignatureItem;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
-import ee.webmedia.alfresco.signature.service.SignatureService;
+import ee.webmedia.alfresco.signature.service.DigiDoc4JSignatureService;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 public class SignatureBlockBean implements Serializable {
@@ -27,18 +27,18 @@ public class SignatureBlockBean implements Serializable {
 
     public static final String BEAN_NAME = "SignatureBlockBean";
 
-    private transient SignatureService signatureService;
+    private transient DigiDoc4JSignatureService digiDoc4JSignatureService;
 
     private NodeRef file;
     private List<DataItem> dataItems;
     private List<SignatureItem> signatureItems;
 
-    protected SignatureService getSignatureService() {
-        if (signatureService == null) {
-            signatureService = (SignatureService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(
-                    SignatureService.BEAN_NAME);
+    protected DigiDoc4JSignatureService getDigiDoc4JSignatureService() {
+        if (digiDoc4JSignatureService == null) {
+        	digiDoc4JSignatureService = (DigiDoc4JSignatureService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(
+                    DigiDoc4JSignatureService.BEAN_NAME);
         }
-        return signatureService;
+        return digiDoc4JSignatureService;
     }
 
     public void init(NodeRef file) {
@@ -54,12 +54,12 @@ public class SignatureBlockBean implements Serializable {
     private void load() {
         dataItems = null;
         signatureItems = null;
-        if (!getSignatureService().isBDocContainer(file)) {
+        if (!getDigiDoc4JSignatureService().isBDocContainer(file)) {
             return;
         }
 
         try {
-            SignatureItemsAndDataItems values = getSignatureService().getDataItemsAndSignatureItems(file, false, true);
+            SignatureItemsAndDataItems values = getDigiDoc4JSignatureService().getDataItemsAndSignatureItems(file, false);
             signatureItems = values.getSignatureItems();
             dataItems = values.getDataItems();
         } catch (SignatureException e) {

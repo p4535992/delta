@@ -18,7 +18,7 @@ public class DownloadDigiDocContentServletTest extends BaseAlfrescoSpringTest {
     }
 
     public void testGenerateUrl() {
-        String url = DownloadDigiDocContentServlet.generateUrl(nodeRef, 0, "testname");
+        String url = DownloadDigiDocContentServlet.generateUrl(nodeRef, "0", "testname");
         assertTrue(url.startsWith("/ddc/workspace/SpacesStore/"));
         assertTrue(url.endsWith("/0/testname"));
     }

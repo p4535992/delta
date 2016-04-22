@@ -23,7 +23,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 
-import ee.webmedia.alfresco.document.file.model.FileModel;
 import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
@@ -71,6 +70,7 @@ import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.file.model.File;
+import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.dvk.model.DvkModel;
 import ee.webmedia.alfresco.dvk.model.DvkReceivedLetterDocument;
@@ -1231,8 +1231,7 @@ public abstract class DvkServiceImpl implements DvkService {
             InputStream signatureInput = null;
             try {
                 signatureInput = DvkUtil.getFileContents(file);
-                boolean isBdoc = FilenameUtil.isBdocFile(file.getFileName());
-                signatureItems = BeanHelper.getSignatureService().getDataItemsAndSignatureItems(signatureInput, false, isBdoc);
+                signatureItems = BeanHelper.getDigiDoc4JSignatureService().getDataItemsAndSignatureItems(signatureInput, false);
             } catch (SignatureException e) {
                 log.error("Failed to retrieve signatures from " + file.getFileName() + " (" + file.getFileGuid() + ")!", e);
                 throw new RuntimeException(e);

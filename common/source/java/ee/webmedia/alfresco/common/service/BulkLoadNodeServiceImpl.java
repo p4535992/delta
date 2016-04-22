@@ -1174,28 +1174,28 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
     private String getWorkflowStateQuery(List<NodeRef> docRefs, List<Object> arguments, boolean returnStateStr) {
         String inProgressStatus = Status.IN_PROGRESS.getName();
         String sqlQuery = "select uuid, store_id " + (returnStateStr ? ", string_agg(workflow_state, '; ') as document_workflow_state" : "") + " from " +
-                "( " +
-                "select uuid, store_id, workflow_id, concat(workflow_label, ' (', string_agg(task_owner_name, ', '), ')') as workflow_state from " +
-                "( " +
-                "select node.uuid as uuid, node.store_id, delta_task.workflow_id as workflow_id,  " +
+                " ( " +
+                " select uuid, store_id, workflow_id, concat(workflow_label, ' (', string_agg(task_owner_name, ', '), ')') as workflow_state from " +
+                " ( " +
+                " select node.uuid as uuid, node.store_id, delta_task.workflow_id as workflow_id,  " +
                 "    workflow_label.name as workflow_label, delta_task.wfc_owner_name as task_owner_name "
                 + " from " + getNodeTableConditionalJoin(docRefs, arguments) +
-                "join alf_child_assoc doc_assoc on node.id = doc_assoc.parent_node_id " +
-                "join alf_node compound_workflow on compound_workflow.id = doc_assoc.child_node_id " +
-                "join alf_child_assoc workflow_assoc on compound_workflow.id = workflow_assoc.parent_node_id " +
-                "join alf_node workflow on workflow.id = workflow_assoc.child_node_id " +
-                "join alf_node_properties status_prop on status_prop.node_id = workflow.id " +
-                "left join delta_workflow_type_name workflow_label on workflow_label.type_qname_id = workflow.type_qname_id " +
-                "left join delta_task on workflow.uuid = delta_task.workflow_id " +
-                "where " +
+                " join alf_child_assoc doc_assoc on node.id = doc_assoc.parent_node_id " +
+                " join alf_node compound_workflow on compound_workflow.id = doc_assoc.child_node_id " +
+                " join alf_child_assoc workflow_assoc on compound_workflow.id = workflow_assoc.parent_node_id " +
+                " join alf_node workflow on workflow.id = workflow_assoc.child_node_id " +
+                " join alf_node_properties status_prop on status_prop.node_id = workflow.id " +
+                " left join delta_workflow_type_name workflow_label on workflow_label.type_qname_id = workflow.type_qname_id " +
+                " left join delta_task on workflow.uuid = delta_task.workflow_id " +
+                " where " +
                 " delta_task.wfc_status = '" + inProgressStatus + "'" +
                 " and status_prop.qname_id = " + getQNameDbId(WorkflowCommonModel.Props.STATUS) +
-                "and status_prop.string_value = '" + inProgressStatus + "'" +
-                "order by compound_workflow.id, workflow_assoc.assoc_index, delta_task.index_in_workflow " +
-                ") as all_tasks " +
-                "group by uuid, store_id, workflow_id, workflow_label " +
-                ") as all_tasks_by_workflow " +
-                "group by uuid, store_id ";
+                " and status_prop.string_value = '" + inProgressStatus + "'" +
+                " order by compound_workflow.id, workflow_assoc.assoc_index, delta_task.index_in_workflow " +
+                " ) as all_tasks " +
+                " group by uuid, store_id, workflow_id, workflow_label " +
+                " ) as all_tasks_by_workflow " +
+                " group by uuid, store_id ";
         return sqlQuery;
     }
 

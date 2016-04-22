@@ -141,6 +141,7 @@ import ee.webmedia.alfresco.register.service.RegisterService;
 import ee.webmedia.alfresco.report.service.ReportService;
 import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.series.web.SeriesDetailsDialog;
+import ee.webmedia.alfresco.signature.service.DigiDoc4JSignatureService;
 import ee.webmedia.alfresco.signature.service.SignatureService;
 import ee.webmedia.alfresco.signature.service.SkLdapService;
 import ee.webmedia.alfresco.substitute.service.SubstituteService;
@@ -845,6 +846,10 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
 
     public static SignatureService getSignatureService() {
         return getService(SignatureService.class, SignatureService.BEAN_NAME);
+    }
+    
+    public static DigiDoc4JSignatureService getDigiDoc4JSignatureService() {
+        return getService(DigiDoc4JSignatureService.class, DigiDoc4JSignatureService.BEAN_NAME);
     }
 
     public static ReportService getReportService() {

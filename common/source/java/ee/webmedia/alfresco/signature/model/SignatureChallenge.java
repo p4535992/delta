@@ -5,29 +5,42 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.digidoc4j.DataToSign;
+
 /**
  * Holds intermediate data for Mobile-ID signing.
  */
 public class SignatureChallenge implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private final int sesscode;
+    private final String sesscode;
     private final String challengeId;
     private final List<String> digestHexs;
     private final String signatureId;
     private final String format;
     private final String version;
+    private DataToSign dataToSign;
 
     public SignatureChallenge(int sesscode, String challengeId, List<String> digestHexs, String signatureId, String format, String version) {
-        this.sesscode = sesscode;
+        this.sesscode =  String.valueOf(sesscode);
         this.challengeId = challengeId;
         this.digestHexs = Collections.unmodifiableList(new ArrayList<String>(digestHexs));
         this.signatureId = signatureId;
         this.format = format;
         this.version = version;
     }
+    
+    public SignatureChallenge(String sesscode, String challengeId, DataToSign dataToSign) {
+        this.sesscode =  sesscode;
+        this.challengeId = challengeId;
+        this.dataToSign = dataToSign;
+        this.digestHexs = null;
+        this.signatureId = null;
+        this.format = null;
+        this.version = null;
+    }
 
-    public int getSesscode() {
+    public String getSesscode() {
         return sesscode;
     }
 
@@ -49,6 +62,14 @@ public class SignatureChallenge implements Serializable {
 
     public String getVersion() {
         return version;
+    }
+    
+    public void setDataToSign(DataToSign dataToSign) {
+    	this.dataToSign = dataToSign;
+    }
+    
+    public DataToSign getDataToSign() {
+    	return dataToSign;
     }
 
     @Override

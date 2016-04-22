@@ -21,6 +21,7 @@ import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.model.DataItem;
 import ee.webmedia.alfresco.signature.model.SignatureItem;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
+import ee.webmedia.alfresco.signature.service.DigiDoc4JSignatureService;
 import ee.webmedia.alfresco.signature.service.SignatureService;
 
 /**
@@ -33,14 +34,14 @@ public class DigiDocContentTransformer extends AbstractContentTransformer2 {
     private static final Logger log = Logger.getLogger(DigiDocContentTransformer.class);
 
     private ContentService contentService;
-    private SignatureService signatureService;
+    private DigiDoc4JSignatureService digiDoc4JSignatureService;
 
     public void setContentService(ContentService contentService) {
         this.contentService = contentService;
     }
 
-    public void setSignatureService(SignatureService signatureService) {
-        this.signatureService = signatureService;
+    public void setDigiDoc4JSignatureService(DigiDoc4JSignatureService digiDoc4JSignatureService) {
+        this.digiDoc4JSignatureService = digiDoc4JSignatureService;
     }
 
     @Override
@@ -52,7 +53,7 @@ public class DigiDocContentTransformer extends AbstractContentTransformer2 {
         Writer out = null;
         try {
             InputStream is = reader.getContentInputStream();
-            SignatureItemsAndDataItems items = signatureService.getDataItemsAndSignatureItems(is, true, true);
+            SignatureItemsAndDataItems items = digiDoc4JSignatureService.getDataItemsAndSignatureItems(is, true);
             out = new OutputStreamWriter(writer.getContentOutputStream(), writer.getEncoding());
             for (SignatureItem signatureItem : items.getSignatureItems()) {
                 transformSignatureItem(out, signatureItem);

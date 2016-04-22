@@ -69,8 +69,8 @@ public class MetadataItemCompareUtil {
                 
                 FieldGroup unSavedFieldGroup = (FieldGroup) unSavedMetadataItem;
                 if (log.isDebugEnabled()) {
-                	//log.debug("DELTA-897 (unSavedFieldGroup): " + unSavedFieldGroup.getAdditionalInfo());
-                	//log.debug("DELTA-897 (savedFieldGroup): " + savedFieldGroup.getAdditionalInfo());
+                	log.debug("DELTA-897 (unSavedFieldGroup): " + unSavedFieldGroup.getAdditionalInfo());
+                	log.debug("DELTA-897 (savedFieldGroup): " + savedFieldGroup.getAdditionalInfo());
                 }
                
                 ChildrenList<Field> savedFields = savedFieldGroup.getMetadata();
