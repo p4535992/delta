@@ -1,0 +1,8 @@
+build/
+common/lib-server/
+WEB-INF/alfresco.tld
+WEB-INF/c.tld
+WEB-INF/mDelta.tld
+WEB-INF/repo.tld
+WEB-INF/wcm.tld
+WEB-INF/wm.tld
