@@ -213,6 +213,9 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
                 configuration.setOCSPAccessCertificateFileName(pkcs12Container);
                 configuration.setOCSPAccessCertificatePassword(pkcs12Password.toCharArray());
                 configuration.setSignOCSPRequests(true);
+            } else {
+            	// TODO: remove when digidoc4j will be changed to by default signOCSPRequests=false, now it true by default
+            	configuration.setSignOCSPRequests(false);
             }
         	
         }
