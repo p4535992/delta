@@ -57,6 +57,9 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
     private UserRegistry userRegistry;
     private AuthorityService authorityService;
     private ApplicationConstantsBean applicationConstantsBean;
+
+    private String syncActiveStatus;
+
     // START: properties that would cause dependency cycle when trying to inject them
     private UserService _userService;
     // END: properties that would cause dependency cycle when trying to inject them
@@ -400,5 +403,19 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
         this.applicationConstantsBean = applicationConstantsBean;
     }
 
+    public void setSyncActiveStatus(String syncActiveStatus){
+        if(syncActiveStatus == null){
+            this.syncActiveStatus = "true";
+        } else {
+            this.syncActiveStatus = syncActiveStatus;
+        }
+        log.debug("---------------------------------------------------------");
+        log.debug("setSyncActiveStatus(): Sync active status: " + this.syncActiveStatus);
+        log.debug("---------------------------------------------------------");
+    }
+
+    public String getSyncActiveStatus(){
+        return syncActiveStatus;
+    }
     // END: getters / setters
 }

@@ -79,4 +79,5 @@ public interface OrganizationStructureService {
 
     void loadUserUnit(Node user);
 
+    public String getSyncActiveStatus();
 }

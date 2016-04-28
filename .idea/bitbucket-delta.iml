@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/source/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/source/test" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/common/source/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/common/source/test" isTestSource="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/lib" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+        <jarDirectory url="file://$MODULE_DIR$/lib" recursive="false" />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/common/lib" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="file://$MODULE_DIR$/common/lib" />
+        </SOURCES>
+        <jarDirectory url="file://$MODULE_DIR$/common/lib" recursive="false" />
+        <jarDirectory url="file://$MODULE_DIR$/common/lib" recursive="false" type="SOURCES" />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/common/lib-dev" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="file://$MODULE_DIR$/common/lib-dev" />
+        </SOURCES>
+        <jarDirectory url="file://$MODULE_DIR$/common/lib-dev" recursive="false" />
+        <jarDirectory url="file://$MODULE_DIR$/common/lib-dev" recursive="false" type="SOURCES" />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/common/lib-dev-glassfish" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+        <jarDirectory url="file://$MODULE_DIR$/common/lib-dev-glassfish" recursive="false" />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/common/lib-dev-tomcat" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+        <jarDirectory url="file://$MODULE_DIR$/common/lib-dev-tomcat" recursive="false" />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/common/lib-server" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="file://$MODULE_DIR$/common/lib-server" />
+        </SOURCES>
+        <jarDirectory url="file://$MODULE_DIR$/common/lib-server" recursive="false" />
+        <jarDirectory url="file://$MODULE_DIR$/common/lib-server" recursive="false" type="SOURCES" />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/common/lib-tomcat" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+        <jarDirectory url="file://$MODULE_DIR$/common/lib-tomcat" recursive="false" />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/build/exploded/WEB-INF/lib" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="file://$MODULE_DIR$/build/exploded/WEB-INF/lib" />
+        </SOURCES>
+        <jarDirectory url="file://$MODULE_DIR$/build/exploded/WEB-INF/lib" recursive="false" />
+        <jarDirectory url="file://$MODULE_DIR$/build/exploded/WEB-INF/lib" recursive="false" type="SOURCES" />
+      </library>
+    </orderEntry>
+  </component>
+  <component name="TemplatesService">
+    <option name="TEMPLATE_FOLDERS">
+      <list>
+        <option value="$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/templates" />
+      </list>
+    </option>
+  </component>
+</module>
