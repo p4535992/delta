@@ -59,6 +59,9 @@ public class SendOutServiceImpl implements SendOutService {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(SendOutServiceImpl.class);
 
     private static final String SAP_ORG_NAME = "SAP";
+    
+    private static String DIGIDOC_MIMETYPE = "application/digidoc";
+    private static String ASICE_DIGIDOC_MIMETYPE = "application/vnd.etsi.asic-e+zip";
 
     private NodeService nodeService;
     private EmailService emailService;
@@ -355,7 +358,7 @@ public class SendOutServiceImpl implements SendOutService {
         for (EmailAttachment attachment : attachments) {
             ContentToSend content = new ContentToSend();
             content.setFileName(attachment.getFileName());
-            content.setMimeType(attachment.getMimeType());
+            content.setMimeType((DIGIDOC_MIMETYPE.equals(attachment.getMimeType()))?ASICE_DIGIDOC_MIMETYPE:attachment.getMimeType());
             content.setId(attachment.getFileNodeRef().getId());
             try {
                 content.setInputStream(attachment.getInputStreamSource().getInputStream());

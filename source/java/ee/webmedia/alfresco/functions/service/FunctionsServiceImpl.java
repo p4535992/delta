@@ -172,6 +172,9 @@ public class FunctionsServiceImpl implements FunctionsService {
                     properties).getChildRef();
             logService.addLogEntry(LogEntry.create(LogObject.FUNCTION, userService, functionRef, "applog_space_add",
                     function.getMark(), function.getTitle()));
+            Map<Long, QName> propertyTypes = new HashMap<Long, QName>();
+            Node functionNode = generalService.fetchNode(functionRef, propertyTypes);
+            function.setNode(functionNode);
         } else {
             Map<QName, Serializable> originalProperties = nodeService.getProperties(functionRef);
             String propDiff = new PropDiffHelper()

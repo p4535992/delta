@@ -41,12 +41,16 @@ public class BaseObjectOrderModifier<B extends BaseObject> implements OrderModif
     public void markBaseState(List<B> objects) {
         for (B object : objects) {
             Integer order = getOrder(object);
+            Integer origOrder = getOriginalOrder(object);
             if (order == null) {
                 // Other code should theoretically ensure that order is not null
                 // But this is just in case (e.g. some older version did not ensure this)
                 order = Integer.MAX_VALUE;
+                object.setProp(orderProperty, order);
             }
-            object.setProp(orderPropertyOriginalValue, order);
+            if (origOrder == null) {
+            	object.setProp(orderPropertyOriginalValue, order);
+            }
         }
     }
 
