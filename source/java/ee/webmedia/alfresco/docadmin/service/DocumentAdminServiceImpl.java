@@ -737,14 +737,21 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     public List<FieldDefinition> saveOrUpdateFieldDefinitions(Collection<FieldDefinition> fieldDefinitions, boolean isDocumentTypesImport) {
     	List<FieldDefinition> allFds = baseService.getChildren(getFieldDefinitionsRoot(), FieldDefinition.class);
     	FieldDefinitionReorderHelper.markBaseStateDocSearchAndVolSearchProps(allFds);
+    	List<FieldDefinition> fdsToAdd = new ArrayList<FieldDefinition>();
+    	
     	if (fieldDefinitions != null) {
         	for (FieldDefinition fieldDef: fieldDefinitions) {
+        		boolean newFieldDefenition = true;
         		for (FieldDefinition fieldDefFromAll: allFds) {
         			if (fieldDefFromAll.getFieldId().equals(fieldDef.getFieldId())) {
         				fieldDefFromAll.setProp(DocumentAdminModel.Props.PARAMETER_ORDER_IN_VOL_SEARCH, fieldDef.getProp(DocumentAdminModel.Props.PARAMETER_ORDER_IN_VOL_SEARCH));
         				fieldDefFromAll.setProp(DocumentAdminModel.Props.PARAMETER_ORDER_IN_DOC_SEARCH, fieldDef.getProp(DocumentAdminModel.Props.PARAMETER_ORDER_IN_DOC_SEARCH));
+        				newFieldDefenition = false;
         				break;
         			}
+        		}
+        		if (newFieldDefenition) {
+        			fdsToAdd.add(fieldDef);
         		}
         	}
         }
@@ -765,6 +772,9 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         		saveOrUpdateFieldInternal(fieldDefinition);
         	}
         	
+        }
+        for (FieldDefinition fieldDefinition : fdsToAdd) {
+        	saved.add(saveOrUpdateFieldInternal(fieldDefinition));
         }
         return saved;
     }
@@ -1315,10 +1325,16 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
             for (String removedFieldId : removedFieldIds) {
                 FieldDefinition removedFieldFD = fieldsToSave.get(removedFieldId);
                 if (removedFieldFD == null) {
-                    removedFieldFD = getFieldDefinition(removedFieldId).getCopyOfFieldDefinition();
-                    fieldsToSave.put(removedFieldId, removedFieldFD);
+                	UnmodifiableFieldDefinition ufd = getFieldDefinition(removedFieldId);
+                	if (ufd != null) {
+                		removedFieldFD = ufd.getCopyOfFieldDefinition();
+                	}
                 }
-                removedFieldFD.getUsedTypes(dynType.getClass()).remove(documentTypeId);
+                if (removedFieldFD != null) {
+                	fieldsToSave.put(removedFieldId, removedFieldFD);
+                    removedFieldFD.getUsedTypes(dynType.getClass()).remove(documentTypeId);
+                }
+                
             }
         }
         saveOrUpdateFieldDefinitions(fieldsToSave.values(), isDocumentTypesImport);

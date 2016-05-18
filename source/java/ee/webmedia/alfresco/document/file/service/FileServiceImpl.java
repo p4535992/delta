@@ -502,9 +502,6 @@ public class FileServiceImpl implements FileService {
         ContentWriter writer = overwritableNodeRef == null ? contentService.getWriter(null, null, false) : contentService.getWriter(overwritableNodeRef, ContentModel.PROP_CONTENT,
                 true);
         writer.setMimetype(MimetypeMap.MIMETYPE_PDF);
-        writer.setEncoding("UTF-8");
-        reader.setEncoding("UTF-8");
-        
         ContentTransformer transformer = contentService.getTransformer(reader.getMimetype(), writer.getMimetype());
         if (transformer == null) {
             log.debug("No transformation available from '" + reader.getMimetype() + "' to '" + writer.getMimetype() + "', skipping PDF file creation");

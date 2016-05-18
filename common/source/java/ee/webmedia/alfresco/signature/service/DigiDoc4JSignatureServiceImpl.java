@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 
@@ -69,7 +68,6 @@ import ee.sk.digidocserviceV2.MobileId;
 import ee.sk.digidocserviceV2.MobileSignHashRequest;
 import ee.sk.digidocserviceV2.MobileSignHashResponse;
 import ee.sk.digidocserviceV2.ProcessStatusType;
-import ee.sk.utils.ConfigManager;
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.monitoring.MonitoredService;
@@ -450,6 +448,10 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
         }
     }
     
+    public static void main(String args []) {
+    	System.out.println("phone = " + StringUtils.stripToEmpty("+372 454 23423"));
+    }
+    
     private String getMobileCertificate(String phoneNo, String idCode) throws DigiDoc4JException {
     	phoneNo = StringUtils.stripToEmpty(phoneNo);
         idCode = StringUtils.stripToEmpty(idCode);
@@ -582,6 +584,7 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
     
     private void handleDigiDocServiceSoapFault(SOAPFaultException e, long startTime, long stopTime, String queryName) {
         try {
+        	log.error("Error performing query " + queryName + " - " + duration(startTime, stopTime) + " ms: " + e.getMessage(), e);
             int faultCode = Integer.parseInt(e.getMessage());
             if (faultCode == 101 || (faultCode >= 300 && faultCode <= 305)) {
                 log.info("PERFORMANCE: query " + queryName + " - " + duration(startTime, stopTime) + " ms, faultCode=" + faultCode);
@@ -599,7 +602,7 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
         } catch (NumberFormatException e2) {
             // do nothing
         }
-        log.error("Error performing query " + queryName + " - " + duration(startTime, stopTime) + " ms: " + e.getMessage(), e);
+        //log.error("Error performing query " + queryName + " - " + duration(startTime, stopTime) + " ms: " + e.getMessage(), e);
         MonitoringUtil.logError(MonitoredService.OUT_SK_DIGIDOCSERVICE, e);
         throw new UnableToPerformException("sk_digidocservice_error");
     }

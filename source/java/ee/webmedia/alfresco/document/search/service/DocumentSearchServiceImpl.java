@@ -2812,18 +2812,19 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                 }
                 if (seriesRef != null && Boolean.TRUE.equals(nodeService.getProperty(seriesRef, SeriesModel.Props.DOCUMENTS_VISIBLE_FOR_USERS_WITHOUT_ACCESS))) {
                 */
-    				
-                	List<String> authorities = BeanHelper.getPrivilegeService().getAuthoritiesWithPrivilege(docNode, Privilege.VIEW_DOCUMENT_META_DATA);
-                	String ownerId = (String) nodeService.getProperty(docNode, DocumentCommonModel.Props.OWNER_ID);
-                	if (StringUtils.isNotBlank(ownerId)) {
-                		authorities.add(ownerId);
-                	}
-                    for (String authority : authorities) {
-                    	if (currentUserGroups.contains(authority)) {
-                    		filteredResults.add(docNode);
-                    		break;
-                    	}
-                    }
+    				if (nodeService.exists(docNode)) {
+	                	List<String> authorities = BeanHelper.getPrivilegeService().getAuthoritiesWithPrivilege(docNode, Privilege.VIEW_DOCUMENT_META_DATA);
+	                	String ownerId = (String) nodeService.getProperty(docNode, DocumentCommonModel.Props.OWNER_ID);
+	                	if (StringUtils.isNotBlank(ownerId)) {
+	                		authorities.add(ownerId);
+	                	}
+	                    for (String authority : authorities) {
+	                    	if (currentUserGroups.contains(authority)) {
+	                    		filteredResults.add(docNode);
+	                    		break;
+	                    	}
+	                    }
+    				}
                 /*    
                 } else {
                 	filteredResults.add(docNode);

@@ -1426,9 +1426,14 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
     public void deleteDocument(NodeRef nodeRef, String comment, DeletionType deletionType) {
         deleteDocument(nodeRef, comment, deletionType, AuthenticationUtil.getRunAsUser());
     }
-
+    
     @Override
     public void deleteDocument(NodeRef nodeRef, String comment, DeletionType deletionType, String executingUser) {
+        deleteDocument(nodeRef, comment, deletionType, AuthenticationUtil.getRunAsUser(), false);
+    }
+
+    @Override
+    public void deleteDocument(NodeRef nodeRef, String comment, DeletionType deletionType, String executingUser, boolean isDisposeVolume) {
         log.debug("Deleting document: " + nodeRef);
         getAdrService().addDeletedDocument(nodeRef);
         Set<AssociationRef> assocs = new HashSet<>(nodeService.getTargetAssocs(nodeRef, RegexQNamePattern.MATCH_ALL));
@@ -1450,7 +1455,11 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
             }
             if (DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT.equals(assoc.getTypeQName())) {
                 documentAssociationsService.logDocumentWorkflowAssocRemove(nodeRef, targetRef);
-                removeDocFromCompoundWorkflowProps(sourceRef, targetRef);
+                if (isDisposeVolume && getWorkflowService().getCompoundWorkflowDocumentCount(targetRef) == 0) {
+                	nodeService.deleteNode(targetRef);
+                } else {
+                	removeDocFromCompoundWorkflowProps(sourceRef, targetRef);
+                }
             }
         }
         updateParentNodesContainingDocsCount(nodeRef, false);
