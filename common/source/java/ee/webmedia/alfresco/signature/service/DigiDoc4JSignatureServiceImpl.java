@@ -584,7 +584,7 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
     
     private void handleDigiDocServiceSoapFault(SOAPFaultException e, long startTime, long stopTime, String queryName) {
         try {
-        	log.error("Error performing query " + queryName + " - " + duration(startTime, stopTime) + " ms: " + e.getMessage(), e);
+        	log.error("Error performing query " + queryName + " - " + duration(startTime, stopTime) + " ms: " + e.getMessage() + " fault: " + ((e.getFault() != null)?e.getFault().getDetail():""), e);
             int faultCode = Integer.parseInt(e.getMessage());
             if (faultCode == 101 || (faultCode >= 300 && faultCode <= 305)) {
                 log.info("PERFORMANCE: query " + queryName + " - " + duration(startTime, stopTime) + " ms, faultCode=" + faultCode);
