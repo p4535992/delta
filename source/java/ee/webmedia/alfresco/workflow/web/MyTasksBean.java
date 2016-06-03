@@ -199,7 +199,7 @@ public class MyTasksBean extends BaseDialogBean {
     // END: dialog setup
 
     public TaskAndDocumentDataProvider getTasks() {
-        TaskAndDocumentDataProvider result = null;
+        TaskAndDocumentDataProvider result = new TaskAndDocumentDataProvider(new ArrayList<NodeRef>());
         if (LIST_ASSIGNMENT.equals(specificList)) {
             result = assignmentTasks;
         } else if (LIST_ORDER_ASSIGNMENT.equals(specificList)) {

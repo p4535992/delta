@@ -328,7 +328,7 @@ public class SearchRenderer extends BaseRenderer {
         out.write("<a class=\"icon-link margin-left-4 search\" onclick=\"");
         out.write(ComponentUtil.generateFieldSetter(context, search, getActionId(context, search), OPEN_DIALOG_ACTION + ACTION_SEPARATOR + rowIndex));
         out.write("return showModal('");
-        out.write(getDialogId(context, search, rowIndex));
+        out.write(getDialogId(context, search));
         String toolTip = search.getSearchLinkTooltip();
         if (toolTip == null) {
             toolTip = SEARCH_MSG;
@@ -346,7 +346,7 @@ public class SearchRenderer extends BaseRenderer {
         }
 
         out.write("<div id=\"");
-        out.write(getDialogId(context, search, rowIndex));
+        out.write(getDialogId(context, search));
         out.write("\" class=\"modalpopup modalwrap\"");
         if (openDialog != null) {
             out.write(" style=\"display: block;\"");
@@ -381,7 +381,7 @@ public class SearchRenderer extends BaseRenderer {
             out.write("<script type=\"text/javascript\">$jQ(document).ready(function(){");
             out.write(ComponentUtil.generateFieldSetter(context, search, getActionId(context, search), OPEN_DIALOG_ACTION + ACTION_SEPARATOR + openDialog));
             out.write("showModal('");
-            out.write(getDialogId(context, search, rowIndex));
+            out.write(getDialogId(context, search));
             out.write("');");
             out.write("});</script>");
         }
@@ -396,8 +396,8 @@ public class SearchRenderer extends BaseRenderer {
         return -1;
     }
 
-    private String getDialogId(FacesContext context, UIComponent component, int rowIndex) {
-        return component.getClientId(context) + "_" + rowIndex +  "_popup";
+    private String getDialogId(FacesContext context, UIComponent component) {
+        return component.getClientId(context) +  "_popup";
     }
 
     private String getActionId(FacesContext context, UIComponent component) {

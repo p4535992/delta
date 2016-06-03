@@ -182,9 +182,9 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
                     if (f.getDisplayName() != null) {
                         existingDisplayNames.add(f.getDisplayName());
                     }
-                    if (f.isActive()) {
+                    if (f.isActiveAndNotDigiDoc()) {
                         activeFilesCount++;
-                    } else {
+                    } else if (f.isNotActiveAndNotDigiDoc()){
                         inactiveFilesCount++;
                     }
                 }

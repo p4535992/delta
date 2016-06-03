@@ -55,6 +55,7 @@ import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.ResultSetRow;
 import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.cmr.security.AuthorityType;
+import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
@@ -2801,6 +2802,13 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
 	        if (currentUserGroups == null) {
 	        	currentUserGroups = new HashSet<>();
 	        }
+	        Set<String> groupsToRemove = new HashSet<>();
+	        for (String userGroup: currentUserGroups) {
+		        if (userGroup.startsWith(PermissionService.ROLE_PREFIX) || PermissionService.ALL_AUTHORITIES.equals(userGroup)) {
+		        	groupsToRemove.add(userGroup);
+		        }
+	        }
+	        currentUserGroups.removeAll(groupsToRemove);
 	        currentUserGroups.add(currentUserName);
     		List<NodeRef> filteredResults = new ArrayList<>();
     		for (NodeRef docNode: foundResults) {
