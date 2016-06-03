@@ -170,6 +170,12 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
             org.getProperties().put(OrganizationStructureModel.Props.SUPER_UNIT_ID, ylemYksusId.toString());
         }
         String email = yksus.getEmail();
+
+        // -----------------------------------------------------------------------------
+        //TODO: Ajutine fix. PPA-l ei ole struktuuriüksuste e-postidega asja korras!!!
+        email = null;
+        // -----------------------------------------------------------------------------
+
         if (email != null) {
             org.getProperties().put(OrganizationStructureModel.Props.GROUP_EMAIL, email);
         }
