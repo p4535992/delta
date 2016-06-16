@@ -60,6 +60,7 @@ import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
+import org.apache.axis.utils.BeanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.springframework.jdbc.core.RowMapper;
@@ -1030,7 +1031,8 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         addTaskTypeFieldExactQueryPartsAndArguments(queryParts, arguments, WorkflowSpecificModel.Types.LINKED_REVIEW_TASK);
         addTaskStringExactPartsAndArgs(queryParts, arguments, noderefId, WorkflowSpecificModel.Props.ORIGINAL_NODEREF_ID);
         String query = generateTaskSearchQuery(queryParts);
-        List<NodeRef> result = BeanHelper.getWorkflowDbService().searchTaskNodeRefs(query, arguments, -1).getFirst();
+        String userId = userService.getCurrentUserName();
+        List<NodeRef> result = BeanHelper.getWorkflowDbService().searchTaskNodeRefs(query, arguments, -1, userId).getFirst();
         if (log.isDebugEnabled()) {
             log.debug("Linked review task search total time " + (System.currentTimeMillis() - startTime) + " ms");
         }
@@ -1081,7 +1083,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         }
         Pair<List<NodeRef>, Boolean> results;
         if (!BeanHelper.getWorkflowConstantsBean().isDocumentWorkflowEnabled()) {
-            results = BeanHelper.getWorkflowDbService().searchTaskNodeRefs(queryAndArguments.getFirst(), queryAndArguments.getSecond(), limit);
+            results = BeanHelper.getWorkflowDbService().searchTaskNodeRefs(queryAndArguments.getFirst(), queryAndArguments.getSecond(), limit, username);
         } else {
             results = BeanHelper.getWorkflowDbService().searchTaskNodeRefsCheckLimitedSeries(queryAndArguments.getFirst(), username, queryAndArguments.getSecond(), limit);
         }
@@ -1938,7 +1940,8 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         long startTime = System.currentTimeMillis();
         Pair<List<String>, List<Object>> taskQueryAndArgs = getTaskQuery(ownerId, Status.NEW, isPreviousOwnerId);
         String query = generateTaskSearchQuery(taskQueryAndArgs.getFirst());
-        List<NodeRef> results = BeanHelper.getWorkflowDbService().searchTaskNodeRefs(query, taskQueryAndArgs.getSecond(), -1).getFirst();
+        String userId = userService.getCurrentUserName();
+        List<NodeRef> results = BeanHelper.getWorkflowDbService().searchTaskNodeRefs(query, taskQueryAndArgs.getSecond(), -1, userId).getFirst();
         if (log.isDebugEnabled()) {
             log.debug("User's " + ownerId + " new tasks search total time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
         }

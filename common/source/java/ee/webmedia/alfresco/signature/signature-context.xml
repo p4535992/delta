@@ -42,7 +42,7 @@
       <property name="test" value="${jdigidoc.test}" />
       <property name="digiDocServiceUrl" value="https://digidocservice.sk.ee/DigiDocService" />
       <property name="testDigiDocServiceUrl" value="https://tsp.demo.sk.ee" />
-      <property name="digiDocServiceV2Url" value="https://digidocservice.sk.ee/DigiDocService/v2/" />
+      <property name="digiDocServiceV2Url" value="https://digidocservice.sk.ee/v2/" />
       <property name="testDigiDocServiceV2Url" value="https://tsp.demo.sk.ee/v2/" />
       <property name="mobileIdServiceName" value="${mobile-id.service-name}" />
       <property name="testMobileIdServiceName" value="Testimine" />
