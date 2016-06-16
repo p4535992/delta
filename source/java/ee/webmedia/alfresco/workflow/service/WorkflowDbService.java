@@ -99,7 +99,7 @@ public interface WorkflowDbService {
     /**
      * Search tasks from all stores
      */
-    Pair<List<NodeRef>, Boolean> searchTaskNodeRefs(String queryCondition, List<Object> arguments, int limit);
+    Pair<List<NodeRef>, Boolean> searchTaskNodeRefs(String queryCondition, List<Object> arguments, int limit, String userId);
 
     Map<NodeRef, Pair<String, String>> searchTaskSendStatusInfo(String queryCondition, List<Object> arguments);
 
