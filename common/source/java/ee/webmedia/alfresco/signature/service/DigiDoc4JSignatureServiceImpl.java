@@ -48,6 +48,7 @@ import org.digidoc4j.ContainerBuilder;
 import org.digidoc4j.DataFile;
 import org.digidoc4j.DataToSign;
 import org.digidoc4j.DigestAlgorithm;
+import org.digidoc4j.EncryptionAlgorithm;
 import org.digidoc4j.Signature;
 import org.digidoc4j.SignatureBuilder;
 import org.digidoc4j.SignatureProfile;
@@ -88,6 +89,7 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
 
     private static final String ID_CODE_COUNTRY_EE = "EE";
     private static final String ID_CODE_COUNTRY_LT = "LT";
+    private static final String CERTIFICATE_ALGORITHM_EC = "EC";
 
     private static Logger log = Logger.getLogger(DigiDoc4JSignatureServiceImpl.class);
 
@@ -230,11 +232,16 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
 
     public DataToSign getDataToSign(Container containerToSign, String cert, boolean pem) {
         X509Certificate certificate = (pem)?getCertificateFromPem(cert) : getCertificateFromHex(cert);
+        EncryptionAlgorithm encryptionAlgorithm  = EncryptionAlgorithm.RSA;
+        if (CERTIFICATE_ALGORITHM_EC.equals(certificate.getPublicKey().getAlgorithm())) {
+        	encryptionAlgorithm = EncryptionAlgorithm.ECDSA;
+        }
         DataToSign dataToSign = SignatureBuilder.
                 aSignature(containerToSign).
                 withSigningCertificate(certificate).
                 withSignatureDigestAlgorithm(DIGEST_ALGORITHM).
                 withSignatureProfile(SignatureProfile.LT_TM).
+                withEncryptionAlgorithm(encryptionAlgorithm).
                 buildDataToSign();
         return dataToSign;
     }
