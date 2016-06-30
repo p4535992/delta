@@ -2489,28 +2489,35 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
             docCounts.putAll(bulkLoadNodeService.getSearchableChildDocCounts(indpendentCompoundWorkflows));
         }
 
-        for (Task task : tasks) {
-            String compoundWorkflowId = task.getCompoundWorkflowId();
-            NodeRef compoundWorkflowNodeRef = compoundWorkflowId != null ? new NodeRef(task.getNodeRef().getStoreRef(), compoundWorkflowId) : null;
-            Map<QName, Serializable> caseFileProps = caseFiles.get(compoundWorkflowNodeRef);
-            NodeRef caseFileNodeRef = caseFileProps != null ? (NodeRef) caseFileProps.get(ContentModel.PROP_NODE_REF) : null;
-            CompoundWorkflow compoundWorkflow = compoundWorkflows.containsKey(compoundWorkflowNodeRef)
-                    ? new CompoundWorkflow((WmNode) compoundWorkflows.get(compoundWorkflowNodeRef), caseFileNodeRef) : null;
-                    Map<QName, Serializable> documentProps = compoundWorkflowNodeRef != null && documents != null
-                            ? documents.get(compoundWorkflowNodeRef) : null;
+		for (Task task : tasks) {
+			String compoundWorkflowId = task.getCompoundWorkflowId();
+			NodeRef compoundWorkflowNodeRef = compoundWorkflowId != null
+					? new NodeRef(task.getNodeRef().getStoreRef(), compoundWorkflowId) : null;
+			Map<QName, Serializable> caseFileProps = caseFiles.get(compoundWorkflowNodeRef);
+			NodeRef caseFileNodeRef = caseFileProps != null ? (NodeRef) caseFileProps.get(ContentModel.PROP_NODE_REF)
+					: null;
+			CompoundWorkflow compoundWorkflow = compoundWorkflows.containsKey(compoundWorkflowNodeRef)
+					? new CompoundWorkflow((WmNode) compoundWorkflows.get(compoundWorkflowNodeRef), caseFileNodeRef)
+					: null;
+			Map<QName, Serializable> documentProps = compoundWorkflowNodeRef != null && documents != null
+					? documents.get(compoundWorkflowNodeRef) : null;
 
-                            Integer compoundWorkflowDocumentsCount = docCounts.containsKey(compoundWorkflowNodeRef) ? docCounts.get(compoundWorkflowNodeRef) : 0;
-                            if (compoundWorkflow != null) {
-                                compoundWorkflow.setNumberOfDocuments(compoundWorkflowDocumentsCount);
-                            }
+			Integer compoundWorkflowDocumentsCount = docCounts.containsKey(compoundWorkflowNodeRef)
+					? docCounts.get(compoundWorkflowNodeRef) : 0;
+			if (compoundWorkflow != null) {
+				compoundWorkflow.setNumberOfDocuments(compoundWorkflowDocumentsCount);
+			}
 
-            NodeRef documentNodeRef = documentProps != null ? (NodeRef) documentProps.get(ContentModel.PROP_NODE_REF) : null;
-            Document taskDocument = documentNodeRef != null
-                                    ? new Document(documentNodeRef, RepoUtil.toStringProperties(documentProps)) : null;
-                                    results.put(task.getNodeRef(), new TaskAndDocument(task, taskDocument, compoundWorkflow));
-        }
+			NodeRef documentNodeRef = documentProps != null ? (NodeRef) documentProps.get(ContentModel.PROP_NODE_REF)
+					: null;
+			Document taskDocument = documentNodeRef != null
+					? new Document(documentNodeRef, RepoUtil.toStringProperties(documentProps)) : null;
+			TaskAndDocument taskAndDoc = new TaskAndDocument(task, taskDocument, compoundWorkflow);
+			
+			results.put(task.getNodeRef(), taskAndDoc);
+		}
 
-        return results;
+		return results;
     }
 
     @Override

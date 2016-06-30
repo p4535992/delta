@@ -128,6 +128,7 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
         testPhoneNumbers.put("37200006", Pair.newInstance("14212128024", ID_CODE_COUNTRY_EE));
         testPhoneNumbers.put("37200008", Pair.newInstance("14212128026", ID_CODE_COUNTRY_EE));
         testPhoneNumbers.put("37200009", Pair.newInstance("14212128027", ID_CODE_COUNTRY_EE));
+        testPhoneNumbers.put("37200000766", Pair.newInstance("11412090004", ID_CODE_COUNTRY_EE));
 
         testPhoneNumbers.put("37060000007", Pair.newInstance("51001091072", ID_CODE_COUNTRY_LT));
         testPhoneNumbers.put("37060000001", Pair.newInstance("51001091006", ID_CODE_COUNTRY_LT));

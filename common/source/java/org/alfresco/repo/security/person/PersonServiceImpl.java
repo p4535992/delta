@@ -204,6 +204,14 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
                 "beforeDeleteNode"));
 
     }
+    
+    public void clearPersonCache() {
+    	personCache.clear();
+    }
+    
+    public void clearPersonNodesCache() {
+    	personNodesCache.clear();
+    }
 
     public UserNameMatcher getUserNameMatcher()
     {

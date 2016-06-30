@@ -307,10 +307,25 @@ public class MetadataItemCompareUtil {
     }
 
     private static int compareLists(List<String> list1, List<String> list2) {
-        if (list1 != null) {
-            return new CollectionComparator<String>(list1).compareTo(list2);
+        if (list1 != null && list2 == null) {
+        	return -1;
         }
-        return list2 == null ? 0 : 1;
+        if (list2 != null && list1 == null) {
+        	return 1;
+        }
+        if (list1 == null && list2 == null) {
+        	return 0;
+        }
+        if (list1 != null && list2 != null) {
+        	int size1 = list1.size();
+        	int size2 = list2.size();
+        	if (size1 == size2) {
+        		return new CollectionComparator<String>(list1).compareTo(list2);
+        	} else {
+        		return (size1 > size2)?-1:1;
+        	}
+        }
+        return 0;
     }
 
     private static Comparator<FieldGroup> getFieldGroupComparator() {
