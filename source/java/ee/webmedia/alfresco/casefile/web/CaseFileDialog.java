@@ -96,6 +96,7 @@ public class CaseFileDialog extends BaseSnapshotCapableWithBlocksDialog<CaseFile
 BlockBeanProviderProvider {
     private static final long serialVersionUID = 1L;
     public static final String BEAN_NAME = "CaseFileDialog";
+    public static final String DIALOG_NAME = AlfrescoNavigationHandler.DIALOG_PREFIX + "caseFileDialog";
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(CaseFileDialog.class);
 
     private DocumentListDataProvider documents;

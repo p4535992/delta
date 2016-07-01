@@ -228,5 +228,9 @@ public interface PersonService
     NodeRef getPersonFromRepo(String userName);
     
     void setPersonProperty(String username, QName property, Serializable value);
+    
+    void clearPersonCache();
+    
+    void clearPersonNodesCache();
 
 }

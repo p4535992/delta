@@ -10,6 +10,7 @@ import javax.faces.context.FacesContext;
 import javax.faces.model.SelectItem;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
@@ -17,6 +18,7 @@ import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docconfig.generator.BasePropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.generator.BaseSystematicFieldGenerator;
 import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.template.model.UnmodifiableDocumentTemplate;
 import ee.webmedia.alfresco.utils.WebUtil;
@@ -55,12 +57,31 @@ public class TemplateNameGenerator extends BaseSystematicFieldGenerator {
             List<UnmodifiableDocumentTemplate> docTemplates = getDocumentTemplateService().getDocumentTemplates(
                     (String) dialogDataProvider.getNode().getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID));
             List<SelectItem> selectItems = new ArrayList<SelectItem>(docTemplates.size() + 1);
+            String currentTemplateName = (String) dialogDataProvider.getNode().getProperties().get(DocumentSpecificModel.Props.TEMPLATE_NAME);
 
             // Empty default selection
-            selectItems.add(new SelectItem("", ""));
+            SelectItem emptyItem;
+            //if (docTemplates.isEmpty()) {
+            //	emptyItem = new SelectItem("empty_select", "");
+            //} else {
+            	emptyItem = new SelectItem("", "");
+            //}
+            selectItems.add(emptyItem);
+            boolean missingTemplate = true;
+            if (StringUtils.isBlank(currentTemplateName)) {
+            	missingTemplate = false;
+            }
+            
 
             for (UnmodifiableDocumentTemplate tmpl : docTemplates) {
+            	if (missingTemplate && StringUtils.isNotBlank(currentTemplateName) && currentTemplateName.equals(tmpl.getName())) {
+            		missingTemplate = false;
+            	}
                 selectItems.add(new SelectItem(tmpl.getName(), FilenameUtils.removeExtension(tmpl.getName())));
+            }
+            
+            if (missingTemplate) {
+            	selectItems.add(new SelectItem(currentTemplateName, FilenameUtils.removeExtension(currentTemplateName)));
             }
 
             // If we have only 1 match, then preselect it

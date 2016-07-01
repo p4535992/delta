@@ -733,9 +733,17 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
                 }
                 return getRegDateTime().compareTo(other.getRegDateTime());
             }
+            if (getRegDateTime() == null) {
+                if (other.getRegDateTime() != null) {
+                    return -1;
+                }
+            }
             return 0;
         }
         if (getRegNumber() == null) {
+        	if (other.getRegNumber() == null) {
+        		return 0;
+        	}
             return -1;
         } else if (other.getRegNumber() == null) {
             return 1;
