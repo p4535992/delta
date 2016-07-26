@@ -96,6 +96,7 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
 
     @Override
     public int updateOrganisationStructureBasedGroups() {
+        log.info("Starting updateOrganisationStructureBasedGroups...");
         if (!applicationConstantsBean.isGroupsEditingAllowed()) {
             return 0; // System uses Active Directory
         }
@@ -126,6 +127,7 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
             String organizationPath = os.getOrganizationDisplayPath();
             String groupName = StringUtils.isBlank(organizationPath) ? os.getName() : organizationPath;
             String groupAuthority = AuthorityType.GROUP.getPrefixString() + groupName;
+
             String authorityEmail = os.getGroupEmail();
 
             // User has manually created a group that is named after an organization structure
@@ -144,10 +146,15 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
             // update group email
             if (isGeneratedGroupAuthority) {
             	String oldAuthorityEmail = authorityService.getAuthorityEmail(groupAuthority);
-            	
+            	log.debug(os.getOrganizationDisplayPath() + ":: oldAuthorityEmail: " + oldAuthorityEmail);
             	if (StringUtils.isNotBlank(authorityEmail) && (StringUtils.isBlank(oldAuthorityEmail) || StringUtils.isNotBlank(oldAuthorityEmail) && !oldAuthorityEmail.equals(authorityEmail))) {
+                    log.debug(os.getOrganizationDisplayPath() + ":: addAuthorityEmail: " + authorityEmail);
             		authorityService.addAuthorityEmail(groupAuthority, authorityEmail);
-            	}
+            	} else {
+                    log.debug(os.getOrganizationDisplayPath() + "::addAuthorityEmail: NULL! Try to remove units " +
+                            "e-mail...");
+                    authorityService.deleteAuthorityEmail(groupAuthority);
+                }
             }
 
             // Get current users for this group
@@ -196,16 +203,19 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
 
             // Remove users that have been removed from this organization structure
             for (String username : orgStructGroupMembers) {
+                log.debug("Remove users that have been removed from this organization structure... username: " + username);
                 authorityService.removeAuthority(groupAuthority, username);
             }
         }
 
         // Remove missing organization structures
         for (String missingGeneratedGroup : generatedGroups) {
+            log.info("Removing missing organization structure groups... groupname: " + missingGeneratedGroup);
             authorityService.deleteAuthority(missingGeneratedGroup);
 
         }
 
+        log.info("Starting updateOrganisationStructureBasedGroups...Done!");
         return 0;
     }
 

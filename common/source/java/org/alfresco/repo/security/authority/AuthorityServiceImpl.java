@@ -250,6 +250,12 @@ public class AuthorityServiceImpl implements AuthorityService, InitializingBean
     	authorityDAO.addAuthorityEmail(authorityName, authorityEmail);
     }
 
+    public void deleteAuthorityEmail(String authorityName) {
+        logger.debug("Delete Authority Email by authorityName: " + authorityName);
+        authorityDAO.removeAuthorityEmail(authorityName);
+
+    }
+
     private void checkTypeIsMutable(AuthorityType type)
     {
         if((type == AuthorityType.GROUP) || (type == AuthorityType.ROLE))

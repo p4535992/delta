@@ -137,15 +137,25 @@ public class AuthorityDAOImpl implements AuthorityDAO
         nodeService.addChild(parentRef, childRef, ContentModel.ASSOC_MEMBER, QName.createQName("cm", childName, namespacePrefixResolver));
         authorityLookupCache.clear();
     }
-    
-    public void addAuthorityEmail(String authorityName, String authorityEmail)
-    {
+
+    public NodeRef getAuthorityRef(String authorityName){
         NodeRef authorityRef = getAuthorityOrNull(authorityName);
         if (authorityRef == null)
         {
             throw new UnknownAuthorityException("An authority was not found for " + authorityRef);
         }
+        return authorityRef;
+    }
+
+    public void addAuthorityEmail(String authorityName, String authorityEmail)
+    {
+        NodeRef authorityRef = getAuthorityRef(authorityName);
         nodeService.setProperty(authorityRef, ContentModel.PROP_AUTHORITY_EMAIL, authorityEmail);
+    }
+
+    public void removeAuthorityEmail(String authorityName) {
+        NodeRef authorityRef = getAuthorityRef(authorityName);
+        nodeService.removeProperty(authorityRef, ContentModel.PROP_AUTHORITY_EMAIL);
     }
 
     public void createAuthority(String name, String authorityDisplayName, Set<String> authorityZones)
