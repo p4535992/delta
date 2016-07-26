@@ -380,6 +380,8 @@ public interface DocumentService {
     void deleteDocument(NodeRef nodeRef, String comment, DeletionType deletionType);
 
     void deleteDocument(NodeRef nodeRef, String docDeletingComment, DeletionType disposition, String executingUser);
+    
+    void deleteDocument(NodeRef nodeRef, String comment, DeletionType deletionType, String executingUser, boolean isDisposeVolume);
 
     int countFilesInFolder(NodeRef parentRef, boolean countFilesInSubfolders, int limit);
 

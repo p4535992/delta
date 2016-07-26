@@ -61,6 +61,12 @@
       </property>
       <property name="enabled" value="${updater.volumeassoc.enabled}" />
    </bean>
+   
+   <bean id="independentCompoundWorkflowMainDocumentUpdater" class="ee.webmedia.alfresco.series.bootstrap.IndependentCompoundWorkflowMainDocumentUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="false" />
+      <property name="enabled" value="${updater.icwmaindoc.enabled:false}" />
+   </bean>
 	
    <bean id="seriesService" class="ee.webmedia.alfresco.series.service.SeriesServiceImpl">
       <property name="dictionaryService" ref="DictionaryService" />

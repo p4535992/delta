@@ -976,6 +976,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     @Override
     public CompoundWorkflow saveCompoundWorkflow(CompoundWorkflow compoundWorkflowOriginal) {
+    	// todo
         return saveCompoundWorkflow(compoundWorkflowOriginal.copy(), getNewEventQueue());
     }
 
@@ -1034,7 +1035,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                 if (task.getAction() == Task.Action.FINISH) {
                     // Finish task
                     requireStatus(task, Status.IN_PROGRESS, Status.STOPPED, Status.UNFINISHED);
-                    setTaskFinishedWithSpecificOutcome(queue, task);
+                    setTaskFinishedWithSpecificOutcome(queue, task, compoundWorkflow.isHasDelegatedTasks());
                 } else if (task.getAction() == Task.Action.UNFINISH) {
                     // Unfinish task
                     requireStatus(task, Status.IN_PROGRESS, Status.STOPPED);
@@ -1105,7 +1106,26 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         for (Workflow workflow : compoundWorkflow.getWorkflows()) {
             if (!workflow.isSaved()) {
                 addedWorkflows.add(MessageUtil.getMessage(workflow.getType().getLocalName()));
+                
+                // add permissions to doc if groupAssingment tasks
+                /*
+                if (WorkflowSpecificModel.Types.GROUP_ASSIGNMENT_WORKFLOW.equals(workflow.getType())) {
+                	
+                	if (compoundWorkflow.isDocumentWorkflow()) {
+                		NodeRef docRef = nodeService.getPrimaryParent(compoundWorkflow.getNodeRef()).getParentRef();
+                		if (docRef != null && nodeService.exists(docRef)) {
+	                		List<Task> tasks = workflow.getTasks();
+	                    	for (Task task: tasks) {
+	                    		String authority = task.getOwnerId();
+	                   			privilegeService.setPermissions(docRef, authority, Privilege.VIEW_DOCUMENT_FILES, Privilege.VIEW_DOCUMENT_META_DATA, Privilege.EDIT_DOCUMENT);
+	                    	}
+                		}
+                	}
+                	
+                }
+                */
             }
+            
             // Create or update workflow
             saveWorkflow(queue, workflow);
 
@@ -1351,28 +1371,38 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     @Override
     public CompoundWorkflow delegate(Task originalTask) {
         CompoundWorkflow compoundWorkflow = preprocessAndCopyCompoundWorkflow(originalTask);
-        reorderDelegatedTasks(compoundWorkflow);
+        reorderDelegatedTasks(compoundWorkflow, originalTask);
         WorkflowEventQueue queue = getNewEventQueue();
         setDelegatedTasksInProgress(compoundWorkflow, queue);
+        compoundWorkflow.setHasDelegatedTasks(true);
         return saveCompoundWorkflow(compoundWorkflow, queue, true);
     }
 
-    private void reorderDelegatedTasks(CompoundWorkflow compoundWorkflow) {
+    private void reorderDelegatedTasks(CompoundWorkflow compoundWorkflow, Task originalTask) {
         List<Workflow> workflows = compoundWorkflow.getWorkflows();
         for (Workflow wf : workflows) {
             List<Task> tasks = wf.getModifiableTasks();
-            List<Task> tasksInValidOrder = new ArrayList<>();
+            List<Task> tasksInValidOrderFirstPart = new ArrayList<>();
+            List<Task> tasksInValidOrderLastPart = new ArrayList<>();
             List<Task> generatedTasks = new ArrayList<>();
+            boolean originalTaskFound = false;
             for (Task t : tasks) {
+            	
                 if (t.isGeneratedByDelegation()) {
                     generatedTasks.add(t);
+                } else if (originalTaskFound) {
+                	tasksInValidOrderLastPart.add(t);	
                 } else {
-                    tasksInValidOrder.add(t);
+                    tasksInValidOrderFirstPart.add(t);
                 }
+                if (originalTask.getNodeRef().equals(t.getNodeRef())) {
+            		originalTaskFound = true;
+            	}
             }
-            tasksInValidOrder.addAll(generatedTasks);
+            tasksInValidOrderFirstPart.addAll(generatedTasks);
             tasks.clear();
-            tasks.addAll(tasksInValidOrder);
+            tasks.addAll(tasksInValidOrderFirstPart);
+            tasks.addAll(tasksInValidOrderLastPart);
         }
     }
 
@@ -3374,8 +3404,11 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         setTaskFinishedOrUnfinished(queue, task, Status.FINISHED, outcomeLabelId, outcomeIndex, true);
     }
 
-    private void setTaskFinishedWithSpecificOutcome(WorkflowEventQueue queue, Task task) {
-        if (task.isType(WorkflowSpecificModel.Types.REVIEW_TASK, WorkflowSpecificModel.Types.OPINION_TASK)) {
+    private void setTaskFinishedWithSpecificOutcome(WorkflowEventQueue queue, Task task, boolean delegated) {
+    	if (!delegated && task.isType(WorkflowSpecificModel.Types.OPINION_TASK)) {
+    		String outcomeLabelId = "task_outcome_opinionTask0";
+            setTaskFinished(queue, task, 0, outcomeLabelId);
+    	} else if (task.isType(WorkflowSpecificModel.Types.REVIEW_TASK, WorkflowSpecificModel.Types.OPINION_TASK)) {
             String outcomeLabelId = "task_outcome_delegated";
             setTaskFinished(queue, task, 0, outcomeLabelId);
         } else {

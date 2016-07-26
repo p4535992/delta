@@ -23,7 +23,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 
-import ee.webmedia.alfresco.document.file.model.FileModel;
 import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
@@ -71,6 +70,7 @@ import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.file.model.File;
+import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.dvk.model.DvkModel;
 import ee.webmedia.alfresco.dvk.model.DvkReceivedLetterDocument;
@@ -92,6 +92,7 @@ import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
 import ee.webmedia.alfresco.signature.service.SignatureService;
 import ee.webmedia.alfresco.utils.DvkUtil;
 import ee.webmedia.alfresco.utils.FilenameUtil;
+import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
@@ -206,30 +207,39 @@ public abstract class DvkServiceImpl implements DvkService {
     public Collection<String> receiveDocuments() {
         final long maxReceiveDocumentsNr = parametersService.getLongParameter(Parameters.DVK_MAX_RECEIVE_DOCUMENTS_NR);
         final String dvkReceiveDocumentsInvoiceFolder = parametersService.getStringParameter(Parameters.DVK_RECEIVE_DOCUMENTS_INVOICE_FOLDER);
-        NodeRef dvkIncomingFolder = BeanHelper.getConstantNodeRefsBean().getReceivedDvkDocumentsRoot();
+        final NodeRef dvkIncomingFolder = BeanHelper.getConstantNodeRefsBean().getReceivedDvkDocumentsRoot();
         log.info("Starting to receive documents (max " + maxReceiveDocumentsNr + " documents at the time)");
         final Set<String> receiveDocuments = new HashSet<String>();
         Collection<String> lastReceiveDocuments;
         Collection<String> lastFailedDocuments;
-        Collection<String> previouslyFailedDvkIds = getPreviouslyFailedDvkIds();
+        final Collection<String> previouslyFailedDvkIds = getPreviouslyFailedDvkIds();
         int countServiceCalls = 0;
         do {
-            final Pair<Collection<String>, Collection<String>> results //
-            = receiveDocumentsServiceCall((int) maxReceiveDocumentsNr, dvkIncomingFolder, previouslyFailedDvkIds, dvkReceiveDocumentsInvoiceFolder);
-            lastReceiveDocuments = results.getFirst();
-            lastFailedDocuments = results.getSecond();
-            if (lastReceiveDocuments.size() != 0 || lastFailedDocuments.size() != 0) {
-                final ArrayList<String> markReceived = new ArrayList<String>(lastReceiveDocuments);
-                markReceived.addAll(lastFailedDocuments);
-                try {
-                    dhlXTeeService.markDocumentsReceived(markReceived);
-                    MonitoringUtil.logSuccess(MonitoredService.OUT_XTEE_DVK);
-                } catch (RuntimeException e) {
-                    MonitoringUtil.logError(MonitoredService.OUT_XTEE_DVK, e);
-                    throw e;
-                }
-                receiveDocuments.addAll(lastReceiveDocuments);
-            }
+        	Pair<Collection<String>, Collection<String>> results = BeanHelper.getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Pair<Collection<String>, Collection<String>>>() {
+	            @Override
+	            public Pair<Collection<String>, Collection<String>> execute() throws Throwable {
+	            	final Pair<Collection<String>, Collection<String>> results //
+	                = receiveDocumentsServiceCall((int) maxReceiveDocumentsNr, dvkIncomingFolder, previouslyFailedDvkIds, dvkReceiveDocumentsInvoiceFolder);
+	            	Collection<String> lastReceiveDocuments = results.getFirst();
+	            	Collection<String> lastFailedDocuments = results.getSecond();
+	                if (lastReceiveDocuments.size() != 0 || lastFailedDocuments.size() != 0) {
+	                    final ArrayList<String> markReceived = new ArrayList<String>(lastReceiveDocuments);
+	                    markReceived.addAll(lastFailedDocuments);
+	                    try {
+	                        dhlXTeeService.markDocumentsReceived(markReceived);
+	                        MonitoringUtil.logSuccess(MonitoredService.OUT_XTEE_DVK);
+	                    } catch (RuntimeException e) {
+	                        MonitoringUtil.logError(MonitoredService.OUT_XTEE_DVK, e);
+	                        throw e;
+	                    }
+	                    receiveDocuments.addAll(lastReceiveDocuments);
+	                }
+	                return results;
+	            }
+	        }, false, true);
+            
+        	lastReceiveDocuments = results.getFirst();
+        	lastFailedDocuments = results.getSecond();
             countServiceCalls++;
         } while (lastReceiveDocuments.size() >= maxReceiveDocumentsNr);
         log.info("received " + receiveDocuments.size() + " documents from dvk with " + countServiceCalls + " DVK service calls");
@@ -1231,8 +1241,7 @@ public abstract class DvkServiceImpl implements DvkService {
             InputStream signatureInput = null;
             try {
                 signatureInput = DvkUtil.getFileContents(file);
-                boolean isBdoc = FilenameUtil.isBdocFile(file.getFileName());
-                signatureItems = BeanHelper.getSignatureService().getDataItemsAndSignatureItems(signatureInput, false, isBdoc);
+                signatureItems = BeanHelper.getDigiDoc4JSignatureService().getDataItemsAndSignatureItems(signatureInput, false);
             } catch (SignatureException e) {
                 log.error("Failed to retrieve signatures from " + file.getFileName() + " (" + file.getFileGuid() + ")!", e);
                 throw new RuntimeException(e);

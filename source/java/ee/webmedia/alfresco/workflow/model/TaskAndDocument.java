@@ -245,5 +245,4 @@ public class TaskAndDocument implements Serializable {
     public NodeRef getActionNodeRef() {
         return actionNodeRef;
     }
-
 }

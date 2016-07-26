@@ -2525,6 +2525,78 @@ function performSigningPluginOperation(operation, hashHex, certId, path) {
    }
 }
 
+
+
+function signDigidoc4j() {
+	try {
+		if (window.location.protocol != "https:") {
+			$jQ('#signWait').html('Veebis allkirjastamise käivitamine on võimalik vaid https aadressilt');
+			return;
+		}
+		window.hwcrypto.getCertificate({lang: 'ee'}).then(function(certificate) {
+	        return fetchDigidoc4jHash(certificate);
+	    }, function(reason) {
+			if (reason == 'Error: user_cancel') {
+				$jQ('#signWait').html('Allkirjastamine katkestati');
+			} else if (reason == 'Error: no_certificates') {
+				$jQ('#signWait').html('Sertifikaate ei leitud');
+			} else {
+				$jQ('#signWait').html('Tehniline viga');
+			}
+	    });
+	   
+	} catch(ex) {
+		$jQ('#signWait').html('Viga: ' + (ex.message != undefined ? ex.message : ex));
+	}
+}
+
+function fetchDigidoc4jHash(cert) {
+	var uri = getContextPath()
+			+ "/ajax/invoke/WorkflowBlockBean.getDigidoc4jHash";
+	$jQ.ajax({
+				type : 'POST',
+				mode : 'queue',
+				url : uri,
+				data : $jQ.param({
+					'certInHex' : cert.hex
+				}),
+				dataType : 'html',
+				success : function(hash, status, xhr) {
+					window.hwcrypto.sign(cert, {type: 'SHA-256', hex: hash},{lang: 'ee'}).then(function(signature) {
+						//return oamSubmitForm('dialog','dialog:dialog-body:finishDigidoc4jSigning',null,[['signInHex', signature.hex]]);
+						return finishDigidoc4jSign(signature.hex);
+				}, function(reason) {
+					if (reason == 'Error: user_cancel') {
+						$jQ('#signWait').html('Allkirjastamine katkestati');
+					} else if (reason == 'Error: pin_blocked') {
+						$jQ('#signWait').html('Allkirjastamise PIN on blokeeritud');
+					} else if (reason == 'Error: invalid_argument') {
+						$jQ('#signWait').html('Vale allkirjastamise PIN');
+					} else {
+						$jQ('#signWait').html('Tehniline viga');
+					}
+				});
+			   }
+			});
+}
+
+function finishDigidoc4jSign(signInHex) {
+	var uri = getContextPath()
+			+ "/ajax/invoke/WorkflowBlockBean.finishDigidoc4jSigning";
+	$jQ.ajax({
+				type : 'POST',
+				mode : 'queue',
+				url : uri,
+				data : $jQ.param({
+					'signInHex' : signInHex
+				}),
+				dataType : 'html',
+				success : function(responseOutput, status, xhr) {
+					cancelSign();
+				}
+			});
+}
+
 function getMobileIdSignature() {
    var uri = getContextPath() + "/ajax/invoke/WorkflowBlockBean.getMobileIdSignature";
    var mobileIdChallengeId = $jQ('#mobileIdChallengeId').text();

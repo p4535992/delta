@@ -367,6 +367,10 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
                 if (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) {
                     userPriv.add(Privilege.EDIT_DOCUMENT);
                 }
+                if (task.isStatus(Status.IN_PROGRESS) && task.isType(WorkflowSpecificModel.Types.GROUP_ASSIGNMENT_TASK)) {
+                	userPriv.add(Privilege.EDIT_DOCUMENT);
+                	userPriv.add(Privilege.VIEW_DOCUMENT_FILES);
+                }
                 if (isFirstConfirmationTask && task.isType(WorkflowSpecificModel.Types.CONFIRMATION_TASK)) {
                     userPriv.add(Privilege.EDIT_DOCUMENT);
                     isFirstConfirmationTask = false;

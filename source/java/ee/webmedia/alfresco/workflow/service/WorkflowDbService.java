@@ -99,7 +99,7 @@ public interface WorkflowDbService {
     /**
      * Search tasks from all stores
      */
-    Pair<List<NodeRef>, Boolean> searchTaskNodeRefs(String queryCondition, List<Object> arguments, int limit);
+    Pair<List<NodeRef>, Boolean> searchTaskNodeRefs(String queryCondition, List<Object> arguments, int limit, String userId);
 
     Map<NodeRef, Pair<String, String>> searchTaskSendStatusInfo(String queryCondition, List<Object> arguments);
 
@@ -169,6 +169,8 @@ public interface WorkflowDbService {
     Map<NodeRef, Task> loadTasksWithFiles(List<NodeRef> taskNodeRefs, Set<QName> propsToLoad);
 
     Map<NodeRef, Task> getTasks(List<NodeRef> taskRefs);
+    
+    Set<NodeRef> getAllCurrentUserTasksCompoundWorkflowRefs();
 
     Map<NodeRef, Task> getTasksWithCompoundWorkflowRef(List<NodeRef> taskRefs);
 
@@ -178,6 +180,11 @@ public interface WorkflowDbService {
      * This method introduces remarkable performance impact, so it should be used only in case document workflows are enabled in application.
      */
     Pair<List<NodeRef>, Boolean> searchTaskNodeRefsCheckLimitedSeries(String queryCondition, String userId, List<Object> arguments, int limit);
+    
+    /**
+     * This method introduces remarkable performance impact, so it should be used only for guest users.
+     */
+    Pair<List<NodeRef>, Boolean> searchTaskCompoundWorkflowsNodeRefs(String queryCondition, final String userId, List<Object> arguments, final int limit);
 
     Map<NodeRef, String> getInProgressTaskOwners(Collection<NodeRef> compoundWorkflows);
 

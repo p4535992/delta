@@ -210,8 +210,15 @@ public class FieldDetailsDialog extends BaseDialogBean {
     private boolean validateDecMappings(boolean valid, List<String> incomingDecElements, List<String> outgoingDecElements) {
         List<String> incomingDecMappings = new ArrayList<String>();
         if (incomingDecElements != null) {
+        	boolean repeatitionFound = false;
             for (String element : incomingDecElements) {
-                // One incoming element can contain multiple mappings (seperated by a comma) that will be concatenated when filling document properties from DVK capsule
+                // chack there is no repeating rows
+            	if (!repeatitionFound && hasRepeatitions(element, incomingDecElements)) {
+            		MessageUtil.addErrorMessage("field_details_error_incomming_dvk_rows_must_be_unique");
+            		repeatitionFound = true;
+                    valid = false;
+            	}
+            	// One incoming element can contain multiple mappings (seperated by a comma) that will be concatenated when filling document properties from DVK capsule
                 if (element.contains(",")) {
                     // Also check if current field is String value compatible
                     if (valid && !DecContainerHandler.isOfStringType(field.getFieldTypeEnum())) {
@@ -233,10 +240,33 @@ public class FieldDetailsDialog extends BaseDialogBean {
             valid = validateMappings(incomingDecMappings, MessageUtil.getMessage("docadmin_documentAdminModel.property.docadmin_relatedIncomingDecElement.title"), valid, false);
         }
         if ((outgoingDecElements != null && !outgoingDecElements.isEmpty())) {
+        	// chack there is no repeating rows
+        	for (String element : outgoingDecElements) {
+	        	if (hasRepeatitions(element, outgoingDecElements)) {
+	        		MessageUtil.addErrorMessage("field_details_error_outgoing_dvk_rows_must_be_unique");
+	                valid = false;
+	                break;
+	        	}
+        	}
+        	
             valid = validateMappings(outgoingDecElements, MessageUtil.getMessage("docadmin_documentAdminModel.property.docadmin_relatedOutgoingDecElement.title"), valid, true);
         }
 
         return valid;
+    }
+    
+    private boolean hasRepeatitions(String toCheck, List<String> values) {
+    	int foundCount = 0;
+    	for (String value: values) {
+    		if (toCheck.equals(value)) {
+    			foundCount++;
+    		}
+    	}
+    	if (foundCount > 1) {
+    		return true;
+    	} else {
+    		return false;
+    	}
     }
 
     private boolean validateMappings(Iterable<String> decMappings, String fieldName, boolean valid, boolean isOutgoing) {

@@ -23,6 +23,9 @@ public class DeleteDocumentEvaluator extends SharedResourceEvaluator {
         if (BeanHelper.getDocumentDialogHelperBean().isInEditMode()) {
             return false;
         }
+        if (BeanHelper.getUserService().isGuest()) {
+        	return false;
+        }
         return BeanHelper.getUserService().isDocumentManager()
                 || (StringUtils.isBlank((String) docNode.getProperties().get(DocumentCommonModel.Props.REG_NUMBER))
                 && AuthenticationUtil.getRunAsUser().equals(docNode.getProperties().get(DocumentCommonModel.Props.OWNER_ID.toString())));
@@ -33,6 +36,9 @@ public class DeleteDocumentEvaluator extends SharedResourceEvaluator {
         DocumentDynamicActionsGroupResources resource = (DocumentDynamicActionsGroupResources) sharedResource;
         if (!resource.isWorkspaceNode() || resource.isInEditMode()) {
             return false;
+        }
+        if (BeanHelper.getUserService().isGuest()) {
+        	return false;
         }
         return BeanHelper.getUserService().isDocumentManager() || (StringUtils.isBlank(resource.getRegNr()) && resource.isDocOwner());
     }

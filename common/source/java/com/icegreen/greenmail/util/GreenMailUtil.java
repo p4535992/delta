@@ -52,7 +52,7 @@ import ee.webmedia.alfresco.monitoring.MonitoringUtil;
  * @since Jan 29, 2006 Changed newMimeMessage(String param) for UTF-8 support.
  */
 public class GreenMailUtil {
-    private static final Log log = LogFactory.getLog(AppendCommand.class);
+    private static final Log log = LogFactory.getLog(GreenMailUtil.class);
 
     private static final FastDateFormat dateFormat = FastDateFormat.getInstance("yyyy-MM-dd-HH-mm-ss-SSSZ");
 

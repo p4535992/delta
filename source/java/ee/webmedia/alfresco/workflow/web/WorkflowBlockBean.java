@@ -9,7 +9,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getFileService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getJsfBindingHelper;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getSignatureService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDigiDoc4JSignatureService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowConstantsBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowDbService;
@@ -83,6 +83,8 @@ import org.apache.commons.collections.comparators.TransformingComparator;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
+import org.digidoc4j.Container;
+import org.digidoc4j.DataToSign;
 import org.joda.time.LocalDate;
 
 import ee.webmedia.alfresco.app.AppConstants;
@@ -116,6 +118,7 @@ import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
+import ee.webmedia.alfresco.signature.web.Digidoc4jSignatureModalComponent;
 import ee.webmedia.alfresco.signature.web.SignatureAppletModalComponent;
 import ee.webmedia.alfresco.signature.web.SignatureBlockBean;
 import ee.webmedia.alfresco.utils.ActionUtil;
@@ -144,6 +147,7 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 import ee.webmedia.alfresco.workflow.service.type.DueDateExtensionWorkflowType;
 import ee.webmedia.alfresco.workflow.web.PrintTableServlet.TableMode;
+
 
 public class WorkflowBlockBean implements DocumentDynamicBlock {
 
@@ -650,7 +654,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                 response = compoundWorkflowDialog.saveOrConfirmValidatedWorkflow(null, true);
             } else {
                 params.add(new Pair<String, Object>(ATTRIB_FINISH_VALIDATED, Boolean.TRUE));
-                response = compoundWorkflowDialog.saveWorkflow(FacesContext.getCurrentInstance(), workflowBlockCallback, params, null);
+                response = compoundWorkflowDialog.saveWorkflow(FacesContext.getCurrentInstance(), workflowBlockCallback, params, null, false);
             }
             return StringUtils.isNotBlank(response);
         }
@@ -879,7 +883,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             return;
         }
         if (SignatureTaskOutcome.SIGNED_IDCARD.equals((int) outcomeIndex)) {
-            showModalOrSign();
+        	showModalDigidoc4j();
         } else {
             HttpSession session = (HttpSession) FacesContext.getCurrentInstance().getExternalContext().getSession(false);
             signingFlow.resolveUserPhoneNr(session);
@@ -1140,6 +1144,11 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             boolean finishedSigning = signingFlow.signDocumentImpl(signatureHex);
             if (!finishedSigning) {
                 resetSigningData();
+            } else {
+            	// unlock if compound wf was locked
+                if (lockedCompoundWorkflowNodeRef != null) {
+                	getDocLockService().unlockIfOwner(lockedCompoundWorkflowNodeRef);
+                }
             }
             notifyDialogsIfNeeded(false, finishTask);
         } finally {
@@ -1148,10 +1157,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                 resetSigningData();
             } else {
                 showModalOrSign();
-            }
-            // unlock if compound wf was locked
-            if (lockedCompoundWorkflowNodeRef != null) {
-            	getDocLockService().unlockIfOwner(lockedCompoundWorkflowNodeRef);
             }
         }
     }
@@ -1187,7 +1192,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     }
 
     public void cancelSign() {
-        closeModal();
+        closeModalDigidoc4j();
         resetSigningData();
         notifyDialogsIfNeeded();
     }
@@ -1223,7 +1228,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             getMobileIdPhoneNrModal().setRendered(false);
         }
     }
-
+    
     @ResponseMimetype(MimetypeMap.MIMETYPE_HTML)
     public void getMobileIdSignature() throws IOException {
         ResponseWriter out = FacesContext.getCurrentInstance().getResponseWriter();
@@ -1235,6 +1240,70 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             out.write(SigningFlowContainer.handleInvalidSigantureState());
         }
     }
+    
+    @ResponseMimetype(MimetypeMap.MIMETYPE_HTML)
+    public void getDigidoc4jHash() throws IOException {
+        ResponseWriter out = FacesContext.getCurrentInstance().getResponseWriter();
+        ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
+        String certInHex = (String) externalContext.getRequestParameterMap().get("certInHex");
+        
+        try {
+            long step0 = System.currentTimeMillis();
+            if (!signingFlow.collectAndCheckSigningFiles()) {
+            	closeModalDigidoc4j();
+                resetSigningData();
+                return;
+            }
+            SignatureDigest signatureDigest = getDocumentService().prepareDocumentDigest(signingFlow.getSigningDocument(0), certInHex,
+                    signingFlow.getMainDocumentRef() != null ? compoundWorkflow.getNodeRef() : null);
+            long step1 = System.currentTimeMillis();
+            signingFlow.setSignatureDigest(signatureDigest);
+            out.write(signatureDigest.getDigestHex());
+            if (log.isInfoEnabled()) {
+                log.info("prepareDocumentDigest took total time " + (step1 - step0) + " ms\n    service call - " + (step1 - step0) + " ms");
+            }
+        } catch (SignatureException e) {
+            SignatureBlockBean.addSignatureError(e);
+            closeModalDigidoc4j();
+            resetSigningData();
+        } catch (UnableToPerformException e) {
+            MessageUtil.addStatusMessage(e);
+            closeModalDigidoc4j();
+            resetSigningData();
+        }
+    }
+    
+    //@ResponseMimetype(MimetypeMap.MIMETYPE_HTML)
+    public void finishDigidoc4jSigning() throws IOException {
+    	@SuppressWarnings("unchecked")
+        Map<String, String> requestParameterMap = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap();
+        String signInHex = requestParameterMap.get("signInHex");
+       
+        try {
+            boolean finishTask = signingFlow.isFinishTaskStep();
+            boolean finishedSigning = signingFlow.signDocumentImpl(signInHex);
+            if (!finishedSigning) {
+                resetSigningData();
+            } else {
+            	// unlock if compound wf was locked
+                if (lockedCompoundWorkflowNodeRef != null) {
+                	getDocLockService().unlockIfOwner(lockedCompoundWorkflowNodeRef);
+                }
+            }
+            notifyDialogsIfNeeded(false, finishTask);
+        } finally {
+            if (signingFlow == null || signingFlow.isSigningQueueEmpty()) {
+            	closeModalDigidoc4j();
+                resetSigningData();
+                notifyDialogsIfNeeded();
+            } else {
+            	// TODO: redo digidoc4j
+                showModalOrSign();
+            }
+        }
+        
+        
+    }
 
     public void finishMobileIdSigning(@SuppressWarnings("unused") ActionEvent event) {
         try {
@@ -1242,6 +1311,11 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             boolean finishedMobileIdSigning = signingFlow.finishMobileIdSigning();
             if (!finishedMobileIdSigning) {
                 resetSigningData();
+            } else {
+            	// unlock if compound wf was locked
+                if (lockedCompoundWorkflowNodeRef != null) {
+                	getDocLockService().unlockIfOwner(lockedCompoundWorkflowNodeRef);
+                }
             }
             notifyDialogsIfNeeded(false, finishTask);
         } finally {
@@ -1250,10 +1324,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                 resetSigningData();
             } else {
                 showMobileIdModalOrSign();
-            }
-            // unlock if compound wf was locked
-            if (lockedCompoundWorkflowNodeRef != null) {
-            	getDocLockService().unlockIfOwner(lockedCompoundWorkflowNodeRef);
             }
         }
     }
@@ -1490,11 +1560,13 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         return null;
     }
 
+    
+    
     private void generateSignatureAppletModal(List<UIComponent> panelGroupChildren, Application app) {
         // 1st child must always be SignatureAppletModalComponent
-        panelGroupChildren.add(new SignatureAppletModalComponent());
+        panelGroupChildren.add(new Digidoc4jSignatureModalComponent());
 
-        if (getSignatureService().isMobileIdEnabled()) {
+        if (getDigiDoc4JSignatureService().isMobileIdEnabled()) {
             ValidatingModalLayerComponent mobileIdPhoneNrComponent = (ValidatingModalLayerComponent) app.createComponent(ValidatingModalLayerComponent.class.getCanonicalName());
             mobileIdPhoneNrComponent.setId("mobileIdPhoneNrModal");
             mobileIdPhoneNrComponent.setRendered(false);
@@ -1550,7 +1622,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     }
 
     public static boolean isMobileIdOutcomeAndMobileIdDisabled(QName taskType, int outcomeIndex) {
-        return isMobileIdOutcome(taskType, outcomeIndex) && !getSignatureService().isMobileIdEnabled();
+        return isMobileIdOutcome(taskType, outcomeIndex) && !getDigiDoc4JSignatureService().isMobileIdEnabled();
     }
 
     public static boolean isMobileIdOutcome(QName taskType, int outcomeIndex) {
@@ -1650,6 +1722,10 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     private void showModal() {
         getIdCardModalApplet().showModal();
     }
+    
+    private void showModalDigidoc4j() {
+    	getIdCardDigidoc4jModalComponent().showModal();
+    }
 
     private void showModal(String digestHex, String certId) {
         getIdCardModalApplet().showModal(digestHex, certId);
@@ -1658,9 +1734,17 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     private void closeModal() {
         getIdCardModalApplet().closeModal();
     }
+    
+    private void closeModalDigidoc4j() {
+    	getIdCardDigidoc4jModalComponent().closeModal();
+    }
 
     private SignatureAppletModalComponent getIdCardModalApplet() {
         return (SignatureAppletModalComponent) getDataTableGroupInner().getChildren().get(0);
+    }
+    
+    private Digidoc4jSignatureModalComponent getIdCardDigidoc4jModalComponent() {
+        return (Digidoc4jSignatureModalComponent) getDataTableGroupInner().getChildren().get(0);
     }
 
     private ValidatingModalLayerComponent getMobileIdPhoneNrModal() {
@@ -1828,7 +1912,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         String docRef = BeanHelper.getDocumentDynamicDialog().getDocument().getNodeRef().toString();
         List<SignatureTaskOutcome> signingMethods = new ArrayList<>();
         signingMethods.add(SignatureTaskOutcome.SIGNED_IDCARD);
-        boolean mobileIdEnabled = getSignatureService().isMobileIdEnabled();
+        boolean mobileIdEnabled = getDigiDoc4JSignatureService().isMobileIdEnabled();
         if (mobileIdEnabled) {
             signingMethods.add(SignatureTaskOutcome.SIGNED_MOBILEID);
         }
@@ -1908,7 +1992,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     }
 
     public boolean isMobileIdDisabled() {
-        return !getSignatureService().isMobileIdEnabled();
+        return !getDigiDoc4JSignatureService().isMobileIdEnabled();
     }
 
     public CustomChildrenCreator getNoteBlockRowFileGenerator() {

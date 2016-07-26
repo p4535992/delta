@@ -51,6 +51,7 @@ import org.alfresco.repo.security.permissions.PermissionServiceSPI;
 import org.alfresco.repo.tenant.TenantService;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport.TxnReadState;
+import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.repo.transaction.TransactionListenerAdapter;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
@@ -202,6 +203,14 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
         policyComponent.bindClassBehaviour(QName.createQName(NamespaceService.ALFRESCO_URI, "beforeDeleteNode"), ContentModel.TYPE_PERSON, new JavaBehaviour(this,
                 "beforeDeleteNode"));
 
+    }
+    
+    public void clearPersonCache() {
+    	personCache.clear();
+    }
+    
+    public void clearPersonNodesCache() {
+    	personNodesCache.clear();
     }
 
     public UserNameMatcher getUserNameMatcher()
@@ -731,6 +740,14 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
             if (homeFolder == null)
             {
                 final ChildAssociationRef ref = nodeService.getPrimaryParent(person);
+
+
+                boolean requiresNew = false;
+
+                if (AlfrescoTransactionSupport.getTransactionReadState() != TxnReadState.TXN_READ_WRITE) {
+                    requiresNew = true;
+                }
+                
                 transactionService.getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Object>()
                 {
                     @Override
@@ -739,7 +756,7 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
                         homeFolderManager.onCreateNode(ref);
                         return null;
                     }
-                }, false, true);
+                }, false, requiresNew);
                 
             }
         }

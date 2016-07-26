@@ -10,7 +10,7 @@
 <a:panel id="eventplans-panel" styleClass="panel-100 with-pager" label="#{msg.eventplan_list_title2}" progressive="true">
 
    <%-- Main List --%>
-   <a:richList id="versionsList" viewMode="details" pageSize="#{BrowseBean.pageSizeSpaces}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
+   <a:richList id="versionsList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
       width="100%" value="#{DialogManager.bean.plans}" var="r" initialSortColumn="name">
 
       <%-- 1. Name --%>

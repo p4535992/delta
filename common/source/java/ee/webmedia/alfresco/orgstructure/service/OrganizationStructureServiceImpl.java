@@ -97,6 +97,9 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
         if (!applicationConstantsBean.isGroupsEditingAllowed()) {
             return 0; // System uses Active Directory
         }
+        //clear person and personNodes cache to avoid cache instability
+        getPersonService().clearPersonCache();
+        getPersonService().clearPersonNodesCache();
 
         NodeRef zone = authorityService.getOrCreateZone(STRUCT_UNIT_BASED);
         String structUnitZoneName = (String) nodeService.getProperty(zone, ContentModel.PROP_NAME);
@@ -165,7 +168,7 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
                 if (orgPath != null) {
                     for (String op : orgPath) {
                         if (StringUtils.equals(op, groupName)) {
-                            if (!isAlreadyGroupMember) {
+                            if (!isAlreadyGroupMember && getPersonService().personExists(username)) {
                                 authorityService.addAuthority(groupAuthority, username);
                             }
                             orgStructGroupMembers.remove(username);
@@ -184,7 +187,7 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
                     continue;
                 }
                 if (StringUtils.equals(groupName, orgStruct.getName())) {
-                    if (!isAlreadyGroupMember) {
+                    if (!isAlreadyGroupMember && getPersonService().personExists(username)) {
                         authorityService.addAuthority(groupAuthority, username);
                     }
                     orgStructGroupMembers.remove(username);

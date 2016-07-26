@@ -100,6 +100,7 @@
             <entry key="SUPERVISION" value="${ldap.synchronization.systematicGroupQuery.supervision}" />
             <entry key="ARCHIVISTS" value="${ldap.synchronization.systematicGroupQuery.archivists}" />
             <entry key="ACCOUNTANTS" value="${ldap.synchronization.systematicGroupQuery.accountants}" />
+            <entry key="GUESTS" value="${ldap.synchronization.systematicGroupQuery.guests}" />
          </map>
       </property>
    </bean>

@@ -38,6 +38,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.security.AuthorityType;
+import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.apache.commons.collections.CollectionUtils;
@@ -61,6 +62,7 @@ import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.utils.Predicate;
 import ee.webmedia.alfresco.utils.RepoUtil;
@@ -70,6 +72,7 @@ import ee.webmedia.alfresco.utils.Transformer;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.workflow.bootstrap.MoveTaskFileToChildAssoc;
 import ee.webmedia.alfresco.workflow.model.Comment;
+import ee.webmedia.alfresco.workflow.model.CompoundWorkflowType;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowBlockItem;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
@@ -803,19 +806,99 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     }
 
     @Override
-    public Pair<List<NodeRef>, Boolean> searchTaskNodeRefs(String queryCondition, List<Object> arguments, int limit) {
-        boolean useLimit = limit > -1;
-        String sqlQuery = "SELECT task_id, store_id FROM delta_task WHERE "
+    public Pair<List<NodeRef>, Boolean> searchTaskNodeRefs(String queryCondition, List<Object> arguments, final int limit, final String userId) {
+    	
+    	final boolean isGuestUser = (StringUtils.isNotBlank(userId))?BeanHelper.getUserService().isGuest(userId):false;
+        final Set<String> currentUserGroups = (StringUtils.isNotBlank(userId))?getCurrentUserGroups(userId, true):new HashSet<String>();
+        final BulkLoadNodeService bulkLoadNodeService = BeanHelper.getBulkLoadNodeService();
+        
+    	final boolean useLimit = limit > -1;
+        String sqlQuery = "SELECT task_id, store_id, wfc_owner_id, wfs_compound_workflow_store_id as cw_store_id, wfs_compound_workflow_id as cw_uuid  FROM delta_task WHERE "
                 + SearchUtil.joinQueryPartsAnd(getSearchableAndNotInArchiveSpacesstoreCondition(), queryCondition) + (useLimit ? " LIMIT " + (limit + 1) : "");
         Object[] argumentsArray = arguments.toArray();
-        List<NodeRef> taskRefs = jdbcTemplate.query(sqlQuery, new TaskNodeRefRowMapper(), argumentsArray);
-        explainQuery(sqlQuery, argumentsArray);
-        boolean limitedResult = false;
-        if (useLimit && taskRefs.size() > limit) {
-            limitedResult = true;
-            taskRefs.remove(taskRefs.size() - 1);
+        final List<NodeRef> userAvailableTasks = new ArrayList<>();
+        List<Boolean> enoughTasksRetrievedList = jdbcTemplate.query(sqlQuery, new ParameterizedRowMapper<Boolean>() {
+            private boolean enoughTasksRetrieved = false;
+            private boolean hasGuestRightsOnDocument(NodeRef docNodeRef) {
+            	boolean canSee = false;
+            	if (nodeService.exists(docNodeRef)) {
+	            	List<String> authorities = BeanHelper.getPrivilegeService().getAuthoritiesWithPrivilege(docNodeRef, Privilege.VIEW_DOCUMENT_META_DATA);
+		        	String docOwnerId = (String) nodeService.getProperty(docNodeRef, DocumentCommonModel.Props.OWNER_ID);
+		        	if (StringUtils.isNotBlank(docOwnerId)) {
+		        		authorities.add(docOwnerId);
+		        	}
+		        	LOG.info("Docref = " + docNodeRef + ", doc authorities=" + Arrays.toString(authorities.toArray()));
+		            for (String authority : authorities) {
+		            	if (currentUserGroups.contains(authority)) {
+		            		canSee = true;
+		            		break;
+		            	}
+		            }
+            	}
+            	return canSee;
+            }
+            @Override
+            public Boolean mapRow(ResultSet rs, int rowNum) throws SQLException {
+                if (enoughTasksRetrieved) {
+                    return null;
+                }
+                NodeRef taskRef = nodeRefFromRs(rs, TASK_ID_FIELD);
+                if (isGuestUser) {
+                	String ownerId = rs.getString("wfc_owner_id");
+                    if (StringUtils.isNotBlank(userId) && userId.equals(ownerId)) {
+                    	LOG.info("userId.equals(ownerId) " + ownerId); 
+                    	userAvailableTasks.add(taskRef);
+                    } else {
+                		Long cwStoreId = rs.getLong("cw_store_id");
+                    	String cwUuid = rs.getString("cw_uuid");
+                    	if (cwStoreId != null && StringUtils.isNotBlank(cwUuid)) {
+                    		NodeRef cwNodeRef = new NodeRef(bulkLoadNodeService.getStoreRefByDbId(cwStoreId), cwUuid);
+                    		if (cwNodeRef != null && nodeService.exists(cwNodeRef)) {
+                    			CompoundWorkflowType cwType = BeanHelper.getWorkflowService().getCompoundWorkflowType(cwNodeRef);
+                    			if (CompoundWorkflowType.DOCUMENT_WORKFLOW.equals(cwType)) {
+                    				NodeRef docNodeRef = nodeService.getPrimaryParent(cwNodeRef).getParentRef();
+                    				if (hasGuestRightsOnDocument(docNodeRef)) {
+        				        		userAvailableTasks.add(taskRef);
+        				        	}
+                    			} else {
+                        			List<NodeRef> docRefs = BeanHelper.getWorkflowService().getCompoundWorkflowDocumentRefs(cwNodeRef);
+                        			if (docRefs != null) {
+	                        			for (NodeRef docNodeRef: docRefs) {
+	                        				if (hasGuestRightsOnDocument(docNodeRef)) {
+	            				        		userAvailableTasks.add(taskRef);
+	            				        		break;
+	            				        	}
+	                        			}
+                        			}
+                    			}
+                    		}
+                    	}
+                    }
+                    if (useLimit && userAvailableTasks.size() > limit) {
+                        enoughTasksRetrieved = true;
+                    }
+                } else {
+                    userAvailableTasks.add(taskRef);
+                    if (useLimit && userAvailableTasks.size() > limit) {
+                        enoughTasksRetrieved = true;
+                    }
+                
+                }
+                return enoughTasksRetrieved;
+            }
+        }, argumentsArray);
+        
+        boolean limittedResult = false;
+        for (boolean enoughTasksRetrieved: enoughTasksRetrievedList) {
+        	if (enoughTasksRetrieved) {
+        		limittedResult = true;
+        		break;
+        	}
         }
-        return Pair.newInstance(taskRefs, limitedResult);
+        LOG.info("(searchTaskNodeRefs) sqlQuery = " + sqlQuery + ",  taskRefs: " + Arrays.toString(userAvailableTasks.toArray()));
+        explainQuery(sqlQuery, argumentsArray);
+        
+        return Pair.newInstance(userAvailableTasks, limittedResult);
     }
 
     @Override
@@ -846,13 +929,13 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             restrictedSeries.addAll(documentSearchService.searchRestrictedSeries(documentSearchService.getAllStoresWithArchivalStoreVOs()));
         }
         if (restrictedSeries.isEmpty() || BeanHelper.getUserService().isAdministrator()) {
-            return searchTaskNodeRefs(queryCondition, arguments, limit);
+            return searchTaskNodeRefs(queryCondition, arguments, limit, userId);
         }
         final BulkLoadNodeService bulkLoadNodeService = BeanHelper.getBulkLoadNodeService();
         // 1) get all tasks that match search criteria without checking permissions for restricted series.
         // Retrieve document and series nodeRef to perform additional check later if needed
-        String sqlQuery = "SELECT task_id, task.store_id, series_prop.string_value as series_ref, owner_prop.string_value as owner_id, "
-                + " document.store_id as document_store_id, document.uuid as document_uuid FROM delta_task task "
+        String sqlQuery = "SELECT task_id, wfc_owner_id, wfs_searchable_compound_workflow_type, task.store_id, series_prop.string_value as series_ref, owner_prop.string_value as owner_id, "
+                + " document.store_id as document_store_id, document.uuid as document_uuid, task.wfs_compound_workflow_store_id as cw_store_id, task.wfs_compound_workflow_id as cw_uuid FROM delta_task task "
                 + " left join alf_node compound_workflow on "
                 + "         (task.wfs_compound_workflow_store_id = compound_workflow.store_id and task.wfs_compound_workflow_id = compound_workflow.uuid "
                 + "         and compound_workflow.type_qname_id = "
@@ -870,30 +953,92 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
 
         Object[] argumentsArray = arguments.toArray();
         final boolean useLimit = limit > -1;
+        
+        final boolean isGuestUser = BeanHelper.getUserService().isGuest(userId);
+        final Set<String> currentUserGroups = getCurrentUserGroups(userId, true);
+        LOG.info("userID = " + userId + ", isGeust = " + isGuestUser + ", currentUserGroups: " + Arrays.toString(currentUserGroups.toArray()));
+        
         final List<NodeRef> userAvailableTasks = new ArrayList<>();
         final Map<NodeRef, NodeRef> restrictedTaskDocuments = new HashMap<>();
         jdbcTemplate.query(sqlQuery, new ParameterizedRowMapper<Void>() {
             private boolean enoughTasksRetrieved = false;
-
+            private boolean hasGuestRightsOnDocument(NodeRef docNodeRef) {
+            	boolean canSee = false;
+            	if (nodeService.exists(docNodeRef)) {
+	            	List<String> authorities = BeanHelper.getPrivilegeService().getAuthoritiesWithPrivilege(docNodeRef, Privilege.VIEW_DOCUMENT_META_DATA);
+		        	String docOwnerId = (String) nodeService.getProperty(docNodeRef, DocumentCommonModel.Props.OWNER_ID);
+		        	if (StringUtils.isNotBlank(docOwnerId)) {
+		        		authorities.add(docOwnerId);
+		        	}
+		        	LOG.info("Docref = " + docNodeRef + ", doc authorities=" + Arrays.toString(authorities.toArray()));
+		            for (String authority : authorities) {
+		            	if (currentUserGroups.contains(authority)) {
+		            		canSee = true;
+		            		break;
+		            	}
+		            }
+            	}
+            	return canSee;
+            }
             @Override
             public Void mapRow(ResultSet rs, int rowNum) throws SQLException {
                 if (enoughTasksRetrieved) {
                     return null;
                 }
                 NodeRef taskRef = nodeRefFromRs(rs, TASK_ID_FIELD);
-                String seriesRefStr = rs.getString("series_ref");
-                NodeRef seriesRef = StringUtils.isNotBlank(seriesRefStr) ? new NodeRef(seriesRefStr) : null;
-                if (seriesRef != null && restrictedSeries.contains(seriesRef)) {
-                    String ownerId = rs.getString("owner_id");
-                    if (!userId.equals(ownerId)) {
-                        restrictedTaskDocuments.put(taskRef,
-                                new NodeRef(bulkLoadNodeService.getStoreRefByDbId(rs.getLong("document_store_id")), rs.getString("document_uuid")));
+                if (isGuestUser) {
+                	String ownerId = rs.getString("wfc_owner_id");
+                    if (userId.equals(ownerId)) {
+                    	LOG.info("userId.equals(ownerId) " + ownerId); 
+                    	userAvailableTasks.add(taskRef);
+                    } else {
+                    	
+                    	Long docStoreId = rs.getLong("document_store_id");
+                    	String docUuid = rs.getString("document_uuid");
+                    	// document compound workflow
+                    	if (docStoreId != null && StringUtils.isNotBlank(docUuid)) {
+	                    	NodeRef docNodeRef = new NodeRef(bulkLoadNodeService.getStoreRefByDbId(docStoreId), docUuid);
+				        	if (hasGuestRightsOnDocument(docNodeRef)) {
+				        		userAvailableTasks.add(taskRef);
+				        	}
+                    	} else {
+                    		Long cwStoreId = rs.getLong("cw_store_id");
+                        	String cwUuid = rs.getString("cw_uuid");
+                        	// independant compound workflow
+                        	if (cwStoreId != null && StringUtils.isNotBlank(cwUuid)) {
+                        		NodeRef cwNodeRef = new NodeRef(bulkLoadNodeService.getStoreRefByDbId(cwStoreId), cwUuid);
+                        		if (cwNodeRef != null && nodeService.exists(cwNodeRef)) {
+                        			List<NodeRef> docRefs = BeanHelper.getWorkflowService().getCompoundWorkflowDocumentRefs(cwNodeRef);
+                        			if (docRefs != null) {
+	                        			for (NodeRef docNodeRef: docRefs) {
+	                        				if (hasGuestRightsOnDocument(docNodeRef)) {
+	            				        		userAvailableTasks.add(taskRef);
+	            				        		break;
+	            				        	}
+	                        			}
+                        			}
+                        		}
+                        	}
+                    	}
                     }
-                } else {
-                    userAvailableTasks.add(taskRef);
                     if (useLimit && userAvailableTasks.size() > limit) {
                         enoughTasksRetrieved = true;
                     }
+                } else {
+	                String seriesRefStr = rs.getString("series_ref");
+	                NodeRef seriesRef = StringUtils.isNotBlank(seriesRefStr) ? new NodeRef(seriesRefStr) : null;
+	                if (seriesRef != null && restrictedSeries.contains(seriesRef)) {
+	                    String ownerId = rs.getString("owner_id");
+	                    if (!userId.equals(ownerId)) {
+	                        restrictedTaskDocuments.put(taskRef,
+	                                new NodeRef(bulkLoadNodeService.getStoreRefByDbId(rs.getLong("document_store_id")), rs.getString("document_uuid")));
+	                    }
+	                } else {
+	                    userAvailableTasks.add(taskRef);
+	                    if (useLimit && userAvailableTasks.size() > limit) {
+	                        enoughTasksRetrieved = true;
+	                    }
+	                }
                 }
                 return null;
             }
@@ -915,7 +1060,9 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         List<String> authorities = new ArrayList<>();
         authorities.add(userId);
         authorities.addAll(BeanHelper.getAuthorityService().getContainingAuthorities(AuthorityType.GROUP, userId, false));
-
+        
+        LOG.info("restrictedDocumentsSet " + Arrays.toString(restrictedDocumentsSet.toArray()));
+        
         OUTER: for (List<NodeRef> restrictedTasksSlice : slicedRestrictedDocuments) {
             Set<NodeRef> allowedDocRefs = BeanHelper.getPrivilegeService().getNodeRefWithSetViewPrivilege(restrictedTasksSlice, authorities);
             for (Map.Entry<NodeRef, NodeRef> entry : restrictedTaskDocuments.entrySet()) {
@@ -934,6 +1081,155 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             limited = true;
         }
         return Pair.newInstance(userAvailableTasks, limited);
+    }
+    
+    
+    @Override
+    public Pair<List<NodeRef>, Boolean> searchTaskCompoundWorkflowsNodeRefs(String queryCondition, final String userId, List<Object> arguments, final int limit) {
+    	DocumentSearchService documentSearchService = BeanHelper.getDocumentSearchService();
+    	final List<NodeRef> restrictedSeries = new ArrayList<>();
+        restrictedSeries.addAll(documentSearchService.searchRestrictedSeries(documentSearchService.getAllStoresWithArchivalStoreVOs()));
+        
+        final BulkLoadNodeService bulkLoadNodeService = BeanHelper.getBulkLoadNodeService();
+        // 1) get all tasks that match search criteria without checking permissions for restricted series.
+        // Retrieve document and series nodeRef to perform additional check later if needed
+        String sqlQuery = "SELECT task_id, wfc_owner_id, wfs_compound_workflow_id, task.store_id, series_prop.string_value as series_ref, owner_prop.string_value as owner_id, "
+                + " document.store_id as document_store_id, document.uuid as document_uuid FROM delta_task task "
+                + " left join alf_node compound_workflow on "
+                + "         (task.wfs_compound_workflow_store_id = compound_workflow.store_id and task.wfs_compound_workflow_id = compound_workflow.uuid "
+                + "         and compound_workflow.type_qname_id = "
+                + bulkLoadNodeService.getQNameDbId(WorkflowCommonModel.Types.COMPOUND_WORKFLOW)
+                + ")"
+                + " left join alf_child_assoc doc_assoc on doc_assoc.child_node_id = compound_workflow.id "
+                + " left join alf_node document on document.id = doc_assoc.parent_node_id and document.type_qname_id = "
+                + bulkLoadNodeService.getQNameDbId(DocumentCommonModel.Types.DOCUMENT)
+                + " left join alf_node_properties series_prop on document.id = series_prop.node_id and series_prop.qname_id = "
+                + bulkLoadNodeService.getQNameDbId(DocumentCommonModel.Props.SERIES)
+                + " left join alf_node_properties owner_prop on document.id = owner_prop.node_id and owner_prop.qname_id = "
+                + bulkLoadNodeService.getQNameDbId(DocumentCommonModel.Props.OWNER_ID);
+
+        sqlQuery += " WHERE " + SearchUtil.joinQueryPartsAnd(getSearchableAndNotInArchiveSpacesstoreCondition("task"), queryCondition);
+
+        Object[] argumentsArray = arguments.toArray();
+        final boolean useLimit = limit > -1;
+        
+        final boolean isGuestUser = BeanHelper.getUserService().isGuest(userId);
+        final Set<String> currentUserGroups = getCurrentUserGroups(userId, true);
+        final Set<NodeRef> userCwfs = new HashSet<>();
+        final Map<NodeRef, NodeRef> restrictedTaskDocuments = new HashMap<>();
+        jdbcTemplate.query(sqlQuery, new ParameterizedRowMapper<Void>() {
+            private boolean enoughTasksRetrieved = false;
+
+            @Override
+            public Void mapRow(ResultSet rs, int rowNum) throws SQLException {
+                if (enoughTasksRetrieved) {
+                    return null;
+                }
+                NodeRef cwfRef = nodeRefFromRs(rs, COMPOUND_WORKFLOW_ID_KEY);
+                if (!nodeService.exists(cwfRef)) {
+                	return null;
+                }
+                if (isGuestUser) {
+                	String ownerId = rs.getString("wfc_owner_id");
+                    if (userId.equals(ownerId)) {
+                    	userCwfs.add(cwfRef);
+	                    if (useLimit && userCwfs.size() > limit) {
+	                        enoughTasksRetrieved = true;
+	                    }
+                    } else {
+                    	Long docStoreId = rs.getLong("document_store_id");
+                    	String docUuid = rs.getString("document_uuid");
+                    	if (docStoreId != null && StringUtils.isNotBlank(docUuid)) {
+	                    	NodeRef docNodeRef = new NodeRef(bulkLoadNodeService.getStoreRefByDbId(rs.getLong("document_store_id")), rs.getString("document_uuid"));
+				        	List<String> authorities = BeanHelper.getPrivilegeService().getAuthoritiesWithPrivilege(docNodeRef, Privilege.VIEW_DOCUMENT_META_DATA);
+				        	String docOwnerId = (String) nodeService.getProperty(docNodeRef, DocumentCommonModel.Props.OWNER_ID);
+				        	if (StringUtils.isNotBlank(docOwnerId)) {
+				        		authorities.add(docOwnerId);
+				        	}
+				            for (String authority : authorities) {
+				            	if (currentUserGroups.contains(authority)) {
+				            		userCwfs.add(cwfRef);
+				            		break;
+				            	}
+				            }
+                    	}
+                    }
+                } else {
+	                String seriesRefStr = rs.getString("series_ref");
+	                NodeRef seriesRef = StringUtils.isNotBlank(seriesRefStr) ? new NodeRef(seriesRefStr) : null;
+	                if (seriesRef != null && restrictedSeries.contains(seriesRef)) {
+	                    String ownerId = rs.getString("owner_id");
+	                    if (!userId.equals(ownerId)) {
+	                        restrictedTaskDocuments.put(cwfRef,
+	                                new NodeRef(bulkLoadNodeService.getStoreRefByDbId(rs.getLong("document_store_id")), rs.getString("document_uuid")));
+	                    }
+	                } else {
+	                	userCwfs.add(cwfRef);
+	                    if (useLimit && userCwfs.size() > limit) {
+	                        enoughTasksRetrieved = true;
+	                    }
+	                }
+                }
+                return null;
+            }
+        }, argumentsArray);
+
+        int retrievedtaskCount = userCwfs.size();
+        if (useLimit && retrievedtaskCount >= limit) {
+            boolean limited = false;
+            if (retrievedtaskCount > limit) {
+            	userCwfs.remove(retrievedtaskCount - 1);
+                limited = true;
+            }
+            List<NodeRef> firstList = new ArrayList<>(userCwfs);
+            return Pair.newInstance(firstList, limited);
+        }
+
+        // 2) not enough unrestricted tasks were found, execute additional query to verify restricted series tasks' permissions
+        Set<NodeRef> restrictedDocumentsSet = new HashSet<>(restrictedTaskDocuments.values());
+        List<List<NodeRef>> slicedRestrictedDocuments = RepoUtil.sliceList(new ArrayList<>(restrictedDocumentsSet), 10000);
+        List<String> authorities = new ArrayList<>();
+        authorities.add(userId);
+        authorities.addAll(BeanHelper.getAuthorityService().getContainingAuthorities(AuthorityType.GROUP, userId, false));
+
+        OUTER: for (List<NodeRef> restrictedTasksSlice : slicedRestrictedDocuments) {
+            Set<NodeRef> allowedDocRefs = BeanHelper.getPrivilegeService().getNodeRefWithSetViewPrivilege(restrictedTasksSlice, authorities);
+            for (Map.Entry<NodeRef, NodeRef> entry : restrictedTaskDocuments.entrySet()) {
+                if (allowedDocRefs.contains(entry.getValue())) {
+                	userCwfs.add(entry.getKey());
+                    if (userCwfs.size() > limit) {
+                        break OUTER;
+                    }
+                }
+            }
+        }
+        boolean limited = false;
+        retrievedtaskCount = userCwfs.size();
+        if (retrievedtaskCount > limit) {
+        	userCwfs.remove(retrievedtaskCount - 1);
+            limited = true;
+        }
+        List<NodeRef> firstList = new ArrayList<>(userCwfs);
+        return Pair.newInstance(firstList, limited);
+    }
+    
+    private Set<String> getCurrentUserGroups(String userName, boolean includeUserName) {
+    	Set<String> userGroups = BeanHelper.getUserService().getUsersGroups(userName);
+        if (userGroups == null) {
+        	userGroups = new HashSet<>();
+        }
+        if (includeUserName) {
+        	userGroups.add(userName);
+        }
+        // Remove all roles and GROUP_EVERYONE
+        Set<String> groupsToRemove = new HashSet<>();
+        for (String userGroup: userGroups) {
+	        if (userGroup.startsWith(PermissionService.ROLE_PREFIX) || PermissionService.ALL_AUTHORITIES.equals(userGroup)) {
+	        	groupsToRemove.add(userGroup);
+	        }
+        }
+        userGroups.removeAll(groupsToRemove);
+        return userGroups;
     }
 
     private String getSearchableAndNotInArchiveSpacesstoreCondition() {
@@ -970,6 +1266,28 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             }
         }, userName);
         return counts;
+    }
+    
+    @Override
+    public Set<NodeRef> getAllCurrentUserTasksCompoundWorkflowRefs() {
+        final Set<NodeRef> compoundWorkflows = new HashSet<>();
+        String userName = AuthenticationUtil.getRunAsUser();
+        String sql = "SELECT store_id, wfs_compound_workflow_id FROM delta_task" +
+                " WHERE wfc_owner_id= ?" +
+                " AND " + getSearchableAndNotInArchiveSpacesstoreCondition() +
+                ";";
+        jdbcTemplate.query(sql, new RowMapper<Void>() {
+            @Override
+            public Void mapRow(ResultSet rs, int rowNum) throws SQLException {
+                String storeRef = rs.getString("store_id");
+                String cwfId = rs.getString("wfs_compound_workflow_id");
+                if (StringUtils.isNotBlank(storeRef) && StringUtils.isNotBlank(cwfId)) {
+                	compoundWorkflows.add(new NodeRef(storeRef + "/" + cwfId));
+                }
+                return null;
+            }
+        }, userName);
+        return compoundWorkflows;
     }
 
     @Override

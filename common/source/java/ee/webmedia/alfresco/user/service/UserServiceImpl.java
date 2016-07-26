@@ -45,6 +45,7 @@ import org.springframework.util.Assert;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.ibatis.sqlmap.engine.mapping.sql.dynamic.elements.IsGreaterEqualTagHandler;
 
 import ee.webmedia.alfresco.common.service.ApplicationConstantsBean;
 import ee.webmedia.alfresco.common.service.GeneralService;
@@ -216,6 +217,30 @@ public class UserServiceImpl implements UserService {
     public boolean isArchivist() {
         return isAdministrator() || getAuthorityService().getAuthorities().contains(getArchivistsGroup());
     }
+    
+    @Override
+    public boolean isGuest() {
+    	Set<String> groups = getAuthorityService().getAuthorities();
+    	boolean isGuest  = false;
+    	if (groups.contains(getGuestsGroup()) && !groups.contains(getAdministratorsGroup()) && !groups.contains(getArchivistsGroup()) 
+    			&& !groups.contains(getAccountantsGroup()) && !groups.contains(getDocumentManagersGroup()) 
+    			&& !groups.contains(getSupervisionGroup())) {
+    		isGuest = true;
+    	}
+        return isGuest;
+    }
+    
+    @Override
+    public boolean isGuest(String username) {
+    	Set<String> groups = getAuthorityService().getAuthoritiesForUser(username);
+    	boolean isGuest  = false;
+    	if (groups.contains(getGuestsGroup()) && !groups.contains(getAdministratorsGroup()) && !groups.contains(getArchivistsGroup()) 
+    			&& !groups.contains(getAccountantsGroup()) && !groups.contains(getDocumentManagersGroup()) 
+    			&& !groups.contains(getSupervisionGroup())) {
+    		isGuest = true;
+    	}
+        return isGuest;
+    }
 
     @Override
     public boolean isSupervisor() {
@@ -261,6 +286,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public String getAdministratorsGroup() {
         return getGroup(ADMINISTRATORS_GROUP);
+    }
+    
+    @Override
+    public String getGuestsGroup() {
+        return getGroup(GUESTS_GROUP);
     }
 
     @Override
@@ -609,7 +639,7 @@ public class UserServiceImpl implements UserService {
     public Set<String> getSystematicGroups() {
         if (systematicGroups == null) {
             systematicGroups = new HashSet<String>(Arrays.asList(getAdministratorsGroup(), getDocumentManagersGroup(), getAccountantsGroup(), getSupervisionGroup(),
-                    getArchivistsGroup()));
+                    getArchivistsGroup(), getGuestsGroup()));
         }
         return systematicGroups;
     }

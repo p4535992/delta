@@ -31,6 +31,7 @@ import ee.webmedia.alfresco.volume.web.VolumeListDialog;
 public class CaseDetailsDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
     public static final String BEAN_NAME = "CaseDetailsDialog";
+    public static final String DIALOG_NAME = AlfrescoNavigationHandler.DIALOG_PREFIX + "caseDetailsDialog";
 
     private static final String PARAM_VOLUME_NODEREF = "volumeNodeRef";
     public static final String PARAM_CASE_NODEREF = "caseNodeRef";

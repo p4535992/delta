@@ -22,6 +22,7 @@ public class UnmodifiableSeries implements Serializable, Comparable<Unmodifiable
     private final List<String> volType;
     private final List<String> docTypes;
     private final List<String> structUnits;
+    private final List<String> relatedUsersGroups;
     private final String type;
     private final int containingDocsCount;
     private final NodeRef seriesRef;
@@ -37,6 +38,7 @@ public class UnmodifiableSeries implements Serializable, Comparable<Unmodifiable
         volType = getProp(SeriesModel.Props.VOL_TYPE, node);
         docTypes = getProp(SeriesModel.Props.DOC_TYPE, node);
         structUnits = getProp(SeriesModel.Props.STRUCT_UNIT, node);
+        relatedUsersGroups = getProp(SeriesModel.Props.RELATED_USERS_GROUPS, node);
         type = getProp(SeriesModel.Props.TYPE, node);
         Integer containingDocsCountPropValue = getProp(SeriesModel.Props.CONTAINING_DOCS_COUNT, node);
         containingDocsCount = containingDocsCountPropValue != null ? containingDocsCountPropValue : 0;
@@ -88,6 +90,10 @@ public class UnmodifiableSeries implements Serializable, Comparable<Unmodifiable
 
     public List<String> getStructUnits() {
         return structUnits;
+    }
+    
+    public List<String> getRelatedUsersGroups() {
+        return relatedUsersGroups;
     }
 
     public String getType() {

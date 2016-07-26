@@ -66,7 +66,7 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.dvk.model.DvkModel;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
-import ee.webmedia.alfresco.signature.service.SignatureService;
+import ee.webmedia.alfresco.signature.service.DigiDoc4JSignatureService;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
@@ -79,7 +79,7 @@ public class FileServiceImpl implements FileService {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(FileServiceImpl.class);
 
     private UserService userService;
-    private SignatureService signatureService;
+    private DigiDoc4JSignatureService digiDoc4JSignatureService;
     private AuthenticationService authenticationService;
     private NodeService nodeService;
     private ContentService contentService;
@@ -224,8 +224,8 @@ public class FileServiceImpl implements FileService {
         for (File f : files) {
             //Long previousOrderNr = initialOrders.get(getFileNodeRef(f));
             //if (previousOrderNr == null || !previousOrderNr.equals(f.getFileOrderInList())) {
-            	String nodeRefstr = getFileNodeRef(f).toString();
-            	long ord = f.getFileOrderInList();
+            	//String nodeRefstr = getFileNodeRef(f).toString();
+            	//long ord = f.getFileOrderInList();
                 nodeService.setProperty(getFileNodeRef(f), FileModel.Props.FILE_ORDER_IN_LIST, f.getFileOrderInList());
             //}
         }
@@ -318,7 +318,7 @@ public class FileServiceImpl implements FileService {
                     SignatureItemsAndDataItems ddocItems = AuthenticationUtil.runAs(new RunAsWork<SignatureItemsAndDataItems>() {
                         @Override
                         public SignatureItemsAndDataItems doWork() throws Exception {
-                            return signatureService.getDataItemsAndSignatureItems(item.getNodeRef(), false, isBdoc);
+                            return digiDoc4JSignatureService.getDataItemsAndSignatureItems(item.getNodeRef(), false);
                         }
                     }, AuthenticationUtil.getSystemUserName());
                     item2.setNode(item.getNode()); // Digidoc item uses node of its container for permission evaluations
@@ -935,8 +935,8 @@ public class FileServiceImpl implements FileService {
         this.userService = userService;
     }
 
-    public void setSignatureService(SignatureService signatureService) {
-        this.signatureService = signatureService;
+    public void setDigiDoc4JSignatureService(DigiDoc4JSignatureService digiDoc4JSignatureService) {
+        this.digiDoc4JSignatureService = digiDoc4JSignatureService;
     }
 
     public void setAuthenticationService(AuthenticationService authenticationService) {

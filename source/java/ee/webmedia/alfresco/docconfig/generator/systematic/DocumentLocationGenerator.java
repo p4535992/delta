@@ -103,6 +103,7 @@ import ee.webmedia.alfresco.volume.model.UnmodifiableVolume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.volume.search.model.VolumeReportModel;
 import ee.webmedia.alfresco.volume.search.model.VolumeSearchModel;
+import ee.webmedia.alfresco.volume.search.web.VolumeDynamicSearchDialog;
 import ee.webmedia.alfresco.volume.service.VolumeService;
 
 public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
@@ -758,7 +759,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                             SuggesterGenerator.setValue(caseList, (isSearchFilter ? getCasesEditableOrEmptyList(context, caseList) : casesEditable));
                             caseList.setValue(caseLabel);
                             component.setRendered(casesEditable != null || isSearchFilter);
-                        } else if (component.getId().endsWith(CASE_FILE_TYPE_PROP.getLocalName()) && !showCaseFileTypes) {
+                        } else if (component.getId().endsWith(CASE_FILE_TYPE_PROP.getLocalName()) && !showCaseFileTypes && !(dialogDataProvider instanceof VolumeDynamicSearchDialog)) {
                             component.setRendered(showCaseFileTypes);
                         }
                     }
@@ -824,18 +825,14 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 if (storeStrings == null) {
                     return _getFunctionsService().getAllFunctions();
                 }
-                for (Iterator<String> i = storeStrings.iterator(); i.hasNext();) {
-                    if (StringUtils.isBlank(i.next())) {
-                        i.remove();
+                selectedStores = new ArrayList<NodeRef>();
+                for (Object store: storeStrings) {
+                    if (StringUtils.isNotBlank(store.toString())) {
+                    	selectedStores.add(new NodeRef(store.toString()));
                     }
                 }
-                if (storeStrings.isEmpty()) {
+                if (selectedStores.isEmpty()) {
                     return _getFunctionsService().getAllFunctions();
-                }
-
-                selectedStores = new ArrayList<NodeRef>(storeStrings.size());
-                for (String store : storeStrings) {
-                    selectedStores.add(new NodeRef(store));
                 }
             }
 
