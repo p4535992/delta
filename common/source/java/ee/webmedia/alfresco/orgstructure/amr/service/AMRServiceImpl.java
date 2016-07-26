@@ -26,6 +26,7 @@ public class AMRServiceImpl extends WebServiceTemplate implements AMRService {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(AMRServiceImpl.class);
 
     private BigInteger asutusId;
+    private Boolean removeGroupsEmail;
 
     @Override
     public YksusExt[] getYksusByAsutusId() {
@@ -72,6 +73,29 @@ public class AMRServiceImpl extends WebServiceTemplate implements AMRService {
 
     public void setAsutusId(String asutusId) {
         this.asutusId = new BigInteger(asutusId);
+    }
+
+    public void setRemoveGroupsEmail(String removeGroupsEmail){
+        this.removeGroupsEmail = false;
+
+        if(removeGroupsEmail == null){
+            log.warn("removeGroupsEmail param is not set in global-config! Using default value: " + this.removeGroupsEmail);
+        } else {
+            try {
+                this.removeGroupsEmail = Boolean.valueOf(removeGroupsEmail);
+                log.debug("removeGroupsEmail value found: " + removeGroupsEmail);
+            } catch (Exception ex){
+                log.error("removeGroupsEmail param value ("+removeGroupsEmail
+                        +") convert from string to boolean failed! using default value: " +this.removeGroupsEmail);
+            }
+        }
+
+    }
+
+    @Override
+    public boolean getRemoveGroupsEmail(){
+        log.debug("getRemoveGroupsEmail config value: " + this.removeGroupsEmail);
+        return  this.removeGroupsEmail;
     }
 
 }

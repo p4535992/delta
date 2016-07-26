@@ -48,6 +48,12 @@ public interface AuthorityDAO
     void addAuthorityEmail(String authorityName, String authorityEmail);
 
     /**
+     * Remove an authority email;
+     * @param authorityName
+     */
+    void removeAuthorityEmail(String authorityName);
+
+    /**
      * Create an authority.
      * 
      * @param name

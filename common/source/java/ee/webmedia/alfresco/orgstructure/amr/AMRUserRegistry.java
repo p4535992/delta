@@ -172,13 +172,24 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
         String email = yksus.getEmail();
 
         // -----------------------------------------------------------------------------
-        //TODO: Ajutine fix. PPA-l ei ole struktuuriüksuste e-postidega asja korras!!!
-        email = null;
+        if (amrService.getRemoveGroupsEmail()){
+            email = null;
+        }
         // -----------------------------------------------------------------------------
 
         if (email != null) {
+            log.debug("Units name: [" + yksus.getNimetus() + "]; e-mail: [" + yksus.getEmail() + "]");
             org.getProperties().put(OrganizationStructureModel.Props.GROUP_EMAIL, email);
+        } else {
+            log.debug("Units name: [" + yksus.getNimetus() + "]; e-mail: NULL!! Remove GROUP_EMAIL");
+            //org.getProperties().put(OrganizationStructureModel.Props.GROUP_EMAIL, "");
+            try {
+                org.getProperties().remove(OrganizationStructureModel.Props.GROUP_EMAIL);
+            } catch (Exception ex){
+                log.error("Remove GROUP_EMAIL failed! ERROR: " + ex.getMessage(), ex);
+            }
         }
+
         Serializable organizationPath = (Serializable) UserUtil.formatYksusRadaToOrganizationPath(yksus.getYksusRada());
         org.getProperties().put(OrganizationStructureModel.Props.ORGANIZATION_PATH, organizationPath);
         return org;

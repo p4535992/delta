@@ -11,6 +11,7 @@
    <bean id="AmrService" class="ee.webmedia.alfresco.orgstructure.amr.service.AMRServiceImpl" parent="abstractWebServiceTemplate">
         <property name="defaultUri" value="${amr.service.url}" />
         <property name="asutusId" value="${amr.org.id}" />
+       <property name="removeGroupsEmail" value="${amr.remove.groups.email}" />
    </bean>
    
    <bean id="RsService" class="ee.webmedia.alfresco.orgstructure.amr.service.RSServiceImpl" parent="abstractWebServiceTemplate">
