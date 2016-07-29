@@ -1,0 +1,477 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="Spring" name="Spring">
+      <configuration>
+        <fileset id="fileset" name="Spring Application Context" removed="false">
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/action-services-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/activities/activities-feed-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/adddocument/add-document-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/ee/webmedia/alfresco/adddocument/add-document-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/adddocument/add-document-ws-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/ee/webmedia/alfresco/adddocument/add-document-ws-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/addressbook/addressbook-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/ee/webmedia/alfresco/addressbook/addressbook-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/ee/webmedia/alfresco/adit/adit-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/adit/adit-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/adr/adr-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/ee/webmedia/alfresco/adr/adr-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/adr/adr-impl-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/adr/adr-impl-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/subsystems/Authentication/alfresco/alfresco-authentication-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/subsystems/Authentication/alfrescoNtlm/alfresco-authentication-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/extension/alfresco-link-validation-bootstrap-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/ee/webmedia/alfresco/adit/ametlikud-dokumendid-service-impl-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/adit/ametlikud-dokumendid-service-impl-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/alfresco/subsystems/Authentication/amr/amr-authentication-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/subsystems/Authentication/amr/amr-authentication-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/alfresco/subsystems/Synchronization/amr/amr-synchronization-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/subsystems/Synchronization/amr/amr-synchronization-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/orgstructure/amr/service/amrService-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/ee/webmedia/alfresco/orgstructure/amr/service/amrService-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/application-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/archivals/archivals-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/archivals/archivals-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/document/assignresponsibility/assignresponsibility-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/document/assignresponsibility/assignresponsibility-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/document/associations/associations-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/document/associations/associations-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/attributes-service-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/alfresco/audit-services-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/audit-services-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/authentication-services-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/authority-services-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/org/alfresco/repo/security/authority/authority-services-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/org/alfresco/repo/security/authority/authority-services-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/avm-console-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/avm-services-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/avm-test-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/base/base-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/ee/webmedia/alfresco/base/base-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/blog-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/bootstrap-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/alfresco/bootstrap-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/alfresco/cache-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/cache-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/alfresco/subsystems/Authentication/cas-ad/cas-ad-authentication-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/subsystems/Authentication/cas-ad/cas-ad-authentication-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/cases/case-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/cases/case-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/casefile/case-file-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/casefile/case-file-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/casefile/log/case-file-log-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/casefile/log/case-file-log-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/ee/webmedia/alfresco/classificator/classificator-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/classificator/classificator-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/clt-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/alfresco/cmis-api-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/cmis-api-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/alfresco/cmis-ws-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/cmis-ws-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/ee/webmedia/alfresco/common/common-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/common/common-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/subsystems/imap/common-imap-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/alfresco/subsystems/imap/common-imap-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/subsystems/Authentication/common-ldap-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/common/propertysheet/common-propertysheet-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/ee/webmedia/alfresco/common/propertysheet/common-propertysheet-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/content-services-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/alfresco/content-services-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/alfresco/core-services-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/core-services-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/extension/custom-email-server-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/alfresco/extension/custom-email-server-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/dao/dao-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/subsystems/Synchronization/default/default-synchronization-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/subsystems/wcm_deployment_receiver/default/deployment-receiver-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/deployment-service-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/deprecated-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/ee/webmedia/alfresco/dvk/service/dhl-service-impl-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/dvk/service/dhl-service-impl-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/docadmin/docadmin-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/docadmin/docadmin-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/document/assocsdyn/docassocdyn-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/document/assocsdyn/docassocdyn-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/docconfig/docconfig-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/docconfig/docconfig-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/docdynamic/docdyn-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/docdynamic/docdyn-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/ee/webmedia/alfresco/doclist/doclist-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/doclist/doclist-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/functions/docListImport-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/functions/docListImport-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/document/document-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/document/document-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/document/log/document-log-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/document/log/document-log-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/document/search/document-search-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/document/search/document-search-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/template/document-template-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/template/document-template-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/document/type/document-type-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/document/type/document-type-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/alfresco/subsystems/imap/dummy/dummy-imap-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/subsystems/imap/dummy/dummy-imap-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/dvk/dvk-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/ee/webmedia/alfresco/dvk/dvk-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/dvk/dvk-sim-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/dvk/dvk-sim-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/document/einvoice/einvoice-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/document/einvoice/einvoice-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/email/email-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/ee/webmedia/alfresco/email/email-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/emailserver/email-service-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/eventplan/eventplan-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/eventplan/eventplan-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/alfresco/subsystems/Authentication/external/external-authentication-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/subsystems/Authentication/external/external-authentication-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/subsystems/Authentication/external/external-filter-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/alfresco/subsystems/Authentication/external/external-filter-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/common/externalsession/externalsession-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/ee/webmedia/alfresco/common/externalsession/externalsession-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/document/file/file-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/document/file/file-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/subsystems/fileServers/default/file-servers-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/deployment/filesystem-target.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/form-services-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/document/forum/forum-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/document/forum/forum-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/functions/functions-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/functions/functions-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/help/help-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/help/help-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/hibernate-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/alfresco/hibernate-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/ibatis/ibatis-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/ikt/ikt-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/ee/webmedia/alfresco/ikt/ikt-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/ikt/ikt-ws-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/ee/webmedia/alfresco/ikt/ikt-ws-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/subsystems/thirdparty/default/imagemagick-transform-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/imap/imap-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/imap/imap-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/subsystems/imap/default/imap-server-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/alfresco/import-export-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/import-export-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/importer/importer-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/importer/importer-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/index-recovery-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/alfresco/index-recovery-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/invitation-service-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/jcr-api-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/jcr-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/subsystems/imap/kerberos-ad/kerberos-ad-imap-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/alfresco/subsystems/imap/kerberos-ad/kerberos-ad-imap-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/subsystems/Authentication/kerberos/kerberos-authentication-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/subsystems/Authentication/kerberos/kerberos-filter-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/subsystems/Authentication/ldap-ad/ldap-ad-authentication-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/subsystems/Authentication/ldap/ldap-authentication-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/linkvalidation-service-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/document/lock/lock-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/document/lock/lock-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/log/log-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/log/log-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/menu/menu-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/menu/menu-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/mobile/alfresco/config/mobile-servlet.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/mobile/alfresco/config/mobile-servlet.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/model-specific-services-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/alfresco/module/simdhs/module-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/module/simdhs/module-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/alfresco/module/common/module-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/module/common/module-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/module-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/ee/webmedia/alfresco/mso/mso-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/mso/mso-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/mt/mt-base-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/network-protocol-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/node-services-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/notification/notification-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/notification/notification-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/subsystems/Authentication/passthru/ntlm-filter-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/subsystems/Authentication/alfrescoNtlm/ntlm-filter-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/ocr/ocr-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/ee/webmedia/alfresco/ocr/ocr-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/office-addin-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/alfresco/subsystems/thirdparty/default/openoffice-transform-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/subsystems/thirdparty/default/openoffice-transform-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/ee/webmedia/alfresco/orgstructure/organizationStructure-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/orgstructure/organizationStructure-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/ownable-services-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/ee/webmedia/alfresco/parameters/parameters-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/parameters/parameters-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/subsystems/Authentication/passthru/passthru-authentication-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/alfresco/patch/patch-services-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/patch/patch-services-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/period-type-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/document/permissions/permissions-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/document/permissions/permissions-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/person/person-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/person/person-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/policy-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/ee/webmedia/alfresco/postipoiss/postipoiss-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/postipoiss/postipoiss-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/postipoiss/postipoiss-simdhs-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/postipoiss/postipoiss-simdhs-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/preference-service-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/privilege/privilege-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/privilege/privilege-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/extension/project-override-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/alfresco/extension/project-override-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/public-services-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/alfresco/public-services-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/alfresco/public-services-security-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/public-services-security-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/document/register/register-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/register/register-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/document/register/register-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/register/register-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/ee/webmedia/alfresco/relvastus/relvastus-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/relvastus/relvastus-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/relvastus/relvastus-ws-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/ee/webmedia/alfresco/relvastus/relvastus-ws-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/extension/bootstrap/remote-api-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/bootstrap/remote-api-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/remote-avm-test-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/remote-email-service-test-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/remote-services-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/repo-admin-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/report/report-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/report/report-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/rule-services-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/alfresco/rule-services-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/document/scanned/scanned-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/document/scanned/scanned-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/alfresco/scheduled-jobs-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/scheduled-jobs-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/script-services-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/search/search-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/ee/webmedia/alfresco/search/search-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/document/sendout/send-out-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/document/sendout/send-out-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/series/series-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/series/series-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/sharepoint/sharepoint-simdhs-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/sharepoint/sharepoint-simdhs-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/ee/webmedia/alfresco/signature/signature-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/signature/signature-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/simdhs/simdhs-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/simdhs/simdhs-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/alfresco/subsystems/imap/simdhs/simdhs-imap-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/subsystems/imap/simdhs/simdhs-imap-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/simdhs/simdhs-override-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/simdhs/simdhs-override-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/site-services-context.xml</file>
+          <file>file://$MODULE_DIR$/web/WEB-INF/spring-ws-servlet.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/spring-ws-servlet.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/mt/st-admin-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/st-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/dvk/stub-dvk-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/ee/webmedia/alfresco/dvk/stub-dvk-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/ee/webmedia/alfresco/substitute/substitute-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/substitute/substitute-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/swf-transform-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/subsystems/thirdparty/default/swf-transform-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/alfresco/swf-transform-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/alfresco/subsystems/thirdparty/default/swf-transform-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/tagging-services-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/template-services-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/testdata/testdata-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/testdata/testdata-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/ee/webmedia/alfresco/thesaurus/thesaurus-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/thesaurus/thesaurus-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/thumbnail-service-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/org/alfresco/web/bean/trashcan/trashcan-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/org/alfresco/web/bean/trashcan/trashcan-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/usage-services-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/user/user-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/ee/webmedia/alfresco/user/user-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/user/user-simdhs-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/user/user-simdhs-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/versions/versions-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/versions/versions-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/volume/volume-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/volume/volume-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/volume/search/volume-search-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/volume/search/volume-search-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/wcm-services-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/web-application-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/alfresco/web-client-application-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/web-client-application-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/web-scripts-application-context-test.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/web-scripts-application-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/web-services-application-context.xml</file>
+          <file>file://$MODULE_DIR$/common/source/java/ee/webmedia/alfresco/webdav/webdav-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/webdav/webdav-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/webscript-framework-application-context-test.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/webscript-framework-application-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/workflow-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/workflow/workflow-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/workflow/workflow-context.xml</file>
+          <file>file://$MODULE_DIR$/build/exploded/WEB-INF/classes/ee/webmedia/alfresco/workflow/search/workflow-task-search-context.xml</file>
+          <file>file://$MODULE_DIR$/source/java/ee/webmedia/alfresco/workflow/search/workflow-task-search-context.xml</file>
+        </fileset>
+      </configuration>
+    </facet>
+    <facet type="web" name="Web">
+      <configuration>
+        <descriptors>
+          <deploymentDescriptor name="web.xml" url="file://$MODULE_DIR$/web/WEB-INF/web.xml" />
+        </descriptors>
+        <webroots>
+          <root url="file://$MODULE_DIR$/web" relative="/" />
+        </webroots>
+        <sourceRoots>
+          <root url="file://$MODULE_DIR$/common/source/java" />
+          <root url="file://$MODULE_DIR$/source/java" />
+        </sourceRoots>
+      </configuration>
+    </facet>
+    <facet type="web" name="Web2">
+      <configuration>
+        <descriptors>
+          <deploymentDescriptor name="web.xml" url="file://$MODULE_DIR$/build/exploded/WEB-INF/web.xml" />
+        </descriptors>
+        <webroots>
+          <root url="file://$MODULE_DIR$/build/exploded" relative="/" />
+        </webroots>
+        <sourceRoots>
+          <root url="file://$MODULE_DIR$/common/source/java" />
+          <root url="file://$MODULE_DIR$/source/java" />
+        </sourceRoots>
+      </configuration>
+    </facet>
+  </component>
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_7" inherit-compiler-output="false">
+    <output url="file:///production/bitbucket-delta" />
+    <output-test url="file:///test/bitbucket-delta" />
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/common/source/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/common/source/test" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/source/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/source/test" isTestSource="true" />
+    </content>
+    <orderEntry type="jdk" jdkName="jdk 1.7.0_80" jdkType="JavaSDK" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/lib" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+        <jarDirectory url="file://$MODULE_DIR$/lib" recursive="false" />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/common/lib" />
+          <root url="file://$MODULE_DIR$/common/lib-dev" />
+          <root url="file://$MODULE_DIR$/common/lib-dev-glassfish" />
+          <root url="file://$MODULE_DIR$/common/lib-dev-tomcat" />
+          <root url="file://$MODULE_DIR$/common/lib-server" />
+          <root url="file://$MODULE_DIR$/common/lib-tomcat" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="file://$MODULE_DIR$/common/lib" />
+          <root url="file://$MODULE_DIR$/common/lib-dev" />
+          <root url="file://$MODULE_DIR$/common/lib-server" />
+          <root url="jar://$USER_HOME$/.ideaLibSources/spring-jdbc-3.2.4.RELEASE-sources.jar!/" />
+          <root url="file://$MODULE_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/repository-src/java" />
+        </SOURCES>
+        <jarDirectory url="file://$MODULE_DIR$/common/lib" recursive="false" />
+        <jarDirectory url="file://$MODULE_DIR$/common/lib-dev" recursive="false" />
+        <jarDirectory url="file://$MODULE_DIR$/common/lib-dev-glassfish" recursive="false" />
+        <jarDirectory url="file://$MODULE_DIR$/common/lib-dev-tomcat" recursive="false" />
+        <jarDirectory url="file://$MODULE_DIR$/common/lib-server" recursive="false" />
+        <jarDirectory url="file://$MODULE_DIR$/common/lib-tomcat" recursive="false" />
+        <jarDirectory url="file://$MODULE_DIR$/common/lib" recursive="false" type="SOURCES" />
+        <jarDirectory url="file://$MODULE_DIR$/common/lib-dev" recursive="false" type="SOURCES" />
+        <jarDirectory url="file://$MODULE_DIR$/common/lib-server" recursive="false" type="SOURCES" />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/common/lib-dev" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="file://$MODULE_DIR$/common/lib-dev" />
+        </SOURCES>
+        <jarDirectory url="file://$MODULE_DIR$/common/lib-dev" recursive="false" />
+        <jarDirectory url="file://$MODULE_DIR$/common/lib-dev" recursive="false" type="SOURCES" />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/common/lib-dev-glassfish" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+        <jarDirectory url="file://$MODULE_DIR$/common/lib-dev-glassfish" recursive="false" />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/common/lib" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="file://$MODULE_DIR$/common/lib" />
+          <root url="jar://$USER_HOME$/.ideaLibSources/spring-jdbc-3.2.4.RELEASE-sources.jar!/" />
+        </SOURCES>
+        <jarDirectory url="file://$MODULE_DIR$/common/lib" recursive="false" />
+        <jarDirectory url="file://$MODULE_DIR$/common/lib" recursive="false" type="SOURCES" />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/common/lib-server" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="file://$MODULE_DIR$/common/lib-server" />
+        </SOURCES>
+        <jarDirectory url="file://$MODULE_DIR$/common/lib-server" recursive="false" />
+        <jarDirectory url="file://$MODULE_DIR$/common/lib-server" recursive="false" type="SOURCES" />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/common/lib-tomcat" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+        <jarDirectory url="file://$MODULE_DIR$/common/lib-tomcat" recursive="false" />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/build/exploded/WEB-INF/lib" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="file://$MODULE_DIR$/build/exploded/WEB-INF/lib" />
+        </SOURCES>
+        <jarDirectory url="file://$MODULE_DIR$/build/exploded/WEB-INF/lib" recursive="false" />
+        <jarDirectory url="file://$MODULE_DIR$/build/exploded/WEB-INF/lib" recursive="false" type="SOURCES" />
+      </library>
+    </orderEntry>
+  </component>
+  <component name="TemplatesService">
+    <option name="TEMPLATE_FOLDERS">
+      <list>
+        <option value="$MODULE_DIR$/build/exploded/WEB-INF/classes/alfresco/templates" />
+      </list>
+    </option>
+  </component>
+</module>
