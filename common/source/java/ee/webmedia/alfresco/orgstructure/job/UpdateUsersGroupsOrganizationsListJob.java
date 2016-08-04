@@ -27,7 +27,7 @@ public class UpdateUsersGroupsOrganizationsListJob implements StatefulJob {
         log.info("Starting UpdateUsersGroupsOrganizationsListJob");
         JobDataMap jobData = context.getJobDetail().getJobDataMap();
 
-        if(getSyncActiveStatus() == "true"){
+        //if(getSyncActiveStatus() == "true"){
             log.info("USERS AND GROUPS SYNC IS ACTIVE....");
             // Run the jobs
             log.info("UPDATE ORGANISATIONSTRUCTURE...");
@@ -39,9 +39,9 @@ public class UpdateUsersGroupsOrganizationsListJob implements StatefulJob {
             log.info("UPDATE ORGANISATION STRUCTURE-BASED GROUPS...");
             updateOrganisationStructureBasedGroups(jobData);
 
-        } else {
-            log.info("USERS AND GROUPS SYNC IS SWITCHED OFF FROM CONFIGURATION FILE....");
-        }
+        //} else {
+        //    log.info("USERS AND GROUPS SYNC IS SWITCHED OFF FROM CONFIGURATION FILE....");
+        //}
 
         log.info("UpdateUsersGroupsOrganizationsListJob done");
     }
