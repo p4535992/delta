@@ -1490,6 +1490,8 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
         if (updateMenu) {
             menuService.process(BeanHelper.getMenuBean().getMenu(), false, true);
         }
+        
+        // TODO: DELTA-952 update log objectId from nodeRef to archivedRef
     }
 
     private void removeDocFromCompoundWorkflowProps(NodeRef docRef, NodeRef compoundWorkflowRef) {
@@ -2791,7 +2793,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
             sb.append(documentType);
         }
 
-        return FilenameUtil.buildFileName(sb.toString(), "bdoc"); // TODO: change to asice in July 2016
+        return FilenameUtil.buildFileName(sb.toString(), "asice");
     }
 
     @Override
