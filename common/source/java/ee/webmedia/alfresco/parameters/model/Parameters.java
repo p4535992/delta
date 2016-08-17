@@ -133,7 +133,9 @@ public enum Parameters {
     ACCESS_RESTRICTION_END_DATE_NOTIFICATION_MAX_DOCUMENTS("accessRestrictionEndDateNotificationMaxDocuments"),
     ARCHIVING_BEGIN_TIME("archivingBeginTime"),
     ARCHIVING_END_TIME("archivingEndTime"),
-    CONTINUE_ARCIVING_OVER_WEEKEND("continueArchivingOverWeekend");
+    CONTINUE_ARCIVING_OVER_WEEKEND("continueArchivingOverWeekend"),
+	
+	ALLOW_CLOSE_FOR_ARCIVED_VOLUMES("allowCloseForArchivedVolumes");
 
     private String xPath;
     private String parameterName;

@@ -61,6 +61,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
 
     private static final String ID_CODE_COUNTRY_EE = "EE";
     private static final String ID_CODE_COUNTRY_LT = "LT";
+    private static final String CERTIFICATE_ALGORITHM_EC = "EC";
 
     private static Logger log = Logger.getLogger(SignatureServiceImpl.class);
 
@@ -382,7 +383,9 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
 
             int idCounter = 1;
             for (X509Certificate recipientCert : recipientCerts) {
-
+            	if (CERTIFICATE_ALGORITHM_EC.equals(recipientCert.getPublicKey().getAlgorithm())) {
+            		continue;
+            	}
                 X509Principal principal = PrincipalUtil.getSubjectX509Principal(recipientCert);
                 Vector<?> values = principal.getValues(X509Name.CN);
                 String cn = (String) values.get(0);

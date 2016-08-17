@@ -105,6 +105,7 @@ import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.series.service.SeriesService;
@@ -1451,6 +1452,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         if (templateRef != null) {
             documentTemplateService.populateVolumeArchiveTemplate(activityRef, volumeRefs, templateRef, username);
         }
+        BeanHelper.getPrivilegeService().setPermissions(activityRef, "GROUP_ARCHIVISTS", Privilege.VIEW_DOCUMENT_FILES);
         return activityRef;
     }
 

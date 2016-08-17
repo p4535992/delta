@@ -1488,6 +1488,9 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
             storeRefs = getVolumeSearchStoreRefs(properties);
         }
         List<String> queryParts = getVolumeArchiveListSearchQueryParts(filter);
+        
+        queryParts.add(generatePropertyExactQuery(VolumeModel.Props.STATUS, DocListUnitStatus.CLOSED.getValueName()) + " OR " + generatePropertyExactQuery(VolumeModel.Props.STATUS, DocListUnitStatus.OPEN.getValueName()));
+        
         if (hasArchivalValueOrRetainPermanent) {
             queryParts.add(joinQueryPartsOr(generatePropertyBooleanQuery(EventPlanModel.Props.HAS_ARCHIVAL_VALUE, Boolean.TRUE),
                     generatePropertyBooleanQuery(EventPlanModel.Props.RETAIN_PERMANENT, Boolean.TRUE)));
