@@ -241,7 +241,7 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
                 aSignature(containerToSign).
                 withSigningCertificate(certificate).
                 withSignatureDigestAlgorithm(DIGEST_ALGORITHM).
-                withSignatureProfile(SignatureProfile.LT_TM).
+                withSignatureProfile(SignatureProfile.LT).
                 withEncryptionAlgorithm(encryptionAlgorithm).
                 buildDataToSign();
         return dataToSign;
@@ -671,16 +671,17 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
             X509Cert certValue = signature.getSigningCertificate();
             /*
              * TODO: change to this code when this issue is fixed https://github.com/open-eid/digidoc4j/issues/13
+            */
             String subjectFirstName = certValue.getSubjectName(X509Cert.SubjectName.GIVENNAME);
             String subjectLastName = certValue.getSubjectName(X509Cert.SubjectName.SURNAME);
             String legalCode = certValue.getSubjectName(X509Cert.SubjectName.SERIALNUMBER);
             String name = UserUtil.getPersonFullName(subjectFirstName, subjectLastName);
-            */
-            X509Certificate cert = certValue.getX509Certificate();
-            String subjectFirstName = SignedDoc.getSubjectFirstName(cert);
-            String subjectLastName = SignedDoc.getSubjectLastName(cert);
-            String legalCode = SignedDoc.getSubjectPersonalCode(cert);
-            String name = UserUtil.getPersonFullName(subjectFirstName, subjectLastName);
+            
+//            X509Certificate cert = certValue.getX509Certificate();
+//            String subjectFirstName = SignedDoc.getSubjectFirstName(cert);
+//            String subjectLastName = SignedDoc.getSubjectLastName(cert);
+//            String legalCode = SignedDoc.getSubjectPersonalCode(cert);
+//            String name = UserUtil.getPersonFullName(subjectFirstName, subjectLastName);
             
             Date signingTime = signature.getOCSPResponseCreationTime();
             String address = getSignatureAddress(signature.getCity(), signature.getPostalCode(), signature.getCountryName()); 

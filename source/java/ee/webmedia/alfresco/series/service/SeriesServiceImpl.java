@@ -413,6 +413,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         if (isInClosedFunction(series)) {
             throw new UnableToPerformException("series_open_error_inClosedFunction");
         }
+        
         Map<String, Object> props = seriesNode.getProperties();
         props.put(SeriesModel.Props.STATUS.toString(), DocListUnitStatus.OPEN.getValueName());
         saveOrUpdate(series);

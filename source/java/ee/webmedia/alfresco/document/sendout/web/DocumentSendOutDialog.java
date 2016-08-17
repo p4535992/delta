@@ -562,7 +562,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
                 dvkRecipients.add(new Pair<>(name, mode));
             }
             if (StringUtils.isNotBlank(email)) {
-                if (!emailValidator.isValid(email)) {
+                if (!email.contains("@") || email.startsWith("@") || email.endsWith("@") || StringUtils.countMatches(email, "@") > 1) {
                     valid = false;
                     MessageUtil.addErrorMessage(context, "email_format_is_not_valid");
                 }

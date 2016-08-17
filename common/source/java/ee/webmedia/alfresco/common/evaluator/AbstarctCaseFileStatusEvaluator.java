@@ -34,7 +34,7 @@ public abstract class AbstarctCaseFileStatusEvaluator extends SharedResourceEval
 
     protected abstract boolean isValidStatus(Map<String, Object> properties);
 
-    private boolean isUserAllowedToView(Node caseFileNode, Map<String, Object> properties) {
+    protected boolean isUserAllowedToView(Node caseFileNode, Map<String, Object> properties) {
         return isAdminOrDocmanagerWithPermission(caseFileNode, Privilege.VIEW_CASE_FILE)
                 || AuthenticationUtil.getRunAsUser().equals(properties.get(DocumentCommonModel.Props.OWNER_ID.toString()))
                 || (validToIsExceeded(properties) && getUserService().isArchivist());
