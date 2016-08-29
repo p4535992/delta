@@ -220,6 +220,26 @@
          </list>
       </property>
    </bean>
+   
+   <bean id="documentParametersBootstrap6" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/param:parameters</prop>
+               <prop key="location">ee/webmedia/alfresco/document/bootstrap/document-parameters6.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
 
    <bean id="abstractFavoritesService" class="ee.webmedia.alfresco.document.service.AbstractFavoritesServiceImpl" abstract="true">
       <property name="nodeService" ref="NodeService" />
