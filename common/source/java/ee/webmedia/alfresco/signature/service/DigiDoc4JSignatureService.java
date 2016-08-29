@@ -21,6 +21,10 @@ import ee.webmedia.alfresco.signature.model.SkLdapCertificate;
  * Has methods that create, check, sign, retrieve signatures, signature digests and files from the container.
  */
 public interface DigiDoc4JSignatureService {
+	
+	public static String DIGIDOC_FORMAT_BDOC_TM = "bdoc-tm";
+	public static String DIGIDOC_FORMAT_BDOC_TS = "bdoc-ts";
+	public static String DIGIDOC_FORMAT_ASICE = "asice";
 
     String BEAN_NAME = "DigiDoc4JSignatureService";
     String DIGIDOC_MIMETYPE = "application/digidoc";

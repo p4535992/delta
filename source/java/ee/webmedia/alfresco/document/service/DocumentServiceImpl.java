@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.document.service;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getParametersService;
 import static ee.webmedia.alfresco.document.file.model.FileModel.Props.DISPLAY_NAME;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ACCESS_RESTRICTION;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL;
@@ -87,6 +88,7 @@ import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateFormatUtils;
+import org.digidoc4j.SignatureProfile;
 import org.hibernate.StaleObjectStateException;
 import org.joda.time.Days;
 import org.joda.time.Instant;
@@ -154,6 +156,7 @@ import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.notification.service.NotificationService;
+import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.register.model.Register;
 import ee.webmedia.alfresco.register.service.RegisterService;
 import ee.webmedia.alfresco.series.model.Series;
@@ -2792,8 +2795,14 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
             sb.append(" ");
             sb.append(documentType);
         }
+        
+        String digidocFileExtension = "bdoc";
+        String paramDigidocFormat = getParametersService().getStringParameter(Parameters.DIGIDOC_FILE_FORMAT);
+        if (DigiDoc4JSignatureService.DIGIDOC_FORMAT_ASICE.equals(paramDigidocFormat)) {
+        	digidocFileExtension = "asice";
+        }
 
-        return FilenameUtil.buildFileName(sb.toString(), "asice");
+        return FilenameUtil.buildFileName(sb.toString(), digidocFileExtension);
     }
 
     @Override

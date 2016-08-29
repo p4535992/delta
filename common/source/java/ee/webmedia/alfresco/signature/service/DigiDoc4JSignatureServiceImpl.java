@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.signature.service;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getParametersService;
 import static ee.webmedia.alfresco.utils.CalendarUtil.duration;
 
 import java.io.ByteArrayInputStream;
@@ -73,6 +74,7 @@ import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.monitoring.MonitoredService;
 import ee.webmedia.alfresco.monitoring.MonitoringUtil;
+import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.exception.SignatureRuntimeException;
 import ee.webmedia.alfresco.signature.model.DataItem;
@@ -237,11 +239,17 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
         if (CERTIFICATE_ALGORITHM_EC.equals(certificate.getPublicKey().getAlgorithm())) {
         	encryptionAlgorithm = EncryptionAlgorithm.ECDSA;
         }
+        
+        SignatureProfile signatureProfile = SignatureProfile.LT_TM;
+        String paramDigidocFormat = getParametersService().getStringParameter(Parameters.DIGIDOC_FILE_FORMAT);
+        if (DIGIDOC_FORMAT_ASICE.equals(paramDigidocFormat) || DIGIDOC_FORMAT_BDOC_TS.equals(paramDigidocFormat)) {
+        	signatureProfile = SignatureProfile.LT;
+        }
         DataToSign dataToSign = SignatureBuilder.
                 aSignature(containerToSign).
                 withSigningCertificate(certificate).
                 withSignatureDigestAlgorithm(DIGEST_ALGORITHM).
-                withSignatureProfile(SignatureProfile.LT).
+                withSignatureProfile(signatureProfile).
                 withEncryptionAlgorithm(encryptionAlgorithm).
                 buildDataToSign();
         return dataToSign;
