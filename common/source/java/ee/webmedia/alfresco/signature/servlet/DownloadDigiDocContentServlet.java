@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.signature.servlet;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.SocketException;
 import java.text.MessageFormat;
 import java.util.Date;
@@ -90,6 +91,10 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
         // req.getPathInfo = /workspace/SpacesStore/371b7748-74cd-45d4-ac2a-e6ade845afe4/1/xyz.pdf
         // req.getRequestURI = /dhs/ddc/workspace/SpacesStore/371b7748-74cd-45d4-ac2a-e6ade845afe4/1/xyz.pdf;JSESSIONID=CFE6CC4F12D658B180EB61EF7ABC1C9
         String uri = req.getPathInfo();
+        
+        // fix umlauts in uri
+        uri = fixUmlauts(uri);
+        
 
         if (logger.isDebugEnabled()) {
             String queryString = req.getQueryString();
@@ -144,6 +149,18 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
                 logger.info("Client aborted stream read:\n\tnode: " + nodeRef);
             }
         }
+    }
+    
+    private String fixUmlauts(String broken) {
+    	if (StringUtils.isNotBlank(broken)) {
+    		try {
+    			byte [] bytes = broken.getBytes("ISO-8859-1");
+    			return new String(bytes, "UTF-8");
+    		} catch (UnsupportedEncodingException e) {
+    			getLogger().error("Invalid encoding:" , e);
+    		}
+    	}
+    	return broken;
     }
 
     private void processDigiDocDownloadRequest(HttpServletRequest req, HttpServletResponse res, boolean redirectToLogin, NodeRef dDocRef, String dataFileId)
