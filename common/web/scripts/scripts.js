@@ -2488,6 +2488,12 @@ function cancelSign() {
  return oamSubmitForm('dialog','dialog:dialog-body:cancelSign',null,[[]]);
 }
 
+function closeSignSuccess() {
+	 $jQ('#signApplet').hide();
+	 $jQ('#signWait').show();
+	 return oamSubmitForm('dialog','dialog:dialog-body:closeSignSuccess',null,[[]]);
+	}
+
 function performSigningPluginOperation(operation, hashHex, certId, path) {
    try {
       // plugin works when it's the first child of body; doesn't work when it's somewhere in the middle
@@ -2592,7 +2598,7 @@ function finishDigidoc4jSign(signInHex) {
 				}),
 				dataType : 'html',
 				success : function(responseOutput, status, xhr) {
-					cancelSign();
+					closeSignSuccess();
 				}
 			});
 }

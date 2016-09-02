@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view 
+   xmlns:view="http://www.alfresco.org/view/repository/1.0" 
+   xmlns:param="http://alfresco.webmedia.ee/model/parameters/1.0" 
+>
+
+   <param:stringParameter view:childName="param:digidocFileFormat">
+      <view:properties>
+         <param:value>bdoc-tm</param:value>
+         <param:name>digidocFileFormat</param:name>
+         <param:description>Saab valida kas allkirjastatud dokument on bdoc-tm (ajamärgend), bdoc-ts (ajatempel) või asice (ajatempel), lubatud väärtused on bdoc-tm, bdoc-ts, asice</param:description>
+      </view:properties>
+   </param:stringParameter>
+
+</view:view>
