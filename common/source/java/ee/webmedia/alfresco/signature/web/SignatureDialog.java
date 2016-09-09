@@ -374,7 +374,7 @@ public class SignatureDialog extends BaseDialogBean {
                 NodeRef ref = new NodeRef(selectedItems.get(i));
                 String name = getFileFolderService().getFileInfo(ref).getName();
                 DataItem d = new DataItem(ref, String.valueOf(i), name, null, null,
-                        getFileFolderService().getFileInfo(ref).getContentData().getSize());
+                        getFileFolderService().getFileInfo(ref).getContentData().getSize(), i);
                 d.setDownloadUrl(DownloadContentServlet.generateDownloadURL(ref, name));
                 dataItems.add(d);
             }
