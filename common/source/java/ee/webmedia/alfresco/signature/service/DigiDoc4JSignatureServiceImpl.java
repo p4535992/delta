@@ -60,7 +60,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 
 import ee.sk.digidoc.DigiDocException;
-import ee.sk.digidoc.SignedDoc;
 import ee.sk.digidocservice.DigiDocServicePortType;
 import ee.sk.digidocserviceV2.GetMobileSignHashStatusRequest;
 import ee.sk.digidocserviceV2.GetMobileSignHashStatusResponse;
@@ -731,14 +730,15 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
     
     private List<DataItem> getDataItems(NodeRef nodeRef, Container container, boolean includeData) {
         List<DataItem> items = new ArrayList<DataItem>();
-        for (DataFile dataFile: container.getDataFiles()) {
-            DataItem item = getDataItem(nodeRef, dataFile, dataFile.getId(), includeData);
+        for (int i = 0; i < container.getDataFiles().size(); i++) {
+        	DataFile dataFile = container.getDataFiles().get(i);
+            DataItem item = getDataItem(nodeRef, dataFile, dataFile.getId(), includeData, i);
             items.add(item);
         }
         return items;
     }
     
-    private DataItem getDataItem(NodeRef nodeRef, DataFile dataFile, String id, boolean includeData) {
+    private DataItem getDataItem(NodeRef nodeRef, DataFile dataFile, String id, boolean includeData, int orderNr) {
         String fileName = dataFile.getName();
         String mimeType = dataFile.getMediaType();
         String guessedMimetype = mimetypeService.guessMimetype(fileName);
@@ -746,9 +746,9 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
             guessedMimetype = mimeType;
         }
         if (includeData) {
-            return new DataItem(nodeRef, id, fileName, guessedMimetype, dataFile.getFileSize(), dataFile);
+            return new DataItem(nodeRef, id, fileName, guessedMimetype, dataFile.getFileSize(), dataFile, orderNr);
         }
-        return new DataItem(nodeRef, id, fileName, guessedMimetype, dataFile.getFileSize());
+        return new DataItem(nodeRef, id, fileName, guessedMimetype, dataFile.getFileSize(), orderNr);
     }
     
     @Override
