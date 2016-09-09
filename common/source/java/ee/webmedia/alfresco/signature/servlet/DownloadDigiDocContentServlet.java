@@ -61,15 +61,15 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
      *            File name to return in the URL (cannot be null)
      * @return URL to download the content from the specified node
      */
-    public final static String generateUrl(NodeRef ref, String id, String name) {
+    public final static String generateUrl(NodeRef ref, int orderNr, String name) {
         Assert.notNull(ref, "Parameter 'ref' is mandatory");
         //Assert.isTrue(id >= 0, "Parameter 'id' must not be negative");
         Assert.notNull(name, "Parameter 'name' is mandatory");
 
-        name = FilenameUtil.makeSafeFilename(name);
+        //name = FilenameUtil.makeSafeFilename(name);
 
         return MessageFormat.format("/ddc/{0}/{1}/{2}/{3}/{4}", new Object[] { ref.getStoreRef().getProtocol(),
-                ref.getStoreRef().getIdentifier(), ref.getId(), id, URLEncoder.encode(name) });
+                ref.getStoreRef().getIdentifier(), ref.getId(), orderNr, URLEncoder.encode(name) });
     }
 
     /**
@@ -87,15 +87,11 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
     @Override
     protected void processDownloadRequest(final HttpServletRequest req, final HttpServletResponse res, final boolean redirectToLogin)
             throws ServletException, IOException {
-        Log logger = getLogger();
+        final Log logger = getLogger();
         // req.getPathInfo = /workspace/SpacesStore/371b7748-74cd-45d4-ac2a-e6ade845afe4/1/xyz.pdf
         // req.getRequestURI = /dhs/ddc/workspace/SpacesStore/371b7748-74cd-45d4-ac2a-e6ade845afe4/1/xyz.pdf;JSESSIONID=CFE6CC4F12D658B180EB61EF7ABC1C9
         String uri = req.getPathInfo();
         
-        // fix umlauts in uri
-        uri = fixUmlauts(uri);
-        
-
         if (logger.isDebugEnabled()) {
             String queryString = req.getQueryString();
             logger.debug("Processing URL: " + uri + (queryString != null && queryString.length() > 0 ? "?" + queryString : ""));
@@ -115,7 +111,8 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
         StoreRef storeRef = new StoreRef(t.nextToken(), t.nextToken());
         String id = URLDecoder.decode(t.nextToken());
 
-        final String dataFileId = t.nextToken();
+        final String dataFileOrderNrStr = t.nextToken();
+        
 
         // build noderef from the appropriate URL elements
         final NodeRef nodeRef = new NodeRef(storeRef, id);
@@ -128,7 +125,13 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
                 txHelper.doInTransaction(new RetryingTransactionCallback<Object>() {
                     @Override
                     public Object execute() throws Throwable {
-                        processDigiDocDownloadRequest(req, res, redirectToLogin, nodeRef, dataFileId);
+                    	int dataFileOrderNr = -1;
+                        try {
+                        	dataFileOrderNr = Integer.parseInt(dataFileOrderNrStr);
+                        } catch (NumberFormatException e) {
+                        	logger.error("Invalid dataFileOrderNr: " + dataFileOrderNrStr);
+                        }
+                        processDigiDocDownloadRequest(req, res, redirectToLogin, nodeRef, dataFileOrderNr);
                         return null;
                     }
                 }, true);
@@ -150,20 +153,8 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
             }
         }
     }
-    
-    private String fixUmlauts(String broken) {
-    	if (StringUtils.isNotBlank(broken)) {
-    		try {
-    			byte [] bytes = broken.getBytes("ISO-8859-1");
-    			return new String(bytes, "UTF-8");
-    		} catch (UnsupportedEncodingException e) {
-    			getLogger().error("Invalid encoding:" , e);
-    		}
-    	}
-    	return broken;
-    }
 
-    private void processDigiDocDownloadRequest(HttpServletRequest req, HttpServletResponse res, boolean redirectToLogin, NodeRef dDocRef, String dataFileId)
+    private void processDigiDocDownloadRequest(HttpServletRequest req, HttpServletResponse res, boolean redirectToLogin, NodeRef dDocRef, int dataFileOrderNr)
             throws SocketException, IOException {
         Log logger = getLogger();
 
@@ -237,7 +228,7 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
             SignatureItemsAndDataItems items = digiDoc4JSignatureService.getDataItemsAndSignatureItems(dDocRef, true);
             DataItem item = null;
             for (DataItem dItem: items.getDataItems()) {
-            	if (dItem.getId().equals(dataFileId)) {
+            	if (dItem.getOrderNr() == dataFileOrderNr) {
             		item = dItem;
             		break;
             	}
@@ -254,7 +245,7 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
             ServletOutputStream os = res.getOutputStream();
             FileCopyUtils.copy(item.getData(), os); // closes both streams
         } catch (SignatureException e) {
-            logger.error("Failed to fetch a document from " + (isBdoc ? ".bdoc" : ".ddoc") + ", noderef: " + dDocRef + ", id = " + dataFileId, e);
+            logger.error("Failed to fetch a document from " + (isBdoc ? ".bdoc" : ".ddoc") + ", noderef: " + dDocRef + ", id = " + dataFileOrderNr, e);
         }
     }
 
