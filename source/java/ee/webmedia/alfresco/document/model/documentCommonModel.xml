@@ -197,6 +197,18 @@
             <property name="doccom:openedDateTime">
                <type>d:datetime</type>
             </property>
+            <property name="doccom:isZipped">
+               <type>d:boolean</type>
+            </property>
+            <property name="doccom:isEncrypted">
+               <type>d:boolean</type>
+            </property>
+            <property name="doccom:sentFiles">
+               <type>d:text</type>
+            </property>
+            <property name="doccom:sender">
+               <type>d:text</type>
+            </property>
          </properties>
       </type>
       

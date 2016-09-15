@@ -76,6 +76,17 @@
                   <many>true</many>
                </target>
             </child-association>
+            <child-association name="ab:orgCertificates">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>ab:orgCertificate</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
          </associations>
          <mandatory-aspects>
             <aspect>ab:organizationProperties</aspect>
@@ -136,6 +147,13 @@
          <parent>ab:personBase</parent>
          <mandatory-aspects>
             <aspect>ab:orgPrivate</aspect>
+         </mandatory-aspects>
+      </type>
+      
+      <type name="ab:orgCertificate">
+         <parent>ab:base</parent>
+         <mandatory-aspects>
+            <aspect>ab:certProperties</aspect>
          </mandatory-aspects>
       </type>
 
@@ -319,6 +337,26 @@
          <mandatory-aspects>
             <aspect>ab:skype</aspect>
          </mandatory-aspects>
+      </aspect>
+      
+      <aspect name="ab:certProperties">
+         <properties>
+            <property name="ab:certName">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="ab:certValidTo">
+               <type>d:date</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="ab:certContent">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="ab:certDescription">
+               <type>d:text</type>
+            </property>
+         </properties>
       </aspect>
 
    </aspects>
