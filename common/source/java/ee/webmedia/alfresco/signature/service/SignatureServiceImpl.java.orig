@@ -56,7 +56,6 @@ import ee.sk.xmlenc.EncryptionProperty;
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.signature.exception.SignatureRuntimeException;
 import ee.webmedia.alfresco.signature.model.SkLdapCertificate;
-import ee.webmedia.alfresco.utils.FilenameUtil;
 
 public class SignatureServiceImpl implements SignatureService, InitializingBean {
 
@@ -288,9 +287,6 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
      */
     protected String getFileName(NodeRef fileRef) {
     	String name = (String) nodeService.getProperty(fileRef, FileModel.Props.DISPLAY_NAME);
-    	if (StringUtils.isNotBlank(name)) {
-    		name = FilenameUtil.stripForbiddenWindowsCharactersAndRedundantWhitespaces(name);
-    	}
         return StringUtils.isNotBlank(name)?name:(String) nodeService.getProperty(fileRef, ContentModel.PROP_NAME);
     }
 
