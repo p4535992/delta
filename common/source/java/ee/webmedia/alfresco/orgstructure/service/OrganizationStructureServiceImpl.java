@@ -98,12 +98,8 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
 
     @Override
     public int updateOrganisationStructureBasedGroups() {
-<<<<<<< HEAD
-        log.info("Starting updateOrganisationStructureBasedGroups...");
-        if (!applicationConstantsBean.isGroupsEditingAllowed()) {
-=======
+		log.info("Starting updateOrganisationStructureBasedGroups...");
         if (!applicationConstantsBean.isCreateOrgStructGroups()) {
->>>>>>> develop-5.2
             return 0; // System uses Active Directory
         }
         //clear person and personNodes cache to avoid cache instability
@@ -156,11 +152,11 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
             	if (StringUtils.isNotBlank(authorityEmail) && (StringUtils.isBlank(oldAuthorityEmail) || StringUtils.isNotBlank(oldAuthorityEmail) && !oldAuthorityEmail.equals(authorityEmail))) {
                     log.debug(os.getOrganizationDisplayPath() + ":: addAuthorityEmail: " + authorityEmail);
             		authorityService.addAuthorityEmail(groupAuthority, authorityEmail);
-            	} else {
+				} else {
                     log.debug(os.getOrganizationDisplayPath() + "::addAuthorityEmail: NULL! Try to remove units " +
                             "e-mail...");
-                    authorityService.deleteAuthorityEmail(groupAuthority);
-                }
+					authorityService.deleteAuthorityEmail(groupAuthority);
+            	}
             }
 
             // Get current users for this group
@@ -230,11 +226,8 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
 
         // Remove missing organization structures
         for (String missingGeneratedGroup : generatedGroups) {
-<<<<<<< HEAD
-            log.info("Removing missing organization structure groups... groupname: " + missingGeneratedGroup);
-=======
+			log.info("Removing missing organization structure groups... groupname: " + missingGeneratedGroup);
         	String missingGroupDisplayName = authorityService.getAuthorityDisplayName(missingGeneratedGroup);
->>>>>>> develop-5.2
             authorityService.deleteAuthority(missingGeneratedGroup);
             getWorkflowService().removeUserOrGroupFromCompoundWorkflowDefinitions(missingGroupDisplayName, null);
 
