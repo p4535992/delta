@@ -13,5 +13,6 @@ public interface SkLdapService {
     String BEAN_NAME = "SkLdapService";
 
     List<SkLdapCertificate> getCertificates(String serialNumber);
+    List<SkLdapCertificate> getCertificatesByName(String cnName);
 
 }

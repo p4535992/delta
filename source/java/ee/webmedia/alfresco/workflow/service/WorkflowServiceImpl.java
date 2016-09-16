@@ -1,6 +1,8 @@
 package ee.webmedia.alfresco.workflow.service;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFileService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getOrganizationStructureService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
 import static ee.webmedia.alfresco.log.PropDiffHelper.value;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.checkCompoundWorkflow;
@@ -200,6 +202,124 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         }
         return compoundWorkflowDefinitionsRoot;
     }
+    
+    @Override
+    public void removeUserOrGroupFromCompoundWorkflowDefinitions(String groupName, String userId) {
+    	if (StringUtils.isNotBlank(groupName)) {
+	    	List<CompoundWorkflowDefinition> cwdList = getActiveCompoundWorkflowDefinitions(false);
+	    	for (CompoundWorkflowDefinition cwd: cwdList) {
+	    		List<Workflow> workflows = cwd.getWorkflows();
+	    		boolean cwdChanged = false;
+	    		for (Workflow workflow: workflows) {
+	    			List<Task> tasks = workflow.getTasks();
+	    			List<Task> tasksToRemove = new ArrayList<Task>();
+	    			for (Task task: tasks) {
+	    				if (groupName.equals(task.getOwnerGroup())) {
+		    				if (StringUtils.isBlank(userId) || userId.equals(task.getOwnerId())) {
+		    					tasksToRemove.add(task);
+		    					cwdChanged = true;
+		    				}
+	    				}
+	    			}
+	    			
+	    			if (!tasksToRemove.isEmpty()) {
+	    				workflow.removeTasks(tasksToRemove);
+	    			}
+	    		}
+	    		if (cwdChanged) {
+	    			saveCompoundWorkflowDefinition(cwd);
+	    		}
+	    	}
+    	}
+    }
+    
+    @Override
+    public void addUserToCompoundWorkflowDefinitions(String groupName, String userId) {
+    	if (StringUtils.isNotBlank(groupName) && StringUtils.isNotBlank(userId)) {
+	    	List<CompoundWorkflowDefinition> cwdList = getActiveCompoundWorkflowDefinitions(false);
+	    	for (CompoundWorkflowDefinition cwd: cwdList) {
+	    		List<Workflow> workflows = cwd.getWorkflows();
+	    		boolean cwdChanged = false;
+	    		for (Workflow workflow: workflows) {
+	    			List<Task> tasks = workflow.getTasks();
+	    			boolean groupFound = false;
+	    			boolean userFound = false;
+	    			int userTaskIndex = -1;
+	    			for (Task task: tasks) {
+	    				if (userId.equals(task.getOwnerId())) {
+    						userFound = true;
+    						break;
+    					}
+	    				if (groupName.equals(task.getOwnerGroup())) {
+	    					userTaskIndex = task.getTaskIndexInWorkflow();
+	    					groupFound = true;
+	    				}
+	    			}
+	    			if (groupFound && !userFound) {
+	    				Task addedTask;
+	    				if (userTaskIndex > -1) {
+	    					addedTask = workflow.addTask(userTaskIndex + 1);
+	    				} else {
+	    					addedTask = workflow.addTask();
+	    				}
+						setPersonPropsToTask(addedTask, userId, groupName);
+						cwdChanged = true;
+	    			}
+	    		}
+	    		if (cwdChanged) {
+	    			saveCompoundWorkflowDefinition(cwd);
+	    		}
+	    	}
+    	}
+    }
+    
+    @Override
+    public void updateGroupUsersForCompoundWorkflowDefinitions(String groupName, Set<String> userIds) {
+    	if (StringUtils.isNotBlank(groupName)) {
+	    	List<CompoundWorkflowDefinition> cwdList = getActiveCompoundWorkflowDefinitions(false);
+	    	for (CompoundWorkflowDefinition cwd: cwdList) {
+	    		List<Workflow> workflows = cwd.getWorkflows();
+	    		boolean cwdChanged = false;
+	    		for (Workflow workflow: workflows) {
+	    			List<Task> tasks = workflow.getTasks();
+	    			boolean groupFound = false;
+	    			List<Task> tasksToRemove = new ArrayList<Task>();
+	    			for (Task task: tasks) {
+	    				if (groupName.equals(task.getOwnerGroup())) {
+	    					tasksToRemove.add(task);
+	    					groupFound = true;
+	    					cwdChanged = true;
+	    				}
+	    			}
+	    			
+	    			if (!tasksToRemove.isEmpty()) {
+	    				workflow.removeTasks(tasksToRemove);
+	    			}
+	    			if (groupFound) {
+	    				for (String userId: userIds) {
+		    				Task addedTask = workflow.addTask();
+							setPersonPropsToTask(addedTask, userId, groupName);
+	    				}
+	    			}
+	    			
+	    		}
+	    		if (cwdChanged) {
+	    			saveCompoundWorkflowDefinition(cwd);
+	    		}
+	    	}
+    	}
+    }
+    
+    private void setPersonPropsToTask(Task task, String userName, String groupName) {
+        Map<QName, Serializable> resultProps = getUserService().getUserProperties(userName);
+        String name = UserUtil.getPersonFullName1(resultProps);
+        Serializable id = resultProps.get(ContentModel.PROP_USERNAME);
+        Serializable email = resultProps.get(ContentModel.PROP_EMAIL);
+        Serializable orgName = (Serializable) getOrganizationStructureService().getOrganizationStructurePaths((String) resultProps.get(ContentModel.PROP_ORGID));
+        Serializable jobTitle = resultProps.get(ContentModel.PROP_JOBTITLE);
+        WorkflowUtil.setPropsToTask(task, name, id, email, orgName, jobTitle, groupName);
+    }
+
 
     @Override
     public List<CompoundWorkflowDefinition> getActiveCompoundWorkflowDefinitions(boolean getUserFullName) {
@@ -2052,7 +2172,12 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                 continue;
             }
             for (Workflow workflow : compoundWorkflow.getWorkflows()) {
-                if (workflow.isType(WorkflowSpecificModel.Types.INFORMATION_WORKFLOW) || workflow.isStatus(Status.FINISHED)) {
+                if (workflow.isType(WorkflowSpecificModel.Types.INFORMATION_WORKFLOW) 
+                		|| workflow.isType(WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW)
+                		|| workflow.isType(WorkflowSpecificModel.Types.REVIEW_WORKFLOW)
+                		|| workflow.isType(WorkflowSpecificModel.Types.OPINION_WORKFLOW)
+                		|| workflow.isType(WorkflowSpecificModel.Types.CONFIRMATION_WORKFLOW)
+                		|| workflow.isStatus(Status.FINISHED)) {
                     continue;
                 }
                 for (Task task : workflow.getTasks()) {
@@ -2219,8 +2344,9 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     @Override
     public boolean hasTwoInProgressOrStoppedCWorkflowsWithMultipleWorkflows(CompoundWorkflow cWorkflow, boolean checkCurrentWorkflow) {
+    	boolean oneMultistepWorkflowAllowed =  Boolean.valueOf(BeanHelper.getParametersService().getStringParameter(Parameters.ONE_MULTISTEP_WORKFLOW_ALLOWED));
         boolean hasOtherInProgressOrStoppedWorkflowWithMultipleWorkflows = false;
-        if (!checkCurrentWorkflow || cWorkflow.getWorkflows().size() > 1) {
+        if (oneMultistepWorkflowAllowed && (!checkCurrentWorkflow || cWorkflow.getWorkflows().size() > 1)) {
             for (CompoundWorkflow otherCWf : getOtherCompoundWorkflows(cWorkflow)) {
                 if (otherCWf.isStatus(Status.IN_PROGRESS, Status.STOPPED) && otherCWf.getWorkflows().size() > 1) {
                     hasOtherInProgressOrStoppedWorkflowWithMultipleWorkflows = true;

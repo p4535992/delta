@@ -21,6 +21,11 @@ public class FakeSendInfo extends SendInfo {
     public String getRecipient() {
         return (String) properties.get(DocumentCommonModel.Props.SEND_INFO_RECIPIENT);
     }
+    
+    @Override
+    public String getSender() {
+        return (String) getProperties().get(DocumentCommonModel.Props.SEND_INFO_SENDER);
+    }
 
     @Override
     public Date getSendDateTime() {
@@ -31,10 +36,20 @@ public class FakeSendInfo extends SendInfo {
     public String getSendMode() {
         return (String) properties.get(DocumentCommonModel.Props.SEND_INFO_SEND_MODE);
     }
+    
+    @Override
+    public String getSendModeExtended() {
+        return (String) properties.get(DocumentCommonModel.Props.SEND_INFO_SEND_MODE);
+    }
 
     @Override
     public String getSendStatus() {
         return (String) properties.get(DocumentCommonModel.Props.SEND_INFO_SEND_STATUS);
     }
+
+	@Override
+	public String getSentFiles() {
+		return (String) properties.get(DocumentCommonModel.Props.SEND_INFO_SENT_FILES);
+	}
 
 }

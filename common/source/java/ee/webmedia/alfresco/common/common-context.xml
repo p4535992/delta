@@ -14,6 +14,7 @@
       <property name="caseVolumeEnabled" value="${conf.casefile.enabled}" />
       <property name="defaultVolumeSortingField" value="${conf.volumesList.orderedBy}" />
       <property name="groupsEditingAllowed" value="${groups.editingAllowed}" />
+      <property name="createOrgStructGroups" value="${groups.createOrgStruct}" />
       <property name="substitutionTaskEndDateRestricted" value="${conf.notifications.substitutionTaskEndDateRestricted}" />
       <property name="generateNewRegNumberInReregistration" value="${conf.document-regnumber.generate-new-in-reregistration.enabled}" />
       <property name="finishUnregisteredDocumentEnabled" value="${conf.document.finish-unregistered-document.enabled}" />

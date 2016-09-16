@@ -134,7 +134,7 @@ public enum Parameters {
     ARCHIVING_BEGIN_TIME("archivingBeginTime"),
     ARCHIVING_END_TIME("archivingEndTime"),
     CONTINUE_ARCIVING_OVER_WEEKEND("continueArchivingOverWeekend"),
-	DIGIDOC_FILE_FORMAT("digidocFileFormat"),
+    DIGIDOC_FILE_FORMAT("digidocFileFormat"),
 	ALLOW_CLOSE_FOR_ARCIVED_VOLUMES("allowCloseForArchivedVolumes"),
 	ONE_MULTISTEP_WORKFLOW_ALLOWED("oneMultistepWorkflowAllowed");
 

@@ -51,6 +51,29 @@ public class SkLdapServiceImpl implements SkLdapService {
             throw e;
         }
     }
+    
+    @Override
+    public List<SkLdapCertificate> getCertificatesByName(String cnName) {
+        Assert.isTrue(StringUtils.isNotEmpty(cnName));
+
+        String filter = "(cn=" + cnName + "*)";
+        long startTime = System.nanoTime();
+        try {
+            List<SkLdapCertificate> list = ldapTemplate.search("", filter, new SkLdapCertificateMapper());
+            long stopTime = System.nanoTime();
+            LOG.info("PERFORMANCE: query skLdapSearchByCn - " + duration(startTime, stopTime) + " ms");
+            MonitoringUtil.logSuccess(MonitoredService.OUT_SK_LDAP);
+            return list;
+        } catch (NamingException e) {
+            long stopTime = System.nanoTime();
+            MonitoringUtil.logError(MonitoredService.OUT_SK_LDAP, e);
+            LOG.error("Error performing cn query from SK LDAP service (took " + duration(startTime, stopTime) + " ms) : " + filter, e);
+            throw new UnableToPerformException("sk_ldap_error");
+        } catch (RuntimeException e) {
+            MonitoringUtil.logError(MonitoredService.OUT_SK_LDAP, e);
+            throw e;
+        }
+    }
 
     public static class SkLdapCertificateMapper extends AbstractParameterizedContextMapper<SkLdapCertificate> {
 
