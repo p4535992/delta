@@ -628,6 +628,9 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
      */
     protected String getFileName(NodeRef fileRef) {
     	String name = (String) nodeService.getProperty(fileRef, FileModel.Props.DISPLAY_NAME);
+    	if (StringUtils.isNotBlank(name)) {
+    		name = FilenameUtil.stripForbiddenWindowsCharactersAndRedundantWhitespaces(name);
+    	}
         return StringUtils.isNotBlank(name)?name:(String) nodeService.getProperty(fileRef, ContentModel.PROP_NAME);
     }
 
