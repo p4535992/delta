@@ -115,10 +115,8 @@
 
    <bean id="updateUsersGroupsOrganizationsListTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean" parent="parameterRescheduledTriggerParent">
       <property name="enabled" value="${jobs.enabled}" />
-      <property name="parameterName" value="volumeDispositionDateNotificationDays" />
-      <property name="parameterFormat" value="D" />
-      <property name="fireAtStartup" value="true" />
-      <property name="startDelay" value="60000" />
+      <property name="parameterName" value="syncUsersGroupsStructUnitsTime" />
+      <property name="parameterFormat" value="H:mm" />
       <property name="jobDetail">
          <bean id="updateOrganizationsListJobDetails" class="org.springframework.scheduling.quartz.JobDetailBean">
             <property name="jobClass" value="ee.webmedia.alfresco.orgstructure.job.UpdateUsersGroupsOrganizationsListJob" />
