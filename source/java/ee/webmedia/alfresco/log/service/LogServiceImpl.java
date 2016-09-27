@@ -513,7 +513,7 @@ public class LogServiceImpl implements LogService, InitializingBean {
     	jdbcTemplate.update(sql, new Object[] { new Date(), notificationId });
 	}
 
-	@Override
+		@Override
 	public LoggedNotification getLoggedNotification(long notificationLogId, String userGroupHash) {
 		LoggedNotification loggedNotification = new LoggedNotification();
 		String sql = "SELECT notification_date_time FROM delta_notification_group_log WHERE notification_log_id = ? AND user_group_hash = ?";
@@ -536,15 +536,6 @@ public class LogServiceImpl implements LogService, InitializingBean {
 		});
 		loggedNotification.setNotificatedUsers(notificatedUsers);
 		return loggedNotification;
-	}
-	
-	@Override
-	public void updateLogEntryObjectId(String currentObjectId, String newObjectId) {
-        if (StringUtils.isBlank(currentObjectId) || StringUtils.isBlank(newObjectId)) {
-        	return;
-        }
-        jdbcTemplate.update(
-                "UPDATE delta_log SET object_id = ? WHERE object_id = ?",
-                new Object[] { newObjectId, currentObjectId });
-    }
+		}
+
 }

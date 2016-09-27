@@ -457,8 +457,6 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
                 return null;
             }
         }, AuthenticationUtil.getSystemUserName());
-        
-        documentLogService.addDocumentLog(documentRef, MessageUtil.getMessage("document_log_status_opened_from_finished"));
         if (log.isDebugEnabled()) {
             log.debug("Document reopened");
         }
@@ -1491,14 +1489,12 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
         NodeRef archivedRef = new NodeRef(StoreRef.STORE_REF_ARCHIVE_SPACESSTORE, nodeRef.getId());
         String location = nodeService.exists(archivedRef) ? (String) nodeService.getProperty(archivedRef, ContentModel.PROP_ARCHIVED_ORIGINAL_LOCATION_STRING) : "";
         logService.addLogEntry(LogEntry.create(LogObject.DOCUMENT, userService, nodeRef, "document_log_status_deleted_from", status, location));
-        
-        // DELTA-980, reset log_data objectId
-        logService.updateLogEntryObjectId(nodeRef.toString(), archivedRef.toString());
-        
+
         if (updateMenu) {
             menuService.process(BeanHelper.getMenuBean().getMenu(), false, true);
         }
         
+        // TODO: DELTA-952 update log objectId from nodeRef to archivedRef
     }
 
     private void removeDocFromCompoundWorkflowProps(NodeRef docRef, NodeRef compoundWorkflowRef) {

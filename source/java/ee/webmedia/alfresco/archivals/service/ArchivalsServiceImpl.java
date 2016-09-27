@@ -873,10 +873,6 @@ public class ArchivalsServiceImpl implements ArchivalsService {
                             if (isDocument && independentWorkflowEnabled) {
                                 updateCompoundWorkflowProps(cwfRefs, childRef, archivedNodeRef);
                             }
-                            if (isDocument) {
-                            	logService.updateLogEntryObjectId(childRef.toString(), archivedNodeRef.toString());
-                            }
-                            
                             return null;
                         }
                     }, false, true);

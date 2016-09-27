@@ -26,17 +26,11 @@ public abstract class SendInfo {
     }
 
     public abstract String getRecipient();
-    
-    public abstract String getSender();
 
     public abstract Date getSendDateTime();
 
     public abstract String getSendMode();
-    
-    public abstract String getSendModeExtended();
 
-    public abstract String getSentFiles();
-    
     public abstract String getSendStatus();
 
     public String getReceivedDateTime() {
