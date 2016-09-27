@@ -1419,22 +1419,6 @@ public class ComponentUtil {
         }
         return index;
     }
-    
-    public static Integer getIndexFromClientId(String clientId) {
-        Integer index = null;
-        if (StringUtils.isNotBlank(clientId) && clientId.contains(":")) {
-        	String [] clientIdParts = clientId.split(":");
-        	if (clientIdParts.length > 2) {
-	            String indexStr = clientIdParts[clientIdParts.length - 2];
-	            try {
-	                index = Integer.parseInt(indexStr);
-	            } catch (NumberFormatException e) {
-	                // Do nothing
-	            }
-        	}
-        }
-        return index;
-    }
 
     public static void addRecipientGrouping(Field field, ItemConfigVO item, NamespaceService namespaceService) {
         if (field == null || namespaceService == null) {

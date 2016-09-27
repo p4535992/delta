@@ -52,7 +52,6 @@ import org.apache.commons.logging.LogFactory;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
-import ee.webmedia.alfresco.log.service.LogService;
 
 /**
  * Implementation of the node archive abstraction.
@@ -63,16 +62,10 @@ public class NodeArchiveServiceImpl implements NodeArchiveService
 {
     private static Log logger = LogFactory.getLog(NodeArchiveServiceImpl.class);
     
-    private LogService logService;
     private NodeService nodeService;
     private SearchService searchService;
     private TransactionService transactionService;
 
-    public void setLogService(LogService logService)
-    {
-        this.logService = logService;
-    }
-    
     public void setNodeService(NodeService nodeService)
     {
         this.nodeService = nodeService;
@@ -162,11 +155,6 @@ public class NodeArchiveServiceImpl implements NodeArchiveService
             // success
             report.setRestoredNodeRef(newNodeRef);
             report.setStatus(RestoreStatus.SUCCESS);
-            
-            // DELTA-980, reset log_data objectId
-            if (DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(newNodeRef))) {
-            	logService.updateLogEntryObjectId(archivedNodeRef.toString(), newNodeRef.toString());
-            }
 
             // Remove deleted document entry for ADR sync
             if (DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(newNodeRef))) { 

@@ -93,6 +93,7 @@ import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.workflow.model.CompoundWorkflowType;
@@ -1165,8 +1166,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
 
     private boolean dontShowAddActions() {
         boolean dontShowAddActions = getSortedTypes().isEmpty();
-        boolean oneMultistepWorkflowAllowed =  Boolean.valueOf(BeanHelper.getParametersService().getStringParameter(Parameters.ONE_MULTISTEP_WORKFLOW_ALLOWED));
-        if (!dontShowAddActions && this instanceof CompoundWorkflowDialog && !compoundWorkflow.getWorkflows().isEmpty() && oneMultistepWorkflowAllowed) {
+        if (!dontShowAddActions && this instanceof CompoundWorkflowDialog && !compoundWorkflow.getWorkflows().isEmpty()) {
             List<CompoundWorkflow> otherCompoundWorkflows = getWorkflowService().getOtherCompoundWorkflows(compoundWorkflow);
             for (CompoundWorkflow cwf : otherCompoundWorkflows) {
                 if (cwf.isStatus(Status.IN_PROGRESS, Status.STOPPED) && cwf.getWorkflows().size() > 1 && !cwf.getWorkflows().isEmpty()) {

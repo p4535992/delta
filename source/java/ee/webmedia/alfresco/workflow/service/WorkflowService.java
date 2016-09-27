@@ -321,11 +321,5 @@ public interface WorkflowService {
     List<Map<QName, Serializable>> getDocumentCompoundWorkflowTaskOwnerNamesAndIds(NodeRef docRef, Set<QName> taskTypes, Set<Status> taskStatuses);
 
     void removeCaseFileTypeFromCompoundWorklfowDefinitions(String caseFileId);
-    
-    void removeUserOrGroupFromCompoundWorkflowDefinitions(String groupName, String userId);
-    
-    void addUserToCompoundWorkflowDefinitions(String groupName, String userId);
-    
-    void updateGroupUsersForCompoundWorkflowDefinitions(String groupName, Set<String> userIds);
 
 }

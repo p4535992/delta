@@ -17,7 +17,6 @@ public interface AddressbookModel {
         QName PRIV_PERSON = QName.createQName(AddressbookModel.URI, "privPerson");
         QName CONTACT_GROUP = QName.createQName(AddressbookModel.URI, "contactGroup");
         QName PERSON_BASE = QName.createQName(AddressbookModel.URI, "personBase");
-        QName ORGCERTIFICATE = QName.createQName(AddressbookModel.URI, "orgCertificate");
     }
 
     interface Assocs {
@@ -28,7 +27,6 @@ public interface AddressbookModel {
         QName CONTACT_GROUPS = QName.createQName(AddressbookModel.URI, "contactGroups");
         QName CONTACT_PERSON_BASE = QName.createQName(AddressbookModel.URI, "contactPersonBases");
         QName CONTACT_ORGANIZATION = QName.createQName(AddressbookModel.URI, "contactOrganizations");
-        QName ORGCERTIFICATES = QName.createQName(AddressbookModel.URI, "orgCertificates");
     }
 
     interface Props {
@@ -64,11 +62,6 @@ public interface AddressbookModel {
         QName MANAGEABLE_FOR_ADMIN = QName.createQName(AddressbookModel.URI, "manageableForAdmin");
         QName DEC_TASK_CAPABLE = QName.createQName(AddressbookModel.URI, "decTaskCapable");
         QName FORWARDING_DEC_DOCUMENT_ALLOWED = QName.createQName(AddressbookModel.URI, "forwardingDecDocumentAllowed");
-        
-        QName ORG_CERT_NAME = QName.createQName(AddressbookModel.URI, "certName");
-        QName ORG_CERT_VALID_TO = QName.createQName(AddressbookModel.URI, "certValidTo");
-        QName ORG_CERT_DESCRIPTION = QName.createQName(AddressbookModel.URI, "certDescription");
-        QName ORG_CERT_CONTENT = QName.createQName(AddressbookModel.URI, "certContent");
     }
 
     interface Aspects {
@@ -79,7 +72,5 @@ public interface AddressbookModel {
         QName SKYPE = QName.createQName(AddressbookModel.URI, "skype");
         QName DEC_TASK_CAPABLE = QName.createQName(AddressbookModel.URI, "decTaskCapable");
         QName FORWARDING_DEC_DOCUMENT_ALLOWED = QName.createQName(AddressbookModel.URI, "forwardingDecDocumentAllowed");
-        QName CERT_PROPERTIES = QName.createQName(AddressbookModel.URI, "certProperties");
-        
     }
 }

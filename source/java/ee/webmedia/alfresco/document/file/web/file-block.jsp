@@ -147,7 +147,7 @@
                <f:param name="nodeRef" value="#{r.nodeRef}" />
             </a:actionLink>
          </wm:docPermissionEvaluator>
-         <a:actionLink id="col7-act" value="#{r.name}" actionListener="#{BrowseBean.setupContentActionByNodeRef}" action="dialog:deleteFile" showLink="false"
+         <a:actionLink id="col7-act" value="#{r.name}" actionListener="#{BrowseBean.setupContentAction}" action="dialog:deleteFile" showLink="false"
             image="/images/icons/delete.gif" tooltip="#{msg.file_remove}" rendered="#{FileBlockBean.deleteFileAllowed && FileBlockBean.guest == false}">
             <f:param name="id" value="#{r.id}" />
             <f:param name="ref" value="#{r.nodeRef}" />
@@ -334,7 +334,7 @@
                <f:param name="nodeRef" value="#{r.nodeRef}" />
             </a:actionLink>
          </wm:docPermissionEvaluator>
-         <a:actionLink id="col27-act" value="#{r.name}" actionListener="#{BrowseBean.setupContentActionByNodeRef}" action="dialog:deleteFile" showLink="false"
+         <a:actionLink id="col27-act" value="#{r.name}" actionListener="#{BrowseBean.setupContentAction}" action="dialog:deleteFile" showLink="false"
             image="/images/icons/delete.gif" tooltip="#{msg.file_remove}" rendered="#{FileBlockBean.deleteInactiveFileAllowed}">
             <f:param name="id" value="#{r.id}" />
             <f:param name="ref" value="#{r.nodeRef}" />

@@ -341,44 +341,6 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         }
         return results;
     }
-    
-    public X509Certificate getCertificateForEncryption(SkLdapCertificate skLdapCertificate) {
-    	return getCertificateForEncryption(skLdapCertificate.getUserCertificate(), skLdapCertificate.getCn());
-    }
-    
-    public X509Certificate getCertificateForEncryption(byte [] certData, String certName) {
-    	X509Certificate cert = null;
-    	try {
-            cert = SignedDoc.readCertificate(certData);
-
-            // In DigiDoc Client 2 and 3, only certificates which contain KeyEncipherment in KeyUsage, are suitable for encryption
-            // (in DigiDoc Client < 3.6 DataEncipherment was checked)
-            // According to https://svn.eesti.ee/projektid/idkaart_public/trunk/qdigidoc/crypto/KeyDialog.cpp
-            // * c.keyUsage().contains( SslCertificate::KeyEncipherment )
-            boolean keyEncipherment = cert.getKeyUsage()[2];
-            if (!keyEncipherment) {
-            	return null;
-            }
-            
-            // In DigiDoc Client 3 (but not 2), additionally Mobile-ID certificates are filtered out (because decryption is not implemented in Mobile-ID)
-            // According to https://svn.eesti.ee/projektid/idkaart_public/trunk/qdigidoc/crypto/KeyDialog.cpp
-            // * c.type() != SslCertificate::MobileIDType
-            // and https://svn.eesti.ee/projektid/idkaart_public/trunk/qdigidoc/common/SslCertificate.cpp
-            // * QStringList p = policies();
-            // * if( p.indexOf( QRegExp( "^1\\.3\\.6\\.1\\.4\\.1\\.10015\\.1\\.3.*" ) ) != -1 ||
-            // * p.indexOf( QRegExp( "^1\\.3\\.6\\.1\\.4\\.1\\.10015\\.11\\.1.*" ) ) != -1 )
-            // * return MobileIDType;
-            List<String> objectIdentifiers = getPolicyObjectIdentifiers(cert);
-            for (String objectIdentifier : objectIdentifiers) {
-                if (objectIdentifier.startsWith("1.3.6.1.4.1.10015.1.3") || objectIdentifier.startsWith("1.3.6.1.4.1.10015.11.1")) {
-                	return null;
-                }
-            }
-            return cert;
-        } catch (Exception e) {
-            throw new SignatureRuntimeException("Failed to parse certificate for " + certName, e);
-        }
-    }
 
     private static List<String> getPolicyObjectIdentifiers(X509Certificate cert) {
         try {
