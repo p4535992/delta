@@ -192,8 +192,9 @@ public class StructureImporter {
 
         NodeRef mainDocsList = generalService.getNodeRef(FunctionsModel.Repo.FUNCTIONS_SPACE, generalService.getStore());
         NodeRef archDocsList = generalService.getNodeRef(FunctionsModel.Repo.FUNCTIONS_SPACE, generalService.getArchivalsStoreRef());
-        List<String> documentTypes = new ArrayList<String>(documentAdminService.getDocumentTypeNames(Boolean.TRUE).keySet());
-
+        List<String> documentTypes = new ArrayList<String>();
+        documentTypes.add("otherDocument");
+        
         String taskOwnerStructUnitAuthority = null;
         Set<Privilege> taskOwnerStructUnitAuthorityPrivileges = getStructUnitAuthorityPrivileges(data.getTaskOwnerStructUnitAuthorityPrivileges());;
         if (taskOwnerStructUnitAuthorityPrivileges != null && StringUtils.isNotBlank(data.getTaskOwnerStructUnitAuthority())) {

@@ -194,8 +194,8 @@ public class GoProImporter {
                 status.beginStruct();
                 importer = new StructureImporter();
                 super.doWork();
-                importer.checkSeriesOrders();
             } finally {
+            	importer.checkSeriesOrders();
                 status.endStruct();
             }
             return null;
