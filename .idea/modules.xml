@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/bitbucket-delta.iml" filepath="$PROJECT_DIR$/.idea/bitbucket-delta.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/repository-src/repository-src.iml" filepath="$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/repository-src/repository-src.iml" />
     </modules>
   </component>
 </project>

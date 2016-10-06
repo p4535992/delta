@@ -21,7 +21,7 @@ REM export ANT_OPTS="-Xmx2048m -XX:PermSize=512m -XX:MaxPermSize=1024m -Drevisio
 SET JAVA_OPTS=-Djavax.net.ssl.trustStore=cacerts -Djavax.net.ssl.keyStore=cacerts
 
 REM ant clean-all
-ant war -Dconf.name=sim-example -Dconf.organization.name=ppa -Dappserver=tomcat
+ant clean-all war -Dconf.name=sim-example -Dconf.organization.name=ppa -Dappserver=tomcat
 REM ant war -Dconf.name=dev-example -Dconf.organization.name=mv -Dappserver=tomcat
 REM ant war -Dconf.name=jum-example -Dconf.organization.name=jum -Dappserver=tomcat
 

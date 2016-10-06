@@ -222,10 +222,58 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
     
 
     private DataFile createDDocDataFile(SignedDoc signedDocument, ContentReader reader, String fileName) throws DigiDocException, IOException {
+        if(signedDocument == null){
+            log.error("Signed digidoc is NULL!");
+        } else {
+            log.debug("signedDocument.getNewDataFileId(): " + signedDocument.getNewDataFileId());
+        }
+        if(fileName == null){
+            log.error("Filename is NULL!!");
+        } else{
+            log.debug("Filename: " + fileName);
+        }
         DataFile dataFile = new DataFile(signedDocument.getNewDataFileId(), DataFile.CONTENT_EMBEDDED_BASE64, fileName, reader.getMimetype(), signedDocument);
+        if(dataFile == null) {
+            log.error("dataFile is NULL!!!");
+        } else {
+            log.debug("dataFile: is body BASH64: " + dataFile.getBodyIsBase64());
+        }
+        log.debug("Create cache file...");
         dataFile.createCacheFile();
-        OutputStream os = new Base64OutputStream(new BufferedOutputStream(new FileOutputStream(dataFile.getDfCacheFile())), true, 64, new byte[] { '\n' });
+        log.debug("Create cache file... Created!");
+        File dataFileCached = dataFile.getDfCacheFile();
+        if(dataFileCached == null){
+            log.error("Can't get cached dataFile! File is NULL");
+        } else {
+            log.debug("Cached dataFile: " + dataFileCached.getAbsolutePath());
+        }
+        FileOutputStream fileOutputStream = new FileOutputStream(dataFileCached);
+        if(fileOutputStream == null){
+            log.error("New FileOutputStream is NULL!!");
+        } else {
+            log.debug("New FileOutputStream: CREATED!");
+        }
+        BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
+        if(bufferedOutputStream == null){
+            log.error("New BufferedOutputStream is NULL!!");
+        } else {
+            log.debug("New BufferedOutputStream: CREATED!");
+        }
+
+        OutputStream os = new Base64OutputStream(bufferedOutputStream,true, 64, new byte[] { '\n' });
+        if(os == null){
+            log.error("New Base64OutputStream is NULL!!");
+        } else {
+            log.debug("New Base64OutputStream: CREATED!");
+        }
+
+        log.debug("Read content...");
         reader.getContent(os); // closes both streams
+        if(reader != null){
+            log.debug("Reader size(): " + reader.getSize());
+        } else {
+            log.error("Reader is NULL!!");
+        }
         dataFile.setSize(reader.getSize());
         // XXX reader.getEncoding() sometimes returns "utf-8", sometimes "UTF-8"
         dataFile.setInitialCodepage(reader.getEncoding().toUpperCase());
