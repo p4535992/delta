@@ -1,14 +1,6 @@
 package ee.webmedia.alfresco.signature.service;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -29,6 +21,7 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.util.Pair;
 import org.alfresco.util.TempFileProvider;
 import org.apache.commons.codec.binary.Base64OutputStream;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
@@ -223,54 +216,105 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
 
     private DataFile createDDocDataFile(SignedDoc signedDocument, ContentReader reader, String fileName) throws DigiDocException, IOException {
         if(signedDocument == null){
-            log.error("Signed digidoc is NULL!");
+            log.error("SignedDocument: Signed digidoc is NULL!");
         } else {
-            log.debug("signedDocument.getNewDataFileId(): " + signedDocument.getNewDataFileId());
+            log.trace("SignedDocument: NewDataFileId: " + signedDocument.getNewDataFileId());
+            log.trace("SignedDocument: path: " + signedDocument.getPath());
+            log.trace("SignedDocument: version: " + signedDocument.getVersion());
+            log.trace("SignedDocument: size: " + signedDocument.getSize());
+            log.trace("SignedDocument: MIME type: " + signedDocument.getMimeType());
+            try{
+                ArrayList data = signedDocument.getDataFiles();
+                if(data == null){
+                    log.error("SignedDocument: getDataFiles Arraylist is NULL!");
+                } else {
+                    if (data.size() > 0) {
+                        for (Object object : data) {
+                            log.trace("DATA ArrayList object: " + object.toString());
+                        }
+                    }
+                }
+
+            } catch (Exception e){
+                log.error("ERROR: " + e.getMessage(), e);
+            }
+
         }
         if(fileName == null){
             log.error("Filename is NULL!!");
         } else{
-            log.debug("Filename: " + fileName);
+            log.trace("Filename: " + fileName);
         }
-        DataFile dataFile = new DataFile(signedDocument.getNewDataFileId(), DataFile.CONTENT_EMBEDDED_BASE64, fileName, reader.getMimetype(), signedDocument);
-        if(dataFile == null) {
-            log.error("dataFile is NULL!!!");
+
+        if(reader == null){
+            log.error("ContentReader is NULL!");
         } else {
-            log.debug("dataFile: is body BASH64: " + dataFile.getBodyIsBase64());
+            try {
+                log.trace("ContentReader getSize: " + reader.getSize());
+                log.trace("ContentReader getContentUrl: " + reader.getContentUrl());
+                log.trace("ContentReader getLastModified:" + reader.getLastModified());
+                log.trace("ContentReader getEncoding: " + reader.getEncoding());
+                log.trace("ContentReader getMimetype: " + reader.getMimetype());
+            } catch (Exception e){
+                log.error("ContentReader ERROR: " + e.getMessage(), e);
+            }
         }
-        log.debug("Create cache file...");
-        dataFile.createCacheFile();
-        log.debug("Create cache file... Created!");
+        DataFile dataFile = createDataFile(signedDocument, reader, fileName);
+
+        log.trace("Try to get cached file...");
         File dataFileCached = dataFile.getDfCacheFile();
+
+        //dataFileCached = null;
         if(dataFileCached == null){
             log.error("Can't get cached dataFile! File is NULL");
+
+            String oldTmpDir = System.getProperty("java.io.tmpdir");
+
+            log.trace("Attempt 2: Try change TEMP folder: " + oldTmpDir + " ==> /tmp");
+            System.setProperty("java.io.tmpdir", "/tmp");
+            System.setProperty("CATALINA_TMPDIR", "/tmp");
+
+            createTestTmpfile("/tmp/");
+
+            dataFile = createDataFile(signedDocument, reader, fileName);
+
+
+            log.trace("Attempt 2: Changeing java.io.tmpdir back to Old value: " + oldTmpDir);
+            System.setProperty("java.io.tmpdir", oldTmpDir);
+            System.setProperty("CATALINA_TMPDIR", oldTmpDir);
+
+            log.trace("Attempt 2: Try get cached file...");
+            dataFileCached = dataFile.getDfCacheFile();
+            if(dataFileCached == null){
+                log.error("Attempt 2: dataFileCached is still NULL!");
+            }
         } else {
-            log.debug("Cached dataFile: " + dataFileCached.getAbsolutePath());
+            log.trace("Cached dataFile: absolutePath: " + dataFileCached.getAbsolutePath());
         }
         FileOutputStream fileOutputStream = new FileOutputStream(dataFileCached);
         if(fileOutputStream == null){
             log.error("New FileOutputStream is NULL!!");
         } else {
-            log.debug("New FileOutputStream: CREATED!");
+            log.trace("New FileOutputStream: CREATED!");
         }
         BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
         if(bufferedOutputStream == null){
             log.error("New BufferedOutputStream is NULL!!");
         } else {
-            log.debug("New BufferedOutputStream: CREATED!");
+            log.trace("New BufferedOutputStream: CREATED!");
         }
 
         OutputStream os = new Base64OutputStream(bufferedOutputStream,true, 64, new byte[] { '\n' });
         if(os == null){
             log.error("New Base64OutputStream is NULL!!");
         } else {
-            log.debug("New Base64OutputStream: CREATED!");
+            log.trace("New Base64OutputStream: CREATED!");
         }
 
         log.debug("Read content...");
         reader.getContent(os); // closes both streams
         if(reader != null){
-            log.debug("Reader size(): " + reader.getSize());
+            log.trace("Reader size(): " + reader.getSize());
         } else {
             log.error("Reader is NULL!!");
         }
@@ -281,7 +325,76 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         return dataFile;
     }
 
+    /**
+     * Creating test temp file...
+     * @param path
+     */
+    public void createTestTmpfile(String path){
+        try{
+            String dfId = new Long(System.currentTimeMillis()).toString();
+            File fCacheDir = new File(path);
 
+            log.trace("tempdir: isAbsolute: " + fCacheDir.isAbsolute());
+            log.trace("tempdir: canExecute: " + fCacheDir.canExecute());
+            log.trace("tempdir: canRead: " + fCacheDir.canRead());
+            log.trace("tempdir: canWrite: " + fCacheDir.canWrite());
+            log.trace("tempdir: exists: " + fCacheDir.exists());
+            log.trace("tempdir: getFreeSpace: " + fCacheDir.getFreeSpace());
+            log.trace("tempdir: isDirectory: " + fCacheDir.isDirectory());
+            log.trace("tempdir: isFile: " + fCacheDir.isFile());
+            log.trace("tempdir: isHidden: " + fCacheDir.isHidden());
+            log.trace("SET WRITABLE: " + fCacheDir.setWritable(true));
+
+            File file = File.createTempFile(dfId, ".df", fCacheDir);
+            log.trace("CREATED NEW TEST TEMP file:" + file.getAbsolutePath());
+
+            log.trace("File: carWrite: " + file.canWrite());
+
+            FileUtils.writeStringToFile(file, "üõöäžšÜÕÖÄŽŠ\nFIN!", "UTF-8");
+
+            //file.delete();
+        } catch (Exception e){
+            log.error("ERROR: " + e.getMessage(), e);
+        }
+
+    }
+    public DataFile createDataFile(SignedDoc signedDocument, ContentReader reader, String fileName) throws
+            DigiDocException, IOException {
+
+        DataFile dataFile = new DataFile(signedDocument.getNewDataFileId(), DataFile.CONTENT_EMBEDDED_BASE64,
+                fileName, reader.getMimetype(), signedDocument);
+
+        if(dataFile == null) {
+            log.error("dataFile is NULL!!!");
+        } else {
+            log.trace("dataFile: is body BASH64: " + dataFile.getBodyIsBase64());
+            log.trace("dataFile: hasAccessToDataFile: " + dataFile.hasAccessToDataFile());
+        }
+        String systemTmpPath = System.getProperty("java.io.tmpdir");
+        log.trace("SYSTEM TMP PATH: " + systemTmpPath);
+        String CATALINA_TMPDIR = System.getProperty("CATALINA_TMPDIR");
+        log.trace("CATALINA_TMPDIR: " + CATALINA_TMPDIR);
+        String digiDocFilePath = ConfigManager.instance().
+                getStringProperty("DIGIDOC_DF_CACHE_DIR", systemTmpPath );
+        log.trace("DIGIDOC_DF_CACHE_DIR: " + digiDocFilePath);
+
+        createTestTmpfile(digiDocFilePath);
+
+        log.trace("createCacheFile...");
+        try {
+            dataFile.createCacheFile();
+            log.trace("dataFile: hasAccessToDataFile: " + dataFile.hasAccessToDataFile());
+            log.trace("dataFile id: " + dataFile.getId());
+            log.trace("dataFile body is BASE64?: " + dataFile.getBodyIsBase64());
+            log.trace("dataFile Filename: " + dataFile.getFileName());
+            log.trace("dataFile MIME type: " + dataFile.getMimeType());
+        } catch (Exception e){
+            log.error("dataFile: ERROR creating cache file: " + e.getMessage(), e);
+            throw e;
+        }
+        log.trace("dataFile: Create cache file... Created!");
+        return dataFile;
+    }
 
     
     private static void bindCleanTempFiles(final SignedDoc signedDoc) {
