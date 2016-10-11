@@ -517,11 +517,17 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
         boolean isTestNumber = testIdCodeAndCountry != null;
         
         MobileSignHashRequest mobileSignHashRequest = new MobileSignHashRequest();
+        log.trace("mobileSignHashRequest hash: " + hash);
     	mobileSignHashRequest.setHash(hash);
+        log.trace("mobileSignHashRequest idCode: " + idCode);
     	mobileSignHashRequest.setIDCode(isTestNumber ? testIdCodeAndCountry.getFirst() : idCode);
+        log.trace("mobileSignHashRequest Language: " + LanguageType.EST);
     	mobileSignHashRequest.setLanguage(LanguageType.EST);
+        log.trace("mobileSignHashRequest PhoneNo: " + phoneNo);
     	mobileSignHashRequest.setPhoneNo(phoneNo);
+        log.trace("mobileSignHashRequest hashType: " + HashType.SHA_256.toString());
     	mobileSignHashRequest.setHashType(HashType.SHA_256);
+        log.trace("mobileSignHashRequest serviceName: " + getMobileIdServiceName());
     	mobileSignHashRequest.setServiceName(getMobileIdServiceName());
         try {
         	

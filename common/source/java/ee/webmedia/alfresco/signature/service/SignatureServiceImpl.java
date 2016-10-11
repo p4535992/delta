@@ -38,7 +38,7 @@ import org.bouncycastle.jce.X509Principal;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 
-import ee.sk.digidoc.DataFile1;
+import ee.sk.digidoc.DataFile;
 import ee.sk.digidoc.DigiDocException;
 import ee.sk.digidoc.SignedDoc;
 import ee.sk.digidocservice.DigiDocServicePortType;
@@ -208,13 +208,13 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
     private void addDataFile(NodeRef nodeRef, SignedDoc document) throws DigiDocException, IOException {
         String fileName = getFileName(nodeRef);
         ContentReader reader = fileFolderService.getReader(nodeRef);
-        DataFile1 datafile = createDDocDataFile(document, reader, fileName);
+        DataFile datafile = createDDocDataFile(document, reader, fileName);
         document.addDataFile(datafile);
     }
 
     
 
-    private DataFile1 createDDocDataFile(SignedDoc signedDocument, ContentReader reader, String fileName) throws
+    private DataFile createDDocDataFile(SignedDoc signedDocument, ContentReader reader, String fileName) throws
             DigiDocException, IOException {
         if(signedDocument == null){
             log.error("SignedDocument: Signed digidoc is NULL!");
@@ -260,7 +260,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
                 log.error("ContentReader ERROR: " + e.getMessage(), e);
             }
         }
-        DataFile1 dataFile = createDataFile(signedDocument, reader, fileName);
+        DataFile dataFile = createDataFile(signedDocument, reader, fileName);
 
         log.trace("Try to get cached file...");
         File dataFileCached = dataFile.getDfCacheFile();
@@ -359,17 +359,17 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         }
 
     }
-    public DataFile1 createDataFile(SignedDoc signedDocument, ContentReader reader, String fileName) throws
+    public DataFile createDataFile(SignedDoc signedDocument, ContentReader reader, String fileName) throws
             DigiDocException, IOException {
 
-        DataFile1 dataFile = new DataFile1(signedDocument.getNewDataFileId(), DataFile1.CONTENT_EMBEDDED_BASE64,
+        DataFile dataFile = new DataFile(signedDocument.getNewDataFileId(), DataFile.CONTENT_EMBEDDED_BASE64,
                 fileName, reader.getMimetype(), signedDocument);
 
         if(dataFile == null) {
             log.error("dataFile is NULL!!!");
         } else {
             log.trace("dataFile: is body BASH64: " + dataFile.getBodyIsBase64());
-            log.trace("dataFile: hasAccessToDataFile: " + dataFile.hasAccessToDatFile());
+            log.trace("dataFile: hasAccessToDataFile: " + dataFile.hasAccessToDataFile());
         }
         String systemTmpPath = System.getProperty("java.io.tmpdir");
         log.trace("SYSTEM TMP PATH: " + systemTmpPath);
@@ -379,6 +379,9 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
                 getStringProperty("DIGIDOC_DF_CACHE_DIR", systemTmpPath );
         log.trace("DIGIDOC_DF_CACHE_DIR: " + digiDocFilePath);
 
+        // TESTING ERROR:
+        //ConfigManager.instance().setStringProperty("DIGIDOC_MAX_DATAFILE_CACHED", "-1");
+
         createTestTmpfile(digiDocFilePath);
 
         log.trace("createCacheFile...");
@@ -386,7 +389,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
             log.trace("dataFile: (should be TRUE) schouldUseTempFile(): " + dataFile.schouldUseTempFile());
             log.trace("dataFile: (should be NULL) getDfCacheFile(): " + dataFile.getDfCacheFile());
             dataFile.createCacheFile();
-            log.trace("dataFile: hasAccessToDataFile: " + dataFile.hasAccessToDatFile());
+            log.trace("dataFile: hasAccessToDataFile: " + dataFile.hasAccessToDataFile());
             log.trace("dataFile id: " + dataFile.getId());
             log.trace("dataFile body is BASE64?: " + dataFile.getBodyIsBase64());
             log.trace("dataFile Filename: " + dataFile.getFileName());
@@ -567,7 +570,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
 
             // Like cdoc.setPropRegisterDigiDoc(signedDoc), but with minor improvements
             for (int i = 0; i < dDoc.countDataFiles(); i++) {
-                DataFile1 df = dDoc.getDataFile(i);
+                DataFile df = dDoc.getDataFile(i);
                 StringBuffer sb = new StringBuffer();
                 sb.append(df.getFileName());
                 sb.append("|");

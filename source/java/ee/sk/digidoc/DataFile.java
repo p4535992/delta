@@ -20,25 +20,36 @@
  */
 
 package ee.sk.digidoc;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.io.ByteArrayOutputStream;
+import java.security.MessageDigest;
+import java.io.InputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.File;
+import java.util.Date;
+
+import ee.sk.utils.ConvertUtils;
+
+import java.io.OutputStream;
 
 import ee.sk.digidoc.factory.CanonicalizationFactory;
 import ee.sk.utils.ConfigManager;
-import ee.sk.utils.ConvertUtils;
-import org.apache.commons.codec.binary.Base64InputStream;
-import org.apache.log4j.Logger;
+
 import org.w3c.dom.Node;
 
-import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import java.io.*;
-import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.Date;
+import javax.xml.transform.OutputKeys;
 
+import org.apache.log4j.Logger;
 //import com.sun.mail.util.BASE64DecoderStream;
+import org.apache.commons.codec.binary.Base64InputStream;
 
 /**
  * Represents a DataFile instance, that either
@@ -47,10 +58,10 @@ import java.util.Date;
  * @author  Veiko Sinivee
  * @version 1.0
  */
-public class DataFile1 implements Serializable
+public class DataFile implements Serializable
 {
     private static final long serialVersionUID = 1L;
-    /** content type of the DataFile1 */
+    /** content type of the DataFile */
     private String m_contentType;
     /** filename */
     private String m_fileName;
@@ -90,7 +101,7 @@ public class DataFile1 implements Serializable
     public static final String DIGEST_TYPE_SHA1 = "sha1";
     private static int block_size = 2048;
     /** log4j logger */
-    private static Logger m_logger = Logger.getLogger(DataFile1.class);
+    private static Logger m_logger = Logger.getLogger(DataFile.class);
     /** temp file used to cache DataFile data if caching is enabled */
     private transient File m_fDfCache = null;
     private boolean m_bodyIsBase64;
@@ -101,13 +112,13 @@ public class DataFile1 implements Serializable
     /**
      * Creates new DataFile
      * @param id id of the DataFile
+     * @param contentType DataFile content type
      * @param fileName original file name (without path!)
      * @param mimeType contents mime type
      * @param sdoc parent object
      * @throws DigiDocException for validation errors
      */
-
-    public DataFile1(String id, String contentType, String fileName, String mimeType, SignedDoc sdoc)
+    public DataFile(String id, String contentType, String fileName, String mimeType, SignedDoc sdoc)
             throws DigiDocException
     {
         m_sigDoc = sdoc;
@@ -130,16 +141,16 @@ public class DataFile1 implements Serializable
     }
 
     /**
-     * Accessor for temp file object used to cache DataFile1 data
+     * Accessor for temp file object used to cache DataFile data
      * if caching is enabled.
-     * @return temp file object used to cache DataFile1 data
+     * @return temp file object used to cache DataFile data
      */
     public File getDfCacheFile() {
         return m_fDfCache;
     }
 
     /**
-     * Removes temporary DatFile1 cache file
+     * Removes temporary DataFile cache file
      */
     public void cleanupDfCache() {
         if(m_fDfCache != null) {
@@ -270,7 +281,7 @@ public class DataFile1 implements Serializable
 
 
     /**
-     * Sets DatFile1 contents from an input stream.
+     * Sets DataFile contents from an input stream.
      * This method allways uses temporary files to read out
      * the input stream first in order to determine the
      * size of data. Caller can close the stream after
@@ -433,7 +444,7 @@ public class DataFile1 implements Serializable
     }
 
     /**
-     * Set DatFile1 cached content or cache file, calculate size and digest
+     * Set datafile cached content or cache file, calculate size and digest
      * @param is data input stream
      */
     public void setOrCacheBodyAndCalcHashes(InputStream is)
@@ -519,7 +530,7 @@ public class DataFile1 implements Serializable
         return data;
     }
 
-    public boolean hasAccessToDatFile()
+    public boolean hasAccessToDataFile()
     {
         if(m_fDfCache != null || m_body != null)
             return true;
@@ -573,25 +584,35 @@ public class DataFile1 implements Serializable
     }
 
     /**
-     * Checks if this DatFile1 object schould use a temp file
+     * Checks if this DataFile object schould use a temp file
      * to store it's data because of memory cache size limitation
      * @return true if this object schould use temp file
      */
     public boolean schouldUseTempFile()
     {
-        m_logger.trace("DIGIDOC_MAX_DATAFILE_CACHED:" + ConfigManager.instance().getProperty
+        m_logger.trace("schouldUseTempFile(): DIGIDOC_MAX_DATAFILE_CACHED:" + ConfigManager.instance().getProperty
                 ("DIGIDOC_MAX_DATAFILE_CACHED"));
-        m_logger.trace("MAX_VALUE" + Long.MAX_VALUE);
+        m_logger.trace("schouldUseTempFile(): MAX_VALUE: " + Long.MAX_VALUE);
         long lMaxDfCached = ConfigManager.instance().
                 getLongProperty("DIGIDOC_MAX_DATAFILE_CACHED", Long.MAX_VALUE);
-        m_logger.trace("lMaxDfCached" + lMaxDfCached);
-        m_logger.trace("m_contentType: " + m_contentType);
-        m_logger.trace("m_size: " + m_size);
+        if(lMaxDfCached < 4096){
+            m_logger.trace("lMaxDfCache value is smaller then '4096'. Change it...");
+            lMaxDfCached = 4096;
+            m_logger.trace("Chenge DIGIDOC_MAX_DATAFILE_CACHED property value back to 4096...");
+            ConfigManager.instance().setStringProperty("DIGIDOC_MAX_DATAFILE_CACHED", "4096");
+            m_logger.trace("schouldUseTempFile(): Check DIGIDOC_MAX_DATAFILE_CACHED:" + ConfigManager.instance()
+                    .getProperty
+                    ("DIGIDOC_MAX_DATAFILE_CACHED"));
+        }
+
+        m_logger.trace("schouldUseTempFile(): lMaxDfCached: " + lMaxDfCached);
+        m_logger.trace("schouldUseTempFile(): m_contentType: " + m_contentType);
+        m_logger.trace("schouldUseTempFile(): m_size: " + m_size);
         return (lMaxDfCached > 0 && (m_size == 0 || (m_size > lMaxDfCached && (m_contentType == null || m_contentType.equals(CONTENT_EMBEDDED_BASE64)))));
     }
 
     /**
-     * Helper method to enable temporary cache file for this DatFile1
+     * Helper method to enable temporary cache file for this DataFile
      * @return new temporary file object
      * @throws IOException
      */
@@ -599,25 +620,26 @@ public class DataFile1 implements Serializable
             throws IOException
     {
         //m_fDfCache = null;
-        m_logger.trace("DIGIDOC_MAX_DATAFILE_CACHED: " + System.getProperty("DIGIDOC_MAX_DATAFILE_CACHED"));
-        m_logger.trace("DIGIDOC_DF_CACHE_DIR: " + System.getProperty("DIGIDOC_DF_CACHE_DIR"));
-        m_logger.trace("java.io.tmpdir: " + System.getProperty("java.io.tmpdir"));
-        m_logger.trace("schouldUseTempFile(): " + schouldUseTempFile());
+        m_logger.trace("createCacheFile(): DIGIDOC_MAX_DATAFILE_CACHED: " + ConfigManager.instance().getProperty
+                ("DIGIDOC_MAX_DATAFILE_CACHED"));
+        m_logger.trace("createCacheFile(): DIGIDOC_DF_CACHE_DIR: " + ConfigManager.instance().getProperty("DIGIDOC_DF_CACHE_DIR"));
+        m_logger.trace("createCacheFile(): java.io.tmpdir: " + System.getProperty("java.io.tmpdir"));
+        m_logger.trace("createCacheFile(): schouldUseTempFile(): " + schouldUseTempFile());
 
 
         if((m_fDfCache == null) && schouldUseTempFile()) {
             File fCacheDir = new File(ConfigManager.instance().
                     getStringProperty("DIGIDOC_DF_CACHE_DIR", System.getProperty("java.io.tmpdir")));
-            m_logger.trace("Cache dir: getAbsolutePath: " + fCacheDir.getAbsolutePath());
-            m_logger.trace("Cache dir: canWrite: " + fCacheDir.canWrite());
-            m_logger.trace("Cache dir: canRead: " + fCacheDir.canRead());
+            m_logger.trace("createCacheFile(): Cache dir: getAbsolutePath: " + fCacheDir.getAbsolutePath());
+            m_logger.trace("createCacheFile(): Cache dir: canWrite: " + fCacheDir.canWrite());
+            m_logger.trace("createCacheFile(): Cache dir: canRead: " + fCacheDir.canRead());
 
             String dfId = new Long(System.currentTimeMillis()).toString();
-            m_logger.trace("DF Filename: " + dfId + ".df");
+            m_logger.trace("createCacheFile(): DF Filename: " + dfId + ".df");
             m_fDfCache = File.createTempFile(dfId, ".df", fCacheDir);
-            m_logger.trace("DF file: getAbsolutePath: " + m_fDfCache.getAbsolutePath());
-            m_logger.trace("DF file: canWrite: " + m_fDfCache.canWrite());
-            m_logger.trace("DF file: canRead: " + m_fDfCache.canRead());
+            m_logger.trace("createCacheFile(): DF file: getAbsolutePath: " + m_fDfCache.getAbsolutePath());
+            m_logger.trace("createCacheFile(): DF file: canWrite: " + m_fDfCache.canWrite());
+            m_logger.trace("createCacheFile(): DF file: canRead: " + m_fDfCache.canRead());
         } else {
             m_logger.error("CACHE FILE NOT CREATED!: CacheFile already exists or schouldUseTempFile is FALSE!");
         }
@@ -959,6 +981,7 @@ public class DataFile1 implements Serializable
 
     /**
      * Accessor for digestValue attribute
+     * @param digType digest type
      * @return value of digestValue attribute
      */
     public byte[] getDigestValueOfType(String digType)
@@ -1062,6 +1085,7 @@ public class DataFile1 implements Serializable
 
     /**
      * Helper method to validate a digestValue
+     * @param data input data
      * @return exception or null for ok
      */
     private DigiDocException validateDigestValue(byte[] data)
@@ -1125,7 +1149,7 @@ public class DataFile1 implements Serializable
 
     /**
      * Helper method to validate the whole
-     * DatFile1 object
+     * DataFile object
      * @param bStrong flag that specifies if Id atribute value is to
      * be rigorously checked (according to digidoc format) or only
      * as required by XML-DSIG
@@ -1160,6 +1184,7 @@ public class DataFile1 implements Serializable
 
     /**
      * Helper method to canonicalize a piece of xml
+     * @param data data to be canonicalized
      * @return canonicalized xml
      */
     private byte[] canonicalizeXml(byte[] data) {
@@ -1263,9 +1288,9 @@ public class DataFile1 implements Serializable
                 if(getDfCacheFile() != null)
                     is = getBodyAsStream();
                 else if(is == null && m_body != null)
-                    is = new ByteArrayInputStream(m_body);
+                    is = new java.io.ByteArrayInputStream(m_body);
                 else if(is == null && m_fileName != null)
-                    is = new FileInputStream(m_fileName);
+                    is = new java.io.FileInputStream(m_fileName);
                 if(is != null)
                     calcHashes(is);
             } catch(java.io.FileNotFoundException ex) {
@@ -1288,7 +1313,7 @@ public class DataFile1 implements Serializable
             bUse64ByteLines = false;
         try {
             sha = MessageDigest.getInstance("SHA-1"); // TODO: fix digest type
-            // if DatFile1's digest has already been initialized
+            // if DataFile's digest has already been initialized
             // and body in memory, e.g. has been read from digidoc
             // then write directly to output stream and don't calculate again
             if(m_origDigestValue != null && m_body != null && os != null) {
@@ -1449,7 +1474,7 @@ public class DataFile1 implements Serializable
             byte[] digest = sha.digest();
             setDigest(digest);
             if(m_logger.isDebugEnabled())
-                m_logger.debug("DatFile1: \'" + getId() + "\' length: " +
+                m_logger.debug("DataFile: \'" + getId() + "\' length: " +
                         getSize() + " digest: " + Base64Util.encode(digest));
             m_fileName = longFileName;
         } catch(Exception ex) {
@@ -1466,7 +1491,7 @@ public class DataFile1 implements Serializable
 
 
     /**
-     * Writes the DatFile1 to an outout file
+     * Writes the DataFile to an outout file
      * @param fos output stream
      * @throws DigiDocException for all errors
      */
