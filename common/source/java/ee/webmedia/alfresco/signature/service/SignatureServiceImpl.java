@@ -211,7 +211,13 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         return document;
     }
 
-
+    /**
+     *
+     * @param nodeRef
+     * @param document
+     * @throws DigiDocException
+     * @throws IOException
+     */
     private void addDataFile(NodeRef nodeRef, SignedDoc document) throws DigiDocException, IOException {
         String fileName = getFileName(nodeRef);
         ContentReader reader = fileFolderService.getReader(nodeRef);
@@ -219,10 +225,35 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         document.addDataFile(datafile);
     }
 
-    
+    /**
+     * Checking jDigidoc DIGIDOC_MAX_DATAFILE_CACHED value. To cache dataFile to disk the value must be bigger than 0
+     */
+    private void checkJDigidocMaxDataFileCachedParam(){
+        long lMaxDfCached = ConfigManager.instance().getLongProperty("DIGIDOC_MAX_DATAFILE_CACHED", Long.MAX_VALUE);
+        log.trace("DIGIDOC_MAX_DATAFILE_CACHED:" + lMaxDfCached);
 
+        if(lMaxDfCached < 4096){
+            log.trace("DIGIDOC_MAX_DATAFILE_CACHED value is smaller then '4096'. Change it...");
+            ConfigManager.instance().setStringProperty("DIGIDOC_MAX_DATAFILE_CACHED", "4096");
+        }
+
+        log.trace("Check DIGIDOC_MAX_DATAFILE_CACHED:" + ConfigManager.instance().getProperty("DIGIDOC_MAX_DATAFILE_CACHED"));
+    }
+
+    /**
+     * Create CDOC file with jDididoc
+     * @param signedDocument
+     * @param reader
+     * @param fileName
+     * @return
+     * @throws DigiDocException
+     * @throws IOException
+     */
     private DataFile createDDocDataFile(SignedDoc signedDocument, ContentReader reader, String fileName) throws DigiDocException, IOException {
         DataFile dataFile = new DataFile(signedDocument.getNewDataFileId(), DataFile.CONTENT_EMBEDDED_BASE64, fileName, reader.getMimetype(), signedDocument);
+
+        checkJDigidocMaxDataFileCachedParam();
+
         dataFile.createCacheFile();
         OutputStream os = new Base64OutputStream(new BufferedOutputStream(new FileOutputStream(dataFile.getDfCacheFile())), true, 64, new byte[] { '\n' });
         reader.getContent(os); // closes both streams
