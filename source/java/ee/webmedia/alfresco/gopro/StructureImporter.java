@@ -170,6 +170,15 @@ public class StructureImporter {
         if (errorsFile.exists()) {
             errorsFile.delete();
         }
+        
+        try {
+            if (userService.getPerson(data.getDefaultOwnerId()) == null) {
+                throw new ImportValidationException("Default user with id = " + data.getDefaultOwnerId() + " does not exist");
+            }
+        } catch (ImportValidationException e) {
+            docsError(errorsFile, e);
+            throw new RuntimeException(e);
+        }
 
         if (logFile.exists()) {
             LOG.info(COMPLETED_FILENAME + " was found in work folder. Skipping structure import");
@@ -179,15 +188,6 @@ public class StructureImporter {
         if (!sourceFile.exists()) {
             structError(errorsFile, "struktuur.csv cannot be found");
             return;
-        }
-
-        try {
-            if (userService.getPerson(data.getDefaultOwnerId()) == null) {
-                throw new ImportValidationException("Default user with id = " + data.getDefaultOwnerId() + " does not exist");
-            }
-        } catch (ImportValidationException e) {
-            docsError(errorsFile, e);
-            throw new RuntimeException(e);
         }
 
         NodeRef mainDocsList = generalService.getNodeRef(FunctionsModel.Repo.FUNCTIONS_SPACE, generalService.getStore());
@@ -484,8 +484,6 @@ public class StructureImporter {
             props.put(VolumeModel.Props.CONTAINS_CASES, Boolean.FALSE);
 
             if (!VolumeType.CASE_FILE.name().equals(volumeType)) {
-                //props.put(VolumeModel.Props.CONTAINS_CASES, context.getData().isSharepointOrigin());
-                //props.put(VolumeModel.Props.CASES_CREATABLE_BY_USER, context.getData().isSharepointOrigin());
 
                 if (volumeEndDate != null) {
                     Integer retentionPeriod = getInteger(reader, 21);

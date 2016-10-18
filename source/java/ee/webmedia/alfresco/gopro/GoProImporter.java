@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.gopro;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
 
+import java.io.File;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.faces.event.ActionEvent;
@@ -15,13 +16,18 @@ import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 
+import ee.webmedia.alfresco.common.model.DynamicBase;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docconfig.generator.SaveListener;
+import ee.webmedia.alfresco.docconfig.generator.SaveListener.ValidationHelper;
+import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.log.LogHelper;
+import ee.webmedia.alfresco.postipoiss.PostipoissImporter.StopException;
 
 /**
  * Entry point for starting and stopping whole import. Manages input parameters and coordinates structure and document import.
  */
-public class GoProImporter {
+public class GoProImporter implements SaveListener {
 
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(GoProImporter.class);
 
@@ -84,10 +90,10 @@ public class GoProImporter {
 
             ImportSettings importData = data.clone();
             StructureImportWork structureImport = new StructureImportWork(importData);
-            //DocumentImportWork documentImport = new DocumentImportWork(importData);
+            DocumentImportWork documentImport = new DocumentImportWork(importData);
             //WorkflowImportWork workflowImport = new WorkflowImportWork(importData);
 
-            startImporterThread(structureImport);
+            startImporterThread(structureImport, documentImport);
         } else {
             LOG.warn("Importer is already running; skipping another request to run import in background");
         }
@@ -209,12 +215,12 @@ public class GoProImporter {
     }
 
     
-     /* A class with a callback for importing documents and their files.
+     // A class with a callback for importing documents and their files.
     private class DocumentImportWork extends BaseImportWork {
 
         private final ImportSettings importData;
 
-        private DocumentImporter importer;
+        private GoProDocumentsImporter importer;
 
         public DocumentImportWork(ImportSettings importData) {
             this.importData = importData;
@@ -225,7 +231,7 @@ public class GoProImporter {
             boolean someDataWasImported = false;
             try {
                 status.beginDocs();
-                importer = new DocumentImporter(importData, status, jdbcTemplate);
+                importer = new GoProDocumentsImporter(GoProImporter.this);
                 someDataWasImported = super.doWork();
             } finally {
                 if (someDataWasImported) {
@@ -240,7 +246,14 @@ public class GoProImporter {
 
         @Override
         protected Boolean executeWithoutTransaction() {
-            return importer.doBatch();
+        	try {
+        		importer.runImport(new File(importData.getDataFolder()), new File(importData.getWorkFolder()), importData.getMappingsFile(), importData.getBatchSize(), importData.getDefaultOwnerId());
+        	} catch (Exception e) {
+        		LOG.error("GoProDocumentsImporter failed: " + e.getMessage());
+        		return false;
+        	}
+        	return false;
+            
         }
 
         @Override
@@ -250,7 +263,7 @@ public class GoProImporter {
         }
     }
 
-    **
+    /**
      * A class with a callback for importing work-flows.
      *
     private class WorkflowImportWork extends BaseImportWork {
@@ -290,5 +303,40 @@ public class GoProImporter {
         }
     }
     */
+    
+    public static class StopException extends RuntimeException {
+        private static final long serialVersionUID = 1L;
+
+        public StopException() {
+            //
+        }
+
+    }
+
+    public void checkStop() {
+        if (stopFlag.get()) {
+            throw new StopException();
+        }
+    }
+    
+ // SaveListener that sets draft=true on document
+
+    @Override
+    public void validate(DynamicBase dynamicObject, ValidationHelper validationHelper) {
+        // do nothing
+    }
+
+    @Override
+    public void save(DynamicBase document) {
+        if (document instanceof DocumentDynamic) {
+            ((DocumentDynamic) document).setDraft(true);
+            ((DocumentDynamic) document).setDraftOrImapOrDvk(true);
+        }
+    }
+
+    @Override
+    public String getBeanName() {
+        return null;
+    }
 
 }

@@ -322,6 +322,15 @@ public class GoProDocumentsMapper {
         }
 
     }
+    
+    class ListPropertyValueProvider extends PropertyValueProvider {
+
+        @Override
+        public PropertyValue provide() {
+            return new ListPropertyValue().withQName(qname);
+        }
+
+    }
 
     static class NumberPropertyValueProvider extends PropertyValueProvider {
 
@@ -442,7 +451,7 @@ public class GoProDocumentsMapper {
             for (String prefix : prefixes) {
                 String prefixValue = values.get(prefix).get();
                 if (StringUtils.isNotBlank(prefixValue)) {
-                    value.add(prefix + ": " + prefixValue);
+                    value.add(prefix + prefixValue);
                 }
             }
             String string = value.get();
@@ -474,6 +483,33 @@ public class GoProDocumentsMapper {
             }
             Assert.isInstanceOf(Date.class, o);
             value = (Date) o;
+        }
+
+    }
+    
+    class ListPropertyValue extends PropertyValue {
+        List<String> value;
+
+        @Override
+        public Serializable get() {
+            return (Serializable)value;
+        }
+
+        @Override
+        public void put(String s) {
+        	if (value == null) {
+        		value = new ArrayList<String>();
+        	}
+        	value.add(s);
+        }
+
+        @Override
+        public void putObject(Object o) {
+            if (o == null) {
+                return;
+            }
+            Assert.isInstanceOf(List.class, o);
+            value = (List<String>) o;
         }
 
     }
@@ -610,7 +646,11 @@ public class GoProDocumentsMapper {
         if ("java.lang.Double".equals(javaClassName) || "java.lang.Long".equals(javaClassName)) {
             return new NumberPropertyValueProvider();
         }
-        if (!javaClassName.equals("java.lang.String")) {
+        
+        if ("additionalRecipientName".equals(name)) {
+            return new ListPropertyValueProvider();
+        }
+        if (!"java.lang.String".equals(javaClassName)) {
             log.info("Data type " + javaClassName + " is not supported for property " + propDef.getName().toPrefixString(BeanHelper.getNamespaceService())
                     + ", not allowing mapping");
             return null;
@@ -730,7 +770,7 @@ public class GoProDocumentsMapper {
 
         for (Object o : root.elements("documentType")) {
             Mapping m = createMapping(base, (Element) o);
-            Assert.isTrue(!("accessRestriction".equals(m.from)) && !mappings.containsKey(m.from),
+            Assert.isTrue(!mappings.containsKey(m.from),
                     "Cannot have multiple documentType mappings from '" + m.from + "'");
             mappings.put(m.from, m);
         }
