@@ -103,6 +103,7 @@ import ee.webmedia.alfresco.volume.model.UnmodifiableVolume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.volume.search.model.VolumeReportModel;
 import ee.webmedia.alfresco.volume.search.model.VolumeSearchModel;
+import ee.webmedia.alfresco.volume.search.web.VolumeDynamicSearchDialog;
 import ee.webmedia.alfresco.volume.service.VolumeService;
 
 public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
@@ -362,7 +363,20 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             NodeRef seriesRef = (NodeRef) docProps.get(seriesProp);
             NodeRef volumeRef = documentType ? (NodeRef) docProps.get(volumeProp) : null;
             NodeRef caseRef = documentType ? (NodeRef) docProps.get(caseProp) : null;
-
+            
+            if (functionRef != null && !getNodeService().exists(functionRef)) {
+            	functionRef = null;
+            }
+            if (seriesRef != null && !getNodeService().exists(seriesRef)) {
+            	seriesRef = null;
+            }
+            if (volumeRef != null && !getNodeService().exists(volumeRef)) {
+            	volumeRef = null;
+            }
+            if (caseRef != null && !getNodeService().exists(caseRef)) {
+            	caseRef = null;
+            }
+            
             if (inEditMode) {
                 String caseLabel = documentType ? (String) docProps.get(caseLabelEditableProp) : null;
                 if (caseRef != null) {
@@ -758,7 +772,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                             SuggesterGenerator.setValue(caseList, (isSearchFilter ? getCasesEditableOrEmptyList(context, caseList) : casesEditable));
                             caseList.setValue(caseLabel);
                             component.setRendered(casesEditable != null || isSearchFilter);
-                        } else if (component.getId().endsWith(CASE_FILE_TYPE_PROP.getLocalName()) && !showCaseFileTypes) {
+                        } else if (component.getId().endsWith(CASE_FILE_TYPE_PROP.getLocalName()) && !showCaseFileTypes && !(dialogDataProvider instanceof VolumeDynamicSearchDialog)) {
                             component.setRendered(showCaseFileTypes);
                         }
                     }
@@ -824,18 +838,14 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 if (storeStrings == null) {
                     return _getFunctionsService().getAllFunctions();
                 }
-                for (Iterator<String> i = storeStrings.iterator(); i.hasNext();) {
-                    if (StringUtils.isBlank(i.next())) {
-                        i.remove();
+                selectedStores = new ArrayList<NodeRef>();
+                for (Object store: storeStrings) {
+                    if (StringUtils.isNotBlank(store.toString())) {
+                    	selectedStores.add(new NodeRef(store.toString()));
                     }
                 }
-                if (storeStrings.isEmpty()) {
+                if (selectedStores.isEmpty()) {
                     return _getFunctionsService().getAllFunctions();
-                }
-
-                selectedStores = new ArrayList<NodeRef>(storeStrings.size());
-                for (String store : storeStrings) {
-                    selectedStores.add(new NodeRef(store));
                 }
             }
 

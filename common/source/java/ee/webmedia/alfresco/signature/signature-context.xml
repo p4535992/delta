@@ -33,11 +33,42 @@
       </property>
    </bean>
 
+	<bean id="digiDoc4jSignatureService" class="ee.webmedia.alfresco.signature.service.DigiDoc4JSignatureServiceImpl">
+      <property name="fileFolderService" ref="FileFolderService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="mimetypeService" ref="MimetypeService" />
+      <property name="digiDocServiceFactory" ref="digiDocServiceFactory" />
+      <property name="digiDocServiceV2Factory" ref="digiDocServiceV2Factory" />
+      <property name="test" value="${jdigidoc.test}" />
+      <property name="digiDocServiceUrl" value="https://digidocservice.sk.ee/DigiDocService" />
+      <property name="testDigiDocServiceUrl" value="https://tsp.demo.sk.ee" />
+      <property name="digiDocServiceV2Url" value="https://digidocservice.sk.ee/v2/" />
+      <property name="testDigiDocServiceV2Url" value="https://tsp.demo.sk.ee/v2/" />
+      <property name="mobileIdServiceName" value="${mobile-id.service-name}" />
+      <property name="testMobileIdServiceName" value="Testimine" />
+      <property name="pkcs12Container" value="${jdigidoc.pkcs12.container}" />
+      <property name="pkcs12Password" value="${jdigidoc.pkcs12.passwd}" />
+   </bean>
+
+   <bean id="DigiDoc4JSignatureService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.signature.service.DigiDoc4JSignatureService</value>
+         </list>
+      </property>
+      <property name="target" ref="digiDoc4jSignatureService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+
    <bean id="transformer.DigiDocContent" class="ee.webmedia.alfresco.signature.transform.DigiDocContentTransformer" parent="baseContentTransformer">
       <!-- XXX When using "ContentService" in place of "contentService" the following exception occurs: -->
       <!-- UnexpectedRollbackException: Transaction rolled back because it has been marked as rollback-only -->
       <property name="contentService" ref="contentService" />
-      <property name="signatureService" ref="SignatureService" />
+      <property name="digiDoc4JSignatureService" ref="DigiDoc4JSignatureService" />
    </bean>
 
    <bean id="signatureResourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
@@ -75,6 +106,11 @@
    <bean id="digiDocServiceFactory" class="org.apache.cxf.jaxws.JaxWsProxyFactoryBean">
       <property name="serviceClass" value="ee.sk.digidocservice.DigiDocServicePortType" />
       <property name="wsdlLocation" value="classpath:ee/sk/digidocservice/DigiDocService_2_3.wsdl" />
+   </bean>
+   
+   <bean id="digiDocServiceV2Factory" class="org.apache.cxf.jaxws.JaxWsProxyFactoryBean">
+      <property name="serviceClass" value="ee.sk.digidocserviceV2.MobileId" />
+      <property name="wsdlLocation" value="classpath:ee/sk/digidocserviceV2/DigiDocService_2_3_V2.wsdl" />
    </bean>
 
 </beans>

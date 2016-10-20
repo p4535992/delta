@@ -24,6 +24,7 @@ import ee.webmedia.alfresco.archivals.model.ActivityStatus;
 import ee.webmedia.alfresco.archivals.model.ActivityType;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.eventplan.model.FirstEvent;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.utils.ComparableTransformer;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.volume.model.Volume;

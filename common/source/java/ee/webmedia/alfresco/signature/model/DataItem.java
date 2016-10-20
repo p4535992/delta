@@ -7,9 +7,8 @@ import org.alfresco.repo.web.scripts.FileTypeImageUtils;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.ObjectUtils;
-
-import ee.sk.digidoc.DataFile;
-import ee.sk.digidoc.DigiDocException;
+import org.digidoc4j.exceptions.DigiDoc4JException;
+import org.digidoc4j.DataFile;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.servlet.DownloadDigiDocContentServlet;
 
@@ -17,18 +16,16 @@ public class DataItem implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    protected int id;
+    protected String id;
     protected String name;
     protected String mimeType;
     protected String encoding;
     protected long size;
     protected DataFile dataFile;
     protected String downloadUrl;
+    protected int orderNr;
 
-    public DataItem(NodeRef nodeRef, int id, String name, String mimeType, String encoding, long size, DataFile dataFile) {
-        if (id < 0) {
-            throw new IllegalArgumentException("DataItem id must not be negative");
-        }
+    public DataItem(NodeRef nodeRef, String id, String name, String mimeType, String encoding, long size, DataFile dataFile, int orderNr) {
         this.id = id;
         this.name = name;
         this.mimeType = mimeType;
@@ -36,15 +33,24 @@ public class DataItem implements Serializable {
         this.size = size;
         this.dataFile = dataFile;
         if (nodeRef != null && name != null) {
-            downloadUrl = DownloadDigiDocContentServlet.generateUrl(nodeRef, id, name);
+            downloadUrl = DownloadDigiDocContentServlet.generateUrl(nodeRef, orderNr, id);
         }
+        this.orderNr = orderNr;
+    }
+    
+    public DataItem(NodeRef nodeRef, String id, String name, String mimeType, long size, DataFile dataFile, int orderNr) {
+    	this(nodeRef, id, name, mimeType, null, size, dataFile, orderNr);
     }
 
-    public DataItem(NodeRef nodeRef, int id, String name, String mimeType, String encoding, long size) {
-        this(nodeRef, id, name, mimeType, encoding, size, null);
+    public DataItem(NodeRef nodeRef, String id, String name, String mimeType, String encoding, long size, int orderNr) {
+        this(nodeRef, id, name, mimeType, encoding, size, null, orderNr);
+    }
+    
+    public DataItem(NodeRef nodeRef, String id, String name, String mimeType, long size, int orderNr) {
+        this(nodeRef, id, name, mimeType, null, size, null, orderNr);
     }
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
@@ -78,8 +84,8 @@ public class DataItem implements Serializable {
     public InputStream getData() throws SignatureException {
         InputStream inputStream = null;
         try {
-            inputStream = dataFile.getBodyAsStream();
-        } catch (DigiDocException e) {
+            inputStream = dataFile.getStream();
+        } catch (DigiDoc4JException e) {
             throw new SignatureException("Error getting data, " + toString(), e);
         }
         if (inputStream == null) {
@@ -95,6 +101,14 @@ public class DataItem implements Serializable {
     public void setDownloadUrl(String downloadUrl) {
         this.downloadUrl = downloadUrl;
     }
+    
+    public int getOrderNr() {
+        return orderNr;
+    }
+
+    public void setOrderNr(int orderNr) {
+        this.orderNr = orderNr;
+    } 
 
     /**
      * Used in JSP to determine the file icon.

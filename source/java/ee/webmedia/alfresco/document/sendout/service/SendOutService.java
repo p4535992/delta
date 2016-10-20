@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.document.sendout.service;
 
 import java.io.Serializable;
+import java.security.cert.X509Certificate;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -61,8 +62,8 @@ public interface SendOutService {
      * @param fileNodeRefs list of file node refs as strings to match those files which should be sent out as attachments from given document
      * @return true
      */
-    boolean sendOut(NodeRef document, List<String> names, List<String> emails, List<String> modes, List<String> idCodes, List<String> encryptionIdCodes, String fromEmail,
-            String subject, String content, List<NodeRef> fileRefs, boolean zipIt);
+    boolean sendOut(NodeRef document, List<String> names, List<String> emails, List<String> modes, List<String> idCodes, List<String> encryptionIdCodes, List<X509Certificate> allCertificates, 
+    		String fromEmail, String subject, String content, List<NodeRef> fileRefs, boolean zipIt);
 
     /** @return {@code List<Pair<recipientName, recipientRegistrationNr>> } */
     List<Pair<String, String>> forward(NodeRef document, List<String> names, List<String> emails, List<String> modes, String fromEmail, String content, List<NodeRef> fileRefs);

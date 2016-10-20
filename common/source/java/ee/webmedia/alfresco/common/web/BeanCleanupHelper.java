@@ -176,7 +176,7 @@ public class BeanCleanupHelper implements Serializable {
                     && !NavigationBean.LOCATION_MYALFRESCO.equals(outcome) && !MyTasksBean.TASK_LIST_DIALOG.equals(outcome);
             if (resetTasks) {
                 myAlfrescoScreenVisited = false;
-                if (!CompoundWorkflowDialog.DIALOG_NAME.equals(outcome)) {
+                if (!CompoundWorkflowDialog.DIALOG_NAME.equals(outcome) && !DocumentDynamicDialog.DIALOG_NAME.equals(outcome) && !CaseFileDialog.DIALOG_NAME.equals(outcome)) {
                     BeanHelper.getMyTasksBean().clean();
                 }
             }

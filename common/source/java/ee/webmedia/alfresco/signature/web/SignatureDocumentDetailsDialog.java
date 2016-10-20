@@ -15,7 +15,7 @@ import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.model.DataItem;
 import ee.webmedia.alfresco.signature.model.SignatureItem;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
-import ee.webmedia.alfresco.signature.service.SignatureService;
+import ee.webmedia.alfresco.signature.service.DigiDoc4JSignatureService;
 
 public class SignatureDocumentDetailsDialog extends DocumentDetailsDialog {
     private static final long serialVersionUID = 1L;
@@ -24,22 +24,22 @@ public class SignatureDocumentDetailsDialog extends DocumentDetailsDialog {
 
     private static Logger log = Logger.getLogger(SignatureDocumentDetailsDialog.class);
 
-    private transient SignatureService signatureService;
+    private transient DigiDoc4JSignatureService digiDoc4JSignatureService;
 
     private boolean isDdocValid = true;
     private List<DataItem> dataItems;
     private List<SignatureItem> signatures;
 
-    public void setSignatureService(SignatureService signatureService) {
-        this.signatureService = signatureService;
+    public void setDigiDoc4JSignatureService(DigiDoc4JSignatureService digiDoc4JSignatureService) {
+        this.digiDoc4JSignatureService = digiDoc4JSignatureService;
     }
 
-    protected SignatureService getSignatureService() {
-        if (signatureService == null) {
-            signatureService = (SignatureService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(
-                    SignatureService.BEAN_NAME);
+    protected DigiDoc4JSignatureService getDigiDoc4JSignatureService() {
+        if (digiDoc4JSignatureService == null) {
+        	digiDoc4JSignatureService = (DigiDoc4JSignatureService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(
+                    DigiDoc4JSignatureService.BEAN_NAME);
         }
-        return signatureService;
+        return digiDoc4JSignatureService;
     }
 
     @Override
@@ -60,7 +60,7 @@ public class SignatureDocumentDetailsDialog extends DocumentDetailsDialog {
         if (browseBean.getDocument() == null) {
             return;
         }
-        if (!getSignatureService().isBDocContainer(browseBean.getDocument().getNodeRef())) {
+        if (!getDigiDoc4JSignatureService().isBDocContainer(browseBean.getDocument().getNodeRef())) {
             return;
         }
 
@@ -119,7 +119,7 @@ public class SignatureDocumentDetailsDialog extends DocumentDetailsDialog {
     }
 
     private void getDataFilesAndSignatures() throws SignatureException {
-        SignatureItemsAndDataItems values = getSignatureService().getDataItemsAndSignatureItems(browseBean.getDocument().getNodeRef(), false, true);
+        SignatureItemsAndDataItems values = getDigiDoc4JSignatureService().getDataItemsAndSignatureItems(browseBean.getDocument().getNodeRef(), false);
         signatures = values.getSignatureItems();
         dataItems = values.getDataItems();
     }

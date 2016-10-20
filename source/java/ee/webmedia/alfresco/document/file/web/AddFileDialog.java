@@ -182,9 +182,9 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
                     if (f.getDisplayName() != null) {
                         existingDisplayNames.add(f.getDisplayName());
                     }
-                    if (f.isActive()) {
+                    if (f.isActiveAndNotDigiDoc()) {
                         activeFilesCount++;
-                    } else {
+                    } else if (f.isNotActiveAndNotDigiDoc()){
                         inactiveFilesCount++;
                     }
                 }
@@ -322,7 +322,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
     private void checkDigiDoc(NodeRef fileNodeRef, String fileName) {
         try {
             if (FilenameUtil.isDigiDocFile(fileName)) {
-                BeanHelper.getSignatureService().getDataItemsAndSignatureItems(fileNodeRef, false, FilenameUtil.isBdocFile(fileName));
+                BeanHelper.getDigiDoc4JSignatureService().getDataItemsAndSignatureItems(fileNodeRef, false);
             }
         } catch (SignatureException e) {
             throw new UnableToPerformException("file_digidoc_not_valid", fileName, getDigiDocFormat(fileName));
@@ -332,7 +332,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
     private void checkDigiDoc(java.io.File file, String fileName) {
         try {
             if (FilenameUtil.isDigiDocFile(fileName)) {
-                BeanHelper.getSignatureService().getDataItemsAndSignatureItems(new FileInputStream(file), false, FilenameUtil.isBdocFile(fileName));
+                BeanHelper.getDigiDoc4JSignatureService().getDataItemsAndSignatureItems(new FileInputStream(file), false);
             }
         } catch (SignatureException e) {
             throw new UnableToPerformException("file_digidoc_not_valid", fileName, getDigiDocFormat(fileName));

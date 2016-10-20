@@ -46,7 +46,7 @@ public class MyTasksBean extends BaseDialogBean {
 
     private String dialogTitle;
     private String listTitle;
-    private boolean lessColumns = true;
+    private boolean lessColumns = false;
     private String specificList;
     private TaskAndDocumentDataProvider assignmentTasks;
     private TaskAndDocumentDataProvider orderAssignmentTasks;
@@ -199,7 +199,7 @@ public class MyTasksBean extends BaseDialogBean {
     // END: dialog setup
 
     public TaskAndDocumentDataProvider getTasks() {
-        TaskAndDocumentDataProvider result = null;
+        TaskAndDocumentDataProvider result = new TaskAndDocumentDataProvider(new ArrayList<NodeRef>());
         if (LIST_ASSIGNMENT.equals(specificList)) {
             result = assignmentTasks;
         } else if (LIST_ORDER_ASSIGNMENT.equals(specificList)) {
@@ -393,7 +393,7 @@ public class MyTasksBean extends BaseDialogBean {
         dialogTitle = null;
         listTitle = null;
         additionalListTitle = null;
-        lessColumns = true;
+        lessColumns = false;
         specificList = null;
         assignmentTasks = null;
         orderAssignmentTasks = null;
@@ -499,5 +499,36 @@ public class MyTasksBean extends BaseDialogBean {
         log.debug("loadTasks - END: " + (System.currentTimeMillis() - startA) + "ms");
     }
     // END: PRIVATE METHODS
-
+    
+    public String getTitleStyle() {
+    	if (lessColumns) {
+    		return "width: 25%;";
+    	}
+    	return "width: 15%;";
+    }
+    public String getResolutionStyle() {
+    	if (lessColumns) {
+    		return "width: 35%;";
+    	}
+    	return "width: 15%;";
+    }
+    public String getRegNumberStyle() {
+    	if (lessColumns) {
+    		return "display: none;";
+    	}
+    	return "width: 15%;";
+    }
+    public String getRegDateStyle() {
+    	if (lessColumns) {
+    		return "display: none;";
+    	}
+    	return "width: 15%;";
+    }
+    public String getDueDateStyle() {
+    	if (lessColumns) {
+    		return "display: none;";
+    	}
+    	return "width: 15%;";
+    }
+    
 }

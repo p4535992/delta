@@ -175,7 +175,16 @@ public class ChangeFileDialog extends BaseDialogBean {
                 attatchmentsOrScannedFilesAdded = addFileDialog.addAttatchmentsAndScannedFiles();
                 isFileUpload = true;
                 Boolean isActive = addFileDialog.isActiveFileDialog();
-                int maxOrderNr = BeanHelper.getBulkLoadNodeService().countFiles(docRef, isActive);
+                int maxOrderNr = 0;
+                List<SimpleFileWithOrder> docFiles = null;
+                if (isActive) {
+                	docFiles = BeanHelper.getBulkLoadNodeService().loadActiveFilesWithOrder(docRef);
+                } else {
+                	docFiles = BeanHelper.getBulkLoadNodeService().loadInactiveFilesWithOrder(docRef);
+                }
+                if (docFiles != null) {
+                	maxOrderNr = docFiles.size();
+                }
                 FileUploadBean uploadBean = getFileUploadBean();
                 if (uploadBean != null) {
                     List<String> fileNames = uploadBean.getFileNames();

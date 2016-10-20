@@ -4,6 +4,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getAuthorityService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getOrganizationStructureService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -216,6 +217,30 @@ public class UserServiceImpl implements UserService {
     public boolean isArchivist() {
         return isAdministrator() || getAuthorityService().getAuthorities().contains(getArchivistsGroup());
     }
+    
+    @Override
+    public boolean isGuest() {
+    	Set<String> groups = getAuthorityService().getAuthorities();
+    	boolean isGuest  = false;
+    	if (groups.contains(getGuestsGroup()) && !groups.contains(getAdministratorsGroup()) && !groups.contains(getArchivistsGroup()) 
+    			&& !groups.contains(getAccountantsGroup()) && !groups.contains(getDocumentManagersGroup()) 
+    			&& !groups.contains(getSupervisionGroup())) {
+    		isGuest = true;
+    	}
+        return isGuest;
+    }
+    
+    @Override
+    public boolean isGuest(String username) {
+    	Set<String> groups = getAuthorityService().getAuthoritiesForUser(username);
+    	boolean isGuest  = false;
+    	if (groups.contains(getGuestsGroup()) && !groups.contains(getAdministratorsGroup()) && !groups.contains(getArchivistsGroup()) 
+    			&& !groups.contains(getAccountantsGroup()) && !groups.contains(getDocumentManagersGroup()) 
+    			&& !groups.contains(getSupervisionGroup())) {
+    		isGuest = true;
+    	}
+        return isGuest;
+    }
 
     @Override
     public boolean isSupervisor() {
@@ -262,6 +287,11 @@ public class UserServiceImpl implements UserService {
     public String getAdministratorsGroup() {
         return getGroup(ADMINISTRATORS_GROUP);
     }
+    
+    @Override
+    public String getGuestsGroup() {
+        return getGroup(GUESTS_GROUP);
+    }
 
     @Override
     public void addUserToGroup(String group, String username) {
@@ -270,8 +300,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void addUserToGroup(String group, Node user) {
-        getAuthorityService().addAuthority(group, (String) user.getProperties().get(ContentModel.PROP_USERNAME));
+    	String username = (String) user.getProperties().get(ContentModel.PROP_USERNAME);
+        getAuthorityService().addAuthority(group, username);
         logUserGroupAction(group, user, "applog_group_user_add");
+        String groupDisplayName = getAuthorityService().getAuthorityDisplayName(group);
+        getWorkflowService().addUserToCompoundWorkflowDefinitions(groupDisplayName, username);
     }
 
     private void logUserGroupAction(String group, Node user, String logMessageKey) {
@@ -287,7 +320,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void removeUserFromGroup(String group, Node user) {
-        getAuthorityService().removeAuthority(group, (String) user.getProperties().get(ContentModel.PROP_USERNAME));
+    	String username = (String) user.getProperties().get(ContentModel.PROP_USERNAME);
+    	String groupDisplayName = getAuthorityService().getAuthorityDisplayName(group);
+        getAuthorityService().removeAuthority(group, username);
+        getWorkflowService().removeUserOrGroupFromCompoundWorkflowDefinitions(groupDisplayName, username);
         logUserGroupAction(group, user, "applog_group_user_rem");
     }
 
@@ -609,7 +645,7 @@ public class UserServiceImpl implements UserService {
     public Set<String> getSystematicGroups() {
         if (systematicGroups == null) {
             systematicGroups = new HashSet<String>(Arrays.asList(getAdministratorsGroup(), getDocumentManagersGroup(), getAccountantsGroup(), getSupervisionGroup(),
-                    getArchivistsGroup()));
+                    getArchivistsGroup(), getGuestsGroup()));
         }
         return systematicGroups;
     }

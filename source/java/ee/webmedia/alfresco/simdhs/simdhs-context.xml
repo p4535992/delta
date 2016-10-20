@@ -65,7 +65,7 @@
    </bean>
 
    <bean name="casAuthenticationFilter" class="org.jasig.cas.client.authentication.AuthenticationFilter">
-      <property name="casServerLoginUrl" value="${cas.casServerUrl}" />
+      <property name="casServerLoginUrl" value="${cas.casServerUrl}login" />
       <property name="serverName" value="${server.url}" />
    </bean>
 

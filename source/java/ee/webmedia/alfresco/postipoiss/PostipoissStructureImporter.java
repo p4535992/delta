@@ -25,6 +25,7 @@ import org.alfresco.model.ContentModel;
 import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
+import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
@@ -55,6 +56,7 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.functions.model.Function;
+import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.register.model.Register;
 import ee.webmedia.alfresco.register.model.RegisterModel;
@@ -176,7 +178,7 @@ public class PostipoissStructureImporter {
     /**
      * Runs the contact/structure import process
      */
-    public void runImport(File dataFolder, File workFolder, NodeRef archivalsRoot, boolean openUnit) throws Exception {
+    public void runImport(File dataFolder, File workFolder, final NodeRef archivalsRoot, boolean openUnit) throws Exception {
         this.dataFolder = dataFolder;
         this.workFolder = workFolder;
         this.archivalsRoot = archivalsRoot;
@@ -211,6 +213,31 @@ public class PostipoissStructureImporter {
         if (outputFile.exists()) {
             log.info("Structure results file '" + outputFile + "' exists, skipping structure import");
         } else {
+        	/*
+            helper.doInTransaction(new RetryingTransactionCallback<Boolean>() {
+                @Override
+                public Boolean execute() throws Throwable {
+                	 List<ChildAssociationRef> childRefs = functionsService.getFunctionAssocs(archivalsRoot);
+                     List<NodeRef> toRemoveRefs = new ArrayList<NodeRef>();
+                     Map<Long, QName> propertyTypes = new HashMap<Long, QName>();
+                     for (ChildAssociationRef childRef : childRefs) {
+                         NodeRef functionRef = childRef.getChildRef();
+                         if (nodeService.exists(functionRef)) {
+             	            Function function = functionsService.getFunction(functionRef, propertyTypes);
+             	            if (!"function".equals(function.getType())) {
+             	            	toRemoveRefs.add(functionRef);
+             	            }
+                         }
+                     }
+                     for (NodeRef fRef: toRemoveRefs) {
+                     	if (nodeService.exists(fRef)) {
+                     		nodeService.deleteNode(fRef);
+                     	}
+                     }
+                    return true;
+                }
+            }, false, true);
+            */
             helper.doInTransaction(new RetryingTransactionCallback<Object>() {
                 @Override
                 public Object execute() throws Throwable {
@@ -222,6 +249,7 @@ public class PostipoissStructureImporter {
                 }
             });
             writeToimikud();
+            
         }
         log.info("Structure import is COMPLETED");
     }
@@ -576,15 +604,20 @@ public class PostipoissStructureImporter {
         String functionType = ppMark.contains(".") ? "allfunktsioon" : "funktsioon";
         Function function = functionsService.createFunction();
         function.setMark(ppMark);
+        function.getNode().getProperties().put(FunctionsModel.Props.MARK.toString(), ppMark);
         function.setTitle(trimmedTitle);
+        function.getNode().getProperties().put(FunctionsModel.Props.TITLE.toString(), trimmedTitle);
         function.setType(functionType);
+        function.getNode().setType(FunctionsModel.Types.FUNCTION);
         try {
             function.setOrder(Integer.valueOf(funk.order));
         } catch (NumberFormatException e) {
 
         }
         function.setStatus(openUnit ? DocListUnitStatus.OPEN.getValueName() : DocListUnitStatus.CLOSED.getValueName());
+        function.getNode().getProperties().put(FunctionsModel.Props.STATUS.toString(), function.getStatus());
         function.setDocumentActivitiesAreLimited(Boolean.FALSE);
+        function.getNode().getProperties().put(FunctionsModel.Props.DOCUMENT_ACTIVITIES_ARE_LIMITED.toString(), function.isDocumentActivitiesAreLimited());
         function = functionsService.saveOrUpdate(function, archivalsRoot);
 
         log.info(function.getNodeRef());

@@ -7,6 +7,7 @@ import java.util.Set;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.util.EqualsHelper;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
@@ -33,7 +34,8 @@ import ee.webmedia.alfresco.workflow.service.event.WorkflowEventType;
 
 public class IndependentWorkflowTaskStatusChangeListener implements WorkflowEventListener, InitializingBean {
 
-    private WorkflowService workflowService;
+	private NodeService nodeService;
+	private WorkflowService workflowService;
     private PrivilegeService privilegeService;
     private DocumentDynamicService documentDynamicService;
     private WorkflowConstantsBean workflowConstantsBean;
@@ -54,12 +56,22 @@ public class IndependentWorkflowTaskStatusChangeListener implements WorkflowEven
                 return;
             }
             CompoundWorkflow compoundWorkflow = task.getParent().getParent();
+            // handle document workflow
+            if (compoundWorkflow.isDocumentWorkflow() && event.getType().equals(WorkflowEventType.STATUS_CHANGED)) {
+            	if (task.isStatus(Status.IN_PROGRESS) && task.isType(WorkflowSpecificModel.Types.GROUP_ASSIGNMENT_TASK)) {
+	            	NodeRef docRef = nodeService.getPrimaryParent(compoundWorkflow.getNodeRef()).getParentRef();
+	        		if (docRef != null && nodeService.exists(docRef)) {
+	               		privilegeService.setPermissions(docRef, ownerId, Privilege.VIEW_DOCUMENT_FILES, Privilege.VIEW_DOCUMENT_META_DATA, Privilege.EDIT_DOCUMENT);
+	        		}
+            	}
+            }
             if (compoundWorkflow.isIndependentWorkflow() && event.getType().equals(WorkflowEventType.STATUS_CHANGED)) {
                 if (task.isStatus(Status.IN_PROGRESS)) {
                     NodeRef compoundWorkflowRef = compoundWorkflow.getNodeRef();
                     List<Document> documents = workflowService.getCompoundWorkflowDocuments(compoundWorkflowRef);
                     Set<Privilege> privileges = WorkflowUtil.getIndependentWorkflowDefaultDocPermissions();
-                    boolean addEditPrivilege = task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK) || WorkflowUtil.isFirstConfirmationTask(task);
+                    boolean addEditPrivilege = task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK) || task.isType(WorkflowSpecificModel.Types.GROUP_ASSIGNMENT_TASK) || WorkflowUtil.isFirstConfirmationTask(task);
+                    boolean viewDocFilesPrivilege = task.isType(WorkflowSpecificModel.Types.GROUP_ASSIGNMENT_TASK);
                     boolean setOwnerData = WorkflowUtil.isActiveResponsible(task);
                     for (Document document : documents) {
                         Set<Privilege> documentPrivileges = new HashSet<Privilege>();
@@ -67,6 +79,9 @@ public class IndependentWorkflowTaskStatusChangeListener implements WorkflowEven
                         boolean isWorkingDoc = document.isDocStatus(DocumentStatus.WORKING);
                         if (addEditPrivilege && isWorkingDoc) {
                             documentPrivileges.add(Privilege.EDIT_DOCUMENT);
+                        }
+                        if (viewDocFilesPrivilege) {
+                        	documentPrivileges.add(Privilege.VIEW_DOCUMENT_FILES);
                         }
                         NodeRef docRef = document.getNodeRef();
                         privilegeService.setPermissions(docRef, ownerId, documentPrivileges);
@@ -133,6 +148,10 @@ public class IndependentWorkflowTaskStatusChangeListener implements WorkflowEven
         BeanHelper.getLogService().addLogEntry(
                 LogEntry.create(LogObject.TASK, BeanHelper.getUserService(), task.getNodeRef(), "applog_task_review_send_to_dvk_error", task.getOwnerName(),
                         task.getInstitutionName(), MessageUtil.getTypeName(task.getType())));
+    }
+    
+    public void setNodeService(NodeService nodeService) {
+        this.nodeService = nodeService;
     }
 
     public void setWorkflowService(WorkflowService workflowService) {

@@ -80,20 +80,22 @@ public class VersionsServiceImpl implements VersionsService {
             // if not locked, then a new version can be made
             boolean isLocked = getVersionLockableAspect(nodeRef);
             if (!isLocked) {
-                // If the versionable aspect is not there then add it
+            	Date frozenModifiedTime = (Date)getNodeService().getProperty(nodeRef, ContentModel.PROP_MODIFIED);
+            	String modifier = (String)getNodeService().getProperty(nodeRef, ContentModel.PROP_MODIFIER);
+            	// If the versionable aspect is not there then add it
                 addVersionableAspect(nodeRef);
 
                 if (updateOnlyIfNeeded && !Boolean.TRUE.equals(getNodeService().getProperty(nodeRef, FileModel.Props.NEW_VERSION_ON_NEXT_SAVE))) {
-                    org.alfresco.service.cmr.version.Version previousLatestVer = versionServiceExt.getCurrentVersion(nodeRef);
-                    if (previousLatestVer != null) {
-                        Date frozenModifiedTime = previousLatestVer.getFrozenModifiedDate();
-                        String modifier = previousLatestVer.getFrozenModifier();
+                    //org.alfresco.service.cmr.version.Version previousLatestVer = versionServiceExt.getCurrentVersion(nodeRef);
+                    //if (previousLatestVer != null) {
+                        //Date frozenModifiedTime = previousLatestVer.getFrozenModifiedDate();
+                        //String modifier = previousLatestVer.getFrozenModifier();
                         // previousLatestVer.getVersionProperty(name)
                         if (DateUtils.isSameDay(frozenModifiedTime, new Date()) && StringUtils.equals(AuthenticationUtil.getFullyAuthenticatedUser(), modifier)) {
                             logger.info("not creating new version of file with nodeRef=" + nodeRef + " - latest version is modified by same user today");
                             return false;
                         }
-                    }
+                    //}
                 }
 
                 // create a new version

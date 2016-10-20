@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -31,15 +32,6 @@ import javax.mail.internet.ContentType;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.ParseException;
-
-import net.freeutils.tnef.Attachment;
-import net.freeutils.tnef.CompressedRTFInputStream;
-import net.freeutils.tnef.MAPIProp;
-import net.freeutils.tnef.MAPIProps;
-import net.freeutils.tnef.Message;
-import net.freeutils.tnef.RawInputStream;
-import net.freeutils.tnef.TNEFInputStream;
-import net.freeutils.tnef.TNEFUtils;
 
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
@@ -109,6 +101,14 @@ import ee.webmedia.alfresco.imap.model.ImapModel;
 import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
+import net.freeutils.tnef.Attachment;
+import net.freeutils.tnef.CompressedRTFInputStream;
+import net.freeutils.tnef.MAPIProp;
+import net.freeutils.tnef.MAPIProps;
+import net.freeutils.tnef.Message;
+import net.freeutils.tnef.RawInputStream;
+import net.freeutils.tnef.TNEFInputStream;
+import net.freeutils.tnef.TNEFUtils;
 
 /**
  * SimDhs specific IMAP logic.
@@ -380,6 +380,9 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
     MessagingException {
 
         Object content = originalMessage.getContent();
+        //if (content instanceof String) {
+    	//	content = fixPlainTextContentEncoding((String)content);
+        //}
         Part tnefPart = getTnefPart(content);
         Message tnefMessage = null;
         InputStream tnefInputStream = null;
@@ -408,6 +411,13 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
                 tnefInputStream.close();
             }
         }
+    }
+    
+    private String fixPlainTextContentEncoding(String content) {
+    	byte[] tempBytes =  Charset.forName("ISO-8859-1").encode(content).array();
+		String tempContent = new String(tempBytes);
+		content = new String(Charset.forName("UTF-8").encode(tempContent).array());
+		return content;
     }
 
     private boolean saveTnefBodyAndAttachments(NodeRef document, Message tnefMessage, boolean saveBody) throws IOException, UnsupportedEncodingException {
@@ -714,19 +724,11 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
         // We assume that content-type header also contains charset; so far there haven't been different cases
         // If content-type header doesn't contain charset, we use UTF-8 as default
         String encoding = getEncoding(p);
+        
         log.info("Found body part from message, parsed mimeType=" + mimeType + " and encoding=" + encoding + " from contentType=" + p.getContentType());
 
-        // THIS DOES NOT WORK:
-        // String content = (String) p.getContent(); <-- JavaMail does not care for encoding when parsing content to string this way!
-        // tempWriter.putContent(content);
-
-        // p.writeTo(tempWriter.getContentOutputStream()); <-- THIS DOES NOT WORK
-        InputStream inputStream = p.getInputStream();
-        try {
-            createBody(document, mimeType, encoding, inputStream, filename);
-        } finally {
-            inputStream.close();
-        }
+        createBody(document, mimeType, encoding, p.getInputStream(), filename);
+        
         return p;
     }
 
@@ -734,7 +736,9 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
         ContentWriter tempWriter = contentService.getTempWriter();
         tempWriter.setMimetype(mimeType);
         tempWriter.setEncoding(encoding);
+        
         tempWriter.putContent(inputStream);
+        
 
         String safeFileName = FilenameUtil.makeSafeFilename(filename);
         FileInfo createdFile = fileService.transformToPdf(document, null, tempWriter.getReader(), safeFileName, filename, null);

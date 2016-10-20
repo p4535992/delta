@@ -239,8 +239,9 @@
                </item>
             </subitems>
          </dropdown>
-         <dropdown title-id="menu_reports" expanded="true">
+         <dropdown id="menuReports" title-id="menu_reports" expanded="true">
             <submenu-id>reports-submenu</submenu-id>
+            <hidden>#{MenuBean.isMenuItemHidden}</hidden>
             <subitems>
                <item id="documentReports" title-id="menu_document_reports">
                   <outcome>dialog:documentDynamicReportDialog</outcome>
@@ -255,6 +256,7 @@
          </dropdown>
          <item id="executedReports" title-id="menu_executed_reports">
             <outcome>dialog:reportListDialog</outcome>
+            <hidden>#{MenuBean.isMenuItemHidden}</hidden>
          </item>
       </subitems>
    </item>

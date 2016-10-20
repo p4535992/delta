@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.document.service;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getParametersService;
 import static ee.webmedia.alfresco.document.file.model.FileModel.Props.DISPLAY_NAME;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ACCESS_RESTRICTION;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL;
@@ -87,6 +88,7 @@ import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateFormatUtils;
+import org.digidoc4j.SignatureProfile;
 import org.hibernate.StaleObjectStateException;
 import org.joda.time.Days;
 import org.joda.time.Instant;
@@ -154,6 +156,7 @@ import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.notification.service.NotificationService;
+import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.register.model.Register;
 import ee.webmedia.alfresco.register.service.RegisterService;
 import ee.webmedia.alfresco.series.model.Series;
@@ -163,6 +166,7 @@ import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.model.SignatureChallenge;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
+import ee.webmedia.alfresco.signature.service.DigiDoc4JSignatureService;
 import ee.webmedia.alfresco.signature.service.SignatureService;
 import ee.webmedia.alfresco.substitute.model.Substitute;
 import ee.webmedia.alfresco.substitute.service.SubstituteService;
@@ -206,6 +210,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
     private ContentService contentService;
     private FileService _fileService;
     private SignatureService _signatureService;
+    private DigiDoc4JSignatureService _digidoc4jSignatureService;
     private MenuService menuService;
     private WorkflowService _workflowService;
     private DocumentLogService documentLogService;
@@ -452,6 +457,8 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
                 return null;
             }
         }, AuthenticationUtil.getSystemUserName());
+        
+        documentLogService.addDocumentLog(documentRef, MessageUtil.getMessage("document_log_status_opened_from_finished"));
         if (log.isDebugEnabled()) {
             log.debug("Document reopened");
         }
@@ -1424,9 +1431,14 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
     public void deleteDocument(NodeRef nodeRef, String comment, DeletionType deletionType) {
         deleteDocument(nodeRef, comment, deletionType, AuthenticationUtil.getRunAsUser());
     }
-
+    
     @Override
     public void deleteDocument(NodeRef nodeRef, String comment, DeletionType deletionType, String executingUser) {
+        deleteDocument(nodeRef, comment, deletionType, AuthenticationUtil.getRunAsUser(), false);
+    }
+
+    @Override
+    public void deleteDocument(NodeRef nodeRef, String comment, DeletionType deletionType, String executingUser, boolean isDisposeVolume) {
         log.debug("Deleting document: " + nodeRef);
         getAdrService().addDeletedDocument(nodeRef);
         Set<AssociationRef> assocs = new HashSet<>(nodeService.getTargetAssocs(nodeRef, RegexQNamePattern.MATCH_ALL));
@@ -1448,7 +1460,11 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
             }
             if (DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT.equals(assoc.getTypeQName())) {
                 documentAssociationsService.logDocumentWorkflowAssocRemove(nodeRef, targetRef);
-                removeDocFromCompoundWorkflowProps(sourceRef, targetRef);
+                if (isDisposeVolume && getWorkflowService().getCompoundWorkflowDocumentCount(targetRef) == 0) {
+                	nodeService.deleteNode(targetRef);
+                } else {
+                	removeDocFromCompoundWorkflowProps(sourceRef, targetRef);
+                }
             }
         }
         updateParentNodesContainingDocsCount(nodeRef, false);
@@ -1475,10 +1491,14 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
         NodeRef archivedRef = new NodeRef(StoreRef.STORE_REF_ARCHIVE_SPACESSTORE, nodeRef.getId());
         String location = nodeService.exists(archivedRef) ? (String) nodeService.getProperty(archivedRef, ContentModel.PROP_ARCHIVED_ORIGINAL_LOCATION_STRING) : "";
         logService.addLogEntry(LogEntry.create(LogObject.DOCUMENT, userService, nodeRef, "document_log_status_deleted_from", status, location));
-
+        
+        // DELTA-980, reset log_data objectId
+        logService.updateLogEntryObjectId(nodeRef.toString(), archivedRef.toString());
+        
         if (updateMenu) {
             menuService.process(BeanHelper.getMenuBean().getMenu(), false, true);
         }
+        
     }
 
     private void removeDocFromCompoundWorkflowProps(NodeRef docRef, NodeRef compoundWorkflowRef) {
@@ -1839,7 +1859,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
         docNode.clearPermissionsCache(); // permissions might have been lost after rendering registration button
         if (!isRelocating) {
             if (!RegisterDocumentEvaluator.canRegisterWithLog(docNode, false, log)) {
-                throw new UnableToPerformException("document_registerDoc_error_noPermission");
+                throw new UnableToPerformException("document_registerDoc_error_document_changed");
             }
         } else {
             // when relocating, this is the only check from RegisterDocumentEvaluator.canRegister, that we need to perform
@@ -2478,28 +2498,35 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
             docCounts.putAll(bulkLoadNodeService.getSearchableChildDocCounts(indpendentCompoundWorkflows));
         }
 
-        for (Task task : tasks) {
-            String compoundWorkflowId = task.getCompoundWorkflowId();
-            NodeRef compoundWorkflowNodeRef = compoundWorkflowId != null ? new NodeRef(task.getNodeRef().getStoreRef(), compoundWorkflowId) : null;
-            Map<QName, Serializable> caseFileProps = caseFiles.get(compoundWorkflowNodeRef);
-            NodeRef caseFileNodeRef = caseFileProps != null ? (NodeRef) caseFileProps.get(ContentModel.PROP_NODE_REF) : null;
-            CompoundWorkflow compoundWorkflow = compoundWorkflows.containsKey(compoundWorkflowNodeRef)
-                    ? new CompoundWorkflow((WmNode) compoundWorkflows.get(compoundWorkflowNodeRef), caseFileNodeRef) : null;
-                    Map<QName, Serializable> documentProps = compoundWorkflowNodeRef != null && documents != null
-                            ? documents.get(compoundWorkflowNodeRef) : null;
+		for (Task task : tasks) {
+			String compoundWorkflowId = task.getCompoundWorkflowId();
+			NodeRef compoundWorkflowNodeRef = compoundWorkflowId != null
+					? new NodeRef(task.getNodeRef().getStoreRef(), compoundWorkflowId) : null;
+			Map<QName, Serializable> caseFileProps = caseFiles.get(compoundWorkflowNodeRef);
+			NodeRef caseFileNodeRef = caseFileProps != null ? (NodeRef) caseFileProps.get(ContentModel.PROP_NODE_REF)
+					: null;
+			CompoundWorkflow compoundWorkflow = compoundWorkflows.containsKey(compoundWorkflowNodeRef)
+					? new CompoundWorkflow((WmNode) compoundWorkflows.get(compoundWorkflowNodeRef), caseFileNodeRef)
+					: null;
+			Map<QName, Serializable> documentProps = compoundWorkflowNodeRef != null && documents != null
+					? documents.get(compoundWorkflowNodeRef) : null;
 
-                            Integer compoundWorkflowDocumentsCount = docCounts.containsKey(compoundWorkflowNodeRef) ? docCounts.get(compoundWorkflowNodeRef) : 0;
-                            if (compoundWorkflow != null) {
-                                compoundWorkflow.setNumberOfDocuments(compoundWorkflowDocumentsCount);
-                            }
+			Integer compoundWorkflowDocumentsCount = docCounts.containsKey(compoundWorkflowNodeRef)
+					? docCounts.get(compoundWorkflowNodeRef) : 0;
+			if (compoundWorkflow != null) {
+				compoundWorkflow.setNumberOfDocuments(compoundWorkflowDocumentsCount);
+			}
 
-            NodeRef documentNodeRef = documentProps != null ? (NodeRef) documentProps.get(ContentModel.PROP_NODE_REF) : null;
-            Document taskDocument = documentNodeRef != null
-                                    ? new Document(documentNodeRef, RepoUtil.toStringProperties(documentProps)) : null;
-                                    results.put(task.getNodeRef(), new TaskAndDocument(task, taskDocument, compoundWorkflow));
-        }
+			NodeRef documentNodeRef = documentProps != null ? (NodeRef) documentProps.get(ContentModel.PROP_NODE_REF)
+					: null;
+			Document taskDocument = documentNodeRef != null
+					? new Document(documentNodeRef, RepoUtil.toStringProperties(documentProps)) : null;
+			TaskAndDocument taskAndDoc = new TaskAndDocument(task, taskDocument, compoundWorkflow);
+			
+			results.put(task.getNodeRef(), taskAndDoc);
+		}
 
-        return results;
+		return results;
     }
 
     @Override
@@ -2543,20 +2570,20 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
         long step1 = System.currentTimeMillis();
         String debug = "";
         if (existingDdoc != null) {
-            signatureDigest = getSignatureService().getSignatureDigest(existingDdoc, certHex);
+            signatureDigest = getDigiDoc4JSignatureService().getSignatureDigest(existingDdoc, certHex);
             long step2 = System.currentTimeMillis();
-            debug += "\n    calculate digest for existing ddoc - " + (step2 - step1) + " ms";
+            debug += "\n    calculate digest for existing digidoc - " + (step2 - step1) + " ms";
         } else {
             List<NodeRef> files = getFilesForSigning(document, compoundWorkflowRef);
             long step2 = System.currentTimeMillis();
-            signatureDigest = getSignatureService().getSignatureDigest(files, certHex);
+            signatureDigest = getDigiDoc4JSignatureService().getSignatureDigest(files, certHex);
             long step3 = System.currentTimeMillis();
             debug += "\n    load file list - " + (step2 - step1) + " ms";
             debug += "\n    calculate digest for " + files.size() + " files - " + (step3 - step2) + " ms";
         }
         long step4 = System.currentTimeMillis();
         if (log.isInfoEnabled()) {
-            log.info("prepareDocumentDigest service call took " + (step4 - step0) + " ms\n    check for existing ddoc - " + (step1 - step0) + " ms" + debug);
+            log.info("prepareDocumentDigest service call took " + (step4 - step0) + " ms\n    check for existing digidoc - " + (step1 - step0) + " ms" + debug);
         }
         return signatureDigest;
     }
@@ -2577,13 +2604,13 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
         long step1 = System.currentTimeMillis();
         String debug = "";
         if (existingDdoc != null) {
-            signatureDigest = getSignatureService().getSignatureChallenge(existingDdoc, phoneNo, idCode);
+            signatureDigest = getDigiDoc4JSignatureService().getSignatureChallenge(existingDdoc, phoneNo, idCode);
             long step2 = System.currentTimeMillis();
             debug += "\n    calculate digest for existing ddoc - " + (step2 - step1) + " ms";
         } else {
             List<NodeRef> files = getFilesForSigning(document, compoundWorkflowRef);
             long step2 = System.currentTimeMillis();
-            signatureDigest = getSignatureService().getSignatureChallenge(files, phoneNo, idCode);
+            signatureDigest = getDigiDoc4JSignatureService().getSignatureChallenge(files, phoneNo, idCode);
             long step3 = System.currentTimeMillis();
             debug += "\n    load file list - " + (step2 - step1) + " ms";
             debug += "\n    calculate digest for " + files.size() + " files - " + (step3 - step2) + " ms";
@@ -2702,39 +2729,40 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
     private NodeRef createBdoc(final SignatureTask task, final String signature, final String filename, NodeRef document, List<NodeRef> files) {
         NodeRef bdoc;
         if (task.getSignatureDigest() != null) {
-            bdoc = getSignatureService().createContainer(document, files, filename, task.getSignatureDigest(), signature);
+            bdoc = getDigiDoc4JSignatureService().createAndSignContainer(document, files, filename, task.getSignatureDigest().getDataToSign(), signature);
         } else {
-            bdoc = getSignatureService().createContainer(document, files, filename, task.getSignatureChallenge(), signature);
+            bdoc = getDigiDoc4JSignatureService().createAndSignContainer(document, files, filename, task.getSignatureChallenge().getDataToSign(), signature);
         }
         return bdoc;
     }
-
-    private void signExistingBdoc(final SignatureTask task, final String signature, NodeRef existingDdoc) {
+    
+    private void signExistingBdoc(final SignatureTask task, final String signature, NodeRef existingDigidoc) {
         if (task.getSignatureDigest() != null) {
-            getSignatureService().addSignature(existingDdoc, task.getSignatureDigest(), signature);
+            getDigiDoc4JSignatureService().addSignature(existingDigidoc, task.getSignatureDigest().getDataToSign(), signature);
         } else {
-            getSignatureService().addSignature(existingDdoc, task.getSignatureChallenge(), signature);
+        	getDigiDoc4JSignatureService().addSignature(existingDigidoc, task.getSignatureChallenge().getDataToSign(), signature);
         }
     }
-
+    
     private NodeRef checkExistingBdoc(NodeRef document) {
         List<File> files = getFileService().getAllActiveFiles(document);
         if (files.size() == 1) {
             File file = files.get(0);
-            if (getSignatureService().isBDocContainer(file.getNodeRef())) {
+            if (getDigiDoc4JSignatureService().isBDocContainer(file.getNodeRef())) {
                 return file.getNodeRef();
             }
         }
         return null;
     }
-
+    
+    
     @Override
     public NodeRef checkExistingBdoc(NodeRef document, NodeRef compoundWorkflowRef) {
         if (document == null || compoundWorkflowRef == null) {
             return null;
         }
         for (File file : getFileService().getAllActiveFiles(document)) {
-            if (getSignatureService().isBDocContainer(file.getNodeRef()) && compoundWorkflowRef.equals(file.getCompoundWorkflowRef())) {
+            if (getDigiDoc4JSignatureService().isBDocContainer(file.getNodeRef()) && compoundWorkflowRef.equals(file.getCompoundWorkflowRef())) {
                 return file.getNodeRef();
             }
         }
@@ -2771,8 +2799,14 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
             sb.append(" ");
             sb.append(documentType);
         }
+        
+        String digidocFileExtension = "bdoc";
+        String paramDigidocFormat = getParametersService().getStringParameter(Parameters.DIGIDOC_FILE_FORMAT);
+        if (DigiDoc4JSignatureService.DIGIDOC_FORMAT_ASICE.equals(paramDigidocFormat)) {
+        	digidocFileExtension = "asice";
+        }
 
-        return FilenameUtil.buildFileName(sb.toString(), "bdoc");
+        return FilenameUtil.buildFileName(sb.toString(), digidocFileExtension);
     }
 
     @Override
@@ -3016,6 +3050,13 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
             _signatureService = BeanHelper.getSignatureService();
         }
         return _signatureService;
+    }
+    
+    private DigiDoc4JSignatureService getDigiDoc4JSignatureService() {
+        if (_digidoc4jSignatureService == null) {
+            _digidoc4jSignatureService = BeanHelper.getDigiDoc4JSignatureService();
+        }
+        return _digidoc4jSignatureService;
     }
 
     private WorkflowService getWorkflowService() {

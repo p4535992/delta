@@ -46,8 +46,10 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
     private String startedDateStr;
     private String stoppedDateStr;
     private String endedDateStr;
+    
+    private boolean hasDelegatedTasks;
 
-    public CompoundWorkflow(WmNode node, NodeRef parent) {
+	public CompoundWorkflow(WmNode node, NodeRef parent) {
         super(node);
         this.parent = parent;
     }
@@ -371,5 +373,13 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
     public void setReviewTaskDvkInfoMessages(List<Pair<String, Object[]>> reviewTaskDvkInfoMessages) {
         this.reviewTaskDvkInfoMessages = reviewTaskDvkInfoMessages;
     }
+    
+    public boolean isHasDelegatedTasks() {
+		return hasDelegatedTasks;
+	}
+
+	public void setHasDelegatedTasks(boolean hasDelegatedTasks) {
+		this.hasDelegatedTasks = hasDelegatedTasks;
+	}
 
 }

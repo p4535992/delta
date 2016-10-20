@@ -19,7 +19,7 @@
 
 <h:panelGroup id="files-panel-facets">
    <f:facet name="title">
-      <r:actions id="acts_add_content" value="addFileMenu" context="#{DocumentDialogHelperBean.node}" showLink="false" rendered="#{DialogManager.bean != AddFileDialog and DialogManager.bean != ChangeFileDialog}" />
+      <r:actions id="acts_add_content" value="addFileMenu" context="#{DocumentDialogHelperBean.node}" showLink="false" rendered="#{FileBlockBean.guest == false and DialogManager.bean != AddFileDialog and DialogManager.bean != ChangeFileDialog}" />
    </f:facet>
 </h:panelGroup>
 <h:panelGroup id="inactive-files-panel-facets">
@@ -128,14 +128,14 @@
             <f:param name="nodeRef" value="#{r.nodeRef}" />
          </a:actionLink>
          <a:actionLink id="col7-act33" value="#{r.name}" actionListener="#{FileBlockBean.toggleActive}" showLink="false"
-            image="/images/icons/document-convert.png" tooltip="#{msg.file_toggle_deactive} " rendered="#{FileBlockBean.toggleActive}">
+            image="/images/icons/document-convert.png" tooltip="#{msg.file_toggle_deactive} " rendered="#{FileBlockBean.toggleActive && FileBlockBean.guest == false}">
             <f:param name="nodeRef" value="#{r.nodeRef}" />
          </a:actionLink>
          <a:actionLink id="col7-act35" value="#{r.name}" showLink="false" image="/images/icons/topic-16.gif" tooltip="#{msg.file_comment_tooltip}" actionListener="#{CommentFileDialog.open}" rendered="#{UserService.userFullName == r.modifier}">               
             <f:param name="nodeRef" value="#{r.nodeRef}" />
          </a:actionLink>
          <wm:docPermissionEvaluator id="col7-act34-eval" value="#{r.node}" allow="editDocument">
-            <a:actionLink id="col7-act34" value="#{r.name}" showLink="false" image="/images/icons/edit_properties.gif" tooltip="#{msg.file_change_tooltip}" actionListener="#{ChangeFileDialog.open}">               
+            <a:actionLink id="col7-act34" value="#{r.name}" showLink="false" image="/images/icons/edit_properties.gif" tooltip="#{msg.file_change_tooltip}" actionListener="#{ChangeFileDialog.open}" rendered="#{FileBlockBean.guest == false}">               
                <f:param name="nodeRef" value="#{r.nodeRef}" />
                <f:param name="type" value="active" />
             </a:actionLink>
@@ -147,8 +147,8 @@
                <f:param name="nodeRef" value="#{r.nodeRef}" />
             </a:actionLink>
          </wm:docPermissionEvaluator>
-         <a:actionLink id="col7-act" value="#{r.name}" actionListener="#{BrowseBean.setupContentAction}" action="dialog:deleteFile" showLink="false"
-            image="/images/icons/delete.gif" tooltip="#{msg.file_remove}" rendered="#{FileBlockBean.deleteFileAllowed}">
+         <a:actionLink id="col7-act" value="#{r.name}" actionListener="#{BrowseBean.setupContentActionByNodeRef}" action="dialog:deleteFile" showLink="false"
+            image="/images/icons/delete.gif" tooltip="#{msg.file_remove}" rendered="#{FileBlockBean.deleteFileAllowed && FileBlockBean.guest == false}">
             <f:param name="id" value="#{r.id}" />
             <f:param name="ref" value="#{r.nodeRef}" />
          </a:actionLink>
@@ -315,14 +315,14 @@
             <f:param name="nodeRef" value="#{r.nodeRef}" />
          </a:actionLink>
          <a:actionLink id="col27-act3" value="#{r.name}" actionListener="#{FileBlockBean.toggleActive}" showLink="false"
-            image="/images/icons/document-convert.png" tooltip="#{msg.file_toggle_active}" rendered="#{FileBlockBean.toggleInActive}">
+            image="/images/icons/document-convert.png" tooltip="#{msg.file_toggle_active}" rendered="#{FileBlockBean.toggleInActive && FileBlockBean.guest == false}">
             <f:param name="nodeRef" value="#{r.nodeRef}" />
          </a:actionLink>
          <a:actionLink id="col27-act35" value="#{r.name}" showLink="false" image="/images/icons/topic-16.gif" tooltip="#{msg.file_comment_tooltip}" actionListener="#{CommentFileDialog.open}" rendered="#{UserService.userFullName == r.modifier}">               
             <f:param name="nodeRef" value="#{r.nodeRef}" />
          </a:actionLink>
          <wm:docPermissionEvaluator id="col27-act34-eval" value="#{r.node}" allow="editDocument">
-            <a:actionLink id="col27-act34" value="#{r.name}" showLink="false" image="/images/icons/edit_properties.gif" tooltip="#{msg.file_change_tooltip}" actionListener="#{ChangeFileDialog.open}">               
+            <a:actionLink id="col27-act34" value="#{r.name}" showLink="false" image="/images/icons/edit_properties.gif" tooltip="#{msg.file_change_tooltip}" actionListener="#{ChangeFileDialog.open}" rendered="#{FileBlockBean.guest == false}">               
                <f:param name="nodeRef" value="#{r.nodeRef}" />
                <f:param name="type" value="inactive" />
             </a:actionLink>
@@ -334,7 +334,7 @@
                <f:param name="nodeRef" value="#{r.nodeRef}" />
             </a:actionLink>
          </wm:docPermissionEvaluator>
-         <a:actionLink id="col27-act" value="#{r.name}" actionListener="#{BrowseBean.setupContentAction}" action="dialog:deleteFile" showLink="false"
+         <a:actionLink id="col27-act" value="#{r.name}" actionListener="#{BrowseBean.setupContentActionByNodeRef}" action="dialog:deleteFile" showLink="false"
             image="/images/icons/delete.gif" tooltip="#{msg.file_remove}" rendered="#{FileBlockBean.deleteInactiveFileAllowed}">
             <f:param name="id" value="#{r.id}" />
             <f:param name="ref" value="#{r.nodeRef}" />

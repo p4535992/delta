@@ -44,6 +44,7 @@ import ee.webmedia.alfresco.docconfig.generator.systematic.AccessRestrictionGene
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.eventplan.model.EventPlanModel;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
+import ee.webmedia.alfresco.functions.model.UnmodifiableFunction;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.log.PropDiffHelper;
 import ee.webmedia.alfresco.log.model.LogEntry;
@@ -141,6 +142,34 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         }
         return series;
     }
+    
+    @Override
+    public List<UnmodifiableSeries> getAllSeriesByFunctionForRelatedUsersGroups(NodeRef functionNodeRef, String username) {
+        List<UnmodifiableSeries> series = getAllSeriesByFunction(functionNodeRef);
+        Set<String> userGroups = userService.getUsersGroups(username);
+        if (userGroups == null) {
+        	userGroups = new HashSet<>();
+        }
+        userGroups.add(username);
+        for (Iterator<UnmodifiableSeries> i = series.iterator(); i.hasNext();) {
+        	boolean contains = false;
+            UnmodifiableSeries s = i.next();
+            List<String> relatedUsersGroups = s.getRelatedUsersGroups();
+            if (relatedUsersGroups != null && !relatedUsersGroups.isEmpty()) {
+            	for (String group: userGroups) {
+                	if (relatedUsersGroups.contains(group)) {
+                		contains = true;
+                		break;
+                	}
+                }
+            }
+            if (!contains) {
+        		i.remove();
+        	}
+        }
+        return series;
+    }
+    
 
     @Override
     public Series getSeriesByNodeRef(NodeRef nodeRef) {
@@ -197,6 +226,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
             .label(SeriesModel.Props.REGISTER, "series_register")
             .label(SeriesModel.Props.INDIVIDUALIZING_NUMBERS, "series_individualizingNumbers")
             .label(SeriesModel.Props.STRUCT_UNIT, "series_structUnit")
+            .label(SeriesModel.Props.RELATED_USERS_GROUPS, "series_relatedUsersGroups")
             .label(SeriesModel.Props.TYPE, "series_type")
             .label(SeriesModel.Props.DOC_TYPE, "series_docType")
             .label(SeriesModel.Props.DOC_NUMBER_PATTERN, "series_docNumberPattern")
@@ -383,6 +413,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         if (isInClosedFunction(series)) {
             throw new UnableToPerformException("series_open_error_inClosedFunction");
         }
+        
         Map<String, Object> props = seriesNode.getProperties();
         props.put(SeriesModel.Props.STATUS.toString(), DocListUnitStatus.OPEN.getValueName());
         saveOrUpdate(series);

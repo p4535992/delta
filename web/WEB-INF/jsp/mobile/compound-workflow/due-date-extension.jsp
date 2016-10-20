@@ -63,7 +63,7 @@
                       $.ajaxq('lock', {
                          type: 'POST',
                          queue: true,
-                         url: getContextPath() + '/m/ajax/cwf/lockduedate',
+                         url: getContextPath() + '/m/ajax/cwf/locktask',
                          async: false,
                          dataType: 'json',
                          data: JSON.stringify ({compoundWorkflowRef: cwfRef}),

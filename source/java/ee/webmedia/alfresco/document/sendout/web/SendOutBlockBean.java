@@ -50,7 +50,7 @@ public class SendOutBlockBean implements DocumentDynamicBlock {
     }
 
     public boolean isRendered() {
-        return getSendInfos() != null && getSendInfos().size() > 0;
+        return !BeanHelper.getUserService().isGuest() && getSendInfos() != null && getSendInfos().size() > 0;
     }
 
     // START: getters / setters

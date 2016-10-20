@@ -199,13 +199,23 @@ public abstract class AbstractSearchServiceImpl {
 
     protected <E extends Comparable<? super E>> Pair<List<E>, Boolean> searchGeneralImpl( //
             String query, int limit, String queryName, SearchCallback<E> callback, Collection<StoreRef> storeRefs) {
-        final Pair<List<E>, Boolean> extractResults = searchGeneralImplWithoutSort(query, limit, queryName, callback, storeRefs, true);
+        return searchGeneralImpl(query, 0, limit, queryName, callback, storeRefs);
+    }
+    
+    protected <E extends Comparable<? super E>> Pair<List<E>, Boolean> searchGeneralImpl( //
+            String query, int startFrom, int limit, String queryName, SearchCallback<E> callback, Collection<StoreRef> storeRefs) {
+        final Pair<List<E>, Boolean> extractResults = searchGeneralImplWithoutSort(query, startFrom, limit, queryName, callback, storeRefs, true);
         Collections.sort(extractResults.getFirst());
         return extractResults;
     }
-
+    
     protected <E> Pair<List<E>, Boolean> searchGeneralImplWithoutSort( //
             String query, int limit, String queryName, SearchCallback<E> callback, Collection<StoreRef> storeRefs, boolean checkExists) {
+    	return searchGeneralImplWithoutSort(query, 0, limit, queryName, callback, storeRefs, checkExists);
+    }
+
+    protected <E> Pair<List<E>, Boolean> searchGeneralImplWithoutSort( //
+            String query, int startFrom, int limit, String queryName, SearchCallback<E> callback, Collection<StoreRef> storeRefs, boolean checkExists) {
         if (StringUtils.isBlank(query)) {
             return new Pair<List<E>, Boolean>(new ArrayList<E>(), false);
         }
@@ -293,12 +303,20 @@ public abstract class AbstractSearchServiceImpl {
      * @return query resultset
      */
     protected ResultSet doSearch(String query, int limit, String queryName, StoreRef storeRef) {
-        final SearchParameters sp = generateLuceneSearchParams(query, storeRef == null ? generalService.getStore() : storeRef, limit);
+        return doSearch(query, 0, limit, queryName, storeRef);
+    }
+    
+    protected ResultSet doSearch(String query, int startFrom, int limit, String queryName, StoreRef storeRef) {
+        final SearchParameters sp = generateLuceneSearchParams(query, storeRef == null ? generalService.getStore() : storeRef, startFrom, limit);
         return doSearchQuery(sp, queryName);
     }
-
+    
     protected List<ResultSet> doSearches(String query, int limit, String queryName, Collection<StoreRef> storeRefs) {
-        final SearchParameters sp = generateLuceneSearchParams(query, null, limit);
+    	return doSearches(query, 0, limit, queryName, storeRefs);
+    }
+
+    protected List<ResultSet> doSearches(String query, int startFrom, int limit, String queryName, Collection<StoreRef> storeRefs) {
+        final SearchParameters sp = generateLuceneSearchParams(query, null, startFrom, limit);
         if (storeRefs == null || storeRefs.size() == 0) {
             storeRefs = Arrays.asList(generalService.getStore());
         }

@@ -4,6 +4,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFileService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getSignatureService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDigiDoc4JSignatureService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
 import static ee.webmedia.alfresco.workflow.web.CompoundWorkflowDialog.handleWorkflowChangedException;
 
@@ -23,6 +24,8 @@ import org.alfresco.service.cmr.model.FileExistsException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.ui.common.Utils;
 import org.apache.commons.lang.StringUtils;
+import org.digidoc4j.Container;
+import org.digidoc4j.DataToSign;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -64,6 +67,9 @@ public class SigningFlowContainer implements Serializable {
     protected InProgressTasksForm inProgressTasksForm;
     private final boolean signTogether;
     private boolean defaultTelephoneForSigning;
+    
+    private Container bdocContainer;
+	private DataToSign dataToSign;
 
     public static final String EE_COUNTRY_CODE = "+372";
     public static final String LAST_USED_MOBILE_ID_NUMBER = "lastUsedMobileIdNumber";
@@ -217,7 +223,7 @@ public class SigningFlowContainer implements Serializable {
             if (!checkSignatureData(requestParamChallengeId)) {
                 return handleInvalidSigantureState();
             }
-            signature = getSignatureService().getMobileIdSignature(getSignatureChallenge());
+            signature = getDigiDoc4JSignatureService().getMobileIdSignature(getSignatureChallenge());
             if (signature == null) {
                 return "REPEAT";
             }
@@ -504,5 +510,21 @@ public class SigningFlowContainer implements Serializable {
     public void setDefaultTelephoneForSigning(boolean defaultTelephoneForSigning) {
         this.defaultTelephoneForSigning = defaultTelephoneForSigning;
     }
+    
+    public Container getBdocContainer() {
+		return bdocContainer;
+	}
+
+	public void setBdocContainer(Container bdocContainer) {
+		this.bdocContainer = bdocContainer;
+	}
+
+	public DataToSign getDataToSign() {
+		return dataToSign;
+	}
+
+	public void setDataToSign(DataToSign dataToSign) {
+		this.dataToSign = dataToSign;
+	}
 
 }

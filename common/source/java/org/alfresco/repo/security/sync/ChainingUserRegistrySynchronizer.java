@@ -62,6 +62,7 @@ import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
+import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 /**
  * A <code>ChainingUserRegistrySynchronizer</code> is responsible for synchronizing Alfresco's local user (person) and
@@ -114,7 +115,9 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
     /** The person service. */
     private PersonService personService;
 
-    /** The attribute service. */
+    private WorkflowService _workflowService;
+    
+	/** The attribute service. */
     private AttributeService attributeService;
 
     private ApplicationService applicationService;
@@ -158,6 +161,13 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
     public void setAuthorityService(AuthorityService authorityService)
     {
         this.authorityService = authorityService;
+    }
+
+    public WorkflowService getWorkflowService() {
+        if (_workflowService == null) {
+        	_workflowService = BeanHelper.getWorkflowService();
+        }
+        return _workflowService;
     }
 
     /**
@@ -542,6 +552,7 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
             NodeDescription group = groups.next();
             PropertyMap groupProperties = group.getProperties();
             String groupName = (String) groupProperties.get(ContentModel.PROP_AUTHORITY_NAME);
+            String groupDisplayName = authorityService.getAuthorityDisplayName(groupName);
 
             if (groupsToDelete.remove(groupName) || systematicGroupNames.contains(groupName))
             {
@@ -562,6 +573,7 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
                             + this.authorityService.getShortName(child) + "' from group '"
                             + this.authorityService.getShortName(groupName) + "'");
                     this.authorityService.removeAuthority(groupName, child);
+                    getWorkflowService().removeUserOrGroupFromCompoundWorkflowDefinitions(groupDisplayName, child);
                 }
             }
             else
@@ -582,6 +594,7 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
                                     + groupShortName
                                     + "'. This group was previously created manually or through synchronization with a lower priority user registry.");
                     this.authorityService.deleteAuthority(groupName);
+                    getWorkflowService().removeUserOrGroupFromCompoundWorkflowDefinitions(groupDisplayName, null);
                 }
                 else
                 {
@@ -625,6 +638,8 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
                     ChainingUserRegistrySynchronizer.logger.info("Adding '" + this.authorityService.getShortName(child)
                             + "' to group '" + this.authorityService.getShortName(groupName) + "'");
                     this.authorityService.addAuthority(groupName, child);
+                    String groupDisplayName = authorityService.getAuthorityDisplayName(groupName);
+                    getWorkflowService().addUserToCompoundWorkflowDefinitions(groupDisplayName, child);
                 }
             }
 
@@ -636,9 +651,11 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
         {
             for (String group : groupsToDelete)
             {
-                ChainingUserRegistrySynchronizer.logger.warn("Deleting group '"
+            	String groupDisplayName = authorityService.getAuthorityDisplayName(group);
+            	ChainingUserRegistrySynchronizer.logger.warn("Deleting group '"
                         + this.authorityService.getShortName(group) + "'");
                 this.authorityService.deleteAuthority(group);
+                getWorkflowService().removeUserOrGroupFromCompoundWorkflowDefinitions(groupDisplayName, null);
                 processedCount++;
             }
         }

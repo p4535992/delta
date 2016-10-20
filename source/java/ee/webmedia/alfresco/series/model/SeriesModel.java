@@ -27,6 +27,7 @@ public interface SeriesModel {
         QName REGISTER = QName.createQName(URI, "register");
         QName INDIVIDUALIZING_NUMBERS = QName.createQName(URI, "individualizingNumbers");
         QName STRUCT_UNIT = QName.createQName(URI, "structUnit");
+        QName RELATED_USERS_GROUPS = QName.createQName(URI, "relatedUsersGroups");
         QName CONTAINING_DOCS_COUNT = QName.createQName(URI, "containingDocsCount");
         QName TYPE = QName.createQName(URI, "type");
         QName DOC_TYPE = QName.createQName(URI, "docType");

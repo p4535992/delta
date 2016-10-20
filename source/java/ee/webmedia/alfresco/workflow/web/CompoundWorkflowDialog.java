@@ -271,21 +271,16 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     }
 
     protected String saveWorkflow(FacesContext context, String workflowBlockCallback, List<Pair<String, Object>> params, String outcome) {
+        return saveWorkflow(context, workflowBlockCallback, params, outcome, true);
+    }
+    
+    protected String saveWorkflow(FacesContext context, String workflowBlockCallback, List<Pair<String, Object>> params, String outcome, boolean canUnlock) {
     	boolean locked = false;
     	if (compoundWorkflow.getNodeRef() != null) {
     		locked = setLock(context, "workflow_compond_locked_for_save");
     	}
         if (compoundWorkflow.getNodeRef() == null || locked) {
         	try {
-        		//TODO: REMOVE ME
-        		if (locked) {
-	        		try {
-	                    Thread.sleep(15000); // 15 sec
-	                }
-	                catch (InterruptedException ie) {
-	                    // Handle the exception
-	                }
-        		}
 		    	boolean isInProgress = WorkflowUtil.isStatus(compoundWorkflow, Status.IN_PROGRESS);
 		        preprocessWorkflow();
 		        boolean checkConfirmations = !finishImplConfirmed;
@@ -304,13 +299,15 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
 		            return saveOrConfirmValidatedWorkflow(!isDocumentWorkflow() ? null : outcome, hasWorkflowBlockCallback);
 		        }
         	} finally {
-        		if (compoundWorkflow.getNodeRef() != null) {
+        		if (canUnlock && compoundWorkflow.getNodeRef() != null) {
         			getDocLockService().unlockIfOwner(compoundWorkflow.getNodeRef());
         		}
         	}
         }
         return null;
     }
+    
+    
 
     public void saveValidatedWorkflow(ActionEvent event) {
         finishImplConfirmed = true;
@@ -369,6 +366,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     private boolean hasOwnerWithNoEmail(String messageKey) {
         List<String> ownersWithNoEmail = getWorkflowService().checkAndAddMissingOwnerEmails(compoundWorkflow);
         // comment/uncomment this whether not need/need mail validation
+        
         if (!ownersWithNoEmail.isEmpty()) {
             for (String owner : ownersWithNoEmail) {
                 MessageUtil.addErrorMessage(messageKey, owner);
@@ -745,15 +743,6 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         try {
         	boolean locked = setLock(FacesContext.getCurrentInstance(), "workflow_compond_locked_for_stop");
             if (locked) {
-            	//TODO: REMOVE ME
-        		if (locked) {
-	        		try {
-	                    Thread.sleep(15000); // 15 sec
-	                }
-	                catch (InterruptedException ie) {
-	                    // Handle the exception
-	                }
-        		}
 		        preprocessWorkflow();
 		        if (validate(FacesContext.getCurrentInstance(), false, false, false)) {
 		            List<String> confirmationMessages = getConfirmationMessages(false);
@@ -858,15 +847,6 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         try {
         	boolean locked = setLock(FacesContext.getCurrentInstance(), "workflow_compond_locked_for_finish");
             if (locked) {
-            	//TODO: REMOVE ME
-        		if (locked) {
-	        		try {
-	                    Thread.sleep(15000); // 15 sec
-	                }
-	                catch (InterruptedException ie) {
-	                    // Handle the exception
-	                }
-        		}
 	            preprocessWorkflow();
 	            if (validate(FacesContext.getCurrentInstance(), false, true, false)) {
 	                // clear panelGroup to avoid memory issues when working with large worflows

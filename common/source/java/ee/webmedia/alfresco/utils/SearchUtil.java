@@ -432,12 +432,19 @@ public class SearchUtil {
     public static boolean isDateProperty(QName dataType) {
         return dataType.equals(DataTypeDefinition.DATE) || dataType.equals(DataTypeDefinition.DATETIME);
     }
-
+    
     public static SearchParameters generateLuceneSearchParams(String query, StoreRef store, int limit) {
+    	return generateLuceneSearchParams(query, store, 0, limit);
+    }
+
+    public static SearchParameters generateLuceneSearchParams(String query, StoreRef store, int startFrom, int limit) {
         SearchParameters sp = new SearchParameters();
         sp.setLanguage(SearchService.LANGUAGE_LUCENE);
         sp.setQuery(query);
         sp.addStore(store);
+        if (startFrom > 0) {
+        	sp.setSkipCount(startFrom);
+        }
         if (limit < 0) {
             sp.setLimitBy(LimitBy.UNLIMITED);
         } else {
@@ -451,12 +458,12 @@ public class SearchUtil {
      * @param userId - if null, use current user
      */
     public static String generateDocAccess(List<NodeRef> restrictedSeriesRefs, String userId) {
-        if (restrictedSeriesRefs.isEmpty() || getUserService().isAdministrator()) {
-            return null;
-        }
-
-        if (userId == null) {
+    	if (userId == null) {
             userId = AuthenticationUtil.getRunAsUser();
+        }
+    	
+    	if (restrictedSeriesRefs.isEmpty() || getUserService().isAdministrator(userId)) {
+            return null;
         }
 
         Set<String> userGroups = new HashSet<String>();

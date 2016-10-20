@@ -6,6 +6,7 @@
  */
 package com.icegreen.greenmail.imap.commands;
 
+import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.text.DateFormat;
@@ -239,7 +240,7 @@ public class CommandParser {
         char[] buffer = new char[size];
         request.read(buffer);
 
-        return Charset.forName("UTF-8").encode(CharBuffer.wrap(buffer)).array();
+ 		return Charset.forName("ISO-8859-1").encode(CharBuffer.wrap(buffer)).array();
     }
 
     /**

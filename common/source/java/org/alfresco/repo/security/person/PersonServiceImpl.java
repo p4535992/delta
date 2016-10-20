@@ -199,6 +199,14 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
                 "beforeDeleteNode"));
 
     }
+    
+    public void clearPersonCache() {
+    	personCache.clear();
+    }
+    
+    public void clearPersonNodesCache() {
+    	personNodesCache.clear();
+    }
 
     public UserNameMatcher getUserNameMatcher()
     {
@@ -727,6 +735,14 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
             if (homeFolder == null)
             {
                 final ChildAssociationRef ref = nodeService.getPrimaryParent(person);
+
+
+                boolean requiresNew = false;
+
+                if (AlfrescoTransactionSupport.getTransactionReadState() != TxnReadState.TXN_READ_WRITE) {
+                    requiresNew = true;
+                }
+                
                 transactionService.getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Object>()
                 {
                     @Override
@@ -735,7 +751,8 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
                         homeFolderManager.onCreateNode(ref);
                         return null;
                     }
-                }, false, transactionService.isReadOnly());
+                }, false, requiresNew);
+                
             }
         }
     }
@@ -845,6 +862,8 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
         for (String containerAuthority : containerAuthorities)
         {
             authorityService.removeAuthority(containerAuthority, userName);
+            String groupDisplayName = authorityService.getAuthorityDisplayName(containerAuthority);
+            BeanHelper.getWorkflowService().removeUserOrGroupFromCompoundWorkflowDefinitions(groupDisplayName, userName);
         }
 
         // remove any user permissions

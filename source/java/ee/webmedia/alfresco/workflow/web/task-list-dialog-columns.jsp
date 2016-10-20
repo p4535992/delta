@@ -17,7 +17,7 @@
       </a:column>
       
       <%-- resolution --%>
-      <a:column id="resolution" primary="true" styleClass="#{r.task.cssStyleClass}" style="width: 15%;">
+      <a:column id="resolution" primary="true" styleClass="#{r.task.cssStyleClass}" style="#{MyTasksBean.resolutionStyle}">
          <f:facet name="header">
             <a:sortLink id="resolution-sort" label="#{msg.task_property_resolution}" value="resolution" styleClass="header" />
          </f:facet>
@@ -37,7 +37,7 @@
       </a:column>
       
       <%-- regNumber --%>
-      <a:column id="col1" primary="true" styleClass="#{r.task.cssStyleClass}" style="width: 10%;" rendered="#{MyTasksBean.caseFileOrDocumentWorkflowEnabled}">
+      <a:column id="col1" primary="true" styleClass="#{r.task.cssStyleClass}" style="#{MyTasksBean.regNumberStyle}" rendered="#{!MyTasksBean.lessColumns && MyTasksBean.caseFileOrDocumentWorkflowEnabled}">
          <f:facet name="header">
             <a:sortLink id="col1-sort" label="#{msg.document_regNumber}" value="regNrOrVolumeMark" styleClass="header" />
          </f:facet>
@@ -47,7 +47,7 @@
       </a:column>
       
       <%-- Registration date --%>
-      <a:column id="col2" primary="true" styleClass="#{r.task.cssStyleClass}" style="width: 10%;" rendered="#{MyTasksBean.documentWorkflowEnabled}">
+      <a:column id="col2" primary="true" styleClass="#{r.task.cssStyleClass}" style="#{MyTasksBean.regDateStyle}" rendered="#{!MyTasksBean.lessColumns && MyTasksBean.documentWorkflowEnabled}">
          <f:facet name="header">
             <a:sortLink id="col2-sort" label="#{msg.document_regDateTime}" value="regDateTime" styleClass="header" />
          </f:facet>
@@ -61,13 +61,13 @@
          <f:facet name="header">
             <a:sortLink id="col4-sort" label="#{msg.document_sender}" value="sender" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col4-text" value="#{r.sender}" action="#{DocumentDialog.action}" tooltip="#{r.sender}" actionListener="#{DocumentDialog.open}" styleClass="no-underline condence20-" >
+         <a:actionLink id="col4-text" value="#{r.sender}" action="#{(MyTasksBean.lessColumns)?r.action:DocumentDialog.action}" tooltip="#{(MyTasksBean.lessColumns)?r.document.sender:r.sender}" actionListener="#{(MyTasksBean.lessColumns)?r.actionListener:DocumentDialog.open}" styleClass="no-underline condence20-" >
             <f:param name="nodeRef" value="#{r.actionNodeRef}" />
          </a:actionLink>
       </a:column>
 
       <%-- Title --%>
-      <a:column id="col6" styleClass="#{r.task.cssStyleClass}" style="width: 15%;">
+      <a:column id="col6" styleClass="#{r.task.cssStyleClass}" style="#{MyTasksBean.titleStyle}">
          <f:facet name="header">
             <a:sortLink id="col6-sort" label="#{msg.document_docName}" value="title" styleClass="header" />
          </f:facet>
@@ -77,7 +77,7 @@
       </a:column>
 
       <%-- DueDate --%>
-      <a:column id="col7" primary="true" styleClass="#{r.task.cssStyleClass}" style="width: 10%;" rendered="#{MyTasksBean.caseFileOrDocumentWorkflowEnabled}">
+      <a:column id="col7" primary="true" styleClass="#{r.task.cssStyleClass}" style="#{MyTasksBean.dueDateStyle}" rendered="#{!MyTasksBean.lessColumns && MyTasksBean.caseFileOrDocumentWorkflowEnabled}">
          <f:facet name="header">
             <a:sortLink id="col7-sort" label="#{msg.document_dueDate}" value="documentDueDate" styleClass="header" />
          </f:facet>

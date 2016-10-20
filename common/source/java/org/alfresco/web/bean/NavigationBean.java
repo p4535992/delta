@@ -79,6 +79,8 @@ import org.alfresco.web.ui.repo.component.shelf.UIShelf;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
+
 /**
  * Bean providing access and management of the various global navigation mechanisms
  * such as the My Home, Company Home, Guest Home toolbar shortcuts, breadcrumb and
@@ -241,6 +243,10 @@ public class NavigationBean implements Serializable
    public User getCurrentUser()
    {
       return Application.getCurrentUser(FacesContext.getCurrentInstance());
+   }
+   
+   public boolean getIsDeltaGuest() {
+   	return BeanHelper.getUserService().isGuest();
    }
    
    /**

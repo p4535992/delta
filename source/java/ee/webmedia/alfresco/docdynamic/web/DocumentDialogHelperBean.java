@@ -127,4 +127,9 @@ public class DocumentDialogHelperBean implements Serializable {
     public DialogDataProvider getDataProvider() {
         return dialogDataProvider;
     }
+    
+    public boolean isGuest() {
+    	return BeanHelper.getUserService().isGuest();
+    }
+    
 }

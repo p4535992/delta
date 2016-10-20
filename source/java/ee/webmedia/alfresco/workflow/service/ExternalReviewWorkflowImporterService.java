@@ -8,7 +8,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.view.Location;
 import org.alfresco.service.namespace.QName;
 
-import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
+//import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
 import org.apache.xmlbeans.XmlObject;
 
 public interface ExternalReviewWorkflowImporterService {

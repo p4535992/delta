@@ -105,6 +105,7 @@ import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.series.service.SeriesService;
@@ -872,6 +873,10 @@ public class ArchivalsServiceImpl implements ArchivalsService {
                             if (isDocument && independentWorkflowEnabled) {
                                 updateCompoundWorkflowProps(cwfRefs, childRef, archivedNodeRef);
                             }
+                            if (isDocument) {
+                            	logService.updateLogEntryObjectId(childRef.toString(), archivedNodeRef.toString());
+                            }
+                            
                             return null;
                         }
                     }, false, true);
@@ -1367,10 +1372,10 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         final Map<Long, QName> propertyTypes = new HashMap<Long, QName>();
         for (final NodeRef volumeNodeRef : volumesToDestroy) {
             // remove all childs
-            deleteDocuments(docDeletingComment, retryingTransactionHelper, volumeNodeRef, executingUser);
+            deleteDocuments(docDeletingComment, retryingTransactionHelper, volumeNodeRef, executingUser, true);
 
             for (NodeRef casRef : BeanHelper.getCaseService().getCaseRefsByVolume(volumeNodeRef)) {
-                deleteDocuments(docDeletingComment, retryingTransactionHelper, casRef, executingUser);
+                deleteDocuments(docDeletingComment, retryingTransactionHelper, casRef, executingUser, true);
             }
 
             retryingTransactionHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
@@ -1396,7 +1401,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
 
     }
 
-    private void deleteDocuments(final String docDeletingComment, RetryingTransactionHelper retryingTransactionHelper, final NodeRef volumeNodeRef, final String executingUser) {
+    private void deleteDocuments(final String docDeletingComment, RetryingTransactionHelper retryingTransactionHelper, final NodeRef volumeNodeRef, final String executingUser, final boolean isDisposeVolume) {
         List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(volumeNodeRef);
         for (ChildAssociationRef childAssoc : childAssocs) {
             final NodeRef nodeRef = childAssoc.getChildRef();
@@ -1414,7 +1419,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
                     adrService.addDeletedDocument(nodeRef);
                     // mark for permanent delete
                     nodeService.addAspect(nodeRef, DocumentCommonModel.Aspects.DELETE_PERMANENT, null);
-                    documentService.deleteDocument(nodeRef, docDeletingComment, DeletionType.DISPOSITION, executingUser);
+                    documentService.deleteDocument(nodeRef, docDeletingComment, DeletionType.DISPOSITION, executingUser,isDisposeVolume);
                     return null;
                 }
 
@@ -1451,6 +1456,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         if (templateRef != null) {
             documentTemplateService.populateVolumeArchiveTemplate(activityRef, volumeRefs, templateRef, username);
         }
+        BeanHelper.getPrivilegeService().setPermissions(activityRef, "GROUP_ARCHIVISTS", Privilege.VIEW_DOCUMENT_FILES);
         return activityRef;
     }
 

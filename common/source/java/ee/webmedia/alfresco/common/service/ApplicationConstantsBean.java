@@ -37,7 +37,8 @@ public class ApplicationConstantsBean implements InitializingBean {
     private boolean caseVolumeEnabled;
     private String defaultVolumeSortingField;
     private boolean groupsEditingAllowed;
-    private boolean substitutionTaskEndDateRestricted;
+    private boolean createOrgStructGroups;
+	private boolean substitutionTaskEndDateRestricted;
     private String messageNo;
     private String messageYes;
 
@@ -107,6 +108,14 @@ public class ApplicationConstantsBean implements InitializingBean {
     public void setGroupsEditingAllowed(boolean groupsEditingAllowed) {
         this.groupsEditingAllowed = groupsEditingAllowed;
     }
+    
+    public boolean isCreateOrgStructGroups() {
+		return createOrgStructGroups;
+	}
+
+	public void setCreateOrgStructGroups(boolean createOrgStructGroups) {
+		this.createOrgStructGroups = createOrgStructGroups;
+	}
 
     public boolean isSubstitutionTaskEndDateRestricted() {
         return substitutionTaskEndDateRestricted;

@@ -11,7 +11,7 @@ import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.signature.service.SignatureService;
+import ee.webmedia.alfresco.signature.service.DigiDoc4JSignatureService;
 
 /**
  * Check necessary permissions for signing a file.
@@ -24,12 +24,13 @@ import ee.webmedia.alfresco.signature.service.SignatureService;
  */
 public class SignatureActionEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 1L;
-
+    
+    // TODO: digidoc4j adjust
     @Override
     public boolean evaluate(Node node) {
-        SignatureService signatureService = (SignatureService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(
-                SignatureService.BEAN_NAME);
-        if (signatureService.isBDocContainer(node.getNodeRef())) {
+        DigiDoc4JSignatureService digiDoc4JSignatureService = (DigiDoc4JSignatureService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(
+        		DigiDoc4JSignatureService.BEAN_NAME);
+        if (digiDoc4JSignatureService.isBDocContainer(node.getNodeRef())) {
             return node.hasPermission(PermissionService.WRITE);
         } else {
             ServiceRegistry serviceRegistry = Repository.getServiceRegistry(FacesContext.getCurrentInstance());

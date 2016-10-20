@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.signature.servlet;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.SocketException;
 import java.text.MessageFormat;
 import java.util.Date;
@@ -37,7 +38,7 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.model.DataItem;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
-import ee.webmedia.alfresco.signature.service.SignatureService;
+import ee.webmedia.alfresco.signature.service.DigiDoc4JSignatureService;
 import ee.webmedia.alfresco.substitute.model.SubstitutionInfo;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.webdav.WebDAVCustomHelper;
@@ -60,15 +61,15 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
      *            File name to return in the URL (cannot be null)
      * @return URL to download the content from the specified node
      */
-    public final static String generateUrl(NodeRef ref, int id, String name) {
+    public final static String generateUrl(NodeRef ref, int orderNr, String name) {
         Assert.notNull(ref, "Parameter 'ref' is mandatory");
-        Assert.isTrue(id >= 0, "Parameter 'id' must not be negative");
+        //Assert.isTrue(id >= 0, "Parameter 'id' must not be negative");
         Assert.notNull(name, "Parameter 'name' is mandatory");
 
-        name = FilenameUtil.makeSafeFilename(name);
+        //name = FilenameUtil.makeSafeFilename(name);
 
         return MessageFormat.format("/ddc/{0}/{1}/{2}/{3}/{4}", new Object[] { ref.getStoreRef().getProtocol(),
-                ref.getStoreRef().getIdentifier(), ref.getId(), id, URLEncoder.encode(name) });
+                ref.getStoreRef().getIdentifier(), ref.getId(), orderNr, URLEncoder.encode(name) });
     }
 
     /**
@@ -86,11 +87,11 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
     @Override
     protected void processDownloadRequest(final HttpServletRequest req, final HttpServletResponse res, final boolean redirectToLogin)
             throws ServletException, IOException {
-        Log logger = getLogger();
+        final Log logger = getLogger();
         // req.getPathInfo = /workspace/SpacesStore/371b7748-74cd-45d4-ac2a-e6ade845afe4/1/xyz.pdf
         // req.getRequestURI = /dhs/ddc/workspace/SpacesStore/371b7748-74cd-45d4-ac2a-e6ade845afe4/1/xyz.pdf;JSESSIONID=CFE6CC4F12D658B180EB61EF7ABC1C9
         String uri = req.getPathInfo();
-
+        
         if (logger.isDebugEnabled()) {
             String queryString = req.getQueryString();
             logger.debug("Processing URL: " + uri + (queryString != null && queryString.length() > 0 ? "?" + queryString : ""));
@@ -110,12 +111,8 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
         StoreRef storeRef = new StoreRef(t.nextToken(), t.nextToken());
         String id = URLDecoder.decode(t.nextToken());
 
-        final int dataFileId;
-        try {
-            dataFileId = new Integer(t.nextToken());
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Download URL did not contain valid data file id : " + uri);
-        }
+        final String dataFileOrderNrStr = t.nextToken();
+        
 
         // build noderef from the appropriate URL elements
         final NodeRef nodeRef = new NodeRef(storeRef, id);
@@ -128,7 +125,13 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
                 txHelper.doInTransaction(new RetryingTransactionCallback<Object>() {
                     @Override
                     public Object execute() throws Throwable {
-                        processDigiDocDownloadRequest(req, res, redirectToLogin, nodeRef, dataFileId);
+                    	int dataFileOrderNr = -1;
+                        try {
+                        	dataFileOrderNr = Integer.parseInt(dataFileOrderNrStr);
+                        } catch (NumberFormatException e) {
+                        	logger.error("Invalid dataFileOrderNr: " + dataFileOrderNrStr);
+                        }
+                        processDigiDocDownloadRequest(req, res, redirectToLogin, nodeRef, dataFileOrderNr);
                         return null;
                     }
                 }, true);
@@ -151,7 +154,7 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
         }
     }
 
-    private void processDigiDocDownloadRequest(HttpServletRequest req, HttpServletResponse res, boolean redirectToLogin, NodeRef dDocRef, int dataFileId)
+    private void processDigiDocDownloadRequest(HttpServletRequest req, HttpServletResponse res, boolean redirectToLogin, NodeRef dDocRef, int dataFileOrderNr)
             throws SocketException, IOException {
         Log logger = getLogger();
 
@@ -219,11 +222,17 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
 
         try {
             WebApplicationContext webAppContext = WebApplicationContextUtils.getWebApplicationContext(getServletContext());
-            SignatureService signatureService = (SignatureService) webAppContext.getBean(SignatureService.BEAN_NAME);
+            DigiDoc4JSignatureService digiDoc4JSignatureService = (DigiDoc4JSignatureService) webAppContext.getBean(DigiDoc4JSignatureService.BEAN_NAME);
             String fileName = (String) nodeService.getProperty(dDocRef, ContentModel.PROP_NAME);
             isBdoc = StringUtils.isNotBlank(fileName) && FilenameUtil.isBdocFile(fileName);
-            SignatureItemsAndDataItems items = signatureService.getDataItemsAndSignatureItems(dDocRef, true, isBdoc);
-            DataItem item = items.getDataItems().get(dataFileId);
+            SignatureItemsAndDataItems items = digiDoc4JSignatureService.getDataItemsAndSignatureItems(dDocRef, true);
+            DataItem item = null;
+            for (DataItem dItem: items.getDataItems()) {
+            	if (dItem.getOrderNr() == dataFileOrderNr) {
+            		item = dItem;
+            		break;
+            	}
+            }
 
             long size = item.getSize();
             res.setHeader("Content-Range", "bytes 0-" + Long.toString(size - 1L) + "/" + Long.toString(size));
@@ -236,7 +245,7 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
             ServletOutputStream os = res.getOutputStream();
             FileCopyUtils.copy(item.getData(), os); // closes both streams
         } catch (SignatureException e) {
-            logger.error("Failed to fetch a document from " + (isBdoc ? ".bdoc" : ".ddoc") + ", noderef: " + dDocRef + ", id = " + dataFileId, e);
+            logger.error("Failed to fetch a document from " + (isBdoc ? ".bdoc" : ".ddoc") + ", noderef: " + dDocRef + ", id = " + dataFileOrderNr, e);
         }
     }
 

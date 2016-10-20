@@ -6,6 +6,7 @@ import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 
 public class ReplyNodeTypeEvaluator extends NodeTypeEvaluator {
@@ -22,6 +23,9 @@ public class ReplyNodeTypeEvaluator extends NodeTypeEvaluator {
 
     @Override
     public boolean evaluate(Node docNode) {
+    	if (BeanHelper.getUserService().isGuest()) {
+        	return false;
+        }
         return docNode.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)
                 && super.evaluate(docNode) && RegisterDocumentEvaluator.isRegistered(docNode);
     }

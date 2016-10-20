@@ -31,9 +31,10 @@ import ee.webmedia.alfresco.signature.model.DataItem;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
 import ee.webmedia.alfresco.signature.model.SignatureItem;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
-import ee.webmedia.alfresco.signature.service.SignatureService;
+import ee.webmedia.alfresco.signature.service.DigiDoc4JSignatureService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 
+// TODO: digidoc4j adjust
 public class SignatureDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
 
@@ -41,7 +42,7 @@ public class SignatureDialog extends BaseDialogBean {
 
     private static Logger log = Logger.getLogger(SignatureDialog.class);
 
-    private transient SignatureService signatureService;
+    private transient DigiDoc4JSignatureService digiDoc4JSignatureService;
 
     private NodeRef nodeRef;
     private SignatureDigest signatureDigest;
@@ -75,16 +76,16 @@ public class SignatureDialog extends BaseDialogBean {
     private Boolean digiDoc;
     private boolean error;
 
-    protected SignatureService getSignatureService() {
-        if (signatureService == null) {
-            signatureService = (SignatureService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(
-                    SignatureService.BEAN_NAME);
+    protected DigiDoc4JSignatureService getDigiDoc4JSignatureService() {
+        if (digiDoc4JSignatureService == null) {
+        	digiDoc4JSignatureService = (DigiDoc4JSignatureService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(
+                    DigiDoc4JSignatureService.BEAN_NAME);
         }
-        return signatureService;
+        return digiDoc4JSignatureService;
     }
 
-    public void setSignatureService(SignatureService signatureService) {
-        this.signatureService = signatureService;
+    public void setDigiDoc4JSignatureService(DigiDoc4JSignatureService digiDoc4JSignatureService) {
+        this.digiDoc4JSignatureService = digiDoc4JSignatureService;
     }
 
     public void setFilename(String filename) {
@@ -111,7 +112,7 @@ public class SignatureDialog extends BaseDialogBean {
 
     public boolean isDigiDoc() {
         if (digiDoc == null) {
-            digiDoc = getSignatureService().isDigiDocContainer(nodeRef);
+            digiDoc = getDigiDoc4JSignatureService().isDigiDocContainer(nodeRef);
         }
         return digiDoc;
     }
@@ -203,7 +204,7 @@ public class SignatureDialog extends BaseDialogBean {
         // a suggested name for the new DigiDoc
         filename = getFileFolderService().getFileInfo(nodeRef).getName();
         if (!isDigiDoc()) {
-            filename = FilenameUtils.removeExtension(filename) + FilenameUtil.BDOC_EXTENSION;
+            filename = FilenameUtils.removeExtension(filename) + FilenameUtil.ASICE_EXTENSION;
             // load the selected files and set singleFile and editMode flags
             getSelectedItems();
         } else {
@@ -231,14 +232,14 @@ public class SignatureDialog extends BaseDialogBean {
         try {
             HttpSession session = (HttpSession) FacesContext.getCurrentInstance().getExternalContext().getSession(false);
             if (isDigiDoc()) {
-                signatureDigest = getSignatureService().getSignatureDigest(nodeRef, certHex);
+                signatureDigest = getDigiDoc4JSignatureService().getSignatureDigest(nodeRef, certHex);
             } else {
                 if (!validateFilename()) {
                     return;
                 }
                 editMode = Boolean.FALSE;
                 singleFile = Boolean.FALSE;
-                signatureDigest = getSignatureService().getSignatureDigest(getSelectedNodeRefs(), certHex);
+                signatureDigest = getDigiDoc4JSignatureService().getSignatureDigest(getSelectedNodeRefs(), certHex);
             }
             session.setAttribute("digest", signatureDigest.getDigestHex());
             session.setAttribute("operation", "FINALIZE");
@@ -254,7 +255,7 @@ public class SignatureDialog extends BaseDialogBean {
 
         if (isDigiDoc()) {
             try {
-                getSignatureService().addSignature(nodeRef, signatureDigest, signatureHex);
+            	getDigiDoc4JSignatureService().addSignature(nodeRef, signatureDigest.getDataToSign(), signatureHex);
             } catch (SignatureRuntimeException e) {
                 SignatureBlockBean.addSignatureError(e);
                 return null;
@@ -264,7 +265,7 @@ public class SignatureDialog extends BaseDialogBean {
             NodeRef parentRef = getNodeService().getPrimaryParent(nodeRefs.get(0)).getParentRef();
             try {
                 // update the reference to the newly created DigiDoc
-                nodeRef = getSignatureService().createContainer(parentRef, nodeRefs, filename, signatureDigest, signatureHex);
+                nodeRef = getDigiDoc4JSignatureService().createAndSignContainer(parentRef, nodeRefs, filename, signatureDigest.getDataToSign(), signatureHex);
             } catch (SignatureRuntimeException e) {
                 SignatureBlockBean.addSignatureError(e);
                 return null;
@@ -353,7 +354,7 @@ public class SignatureDialog extends BaseDialogBean {
         if (isDigiDoc()) {
             // get the data from the container
             try {
-                SignatureItemsAndDataItems values = getSignatureService().getDataItemsAndSignatureItems(nodeRef, false, true);
+                SignatureItemsAndDataItems values = getDigiDoc4JSignatureService().getDataItemsAndSignatureItems(nodeRef, false);
                 signatures = values.getSignatureItems();
                 dataItems = values.getDataItems();
             } catch (SignatureException e) {
@@ -372,8 +373,8 @@ public class SignatureDialog extends BaseDialogBean {
             for (int i = 0; i < selectedItems.size(); i++) {
                 NodeRef ref = new NodeRef(selectedItems.get(i));
                 String name = getFileFolderService().getFileInfo(ref).getName();
-                DataItem d = new DataItem(ref, i, name, null, null,
-                        getFileFolderService().getFileInfo(ref).getContentData().getSize());
+                DataItem d = new DataItem(ref, String.valueOf(i), name, null, null,
+                        getFileFolderService().getFileInfo(ref).getContentData().getSize(), i);
                 d.setDownloadUrl(DownloadContentServlet.generateDownloadURL(ref, name));
                 dataItems.add(d);
             }

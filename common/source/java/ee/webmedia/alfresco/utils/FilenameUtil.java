@@ -31,6 +31,8 @@ public class FilenameUtil {
     public static final String ERR_INVALID_FILE_NAME = "add_file_invalid_file_name";
     public static final String DDOC_EXTENSION = ".ddoc";
     public static final String BDOC_EXTENSION = ".bdoc";
+    public static final String ASICE_EXTENSION = ".asice";
+    public static final String SCE_EXTENSION = ".sce";
 
     private static final int FILE_MAX_LENGTH = 50;
     private static final int FILE_EXTENSION_MAX_LENGTH = FILE_MAX_LENGTH - 7;
@@ -197,12 +199,12 @@ public class FilenameUtil {
     }
 
     public static boolean isBdocFile(String fileName) {
-        return fileName.toLowerCase().endsWith(BDOC_EXTENSION);
+        return fileName.toLowerCase().endsWith(BDOC_EXTENSION) || fileName.toLowerCase().endsWith(ASICE_EXTENSION) || fileName.toLowerCase().endsWith(SCE_EXTENSION);
     }
 
     public static boolean isDigiDocFile(String fileName) {
         String lowerCase = fileName.toLowerCase();
-        return lowerCase.endsWith(DDOC_EXTENSION) || lowerCase.endsWith(BDOC_EXTENSION);
+        return lowerCase.endsWith(DDOC_EXTENSION) || lowerCase.endsWith(BDOC_EXTENSION) || lowerCase.endsWith(ASICE_EXTENSION) || lowerCase.endsWith(SCE_EXTENSION);
     }
 
     public static boolean isDigiDocContainerFile(FileInfo fileInfo) {
