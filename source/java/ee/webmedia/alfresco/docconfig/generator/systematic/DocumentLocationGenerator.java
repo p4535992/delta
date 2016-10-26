@@ -363,7 +363,20 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             NodeRef seriesRef = (NodeRef) docProps.get(seriesProp);
             NodeRef volumeRef = documentType ? (NodeRef) docProps.get(volumeProp) : null;
             NodeRef caseRef = documentType ? (NodeRef) docProps.get(caseProp) : null;
-
+            
+            if (functionRef != null && !getNodeService().exists(functionRef)) {
+            	functionRef = null;
+            }
+            if (seriesRef != null && !getNodeService().exists(seriesRef)) {
+            	seriesRef = null;
+            }
+            if (volumeRef != null && !getNodeService().exists(volumeRef)) {
+            	volumeRef = null;
+            }
+            if (caseRef != null && !getNodeService().exists(caseRef)) {
+            	caseRef = null;
+            }
+            
             if (inEditMode) {
                 String caseLabel = documentType ? (String) docProps.get(caseLabelEditableProp) : null;
                 if (caseRef != null) {

@@ -111,6 +111,7 @@ import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.service.DocumentServiceImpl;
 import ee.webmedia.alfresco.document.service.EventsLoggingHelper;
 import ee.webmedia.alfresco.imap.model.ImapModel;
+import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
@@ -152,6 +153,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     private PrivilegeService privilegeService;
     private WorkflowService workflowService;
     private CaseFileLogService caseFileLogService;
+    private LogService logService;
     private boolean showMessageIfUnregistered;
 
     private BeanFactory beanFactory;
@@ -711,14 +713,18 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
                 }
                 NodeRef newNodeRef = update(associatedDocument, saveListeners, updateGeneratedFiles).getNodeRef();
                 originalNodeRefs.add(Pair.newInstance(oldNodeRef, newNodeRef));
+                logService.updateLogEntryObjectId(oldNodeRef.toString(), newNodeRef.toString());
             } else {
+            	NodeRef oldNodeRef = associatedDocument.getNodeRef();
                 originalDocumentUpdated = update(associatedDocument, saveListenerBeanNames, updateGeneratedFiles);
+                logService.updateLogEntryObjectId(oldNodeRef.toString(), originalDocumentUpdated.getNodeRef().toString());
             }
         }
         long saveStopTime = System.nanoTime();
         LOG.info("Saved 1 original document and " + (associatedDocs.size() - 1) + " associated documents, skipped " + (associatedDocRefs.size() - associatedDocs.size())
                 + " associated documents; finding and loading took " + duration(findStartTime, findStopAndSaveStartTime) + " ms, saving took "
                 + duration(findStopAndSaveStartTime, saveStopTime) + " ms");
+        
         return Pair.newInstance(originalDocumentUpdated, originalNodeRefs);
     }
 
@@ -1114,7 +1120,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
                         // prop is directly on child node
                         if (!propDef.isMultiValued()) {
                             // duplicate later
-                        	Assert.isTrue(!(value instanceof Collection));
+                            Assert.isTrue(!(value instanceof Collection));
                             propsToDuplicate.put(propName, value);
                             continue;
                         } else if (value != null) {
@@ -1491,6 +1497,10 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
     public void setCaseFileLogService(CaseFileLogService caseFileLogService) {
         this.caseFileLogService = caseFileLogService;
+    }
+    
+    public void setLogService(LogService logService) {
+        this.logService = logService;
     }
 
     @Override

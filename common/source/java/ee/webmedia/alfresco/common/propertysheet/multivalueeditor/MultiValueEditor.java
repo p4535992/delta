@@ -41,6 +41,7 @@ import org.alfresco.web.ui.repo.component.UIMultiValueEditor;
 import org.alfresco.web.ui.repo.component.UIMultiValueEditor.MultiValueEditorEvent;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
+import org.apache.cxf.message.MessageUtils;
 
 import ee.webmedia.alfresco.common.ajax.AjaxUpdateable;
 import ee.webmedia.alfresco.common.propertysheet.component.HandlesShowUnvalued;
@@ -50,6 +51,7 @@ import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.ComponentPr
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
 import ee.webmedia.alfresco.utils.ComponentUtil;
+import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Edit multiple multi-valued properties as a table. A {@code javax.faces.Input} component is generated for each cell. Supports deleting any row and appending
@@ -432,11 +434,15 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
         Integer rowIndex = null;
         List<String> propNames = getRegularAndHiddenPropNames();
         for (String propName : propNames) {
-            List<?> list = getList(context, propName);
+            List<Object> list = getList(context, propName);
             if (rowIndex == null) {
                 rowIndex = list.size();
             }
-            list.add(null);
+            if ("recipientDvkCapable".equals(propName)) {
+            	list.add(MessageUtil.getMessage("document_send_out_dvk_capable_no"));
+            } else {
+            	list.add(null);
+            }
         }
         UIPropertySheet propertySheet = ComponentUtil.getAncestorComponent(this, UIPropertySheet.class);
         appendRowComponent(context, rowIndex, propertySheet);

@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.addressbook.web.dialog;
 
 import javax.faces.context.FacesContext;
 
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -18,7 +19,8 @@ public class ConfirmAddDuplicateDialog extends BaseDialogBean {
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Exception {
         AddressbookAddEditDialog bean = BeanHelper.getAddressbookAddEditDialog();
-        bean.persistEntry();
+        NodeRef entryNodeRef = bean.persistEntry();
+        bean.persistOrgCertificates(entryNodeRef);
         return getCloseOutcome(2);
     }
 
