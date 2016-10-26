@@ -115,6 +115,7 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.web.evaluator.DocumentNotInDraftsFunctionActionEvaluator;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
+import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
@@ -155,7 +156,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(WorkflowBlockBean.class);
     public static final String BEAN_NAME = "WorkflowBlockBean";
 
-    private static final String WORKFLOW_METHOD_BINDING_NAME = "#{WorkflowBlockBean.findCompoundWorkflowDefinitions}";
+	private static final String WORKFLOW_METHOD_BINDING_NAME = "#{WorkflowBlockBean.findCompoundWorkflowDefinitions}";
     private static final String WORKFLOW_METHOD_BINDING_NAME_CACHE_KEY = "WorkflowMethodBindingName";
     private static final String INDEPENDENT_WORKFLOW_METHOD_BINDING_NAME = "#{WorkflowBlockBean.findIndependentCompoundWorkflowDefinitions}";
     private static final String INDEPENDENT_WORKFLOW_METHOD_BINDING_NAME_CACHE_KEY = "IndependentWorkflowMethodBindingName";
@@ -384,14 +385,18 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         List<ActionDefinition> actionDefinitions = new ArrayList<>(workflowDefs.size());
         if (CompoundWorkflowType.DOCUMENT_WORKFLOW.equals(compoundWorkflowType)) {
             boolean showCWorkflowDefsWith1Workflow = false;
-            Map<NodeRef, List<NodeRef>> childWorkflowNodeRefsByCompoundWorkflow = getWorkflowService().getChildWorkflowNodeRefsByCompoundWorkflow(compoundWorkflows);
-            for (Map.Entry<NodeRef, List<NodeRef>> cWorkflow : childWorkflowNodeRefsByCompoundWorkflow.entrySet()) {
-                if (cWorkflow.getValue().size() > 1) {
-                    Status status = Status.of((String) getNodeService().getProperty(cWorkflow.getKey(), WorkflowCommonModel.Props.STATUS));
-                    if (Status.IN_PROGRESS.equals(status) || Status.STOPPED.equals(status)) {
-                        showCWorkflowDefsWith1Workflow = true;
-                    }
-                }
+            
+            boolean oneMultistepWorkflowAllowed =  Boolean.valueOf(BeanHelper.getParametersService().getStringParameter(Parameters.ONE_MULTISTEP_WORKFLOW_ALLOWED));
+            if (oneMultistepWorkflowAllowed) {
+	            Map<NodeRef, List<NodeRef>> childWorkflowNodeRefsByCompoundWorkflow = getWorkflowService().getChildWorkflowNodeRefsByCompoundWorkflow(compoundWorkflows);
+	            for (Map.Entry<NodeRef, List<NodeRef>> cWorkflow : childWorkflowNodeRefsByCompoundWorkflow.entrySet()) {
+	                if (cWorkflow.getValue().size() > 1) {
+	                    Status status = Status.of((String) getNodeService().getProperty(cWorkflow.getKey(), WorkflowCommonModel.Props.STATUS));
+	                    if (Status.IN_PROGRESS.equals(status) || Status.STOPPED.equals(status)) {
+	                        showCWorkflowDefsWith1Workflow = true;
+	                    }
+	                }
+	            }
             }
 
             String documentTypeId = (String) container.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID);

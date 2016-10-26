@@ -532,10 +532,6 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
     public List<Node> loadAssociatedTargetNodes(NodeRef sourceRef, Set<QName> propsToLoad, QName assocType, CreateObjectCallback<Node> createNodeCallback) {
         List<Object> arguments = new ArrayList<>();
         boolean filterProps = CollectionUtils.isNotEmpty(propsToLoad);
-        String qNameIdListing = createQnameIdListing(propsToLoad, false);
-        if (filterProps && StringUtils.isBlank(qNameIdListing)) {
-        	return null;
-        }
         String sql = "SELECT target.id, target.uuid, target.store_id, props.* FROM " + getNodeTableConditionalJoin(Collections.singleton(sourceRef), arguments, "id")
                 + " JOIN alf_node_assoc assoc ON node.id = assoc.source_node_id"
                 + " JOIN alf_node_properties props ON props.node_id = assoc.target_node_id"

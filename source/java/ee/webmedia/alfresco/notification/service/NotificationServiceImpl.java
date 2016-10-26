@@ -454,6 +454,10 @@ public class NotificationServiceImpl implements NotificationService {
                 sendNotification(substitutionNotification, docRef, tempalteData, false, notificationCache, task);
             }
             Date now = new Date();
+            String fileNames = null;
+            if (docRef != null) {
+                fileNames = getDocFileNames(docRef);
+            }
             for (Notification notification : notifications) {
                 boolean notificationSent = sendNotification(notification, docRef, tempalteData, isDocumentWF, notificationCache, task);
                 if (notificationSent && isDocumentWF && isNewTaskNotification && !notification.isToPerson()) {
@@ -463,6 +467,10 @@ public class NotificationServiceImpl implements NotificationService {
                     props.put(DocumentCommonModel.Props.SEND_INFO_SEND_MODE, SendMode.EMAIL.getValueName());
                     props.put(DocumentCommonModel.Props.SEND_INFO_SEND_STATUS, SendInfo.SENT);
                     props.put(DocumentCommonModel.Props.SEND_INFO_RESOLUTION, notification.getAdditionalFormulas().get(CONTENT));
+                    props.put(DocumentCommonModel.Props.SEND_INFO_SENDER, "süsteem");
+                    if (notification.isAttachFiles() && StringUtils.isNotBlank(fileNames)) {
+                    	props.put(DocumentCommonModel.Props.SEND_INFO_SENT_FILES, fileNames);
+                    }
                     NodeRef orgNodeRef = getAddressbookService().getOrganizationNodeRef(task.getOwnerEmail(), task.getOwnerName());
                     Serializable orgRegNr = (orgNodeRef != null) ? nodeService.getProperty(orgNodeRef, AddressbookModel.Props.ORGANIZATION_CODE) : null;
                     if (orgRegNr != null) {
@@ -490,6 +498,20 @@ public class NotificationServiceImpl implements NotificationService {
             }
         }
         return result;
+    }
+        
+    private String getDocFileNames(NodeRef docRef) {
+    	List<NodeRef> fileRefs = getActiveFileRefs(docRef);
+    	StringBuilder sentFiles = new StringBuilder();
+    	for (NodeRef fileRef : fileRefs) {
+            String fileName = (String) nodeService.getProperty(fileRef, ContentModel.PROP_NAME);
+            if (sentFiles.length() > 0) {
+            	sentFiles.append("; ");
+            }
+            sentFiles.append(fileName);
+        }
+    	
+    	return sentFiles.toString();
     }
 
     @Override

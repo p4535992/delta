@@ -42,6 +42,7 @@ import ee.webmedia.alfresco.orgstructure.model.OrganizationStructure;
 import ee.webmedia.alfresco.orgstructure.model.OrganizationStructureModel;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
+import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 public class OrganizationStructureServiceImpl implements OrganizationStructureService {
 
@@ -59,6 +60,7 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
     private ApplicationConstantsBean applicationConstantsBean;
     // START: properties that would cause dependency cycle when trying to inject them
     private UserService _userService;
+    private WorkflowService _workflowService;
     // END: properties that would cause dependency cycle when trying to inject them
 
     /** a transactionally-safe cache to be injected */
@@ -93,7 +95,7 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
 
     @Override
     public int updateOrganisationStructureBasedGroups() {
-        if (!applicationConstantsBean.isGroupsEditingAllowed()) {
+        if (!applicationConstantsBean.isCreateOrgStructGroups()) {
             return 0; // System uses Active Directory
         }
         //clear person and personNodes cache to avoid cache instability
@@ -150,6 +152,7 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
             // Get current users for this group
             Set<String> orgStructGroupMembers = new HashSet<String>(authorityService.getContainedAuthorities(AuthorityType.USER, groupAuthority, true));
 
+            boolean isGroupAuthorityUserUpdated = false;
             // Update groups users
             OUTER: for (Map<QName, Serializable> props : users) {
                 String username = (String) props.get(ContentModel.PROP_USERNAME);
@@ -163,6 +166,7 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
                         if (StringUtils.equals(op, groupName)) {
                             if (!isAlreadyGroupMember && getPersonService().personExists(username)) {
                                 authorityService.addAuthority(groupAuthority, username);
+                                isGroupAuthorityUserUpdated = true;
                             }
                             orgStructGroupMembers.remove(username);
                             continue OUTER;
@@ -182,6 +186,7 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
                 if (StringUtils.equals(groupName, orgStruct.getName())) {
                     if (!isAlreadyGroupMember && getPersonService().personExists(username)) {
                         authorityService.addAuthority(groupAuthority, username);
+                        isGroupAuthorityUserUpdated = true;
                     }
                     orgStructGroupMembers.remove(username);
                 }
@@ -190,16 +195,29 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
 
             // Remove processed groups
             generatedGroups.remove(groupAuthority);
-
+            String groupDisplayName = authorityService.getAuthorityDisplayName(groupAuthority);
+            
             // Remove users that have been removed from this organization structure
             for (String username : orgStructGroupMembers) {
                 authorityService.removeAuthority(groupAuthority, username);
+                if (!(isGroupAuthorityUserUpdated && isGeneratedGroupAuthority)){
+                	// remove users tasks for compound workflow definitions
+                	getWorkflowService().removeUserOrGroupFromCompoundWorkflowDefinitions(groupDisplayName, username);
+                }
+            }
+            
+            // update group users tasks for compound workflow definitions 
+            if (isGroupAuthorityUserUpdated && isGeneratedGroupAuthority){
+            	Set<String> groupMembers = new HashSet<String>(authorityService.getContainedAuthorities(AuthorityType.USER, groupAuthority, true));
+            	getWorkflowService().updateGroupUsersForCompoundWorkflowDefinitions(groupDisplayName, groupMembers);
             }
         }
 
         // Remove missing organization structures
         for (String missingGeneratedGroup : generatedGroups) {
+        	String missingGroupDisplayName = authorityService.getAuthorityDisplayName(missingGeneratedGroup);
             authorityService.deleteAuthority(missingGeneratedGroup);
+            getWorkflowService().removeUserOrGroupFromCompoundWorkflowDefinitions(missingGroupDisplayName, null);
 
         }
 
@@ -374,6 +392,13 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
             _userService = BeanHelper.getUserService();
         }
         return _userService;
+    }
+    
+    public WorkflowService getWorkflowService() {
+        if (_workflowService == null) {
+        	_workflowService = BeanHelper.getWorkflowService();
+        }
+        return _workflowService;
     }
 
     public void setGeneralService(GeneralService generalService) {
