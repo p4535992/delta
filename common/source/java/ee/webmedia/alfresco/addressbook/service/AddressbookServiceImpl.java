@@ -108,16 +108,6 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
             }
         });
     }
-    
-    @Override
-    public List<AddressbookEntry> listOrganizationCertificates(final NodeRef organizationRef) {
-        return loadChildren(organizationRef, Types.ORGCERTIFICATE, new CreateObjectCallback<AddressbookEntry>() {
-            @Override
-            public AddressbookEntry create(NodeRef nodeRef, Map<QName, Serializable> properties) {
-                return new AddressbookEntry(new WmNode(nodeRef, Types.ORGCERTIFICATE, null, properties));
-            }
-        });
-    }
 
     @Override
     public List<Pair<String, String>> listAllGroupMembers(NodeRef groupRef) {
@@ -177,8 +167,6 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
                 }
             }
             output = createContactGroup(toQNameProperties(node.getProperties()));
-        } else if (node.getType().equals(Types.ORGCERTIFICATE)) {
-        	output = createOrgCertificate(parent, toQNameProperties(node.getProperties()));
         }
         return output;
     }
@@ -620,10 +608,6 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
         return createNode(organization,
                 organization == null ? Assocs.ABPEOPLE : Assocs.ORGPEOPLE,
                         organization == null ? Types.PRIV_PERSON : Types.ORGPERSON, data);
-    }
-    
-    private NodeRef createOrgCertificate(NodeRef organization, Map<QName, Serializable> data) {
-        return createNode(organization, Assocs.ORGCERTIFICATES, Types.ORGCERTIFICATE, data);
     }
 
     private NodeRef createContactGroup(Map<QName, Serializable> data) {

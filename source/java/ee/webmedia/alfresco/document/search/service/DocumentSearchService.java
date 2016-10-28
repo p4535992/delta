@@ -368,6 +368,8 @@ public interface DocumentSearchService {
     Pair<List<NodeRef>, Boolean> searchTaskRefs(Node filter, String username, int limit);
 
     List<NodeRef> searchRestrictedSeries(Collection<StoreRef> storeRefs);
+    
+    List<NodeRef> searchByQuery(Collection<StoreRef> storeRefs, String query, String queryName);
 
     List<NodeRef> searchCurrentUserCompoundWorkflowRefs();
 

@@ -33,12 +33,8 @@ import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Repository;
-import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 public class DeleteGroupDialog extends BaseDialogBean
 {
@@ -53,7 +49,6 @@ public class DeleteGroupDialog extends BaseDialogBean
    
    /** The AuthorityService to be used by the bean */
    transient private AuthorityService authService;
-   transient private WorkflowService workflowService;
    
    private static final String MSG_DELETE = "delete";
    private static final String MSG_DELETE_GROUP = "delete_group";
@@ -84,10 +79,7 @@ public class DeleteGroupDialog extends BaseDialogBean
    protected String finishImpl(FacesContext context, String outcome) throws Exception
    {
       // delete group using the Authentication Service
-	  String groupDisplayName = getAuthService().getAuthorityDisplayName(this.group);
       this.getAuthService().deleteAuthority(this.group);
-      this.getWorkflowService().removeUserOrGroupFromCompoundWorkflowDefinitions(groupDisplayName, null);
-      
       MessageUtil.addInfoMessage("users_group_delete_success");
       return outcome;
    }
@@ -151,21 +143,5 @@ public class DeleteGroupDialog extends BaseDialogBean
          authService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getAuthorityService();
       }
       return authService;
-   }
-   
-   public void setWorkflowService(WorkflowService workflowService)
-   {
-      this.workflowService = workflowService;
-   }
-   
-   /**
-    * @return the workflowService
-    */
-   protected WorkflowService getWorkflowService()
-   {	
-	   if (workflowService == null) {
-		   workflowService = BeanHelper.getWorkflowService();
-       } 
-      return workflowService;
    }
 }
