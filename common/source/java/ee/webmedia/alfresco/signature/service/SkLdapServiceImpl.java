@@ -2,12 +2,17 @@ package ee.webmedia.alfresco.signature.service;
 
 import static ee.webmedia.alfresco.utils.CalendarUtil.duration;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
+import javax.naming.directory.DirContext;
+import javax.naming.directory.SearchControls;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.ldap.NamingException;
 import org.springframework.ldap.core.DirContextOperations;
+import org.springframework.ldap.core.DirContextProcessor;
 import org.springframework.ldap.core.simple.AbstractParameterizedContextMapper;
 import org.springframework.ldap.core.simple.SimpleLdapTemplate;
 import org.springframework.ldap.core.support.LdapContextSource;
@@ -36,7 +41,31 @@ public class SkLdapServiceImpl implements SkLdapService {
         String filter = "(serialNumber=" + serialNumber + ")";
         long startTime = System.nanoTime();
         try {
-            List<SkLdapCertificate> list = ldapTemplate.search("", filter, new SkLdapCertificateMapper());
+        	/*
+        	DirContextProcessor dcp  = new DirContextProcessor() {
+				
+				@Override
+				public void preProcess(DirContext arg0) throws javax.naming.NamingException {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				@Override
+				public void postProcess(DirContext arg0) throws javax.naming.NamingException {
+					// TODO Auto-generated method stub
+					
+				}
+			};
+			SearchControls controls = new SearchControls();
+			controls.setSearchScope(2);
+			controls.setReturningObjFlag(false);
+			controls.setReturningAttributes(null);
+        	controls.setCountLimit(10);
+            List<SkLdapCertificate> list = ldapTemplate.search("", filter, controls, new SkLdapCertificateMapper(), dcp);
+            */
+        	
+        	List<SkLdapCertificate> list = ldapTemplate.search("", filter, new SkLdapCertificateMapper());
+            list.removeAll(Collections.singleton(null));
             long stopTime = System.nanoTime();
             LOG.info("PERFORMANCE: query skLdapSearchBySerialNumber - " + duration(startTime, stopTime) + " ms");
             MonitoringUtil.logSuccess(MonitoredService.OUT_SK_LDAP);
@@ -60,6 +89,7 @@ public class SkLdapServiceImpl implements SkLdapService {
         long startTime = System.nanoTime();
         try {
             List<SkLdapCertificate> list = ldapTemplate.search("", filter, new SkLdapCertificateMapper());
+            list.removeAll(Collections.singleton(null));
             long stopTime = System.nanoTime();
             LOG.info("PERFORMANCE: query skLdapSearchByCn - " + duration(startTime, stopTime) + " ms");
             MonitoringUtil.logSuccess(MonitoredService.OUT_SK_LDAP);
@@ -79,10 +109,16 @@ public class SkLdapServiceImpl implements SkLdapService {
 
         @Override
         protected SkLdapCertificate doMapFromContext(DirContextOperations ctx) {
-            return new SkLdapCertificate(
+        	String cn = ctx.getStringAttribute("cn");
+        	String serialNumber = ctx.getStringAttribute("serialNumber");
+        	if (StringUtils.isBlank(cn) || StringUtils.isBlank(serialNumber)) {
+        		return null;
+        	} else {
+        		return new SkLdapCertificate(
                     ctx.getStringAttribute("cn"),
                     ctx.getStringAttribute("serialNumber"),
                     (byte[]) ctx.getObjectAttribute("userCertificate;binary"));
+        	}
         }
 
     }

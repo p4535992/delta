@@ -104,7 +104,16 @@ public class AddressbookAddEditDialog extends BaseDialogBean {
     	String orgName = (String)entry.getProperties().get(AddressbookModel.Props.ORGANIZATION_NAME.toString());
     	List<SkLdapCertificate> skLdapCerts = null;
     	if (StringUtils.isNotBlank(orgCode)) {
-    		skLdapCerts = getSkLdapService().getCertificates(orgCode);
+    		try {
+    			skLdapCerts = getSkLdapService().getCertificates(orgCode);
+    		} catch (Exception e) {
+    			// if SKLDAP by serialNumber returns error try to search by cn
+    			if (StringUtils.isNotBlank(orgName)) {
+    	    		skLdapCerts = getSkLdapService().getCertificatesByName(orgName);
+    			} else {
+    				throw e;
+    			}
+    		}
     	} else if (StringUtils.isNotBlank(orgName)) {
     		skLdapCerts = getSkLdapService().getCertificatesByName(orgName);
     	}
