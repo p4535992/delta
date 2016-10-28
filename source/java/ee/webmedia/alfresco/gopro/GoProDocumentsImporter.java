@@ -4,7 +4,9 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicServi
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentListService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNamespaceService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getPrivilegeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ACCESS_RESTRICTION;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_ID;
 
@@ -92,12 +94,21 @@ import ee.webmedia.alfresco.gopro.GoProDocumentsMapper.PropMapping;
 import ee.webmedia.alfresco.gopro.GoProDocumentsMapper.PropertyValue;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
+import ee.webmedia.alfresco.postipoiss.PostipoissDocumentsMapper;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
+import ee.webmedia.alfresco.workflow.model.CompoundWorkflowType;
+import ee.webmedia.alfresco.workflow.model.Status;
+import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
+import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
+import ee.webmedia.alfresco.workflow.service.Task;
+import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
+import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
 /**
  * Imports documents and files from GoPro.
@@ -121,6 +132,11 @@ public class GoProDocumentsImporter {
     private static final String GP_ELEMENT_LINK = "link";
     private static final String GP_ELEMENT_CASE_LINK = "caseLink";
     private static final String GP_ELEMENT_CASE_NUMBER = "CaseNumber";
+    
+    private static final String GP_ELEMENT_WF_APPROVAL_DESCRIPTION = "ApprovalDescription";
+    private static final String GP_ELEMENT_WF_APPSTART = "APPSTART";
+    private static final String GP_ELEMENT_WF_PROCESSED_REVIEWERS = "processedreviewers";
+    private static final String GP_ELEMENT_WF_APPROVAL_HISTORY = "approvalhistory";
     
     
     /**
@@ -447,13 +463,8 @@ public class GoProDocumentsImporter {
     private boolean findUserNode(String goProUserName, Map<QName, Serializable> props, QName idQname, QName nameQname) {
     	Node userNode = null;
     	if (StringUtils.isNotBlank(goProUserName)) {
-    		String userFullname = goProUserName;
-    		if (goProUserName.contains("/")) {
-    			userFullname = StringUtils.substringBefore(goProUserName, "/");
-    		}
-    		if (goProUserName.contains("(")) {
-    			userFullname = StringUtils.substringBefore(goProUserName, "(").trim();
-    		}
+    		String userFullname = parseUserFullName(goProUserName);
+    		
     		List<Node> userNodes = getUserService().searchUsers(userFullname, false, -1);
     		if (userNodes != null && userNodes.size() == 1) {
     			userNode = userNodes.get(0);
@@ -473,6 +484,18 @@ public class GoProDocumentsImporter {
     		return false;
     	}
 	}
+    
+    private String parseUserFullName(String goProUserName) {
+    	String userFullname = goProUserName;
+		if (goProUserName.contains("/")) {
+			userFullname = StringUtils.substringBefore(goProUserName, "/").trim();
+		}
+		if (goProUserName.contains("(")) {
+			userFullname = StringUtils.substringBefore(goProUserName, "(").trim();
+		}
+		
+		return userFullname;
+    }
 
     private void setOwnerProperties(Map<QName, Serializable> props, Element root, Mapping mapping, NodeRef caseFileRef) {
         String gpOwnerName = StringUtils.stripToNull((String) props.get(DocumentCommonModel.Props.OWNER_NAME));
@@ -1774,6 +1797,117 @@ public class GoProDocumentsImporter {
     		}
     	}
     	return foundFields;
+    }
+    
+    protected void addWorkflowItems(NodeRef docRef, Element root, Map<QName, Serializable> docProps, Mapping mapping) throws ParseException {
+        String approvalDescription = getElementTextByAttribudeName(root, GP_ELEMENT_WF_APPROVAL_DESCRIPTION);
+        if (StringUtils.isBlank(approvalDescription)) {
+            return;
+        }
+        String approvalHistory = getElementTextByAttribudeName(root, GP_ELEMENT_WF_APPROVAL_HISTORY);
+        String processedReviewers = getElementTextByAttribudeName(root, GP_ELEMENT_WF_PROCESSED_REVIEWERS);
+        String appStart = getElementTextByAttribudeName(root, GP_ELEMENT_WF_APPSTART);
+        
+        Date startedDateTime = null;
+        try {
+        	startedDateTime = dateTimeFormat.parse(appStart + " 00:00:00");
+        } catch (ParseException e) {
+            throw new RuntimeException("Unable to parse APPSTART: " + e.getMessage(), e);
+        }
+        
+        LogEntry logEntry = new LogEntry();
+        logEntry.setComputerIp("127.0.0.1");
+        logEntry.setComputerName("localhost");
+        logEntry.setLevel(LogObject.DOCUMENT.getLevel());
+        logEntry.setObjectName(LogObject.DOCUMENT.getObjectName());
+        logEntry.setCreatorId("IMPORT");
+        logEntry.setCreatorName((String)docProps.get(DocumentCommonModel.Props.OWNER_NAME));
+        logEntry.setEventDescription(approvalHistory);
+        logEntry.setObjectId(docRef.toString());
+        BeanHelper.getLogService().addImportedLogEntry(logEntry, startedDateTime);
+        
+        
+        List<ReviewTask> reviewTasks = new ArrayList<ReviewTask>();
+        List<String> reviewers = new ArrayList<String>();
+        
+        
+        
+    }
+    
+    private List<ReviewTask> parseReviewTasks(String tasksInfo) {
+    	List<ReviewTask> reviewTasks = new ArrayList<ReviewTask>();
+    	if (StringUtils.isNotBlank(tasksInfo)) {
+        	String [] reviewerTasksArr = tasksInfo.split(";");
+        	for (int i = 0; i < reviewerTasksArr.length; i++) {
+        		// TODO: check possible errors
+        		String taskInfo = reviewerTasksArr[i];
+        		String dateTimeStr = StringUtils.substringBefore(taskInfo, " - ").trim();
+        		Date completedDateTime = null;
+        		try {
+        			completedDateTime = dateTimeFormat.parse(dateTimeStr);
+                } catch (ParseException e) {
+                	// do nothing, means no finished date
+                }
+        		String taskInfoSecond = StringUtils.substringAfter(taskInfo, " - ");
+        		String name = StringUtils.substringBefore(taskInfoSecond, " - ").trim();
+        		String outcomeInfo = StringUtils.substringAfter(taskInfoSecond, " - ");
+        		String comment = (outcomeInfo.contains(":"))?StringUtils.substringAfter(outcomeInfo, ":").trim():null;
+        		String outcome = (outcomeInfo.toLowerCase().contains("dokument tagasi lükatud:"))?"Kooskõlastamata":"Kooskõlastatud";
+        		
+        		ReviewTask rTask = new ReviewTask();
+        		rTask.setUserName(name);
+        		rTask.setCompletedDateTime(completedDateTime);
+        		rTask.setOutcome(outcome);
+        		rTask.setComment(comment);
+        	}
+        }
+    	return reviewTasks;
+        
+    }
+    
+    private Set<String> parseReviewers(String reviewersInfo) {
+        Set<String> reviewers = new HashSet<String>();
+        if (StringUtils.isNotBlank(reviewersInfo)) {
+        	String [] reviewersArr = reviewersInfo.split(";");
+        	for (int i = 0; i < reviewersArr.length; i++) {
+        		reviewers.add(parseUserFullName(reviewersArr[i]));
+        	}
+        }
+    	return reviewers;
+    }
+    
+    private class ReviewTask {
+    	private String userName;
+		private Date completedDateTime;
+    	private String comment;
+    	private String outcome;
+    	
+    	public String getOutcome() {
+			return outcome;
+		}
+		public void setOutcome(String outcome) {
+			this.outcome = outcome;
+		}
+		public String getUserName() {
+			return userName;
+		}
+		public void setUserName(String userName) {
+			this.userName = userName;
+		}
+		public Date getCompletedDateTime() {
+			return completedDateTime;
+		}
+		public void setCompletedDateTime(Date completedDateTime) {
+			this.completedDateTime = completedDateTime;
+		}
+		public String getComment() {
+			return comment;
+		}
+		public void setComment(String comment) {
+			this.comment = comment;
+		}
+    	
+    	
     }
 
 }
