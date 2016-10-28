@@ -860,7 +860,16 @@ public class DocumentSendOutDialog extends BaseDialogBean {
 			// if no stored orgCerts, retrieve from SKLDAP
 			List<SkLdapCertificate> skLdapCerts;
 			if (StringUtils.isNotBlank(orgIdCode)) {
-				skLdapCerts = getSkLdapService().getCertificates(orgIdCode);
+				try {
+	    			skLdapCerts = getSkLdapService().getCertificates(orgIdCode);
+	    		} catch (Exception e) {
+	    			// if SKLDAP by serialNumber returns error try to search by cn
+	    			if (StringUtils.isNotBlank(name)) {
+	    	    		skLdapCerts = getSkLdapService().getCertificatesByName(name);
+	    			} else {
+	    				throw e;
+	    			}
+	    		}
 			} else {
 				skLdapCerts = getSkLdapService().getCertificatesByName(name);
 			}
