@@ -146,6 +146,11 @@ public interface DocumentCommonModel {
          */
         QName SEND_INFO_SEND_STATUS = QName.createQName(DOCCOM_URI, "sendStatus");
         QName SEND_INFO_DVK_ID = QName.createQName(DOCCOM_URI, "dvkId");
+        
+        QName SEND_INFO_IS_ZIPPED = QName.createQName(DOCCOM_URI, "isZipped");
+        QName SEND_INFO_IS_ENCRYPTED = QName.createQName(DOCCOM_URI, "isEncrypted");
+        QName SEND_INFO_SENT_FILES = QName.createQName(DOCCOM_URI, "sentFiles");
+        QName SEND_INFO_SENDER = QName.createQName(DOCCOM_URI, "sender");
 
         /** Contains email Date header value for documents imported from Outlook */
         QName EMAIL_DATE_TIME = QName.createQName(DOCCOM_URI, "emailDateTime");

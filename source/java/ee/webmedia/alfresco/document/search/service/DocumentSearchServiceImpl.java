@@ -2519,38 +2519,6 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         }
         return seriesRefs;
     }
-    
-    @Override
-    public List<NodeRef> searchByQuery(Collection<StoreRef> storeRefs, String query, String queryName) {
-        List<NodeRef> foundRefs = new ArrayList<NodeRef>();
-        if (storeRefs == null) {
-            ResultSet result = null;
-            try {
-                result = doSearch(query, 100, queryName, generalService.getStore());
-                foundRefs.addAll(result.getNodeRefs());
-            } finally {
-                if (result != null) {
-                    result.close();
-                }
-            }
-        } else {
-            List<ResultSet> result = doSearches(query, -1, queryName, storeRefs);
-            try {
-                for (ResultSet resultSet : result) {
-                	foundRefs.addAll(resultSet.getNodeRefs());
-                }
-            } finally {
-                for (ResultSet resultSet : result) {
-                    try {
-                        resultSet.close();
-                    } catch (Exception e) {
-                        log.error("Closing resultSet failed, continuing", e);
-                    }
-                }
-            }
-        }
-        return foundRefs;
-    }
 
     private String generateDocumentSearchQueryWithoutRestriction(List<String> queryParts) {
         if (isBlank(queryParts)) {
