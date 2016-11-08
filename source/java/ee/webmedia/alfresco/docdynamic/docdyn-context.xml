@@ -38,7 +38,6 @@
       <property name="dictionaryService" ref="DictionaryService" />
       <property name="namespaceService" ref="NamespaceService" />
       <property name="nodeService" ref="NodeService" />
-      <property name="logService" ref="LogService" />
       <property name="generalService" ref="GeneralService" />
       <property name="documentService" ref="DocumentService" />
       <property name="documentAdminService" ref="DocumentAdminService" />

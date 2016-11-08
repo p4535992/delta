@@ -71,12 +71,11 @@
          ,recipientId¤TextAreaGenerator¤styleClass=expand19-200 sendOutIdCode
          ,recipientEmail¤TextAreaGenerator¤styleClass=expand19-200
          ,recipientSendMode¤ClassificatorSelectorGenerator¤classificatorName=sendMode¤styleClass=width120 resetSendOutGroupSendMode
-         ,recipientDvkCapable¤LabelGenerator¤defaultValue=Ei¤styleClass=tiny readonly
          "
          hiddenPropNames="recipientGroup"
          groupByColumnName="recipientGroup"
          groupRowControls="sendOut"
-         titles="document_name,document_recipient_id,document_email,document_send_mode,document_dvk_capable" 
+         titles="document_name,document_recipient_id,document_email,document_send_mode" 
          pickerCallback="#{CompoundWorkflowDefinitionDialog.executeOwnerSearch}"
          preprocessCallback="#{UserContactGroupSearchBean.preprocessResultsToNodeRefs}"
          setterCallback="#{DocumentSendOutDialog.fetchContactData}"

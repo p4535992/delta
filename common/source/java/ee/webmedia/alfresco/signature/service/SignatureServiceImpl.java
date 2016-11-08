@@ -219,28 +219,10 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         document.addDataFile(datafile);
     }
 
-    /**
-     * Checking jDigidoc DIGIDOC_MAX_DATAFILE_CACHED value. To cache dataFile to disk the value must be bigger than 0
-     */
-    private void checkJDigidocMaxDataFileCachedParam(){
-    	long lMaxDfCached = ConfigManager.instance().getLongProperty("DIGIDOC_MAX_DATAFILE_CACHED", Long.MAX_VALUE);
-    	log.trace("DIGIDOC_MAX_DATAFILE_CACHED:" + lMaxDfCached);
-
-    	if(lMaxDfCached < 4096){
-
-    		log.trace("DIGIDOC_MAX_DATAFILE_CACHED value is smaller then '4096'. Change it...");
-
-    		ConfigManager.instance().setStringProperty("DIGIDOC_MAX_DATAFILE_CACHED", "4096");
-
-		}
-    	log.trace("Check DIGIDOC_MAX_DATAFILE_CACHED:" + ConfigManager.instance().getProperty("DIGIDOC_MAX_DATAFILE_CACHED"));
-    }
+    
 
     private DataFile createDDocDataFile(SignedDoc signedDocument, ContentReader reader, String fileName) throws DigiDocException, IOException {
         DataFile dataFile = new DataFile(signedDocument.getNewDataFileId(), DataFile.CONTENT_EMBEDDED_BASE64, fileName, reader.getMimetype(), signedDocument);
-        
-        checkJDigidocMaxDataFileCachedParam();
-        
         dataFile.createCacheFile();
         OutputStream os = new Base64OutputStream(new BufferedOutputStream(new FileOutputStream(dataFile.getDfCacheFile())), true, 64, new byte[] { '\n' });
         reader.getContent(os); // closes both streams
@@ -358,44 +340,6 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
             }
         }
         return results;
-    }
-    
-    public X509Certificate getCertificateForEncryption(SkLdapCertificate skLdapCertificate) {
-    	return getCertificateForEncryption(skLdapCertificate.getUserCertificate(), skLdapCertificate.getCn());
-    }
-    
-    public X509Certificate getCertificateForEncryption(byte [] certData, String certName) {
-    	X509Certificate cert = null;
-    	try {
-            cert = SignedDoc.readCertificate(certData);
-
-            // In DigiDoc Client 2 and 3, only certificates which contain KeyEncipherment in KeyUsage, are suitable for encryption
-            // (in DigiDoc Client < 3.6 DataEncipherment was checked)
-            // According to https://svn.eesti.ee/projektid/idkaart_public/trunk/qdigidoc/crypto/KeyDialog.cpp
-            // * c.keyUsage().contains( SslCertificate::KeyEncipherment )
-            boolean keyEncipherment = cert.getKeyUsage()[2];
-            if (!keyEncipherment) {
-            	return null;
-            }
-            
-            // In DigiDoc Client 3 (but not 2), additionally Mobile-ID certificates are filtered out (because decryption is not implemented in Mobile-ID)
-            // According to https://svn.eesti.ee/projektid/idkaart_public/trunk/qdigidoc/crypto/KeyDialog.cpp
-            // * c.type() != SslCertificate::MobileIDType
-            // and https://svn.eesti.ee/projektid/idkaart_public/trunk/qdigidoc/common/SslCertificate.cpp
-            // * QStringList p = policies();
-            // * if( p.indexOf( QRegExp( "^1\\.3\\.6\\.1\\.4\\.1\\.10015\\.1\\.3.*" ) ) != -1 ||
-            // * p.indexOf( QRegExp( "^1\\.3\\.6\\.1\\.4\\.1\\.10015\\.11\\.1.*" ) ) != -1 )
-            // * return MobileIDType;
-            List<String> objectIdentifiers = getPolicyObjectIdentifiers(cert);
-            for (String objectIdentifier : objectIdentifiers) {
-                if (objectIdentifier.startsWith("1.3.6.1.4.1.10015.1.3") || objectIdentifier.startsWith("1.3.6.1.4.1.10015.11.1")) {
-                	return null;
-                }
-            }
-            return cert;
-        } catch (Exception e) {
-            throw new SignatureRuntimeException("Failed to parse certificate for " + certName, e);
-        }
     }
 
     private static List<String> getPolicyObjectIdentifiers(X509Certificate cert) {

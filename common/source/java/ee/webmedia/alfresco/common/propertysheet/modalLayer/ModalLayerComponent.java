@@ -30,7 +30,6 @@ public class ModalLayerComponent extends UICommand implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static final String ATTR_HEADER_KEY = "headerKey";
-    public static final String ATTR_HEADER_KEY_ARG = "headerKeyArg";
     public static final String ATTR_SUBMIT_BUTTON_MSG_KEY = "submitButtonMsgKey";
     public static final String ATTR_SUBMIT_BUTTON_HIDDEN = "submitButtonHidden";
     public static final String ATTR_SET_RENDERED_FALSE_ON_CLOSE = "setRenderedFalseOnClose";
@@ -87,12 +86,10 @@ public class ModalLayerComponent extends UICommand implements Serializable {
         ResponseWriter out = context.getResponseWriter();
         JSONSerializer serializer = new JSONSerializer();
         String modalStyleClass = (String) getAttributes().get(ATTR_STYLE_CLASS);
-        String headerKeyArg = (String) getAttributes().get(ATTR_HEADER_KEY_ARG);
-        String headerTitle = (StringUtils.isNotBlank(headerKeyArg))?MessageUtil.getMessage((String) getAttributes().get(ATTR_HEADER_KEY), headerKeyArg):MessageUtil.getMessage((String) getAttributes().get(ATTR_HEADER_KEY));
         ComponentUtil.writeModalHeader(
                 out,
                 getModalHtmlId(context),
-                headerTitle,
+                MessageUtil.getMessage((String) getAttributes().get(ATTR_HEADER_KEY)),
                 StringUtils.isBlank(modalStyleClass) ? "" : modalStyleClass,
                 ComponentUtil.generateFieldSetter(context, this, getActionId(context, this), "")
                         + generateCloseOnClick(context));

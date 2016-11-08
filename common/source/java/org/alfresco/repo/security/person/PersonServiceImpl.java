@@ -24,6 +24,9 @@
  */
 package org.alfresco.repo.security.person;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocLockService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,9 +51,11 @@ import org.alfresco.repo.security.permissions.PermissionServiceSPI;
 import org.alfresco.repo.tenant.TenantService;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport.TxnReadState;
+import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.repo.transaction.TransactionListenerAdapter;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
+import org.alfresco.service.cmr.lock.LockStatus;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -862,8 +867,6 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
         for (String containerAuthority : containerAuthorities)
         {
             authorityService.removeAuthority(containerAuthority, userName);
-            String groupDisplayName = authorityService.getAuthorityDisplayName(containerAuthority);
-            BeanHelper.getWorkflowService().removeUserOrGroupFromCompoundWorkflowDefinitions(groupDisplayName, userName);
         }
 
         // remove any user permissions

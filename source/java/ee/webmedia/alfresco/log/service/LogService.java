@@ -92,12 +92,4 @@ public interface LogService extends FilterService {
     void confirmNotificationSending(Long notificationId);
     
     LoggedNotification getLoggedNotification(long notificationLogId, String userGroup);
-    
-    /**
-     * Updates log objectId to new provided objectId.
-     * 
-     * @param currentObjectId
-     * @param newObjectId
-     */
-    void updateLogEntryObjectId(String currentObjectId, String newObjectId);
 }

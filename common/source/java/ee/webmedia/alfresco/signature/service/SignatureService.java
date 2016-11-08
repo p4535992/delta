@@ -26,11 +26,7 @@ public interface SignatureService {
      * @return
      */
     List<X509Certificate> getCertificatesForEncryption(List<SkLdapCertificate> certificates);
-    
-    X509Certificate getCertificateForEncryption(SkLdapCertificate skLdapCertificate);
-    
-    X509Certificate getCertificateForEncryption(byte [] certData, String certName);
-    
+
     /**
      * Create a CDOC file (encrypted container).
      *

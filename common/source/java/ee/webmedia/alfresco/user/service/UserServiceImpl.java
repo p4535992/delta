@@ -4,7 +4,6 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getAuthorityService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getOrganizationStructureService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -46,6 +45,7 @@ import org.springframework.util.Assert;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.ibatis.sqlmap.engine.mapping.sql.dynamic.elements.IsGreaterEqualTagHandler;
 
 import ee.webmedia.alfresco.common.service.ApplicationConstantsBean;
 import ee.webmedia.alfresco.common.service.GeneralService;
@@ -300,11 +300,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void addUserToGroup(String group, Node user) {
-    	String username = (String) user.getProperties().get(ContentModel.PROP_USERNAME);
-        getAuthorityService().addAuthority(group, username);
+        getAuthorityService().addAuthority(group, (String) user.getProperties().get(ContentModel.PROP_USERNAME));
         logUserGroupAction(group, user, "applog_group_user_add");
-        String groupDisplayName = getAuthorityService().getAuthorityDisplayName(group);
-        getWorkflowService().addUserToCompoundWorkflowDefinitions(groupDisplayName, username);
     }
 
     private void logUserGroupAction(String group, Node user, String logMessageKey) {
@@ -320,10 +317,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void removeUserFromGroup(String group, Node user) {
-    	String username = (String) user.getProperties().get(ContentModel.PROP_USERNAME);
-    	String groupDisplayName = getAuthorityService().getAuthorityDisplayName(group);
-        getAuthorityService().removeAuthority(group, username);
-        getWorkflowService().removeUserOrGroupFromCompoundWorkflowDefinitions(groupDisplayName, username);
+        getAuthorityService().removeAuthority(group, (String) user.getProperties().get(ContentModel.PROP_USERNAME));
         logUserGroupAction(group, user, "applog_group_user_rem");
     }
 

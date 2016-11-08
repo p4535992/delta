@@ -1755,18 +1755,6 @@ public class BrowseBean implements IContextListener, Serializable
       Map<String, String> params = link.getParameterMap();
       setupContentAction(params.get("id"), true);
    }
-   
-   /**
-    * Action event called by all actions that need to setup a Content Document context on the
-    * BrowseBean before an action page/wizard is called. The context will be a Node in
-    * setDocument() which can be retrieved on the action page from BrowseBean.getDocument().
-    */
-   public void setupContentActionByNodeRef(ActionEvent event)
-   {
-      UIActionLink link = (UIActionLink)event.getComponent();
-      Map<String, String> params = link.getParameterMap();
-      setupContentAction(params.get("ref"), true);
-   }
 
    /**
     * Action event called by all actions that need to setup a <b>Multilingual</b> Content Document context on the
@@ -1810,12 +1798,7 @@ public class BrowseBean implements IContextListener, Serializable
          try
          {
             // create the node ref, then our node representation
-        	NodeRef ref; 
-        	if (id.contains("://")) {
-        		ref = new NodeRef(id);
-        	} else {
-        		ref = new NodeRef(Repository.getStoreRef(), id);
-        	}
+            NodeRef ref = new NodeRef(Repository.getStoreRef(), id);
             Node node = new MapNode(ref);
 
             // store the URL to for downloading the content
