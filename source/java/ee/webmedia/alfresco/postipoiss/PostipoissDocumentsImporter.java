@@ -1643,14 +1643,19 @@ public class PostipoissDocumentsImporter {
 
         propsMap.putAll(parentRefs);
 
+        log.debug("Get recipient...");
         String recipient = getRecipient(type, propsMap); // call before checkProps, because checkProps transforms multi-valued values to Lists-s
-
+        log.debug("Get recipient..." + recipient);
+        log.debug("Check props...");
         checkProps(propsMap, null, mapping.typeInfo.propDefs);
 
+        log.debug(("Map children..."));
         mapChildren(root, mapping, doc.getNode(), new QName[] {}, mapping.typeInfo.propDefs);
 
+        log.debug("Add history items...");
         addHistoryItems(documentRef, root, propsMap, mapping);
 
+        log.debug("Put imported document to props map...");
         propsMap.put(DocumentCommonModel.Props.DOCUMENT_IS_IMPORTED,
                 Boolean.valueOf(DocumentStatus.FINISHED.getValueName().equals(propsMap.get(DocumentCommonModel.Props.DOC_STATUS))));
 
@@ -1917,22 +1922,47 @@ public class PostipoissDocumentsImporter {
 
     protected void addHistoryItems(NodeRef docRef, Element root, Map<QName, Serializable> docProps, Mapping mapping) throws ParseException {
         Element tegevused = root.element("tegevused");
+        String toimik = root.elementText("toimik");
+        //String toimikNimetus = root.elementText("toimik_nimetus");
         if (tegevused == null) {
+            log.debug("Toimik [" + toimik + "] - Tegevused is null!");
             return;
         }
         boolean responsibleActiveSet = false;
         NodeRef firstTaskRef = null;
         String firstTaskOwnerId = null;
 
+        log.debug("Toimik [" + toimik + "] - Find tegevus 'vastamine'...");
+        // Finding 'vastamine' tegevus
+        boolean vastamineTegevus = false;
         for (Object o : root.element("tegevused").elements()) {
             Element tegevus = (Element) o;
+            String nimetus = tegevus.elementText("nimetus");
+            log.debug("Toimik [" + toimik + "] - Tegevuse nimetus: " + nimetus);
+            if(nimetus.equals("vastamine")){
+                log.debug("Toimik [" + toimik + "] - Found tegevus 'vastamine'! break loop");
+                vastamineTegevus = true;
+                break;
+            }
+        }
+
+        log.debug("Toimik [" + toimik + "] - Check tegevused objects...");
+        // Finding 'edastamine täitmiseks' tegevus to save active tasks
+        int i = 0;
+        for (Object o : root.element("tegevused").elements()) {
+            Element tegevus = (Element) o;
+            i++;
+            log.debug("TEGEVUS NR: " + i + " --------------------------------------------------");
             Date kpv = null;
             String kuupaev = tegevus.elementText("kuupaev");
+            log.debug("Toimik [" + toimik + "] - kuupaev: " + kuupaev);
             if (StringUtils.isBlank(kuupaev)) {
                 kpv = (Date) docProps.get(DocumentCommonModel.Props.REG_DATE_TIME);
                 Assert.notNull(kpv, "tegevus kuupaev is null and document regDateTime is also null");
+                log.debug("Toimik [" + toimik + "] - tegevus kuupaev is null and document regDateTime is also null");
             } else {
                 String kellaaeg = tegevus.elementText("kellaaeg");
+                log.debug("Toimik [" + toimik + "] - kellaaeg: " + kellaaeg);
                 String dateString = String.format("%s %s", kuupaev, kellaaeg);
                 try {
                     kpv = dateTimeFormat.parse(dateString);
@@ -1940,15 +1970,24 @@ public class PostipoissDocumentsImporter {
                     throw new RuntimeException("Unable to parse kuupaev kellaaeg: " + e.getMessage(), e);
                 }
             }
-            String nimetus = tegevus.elementText("nimetus");
+
             String resolutsioon = tegevus.elementText("resolutsioon");
+            log.debug("Toimik [" + toimik + "] - Resolutsioon: " + resolutsioon);
+
+            String nimetus = tegevus.elementText("nimetus");
+
             if (nimetus.startsWith("Dokumendi eksportimine") && resolutsioon.startsWith("Auto.eksport")) {
                 // PPA needs to retain "Dokumendi eksportimine" log messages, which are NOT "Auto.eksport"
+                log.debug("Toimik [" + toimik + "] - Nimetus starts with 'Dokumendi exportimine' and resolutsioon starts with 'Auto" +
+                        ".eksport'...continue");
                 continue;
             }
             String kes = tegevus.elementText("kes");
+            log.debug("Toimik [" + toimik + "] - Kes: " + kes);
             if (StringUtils.isBlank(kes)) {
                 kes = tegevus.elementText("kellelt_tekst");
+                log.debug("Toimik [" + toimik + "] - Kes is blank use 'kellelt_tekst': " + kes);
+
             }
             String kelleleTekst = tegevus.elementText("kellele_tekst");
             String description = PostipoissDocumentsMapper.join("; ", nimetus, kelleleTekst, resolutsioon);
@@ -1964,15 +2003,31 @@ public class PostipoissDocumentsImporter {
             logEntry.setObjectId(docRef.toString());
             BeanHelper.getLogService().addImportedLogEntry(logEntry, kpv);
 
+            log.debug("Toimik [" + toimik + "] - Tegevuse nimetus: " + nimetus);
+
             if (!"edastamine täitmiseks".equals(nimetus)) {
+                log.debug("Toimik [" + toimik + "] - Tegevus 'edastamine täitmiseks' IS NOT TRUE...continue;");
                 continue;
             }
+
+            log.debug("Toimik [" + toimik + "] - Found tegevuse nimetus 'edastamine täitmiseks'!");
+            if(vastamineTegevus){
+                log.debug("Toimik [" + toimik + "] - Tegevus 'vastamine' block exists! Task done!...continue;");
+                continue;
+            }
+
             Element kellelt = tegevus.element("kellelt");
+            log.debug("Toimik [" + toimik + "] - Kellelt...");
             String kelleltEnimi = kellelt.elementText("enimi");
             String kelleltPnimi = kellelt.elementText("pnimi");
             String kelleltIkood = kellelt.elementText("ikood");
             String kelleltEmail = kellelt.elementText("email");
+            log.debug("Toimik [" + toimik + "] - kelleltEnimi: " + kelleltEnimi);
+            log.debug("Toimik [" + toimik + "] - kelleltPnimi: " + kelleltPnimi);
+            log.debug("Toimik [" + toimik + "] - kelleltIkood: " + kelleltIkood);
+            log.debug("Toimik [" + toimik + "] - kelleltEmail: " + kelleltEmail);
             if (StringUtils.isBlank(kelleltEnimi) || StringUtils.isBlank(kelleltPnimi) || StringUtils.isBlank(kelleltIkood) || StringUtils.isBlank(kelleltEmail)) {
+                log.debug("Toimik [" + toimik + "] - Kellelt one object is blank... continue!");
                 continue;
             }
 
@@ -1983,19 +2038,30 @@ public class PostipoissDocumentsImporter {
             Map<QName, Serializable> taskSearchableProps = null;
 
             WorkflowType workflowType = BeanHelper.getWorkflowConstantsBean().getWorkflowTypes().get(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW);
+            log.debug("Toimik [" + toimik + "] - Kellele task...");
             for (Element kellele : (List<Element>) tegevus.elements("kellele")) {
                 String kelleleEnimi = kellele.elementText("enimi");
                 String kellelePnimi = kellele.elementText("pnimi");
                 String kelleleIkood = kellele.elementText("ikood");
                 String kelleleEmail = kellele.elementText("email");
-                String kelleleTahtaeg = kellele.elementText("tahtaeg");
+                //String kelleleTahtaeg = kellele.elementText("tahtaeg");
+                String kelleleTahtaeg = tegevus.elementText("tahtaeg");
                 String kelleleTehtud = kellele.elementText("tehtud");
 
                 if (StringUtils.isBlank(kelleleEnimi) || StringUtils.isBlank(kellelePnimi) || StringUtils.isBlank(kelleleIkood) || StringUtils.isBlank(kelleleEmail)
                         || StringUtils.isBlank(kelleleTahtaeg) || StringUtils.isNotBlank(kelleleTehtud)) {
+                    log.debug("Toimik [" + toimik + "] - kelleleEnimi (isBlank): " + kelleleEnimi);
+                    log.debug("Toimik [" + toimik + "] - kellelePnimi (isBlank): " + kellelePnimi);
+                    log.debug("Toimik [" + toimik + "] - kelleleIkood (isBlank): " + kelleleIkood);
+                    log.debug("Toimik [" + toimik + "] - kelleleEmail (isBlank): " + kelleleEmail);
+                    log.debug("Toimik [" + toimik + "] - kelleleTahtaeg (isBlank): " + kelleleTahtaeg);
+                    log.debug("Toimik [" + toimik + "] - kelleleTehtud (isNotBlank): " + kelleleTehtud);
+                    log.debug("Toimik [" + toimik + "] - Kellele one object not passed!... continue.");
                     continue;
                 }
                 if (wfRef == null) {
+                    log.debug("Toimik [" + toimik + "] - NodeRef wfRef is NULL.. fill with data!");
+                    log.debug("Toimik [" + toimik + "] - New props hashmap... createNode: COMPOUND_WORKFLOW");
                     props = new HashMap<QName, Serializable>();
                     props.put(WorkflowCommonModel.Props.CREATOR_NAME, kelleltEnimi + " " + kelleltPnimi);
                     props.put(WorkflowCommonModel.Props.OWNER_ID, kelleltIkood);
@@ -2006,15 +2072,18 @@ public class PostipoissDocumentsImporter {
                     props.put(WorkflowCommonModel.Props.TYPE, CompoundWorkflowType.INDEPENDENT_WORKFLOW.name());
                     props.put(WorkflowCommonModel.Props.TITLE, docProps.get(DocumentCommonModel.Props.DOC_NAME));
                     NodeRef cwfRef = getNodeService().createNode(
-                            BeanHelper.getConstantNodeRefsBean().getIndependentWorkflowsRoot(),
+                            docRef, // SIM: docRef, JUM: BeanHelper.getConstantNodeRefsBean().getIndependentWorkflowsRoot(),
                             WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW,
                             WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW,
                             WorkflowCommonModel.Types.COMPOUND_WORKFLOW,
                             props
                             ).getChildRef();
-                    getNodeService().createAssociation(docRef, cwfRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT);
-                    getWorkflowService().updateMainDocument(cwfRef, docRef);
 
+                    // JUM Process
+                    //getNodeService().createAssociation(docRef, cwfRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT);
+                    //getWorkflowService().updateMainDocument(cwfRef, docRef);
+
+                    log.debug("Toimik [" + toimik + "] - New props hashmap... createNode: WORKFLOW");
                     props = new HashMap<QName, Serializable>();
                     props.put(WorkflowCommonModel.Props.CREATOR_NAME, kelleltEnimi + " " + kelleltPnimi);
                     props.put(WorkflowCommonModel.Props.MANDATORY, Boolean.FALSE);
@@ -2031,9 +2100,13 @@ public class PostipoissDocumentsImporter {
                             WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW,
                             props
                             ).getChildRef();
+                    log.debug("Toimik [" + toimik + "] - WorkflowUtil...getTaskSearchableProps.");
+
+                    // Kas on JUM omadus?
                     taskSearchableProps = WorkflowUtil.getTaskSearchableProps(props);
                 }
 
+                log.debug("Toimik [" + toimik + "] - New props hashmap... node: TASK");
                 props = new HashMap<QName, Serializable>();
                 props.put(WorkflowSpecificModel.Props.CREATOR_EMAIL, kelleltEmail);
                 props.put(WorkflowSpecificModel.Props.CREATOR_ID, kelleltIkood);
@@ -2070,6 +2143,7 @@ public class PostipoissDocumentsImporter {
                 props.put(WorkflowSpecificModel.Props.COMMENT, "");
 
                 props.putAll(taskSearchableProps);
+                log.debug("Toimik [" + toimik + "] - Create task in memory...");
                 Task task = BeanHelper.getWorkflowService().createTaskInMemory(wfRef, workflowType, props);
                 Set<QName> aspects = task.getNode().getAspects();
                 aspects.add(WorkflowSpecificModel.Aspects.SEARCHABLE);
@@ -2082,22 +2156,33 @@ public class PostipoissDocumentsImporter {
                     task.getNode().getProperties().put(WorkflowSpecificModel.Props.ACTIVE.toString(), Boolean.TRUE);
                     aspects.add(WorkflowSpecificModel.Aspects.RESPONSIBLE);
                     responsibleActiveSet = true;
+                    log.debug("Toimik [" + toimik + "] - Set permissions: kelleleIkood: " + kelleleIkood);
                     getPrivilegeService().setPermissions(docRef, kelleleIkood, Privilege.EDIT_DOCUMENT);
                 } else {
                     getPrivilegeService().setPermissions(docRef, kelleleIkood, Privilege.VIEW_DOCUMENT_FILES);
                 }
                 task.setTaskIndexInWorkflow(taskIndex++);
+
+                log.debug("Toimik [" + toimik + "] - Create task entry...");
                 BeanHelper.getWorkflowDbService().createTaskEntry(task, wfRef);
                 docProps.put(DocumentCommonModel.Props.SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS, Boolean.TRUE);
                 docProps.put(DocumentCommonModel.Props.DOC_STATUS, DocumentStatus.WORKING.getValueName());
+                log.debug("Toimik [" + toimik + "] - Next kellele.....");
             }
+            log.debug("Toimik [" + toimik + "] - Next tegevus....");
         }
+        log.debug("Toimik [" + toimik + "] - responsibleActiveSet: " + responsibleActiveSet);
+
+
         if (!responsibleActiveSet && firstTaskRef != null) {
+            log.debug("Toimik [" + toimik + "] - firstTaskRef is not NULL...");
             Map<QName, Serializable> props = new HashMap<QName, Serializable>();
             props.put(WorkflowSpecificModel.Props.ACTIVE, Boolean.TRUE);
+            log.debug("Toimik [" + toimik + "] - Set permissions...firstTaskOwnerId: " + firstTaskOwnerId);
             getPrivilegeService().setPermissions(docRef, firstTaskOwnerId, Privilege.EDIT_DOCUMENT);
             BeanHelper.getWorkflowDbService().updateTaskProperties(firstTaskRef, props);
         }
+        log.debug("Toimik [" + toimik + "] - addHistoryItems... DONE!");
     }
 
     // [ASSOCS
