@@ -376,10 +376,15 @@ public class PostipoissDocumentsImporter {
             }
         });
 
-        log.info("Directory listing contains " + files.length + " xml entries, parsing them to documents");
+        int filesFound = files.length;
+        log.info("Directory listing contains " + filesFound + " xml entries, parsing them to documents");
+
+        int j = 0;
         for (File file : files) {
+            j++;
             String name = file.getName();
             if (name.endsWith(".xml")) {
+                log.info("FILE " + j + "/" + filesFound + " name: " + name);
                 // Document
                 int i = name.lastIndexOf("_");
                 if (i == -1) {
@@ -2059,6 +2064,7 @@ public class PostipoissDocumentsImporter {
                     log.debug("Toimik [" + toimik + "] - Kellele one object not passed!... continue.");
                     continue;
                 }
+
                 if (wfRef == null) {
                     log.debug("Toimik [" + toimik + "] - NodeRef wfRef is NULL.. fill with data!");
                     log.debug("Toimik [" + toimik + "] - New props hashmap... createNode: COMPOUND_WORKFLOW");
@@ -2079,9 +2085,9 @@ public class PostipoissDocumentsImporter {
                             props
                             ).getChildRef();
 
-                    // JUM Process
-                    //getNodeService().createAssociation(docRef, cwfRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT);
-                    //getWorkflowService().updateMainDocument(cwfRef, docRef);
+                    // JUM Process?
+                    getNodeService().createAssociation(docRef, cwfRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT);
+                    getWorkflowService().updateMainDocument(cwfRef, docRef);
 
                     log.debug("Toimik [" + toimik + "] - New props hashmap... createNode: WORKFLOW");
                     props = new HashMap<QName, Serializable>();
