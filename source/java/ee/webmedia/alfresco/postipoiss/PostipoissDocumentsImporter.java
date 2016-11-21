@@ -1941,16 +1941,16 @@ public class PostipoissDocumentsImporter {
 
     // private Map<Integer, ImportedDocument> batchCompletedDocumentsMap;
 
-    private Date documentTaskDate(Element tegevus, Map<QName, Serializable> docProps, String kuupaev, String toimik){
+    private Date documentTaskDate(Element tegevus, Map<QName, Serializable> docProps, String kuupaev, String docNr){
         Date kpv = null;
-        log.debug("Toimik [" + toimik + "] - kuupaev: " + kuupaev);
+        log.debug("docNr [" + docNr + "] - kuupaev: " + kuupaev);
         if (StringUtils.isBlank(kuupaev)) {
             kpv = (Date) docProps.get(DocumentCommonModel.Props.REG_DATE_TIME);
             Assert.notNull(kpv, "tegevus kuupaev is null and document regDateTime is also null");
-            log.debug("Toimik [" + toimik + "] - tegevus kuupaev is null and document regDateTime is also null");
+            log.debug("docNr [" + docNr + "] - tegevus kuupaev is null and document regDateTime is also null");
         } else {
             String kellaaeg = tegevus.elementText("kellaaeg");
-            log.debug("Toimik [" + toimik + "] - kellaaeg: " + kellaaeg);
+            log.debug("docNr [" + docNr + "] - kellaaeg: " + kellaaeg);
             String dateString = String.format("%s %s", kuupaev, kellaaeg);
             try {
                 kpv = dateTimeFormat.parse(dateString);
@@ -1961,70 +1961,154 @@ public class PostipoissDocumentsImporter {
         return kpv;
     }
 
-    protected void addHistoryItems(NodeRef docRef, Element root, Map<QName, Serializable> docProps, Mapping mapping) throws ParseException {
-        Element tegevused = root.element("tegevused");
-		String toimik = root.elementText("toimik");
+    /**
+     * Find if document has a active task. Contain to types: answerTask, activeTask
+     * 1) Map<String 'ansverTask', String 'userIdCode', Date 'TegevusKuupaev'> - [present]
+     * 2) Map<String 'activeTask', String 'userIdCode', Date 'TegevusKuupaev'> - [null|present]
+     * @param root
+     * @param docProps
+     * @param docNr
+     * @return
+     */
+    protected Map<String, Map<String, Date>> getKelleleTask(Element root, Map<QName, Serializable> docProps, String docNr){
+        Map<String, Map<String, Date>> taskInfo = new HashMap<>();
 
-        if (tegevused == null) {
- 			log.debug("Toimik [" + toimik + "] - Tegevused is null!");
-            return;
-        }
-        boolean responsibleActiveSet = false;
-        NodeRef firstTaskRef = null;
-        String firstTaskOwnerId = null;
+        //List<List> edastamineTaitmiseksList = new ArrayList<>();
+        //List<String> edastamineTaitmiseksKes = new ArrayList<>();
+        Map<String, Date> edastamineTaitmiseksKellele = new HashMap<>();
+        //List<String> edastamineTaitmiseksUsers = new ArrayList<>();
 
-        log.debug("Toimik [" + toimik + "] - Find tegevus 'vastamine'...");
-        // Finding 'vastamine' tegevus
-
-        List<String> edastamineTaitmiseksUsers = new ArrayList<>();
-
-        boolean vastamineTegevus = false;
+        Map<String, Date> vastamineMap = new HashMap<>();
         for (Object o : root.element("tegevused").elements()) {
             Element tegevus = (Element) o;
             String nimetus = tegevus.elementText("nimetus");
-            log.debug("Toimik [" + toimik + "] - Tegevuse nimetus: " + nimetus);
+            String kuupaev = tegevus.elementText("kuupaev");
+            final Date edastamineTaitmiseksDate = documentTaskDate(tegevus, docProps, kuupaev, docNr);
+            log.debug("docNr [" + docNr + "] - Tegevuse nimetus: " + nimetus);
+
+            // Ku vastamine blokk on leitud, siis rohkem pole aktiivseid taske!!
             if(nimetus.equals("vastamine")){
-                log.debug("Toimik [" + toimik + "] - Found tegevus 'vastamine'! Break.");
-                vastamineTegevus = true;
+                log.debug("docNr [" + docNr + "] - Found tegevus 'vastamine'! Break.");
+                vastamineMap.put("true", edastamineTaitmiseksDate);
+                edastamineTaitmiseksKellele.clear();
                 break;
             }
+            // Active task
             if(nimetus.equals("edastamine täitmiseks")){
+
+                // If previous Task was set to 'kellelt' person, than this task is for forwarding task to 'kellele'
+                // we should remove active task from kellelt;
+                //Element kellelt = tegevus.element("kellelt");
+                if(tegevus.element("kellelt") != null){
+                    for (Element kellelt : (List<Element>) tegevus.elements("kellelt")) {
+                        String kelleltIkood = kellelt.elementText("ikood");
+                        log.debug("Check if kellelt have a task? - ikood: " + kelleltIkood);
+                        for (String key : edastamineTaitmiseksKellele.keySet()) {
+                            log.debug("edastamineTaitmiseksKellele map check . idCode: " + key + " - " + kelleltIkood);
+                        }
+                        if (edastamineTaitmiseksKellele.containsKey(kelleltIkood)) {
+                            log.debug("docNr [" + docNr + "] - remove task from user: " + kelleltIkood);
+                            edastamineTaitmiseksKellele.remove(kelleltIkood);
+                        } else {
+                            log.debug("Kellelt idCode not found! No active task for that user...");
+                        }
+                    }
+                } else {
+                    log.error("Tegevus element KELLELT is NULL!");
+                }
+
+                // Check kellele is forwarded task
                 for (Element kellele : (List<Element>) tegevus.elements("kellele")) {
                     String kelleleIkood = kellele.elementText("ikood");
-                    if(edastamineTaitmiseksUsers.contains(kelleleIkood)){
-                        log.debug("Toimik [" + toimik + "] - user idCode exists in tasklist: " + kelleleIkood +
+
+                    if(edastamineTaitmiseksKellele.containsKey(kelleleIkood)){
+                        log.debug("docNr [" + docNr + "] - user idCode exists in tasklist: " + kelleleIkood +
                                 "!...continue;");
                         continue;
                     }
-                    log.debug("Toimik [" + toimik + "] - adding user idCode to tasklist: " + kelleleIkood);
-                    edastamineTaitmiseksUsers.add(kelleleIkood);
+                    log.debug("docNr [" + docNr + "] - adding user idCode to tasklist: " + kelleleIkood);
+                    edastamineTaitmiseksKellele.put(kelleleIkood, edastamineTaitmiseksDate);
                 }
+
             }
+
+            // Remove task from user
             if(nimetus.equals("Edastuselt tagasi kutsumine")){
-                log.debug("Toimik [" + toimik + "] - Found tegevus 'Edastuselt tagasi kutsumine'!");
+                log.debug("docNr [" + docNr + "] - Found tegevus 'Edastuselt tagasi kutsumine'!");
                 for (Element kellele : (List<Element>) tegevus.elements("kellele")) {
                     String kelleleIkood = kellele.elementText("ikood");
-                    if (edastamineTaitmiseksUsers.contains(kelleleIkood)) {
-                        log.debug("Toimik [" + toimik + "] - remove task from user: " + kelleleIkood);
-                        edastamineTaitmiseksUsers.remove(kelleleIkood);
+                    if (edastamineTaitmiseksKellele.containsKey(kelleleIkood)) {
+                        log.debug("docNr [" + docNr + "] - remove task from user: " + kelleleIkood);
+                        edastamineTaitmiseksKellele.remove(kelleleIkood);
                     } else {
-                        log.error("Toimik [" + toimik + "] - 'EDASTUSELT TAGASI KUTSUMINE' tegevus found UNKNOW user idCode! ["+kelleleIkood+"]" +
+                        log.error("docNr [" + docNr + "] - 'EDASTUSELT TAGASI KUTSUMINE' tegevus found UNKNOW user idCode! ["+kelleleIkood+"]" +
                                 " - Can't remove 'EDASTAMINE TÄITMISEKS' task.. ");
                     }
                 }
             }
         }
 
-        if(edastamineTaitmiseksUsers.size() > 0){
-            String delimiter = ",";
-            log.debug("Toimik [" + toimik + "] - Some tasks are ACTIVE! userId: " + StringUtils.join(edastamineTaitmiseksUsers, ","));
+        if(edastamineTaitmiseksKellele.size() > 0){
+            taskInfo.put("activeTask", edastamineTaitmiseksKellele);
+            String delimiter = ";";
+            String taskUsers = "";
+            for (String key : edastamineTaitmiseksKellele.keySet()){
+                taskUsers += key + " ==> " + edastamineTaitmiseksKellele.get(key).toString() + delimiter;
+            }
+            log.debug("docNr [" + docNr + "] - Some tasks are ACTIVE! userId: " + taskUsers);
         } else {
-            log.debug("Toimik [" + toimik + "] - No active tasks!");
+            log.debug("docNr [" + docNr + "] - No active tasks!");
+        }
+        if(!vastamineMap.containsKey("true")){
+            log.debug("----- Vastamine tegevus not found... set 'false' status to map..");
+            vastamineMap.put("false", null);
+        } else {
+            log.debug("----- Vastamine tegevus found!");
+        }
+        taskInfo.put("answerTask", vastamineMap);
+
+        return taskInfo;
+    }
+
+    protected void addHistoryItems(NodeRef docRef, Element root, Map<QName, Serializable> docProps, Mapping mapping) throws ParseException {
+        Element tegevused = root.element("tegevused");
+		String toimik = root.elementText("toimik");
+        String registNr = root.elementText("regist_nr");
+        String dokNr = toimik + "/" + registNr;
+
+        if (tegevused == null) {
+ 			log.debug("dokNr [" + dokNr + "] - Tegevused is null!");
+            return;
+        }
+        boolean responsibleActiveSet = false;
+        NodeRef firstTaskRef = null;
+        String firstTaskOwnerId = null;
+        Boolean vastamineTegevus = false;
+
+        Map<String, Date> activeTasks = null;
+
+        log.debug("------------- Find active tasks...START! ------------------------");
+        // Check if document have active task...
+        Map<String, Map<String, Date>> kelleleTask = getKelleleTask(root, docProps, dokNr);
+        if(kelleleTask.containsKey("answerTask")){
+            Map<String, Date> vastamineMap = kelleleTask.get("answerTask");
+            for (String vastamineStatus: vastamineMap.keySet()) {
+                log.debug("....... vastamine status: " + vastamineStatus);
+            }
+            if(vastamineMap.containsKey("true")){
+                log.debug("---------- Found vastamine block!");
+                vastamineTegevus = true;
+            }
         }
 
+        if(kelleleTask.containsKey("activeTask")){
+            activeTasks = kelleleTask.get("activeTask");
+        }
+
+        log.debug("------------- Find active tasks...END! --------------------------");
 
         boolean isDocumentWfEnabled = BeanHelper.getWorkflowConstantsBean().isDocumentWorkflowEnabled();
-        log.debug("Toimik [" + toimik + "] - Check tegevused objects...");
+        log.debug("dokNr [" + dokNr + "] - Check tegevused objects...");
         // Finding 'edastamine täitmiseks' tegevus to save active tasks
         int i = 0;
         for (Object o : root.element("tegevused").elements()) {
@@ -2032,30 +2116,30 @@ public class PostipoissDocumentsImporter {
             Element tegevus = (Element) o;
 
             String kuupaev = tegevus.elementText("kuupaev");
-            Date kpv = documentTaskDate(tegevus, docProps, kuupaev, toimik);
+            Date kpv = documentTaskDate(tegevus, docProps, kuupaev, dokNr);
 
             String nimetus = tegevus.elementText("nimetus");
 
             log.debug("TEGEVUS NR: " + i + " --------------------------------------------------");
             String resolutsioon = tegevus.elementText("resolutsioon");
-            log.debug("Toimik [" + toimik + "] - Resolutsioon: " + resolutsioon);
+            log.debug("dokNr [" + dokNr + "] - Resolutsioon: " + resolutsioon);
             if (nimetus.startsWith("Dokumendi eksportimine") && resolutsioon.startsWith("Auto.eksport")) {
                 // PPA needs to retain "Dokumendi eksportimine" log messages, which are NOT "Auto.eksport"
-                log.debug("Toimik [" + toimik + "] - Nimetus starts with 'Dokumendi exportimine' and resolutsioon starts with 'Auto" +
+                log.debug("dokNr [" + dokNr + "] - Nimetus starts with 'Dokumendi exportimine' and resolutsioon starts with 'Auto" +
                         ".eksport'...continue");
                 continue;
             }
             String kes = tegevus.elementText("kes");
-            log.debug("Toimik [" + toimik + "] - Kes: " + kes);
+            log.debug("dokNr [" + dokNr + "] - Kes: " + kes);
             if (StringUtils.isBlank(kes)) {
                 kes = tegevus.elementText("kellelt_tekst");
-                log.debug("Toimik [" + toimik + "] - Kes is blank use 'kellelt_tekst': " + kes);
+                log.debug("dokNr [" + dokNr + "] - Kes is blank use 'kellelt_tekst': " + kes);
 
             }
             String kelleleTekst = tegevus.elementText("kellele_tekst");
             String description = PostipoissDocumentsMapper.join("; ", nimetus, kelleleTekst, resolutsioon);
 
-            log.debug("Toimik [" + toimik + "] - Adding 'tegevus' task to log...");
+            log.debug("dokNr [" + dokNr + "] - Adding 'tegevus' task to log...");
             LogEntry logEntry = new LogEntry();
             logEntry.setComputerIp("127.0.0.1");
             logEntry.setComputerName("localhost");
@@ -2067,35 +2151,37 @@ public class PostipoissDocumentsImporter {
             logEntry.setObjectId(docRef.toString());
             BeanHelper.getLogService().addImportedLogEntry(logEntry, kpv);
 
-            log.debug("Toimik [" + toimik + "] - Tegevuse nimetus: " + nimetus);
+            log.debug("dokNr [" + dokNr + "] - Tegevuse nimetus: " + nimetus);
 
             if (!"edastamine täitmiseks".equals(nimetus)) {
-                log.debug("Toimik [" + toimik + "] - Tegevus 'edastamine täitmiseks' IS NOT TRUE...continue;");
+                log.debug("dokNr [" + dokNr + "] - Tegevus 'edastamine täitmiseks' IS NOT TRUE...continue;");
                 continue;
             }
 
             if(vastamineTegevus){
-                log.debug("Toimik [" + toimik + "] - Tegevus 'vastamine' block exists! Task done!...continue;");
+                log.debug("dokNr [" + dokNr + "] - Tegevus 'vastamine' block exists! Task done!...continue;");
                 continue;
+            } else {
+                log.debug("dokNr [" + dokNr + "] - Tegevus 'vastamine' don't exist! New task allowed...");
             }
 
-            if(edastamineTaitmiseksUsers.size() == 0){
-                log.debug("Toimik [" + toimik + "] - No active TASKs found!...continue;");
+            if(activeTasks.size() == 0){
+                log.debug("dokNr [" + dokNr + "] - No active TASKs found!...continue;");
                 continue;
             }
-            log.debug("Toimik [" + toimik + "] - Found tegevuse nimetus 'edastamine täitmiseks'!");
+            log.debug("dokNr [" + dokNr + "] - Found tegevuse nimetus 'edastamine täitmiseks'!");
             Element kellelt = tegevus.element("kellelt");
-            log.debug("Toimik [" + toimik + "] - Kellelt...");
+            log.debug("dokNr [" + dokNr + "] - Kellelt...");
             String kelleltEnimi = kellelt.elementText("enimi");
             String kelleltPnimi = kellelt.elementText("pnimi");
             String kelleltIkood = kellelt.elementText("ikood");
             String kelleltEmail = kellelt.elementText("email");
-            log.debug("Toimik [" + toimik + "] - kelleltEnimi: " + kelleltEnimi);
-            log.debug("Toimik [" + toimik + "] - kelleltPnimi: " + kelleltPnimi);
-            log.debug("Toimik [" + toimik + "] - kelleltIkood: " + kelleltIkood);
-            log.debug("Toimik [" + toimik + "] - kelleltEmail: " + kelleltEmail);
+            log.debug("dokNr [" + dokNr + "] - kelleltEnimi: " + kelleltEnimi);
+            log.debug("dokNr [" + dokNr + "] - kelleltPnimi: " + kelleltPnimi);
+            log.debug("dokNr [" + dokNr + "] - kelleltIkood: " + kelleltIkood);
+            log.debug("dokNr [" + dokNr + "] - kelleltEmail: " + kelleltEmail);
             if (StringUtils.isBlank(kelleltEnimi) || StringUtils.isBlank(kelleltPnimi) || StringUtils.isBlank(kelleltIkood) || StringUtils.isBlank(kelleltEmail)) {
-                log.debug("Toimik [" + toimik + "] - Kellelt one object is blank... continue!");
+                log.debug("dokNr [" + dokNr + "] - Kellelt one object is blank... continue!");
                 continue;
             }
 
@@ -2108,16 +2194,23 @@ public class PostipoissDocumentsImporter {
 
             WorkflowType workflowType = BeanHelper.getWorkflowConstantsBean().getWorkflowTypes().get(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW);
 
-            log.debug("Toimik [" + toimik + "] - Kellele task...");
+            log.debug("dokNr [" + dokNr + "] - Kellele task...");
             for (Element kellele : (List<Element>) tegevus.elements("kellele")) {
                 String kelleleIkood = kellele.elementText("ikood");
-                log.debug("Toimik [" + toimik + "] - Kellele user idCode: " + kelleleIkood);
-                if(!edastamineTaitmiseksUsers.contains(kelleleIkood)){
-                    log.debug("Toimik [" + toimik + "] - No active task to this user: " + kelleleIkood +
+                log.debug("dokNr [" + dokNr + "] - Kellele user idCode: " + kelleleIkood);
+                if(!activeTasks.containsKey(kelleleIkood)){
+                    log.debug("dokNr [" + dokNr + "] - No active task to this user: " + kelleleIkood +
                             "!...continue;");
                     continue;
                 } else {
-                    log.debug("Toimik [" + toimik + "] - ADD ACTIVE TASK TO USER..." + kelleleIkood);
+                    log.debug("dokNr [" + dokNr + "] - ADD ACTIVE TASK TO USER..." + kelleleIkood);
+                    Date activeTaskDate = activeTasks.get(kelleleIkood);
+                    if(!activeTaskDate.equals(dateTime)){
+                        log.debug("Active task DATE don't match! [" + activeTaskDate + " != " + dateTime +
+                                "]... continue");
+                        continue;
+                    }
+                    log.debug("Found correct userIdCode and task date! Start creating new task....");
                 }
                 String kelleleEnimi = kellele.elementText("enimi");
                 String kellelePnimi = kellele.elementText("pnimi");
@@ -2129,20 +2222,20 @@ public class PostipoissDocumentsImporter {
                 String kelleleTahtaeg = tegevus.elementText("tahtaeg");
                 String kelleleTehtud = kellele.elementText("tehtud");
 
-                log.debug("Toimik [" + toimik + "] - kelleleEnimi (isBlank): " + kelleleEnimi);
-                log.debug("Toimik [" + toimik + "] - kellelePnimi (isBlank): " + kellelePnimi);
-                log.debug("Toimik [" + toimik + "] - kelleleIkood (isBlank): " + kelleleIkood);
-                log.debug("Toimik [" + toimik + "] - kelleleEmail (isBlank): " + kelleleEmail);
-                log.debug("Toimik [" + toimik + "] - kelleleTahtaeg (isBlank): " + kelleleTahtaeg);
-                log.debug("Toimik [" + toimik + "] - kelleleTehtud (isNotBlank): " + kelleleTehtud);
+                log.debug("dokNr [" + dokNr + "] - kelleleEnimi (isBlank): " + kelleleEnimi);
+                log.debug("dokNr [" + dokNr + "] - kellelePnimi (isBlank): " + kellelePnimi);
+                log.debug("dokNr [" + dokNr + "] - kelleleIkood (isBlank): " + kelleleIkood);
+                log.debug("dokNr [" + dokNr + "] - kelleleEmail (isBlank): " + kelleleEmail);
+                log.debug("dokNr [" + dokNr + "] - kelleleTahtaeg (isBlank): " + kelleleTahtaeg);
+                log.debug("dokNr [" + dokNr + "] - kelleleTehtud (isNotBlank): " + kelleleTehtud);
 
                 if (StringUtils.isBlank(kelleleEnimi) || StringUtils.isBlank(kellelePnimi) || StringUtils.isBlank(kelleleIkood) || StringUtils.isBlank(kelleleEmail)
                         || StringUtils.isBlank(kelleleTahtaeg) || StringUtils.isNotBlank(kelleleTehtud)) {
-                    log.debug("Toimik [" + toimik + "] - Kellele one object not passed!... continue.");
+                    log.debug("dokNr [" + dokNr + "] - Kellele one object not passed!... continue.");
                     continue;
                 }
                 if (wfRef == null) {
-                    log.debug("Toimik [" + toimik + "] - New props hashmap... createNode: COMPOUND_WORKFLOW");
+                    log.debug("dokNr [" + dokNr + "] - New props hashmap... createNode: COMPOUND_WORKFLOW");
                     props = new HashMap<QName, Serializable>();
                     props.put(WorkflowCommonModel.Props.CREATOR_NAME, kelleltEnimi + " " + kelleltPnimi);
                     props.put(WorkflowCommonModel.Props.OWNER_ID, kelleltIkood);
@@ -2150,10 +2243,10 @@ public class PostipoissDocumentsImporter {
                     props.put(WorkflowCommonModel.Props.STARTED_DATE_TIME, dateTime);
                     props.put(WorkflowCommonModel.Props.STATUS, Status.IN_PROGRESS.getName());
                     props.put(WorkflowCommonModel.Props.STOPPED_DATE_TIME, null);
-                    log.debug("Toimik [" + toimik + "] - Document ref (docRef): " + docRef.toString());
+                    log.debug("dokNr [" + dokNr + "] - Document ref (docRef): " + docRef.toString());
                     props.put(WorkflowCommonModel.Props.TYPE, (isDocumentWfEnabled)?CompoundWorkflowType.DOCUMENT_WORKFLOW.name():CompoundWorkflowType.INDEPENDENT_WORKFLOW.name());
                     props.put(WorkflowCommonModel.Props.TITLE, docProps.get(DocumentCommonModel.Props.DOC_NAME));
-                    log.debug("Toimik [" + toimik + "] - Create node...");
+                    log.debug("dokNr [" + dokNr + "] - Create node...");
                     cwfRef = getNodeService().createNode(
                             (isDocumentWfEnabled)?docRef:BeanHelper.getConstantNodeRefsBean().getIndependentWorkflowsRoot(),
                             WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW,
@@ -2161,13 +2254,13 @@ public class PostipoissDocumentsImporter {
                             WorkflowCommonModel.Types.COMPOUND_WORKFLOW,
                             props
                     ).getChildRef();
-					log.debug("Toimik [" + toimik + "] - Create node (COMPOUND_WORKFLOW)... cwfRef: " + cwfRef.toString());
+					log.debug("dokNr [" + dokNr + "] - Create node (COMPOUND_WORKFLOW)... cwfRef: " + cwfRef.toString());
                     if (isDocumentWfEnabled) {
                         getNodeService().createAssociation(docRef, cwfRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT);
                         getWorkflowService().updateMainDocument(cwfRef, docRef);
                     }
 
-                    log.debug("Toimik [" + toimik + "] - New props hashmap... createNode: WORKFLOW");
+                    log.debug("dokNr [" + dokNr + "] - New props hashmap... createNode: WORKFLOW");
                     props = new HashMap<QName, Serializable>();
                     props.put(WorkflowCommonModel.Props.CREATOR_NAME, kelleltEnimi + " " + kelleltPnimi);
                     props.put(WorkflowCommonModel.Props.MANDATORY, Boolean.FALSE);
@@ -2184,12 +2277,12 @@ public class PostipoissDocumentsImporter {
                             WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW,
                             props
                     ).getChildRef();
-					log.debug("Toimik [" + toimik + "] - Create node (WORKFLOW)... wfRef: " + wfRef.toString());
+					log.debug("dokNr [" + dokNr + "] - Create node (WORKFLOW)... wfRef: " + wfRef.toString());
                     //cwfRef.getId()
                     taskSearchableProps = WorkflowUtil.getTaskSearchableProps(props);
                 }
 
-                log.debug("Toimik [" + toimik + "] - New props hashmap... node: TASK");
+                log.debug("dokNr [" + dokNr + "] - New props hashmap... node: TASK");
                 props = new HashMap<QName, Serializable>();
                 props.put(WorkflowSpecificModel.Props.CREATOR_EMAIL, kelleltEmail);
                 props.put(WorkflowSpecificModel.Props.CREATOR_ID, kelleltIkood);
@@ -2204,7 +2297,7 @@ public class PostipoissDocumentsImporter {
                 Serializable taskOwnerStructUnit = null;
 
                 if (kelleleUser != null) {
-                    log.debug("Toimik [" + toimik + "] - Kellele user defined! idCode: " + kelleleIkood);
+                    log.debug("dokNr [" + dokNr + "] - Kellele user defined! idCode: " + kelleleIkood);
                     taskOwnerJobTitle = kelleleUser.getSecond().get(ContentModel.PROP_JOBTITLE);
                     taskOwnerStructUnit = kelleleUser.getSecond().get(ContentModel.PROP_ORGANIZATION_PATH);
                 }
@@ -2219,7 +2312,7 @@ public class PostipoissDocumentsImporter {
                 try {
                     dueDate = dateTimeFormat.parse(kelleleTahtaeg + " 23:59:59");
                 } catch (ParseException e) {
-                    throw new RuntimeException("Toimik [" + toimik + "] - Unable to parse kelleleTahtaeg: " + e.getMessage(), e);
+                    throw new RuntimeException("dokNr [" + dokNr + "] - Unable to parse kelleleTahtaeg: " + e.getMessage(), e);
                 }
 
                 props.put(WorkflowSpecificModel.Props.DUE_DATE, dueDate);
@@ -2234,7 +2327,7 @@ public class PostipoissDocumentsImporter {
 
                 props.putAll(taskSearchableProps);
 
-                log.debug("Toimik [" + toimik + "] - Create task in memory...");
+                log.debug("dokNr [" + dokNr + "] - Create task in memory...");
                 Task task = BeanHelper.getWorkflowService().createTaskInMemory(wfRef, workflowType, props);
 
                 Set<QName> aspects = task.getNode().getAspects();
@@ -2242,59 +2335,59 @@ public class PostipoissDocumentsImporter {
 
                 if (firstTaskRef == null) {
                     firstTaskRef = task.getNodeRef();
-                    log.debug("Toimik [" + toimik + "] - First task ref: " + firstTaskRef.toString());
+                    log.debug("dokNr [" + dokNr + "] - First task ref: " + firstTaskRef.toString());
                     firstTaskOwnerId = kelleleIkood;
-                    log.debug("Toimik [" + toimik + "] - First task owner idCode: " + firstTaskOwnerId);
+                    log.debug("dokNr [" + dokNr + "] - First task owner idCode: " + firstTaskOwnerId);
                 }
                 if (!responsibleActiveSet && kelleleIkood.equals(docProps.get(OWNER_ID))) {
-                    log.debug("Toimik [" + toimik + "] - Set task ACTIVE! idCode: " + kelleleIkood);
+                    log.debug("dokNr [" + dokNr + "] - Set task ACTIVE! idCode: " + kelleleIkood);
                     task.getNode().getProperties().put(WorkflowSpecificModel.Props.ACTIVE.toString(), Boolean.TRUE);
-                    log.debug("Toimik [" + toimik + "] - Aspects: RESPONSIBLE... idCode: " + kelleleIkood);
+                    log.debug("dokNr [" + dokNr + "] - Aspects: RESPONSIBLE... idCode: " + kelleleIkood);
                     aspects.add(WorkflowSpecificModel.Aspects.RESPONSIBLE);
                     responsibleActiveSet = true;
-                    log.debug("Toimik [" + toimik + "] - Set permissions EDIT_DOCUMENT: kelleleIkood: " + kelleleIkood);
+                    log.debug("dokNr [" + dokNr + "] - Set permissions EDIT_DOCUMENT: kelleleIkood: " + kelleleIkood);
                     getPrivilegeService().setPermissions(docRef, kelleleIkood, Privilege.EDIT_DOCUMENT);
                 } else {
                     if (isDocumentWfEnabled) {
-                        log.debug("Toimik [" + toimik + "] - Set permissions EDIT_DOCUMENT: kelleleIkood: " + kelleleIkood);
+                        log.debug("dokNr [" + dokNr + "] - Set permissions EDIT_DOCUMENT: kelleleIkood: " + kelleleIkood);
                         getPrivilegeService().setPermissions(docRef, kelleleIkood, Privilege.EDIT_DOCUMENT);
                     } else {
-                        log.debug("Toimik [" + toimik + "] - Set permissions VIEW_DOCUMENT_FILES: kelleleIkood: " +
+                        log.debug("dokNr [" + dokNr + "] - Set permissions VIEW_DOCUMENT_FILES: kelleleIkood: " +
                                 kelleleIkood);
                         getPrivilegeService().setPermissions(docRef, kelleleIkood, Privilege.VIEW_DOCUMENT_FILES);
                     }
                 }
 
                 task.setTaskIndexInWorkflow(taskIndex++);
-                log.debug("Toimik [" + toimik + "] - Set task index in workflow: " + taskIndex);
+                log.debug("dokNr [" + dokNr + "] - Set task index in workflow: " + taskIndex);
 
-                log.debug("Toimik [" + toimik + "] - Create Task entry...");
+                log.debug("dokNr [" + dokNr + "] - Create Task entry...");
                 BeanHelper.getWorkflowDbService().createTaskEntry(task, wfRef);
                 QName searchableHasStartedCompoundWorkflow = DocumentCommonModel.Props
                         .SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS;
 
-                log.debug("Toimik [" + toimik + "] - Doc Props put: SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS: name(): " +
+                log.debug("dokNr [" + dokNr + "] - Doc Props put: SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS: name(): " +
                         searchableHasStartedCompoundWorkflow.getLocalName());
                 docProps.put(DocumentCommonModel.Props.SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS, Boolean.TRUE);
 
                 docProps.put(DocumentCommonModel.Props.DOC_STATUS, DocumentStatus.WORKING.getValueName());
-                log.debug("Toimik [" + toimik + "] - Next kellele.....");
+                log.debug("dokNr [" + dokNr + "] - Next kellele.....");
             }
-            log.debug("Toimik [" + toimik + "] - Next tegevus....");
+            log.debug("dokNr [" + dokNr + "] - Next tegevus....");
         }
-        log.debug("Toimik [" + toimik + "] - responsibleActiveSet: " + responsibleActiveSet);
+        log.debug("dokNr [" + dokNr + "] - responsibleActiveSet: " + responsibleActiveSet);
 
 
         if (!responsibleActiveSet && firstTaskRef != null) {
-            log.debug("Toimik [" + toimik + "] - firstTaskRef is not NULL...");
+            log.debug("dokNr [" + dokNr + "] - firstTaskRef is not NULL...");
             Map<QName, Serializable> props = new HashMap<QName, Serializable>();
             props.put(WorkflowSpecificModel.Props.ACTIVE, Boolean.TRUE);
-            log.debug("Toimik [" + toimik + "] - Set permissions...firstTaskOwnerId: " + firstTaskOwnerId);
+            log.debug("dokNr [" + dokNr + "] - Set permissions...firstTaskOwnerId: " + firstTaskOwnerId);
             getPrivilegeService().setPermissions(docRef, firstTaskOwnerId, Privilege.EDIT_DOCUMENT);
-            log.debug("Toimik [" + toimik + "] - Update task properties...");
+            log.debug("dokNr [" + dokNr + "] - Update task properties...");
             BeanHelper.getWorkflowDbService().updateTaskProperties(firstTaskRef, props);
         }
-        log.debug("Toimik [" + toimik + "] - addHistoryItems... DONE!");
+        log.debug("dokNr [" + dokNr + "] - addHistoryItems... DONE!");
     }
 
     // [ASSOCS
