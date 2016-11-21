@@ -321,15 +321,26 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
 
     @Override
     public void createTaskEntry(Task task, NodeRef workflowfRef) {
+        LOG.debug("Create task entry: isIndependentTask: FALSE!");
         createTaskEntry(task, workflowfRef, false);
     }
 
     @Override
     public void createTaskEntry(Task task, NodeRef workflowfRef, boolean isIndependentTask) {
+        try {
+            LOG.debug("Create task entry: TASK nodeRef: " + task.getNodeRef().toString());
+            LOG.debug("Create task entry: WorkFlow nodeRef: " + task.getNodeRef().toString());
+        } catch (Exception ex){
+            LOG.error("ERROR: " + ex.getMessage(), ex);
+        }
+
+
         TaskUpdateInfo updateInfo = verifyTaskAndGetUpdateInfoOnCreate(task, (isIndependentTask ? null : workflowfRef), null);
         if (updateInfo == null) {
+            LOG.debug("TASK updateInfo is NULL! Return.");
             return;
         }
+        LOG.debug("Add task entry...");
         addTaskEntry(updateInfo);
     }
 
@@ -344,6 +355,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             sql.append(placeHolder).append((i == finalIndex) ? "" : ",");
         }
 
+        //LOG.debug("createTaskEntries() SQL: " + sql.toString());
         jdbcTemplate.update(new PreparedStatementCreator() {
 
             @Override
@@ -355,6 +367,11 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
                         Object value = info.getFieldValue(fieldName, FIELD_NAME_TO_TASK_PROP);
                         if (value instanceof List) {
                             value = getArrayValueForDb(value, con);
+                        }
+                        try{
+                            //LOG.trace("TaskUpdateInfo fieldName: " + fieldName + " => ["+value.toString()+"]");
+                        } catch (Exception es){
+                            //LOG.trace("TaskUpdateInfo fieldName: " + fieldName + " => [ERROR]; " + es.getMessage());
                         }
                         DbSearchUtil.setParameterValue(ps, fieldIndex, value);
                         fieldIndex++;
@@ -368,6 +385,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     @Override
     public void updateTaskEntries(List<TaskUpdateInfo> taskUpdateInfos, Set<String> usedFieldNames) {
         String sql = "UPDATE delta_task SET " + DbSearchUtil.createCommaSeparatedUpdateString(usedFieldNames) + " WHERE task_id=?";
+        //LOG.debug("updateTaskEntries() SQL: " + sql);
         batchUpdate(taskUpdateInfos, usedFieldNames, sql, true);
     }
 
@@ -416,16 +434,22 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
 
     private TaskUpdateInfo verifyTaskAndGetUpdateInfo(Task task, NodeRef workflowfRef, boolean isNewTask, Map<QName, Serializable> props, Connection connection) {
         if (task == null) {
+            LOG.debug("TASK is NULL! Return NULL!");
             return null;
         }
 
+        LOG.debug("Verify task..");
         verifyTask(task, workflowfRef);
         if (isNewTask) {
+            LOG.debug("isNewTask is TRUE...");
             Integer taskIndexInWorkflow = task.getTaskIndexInWorkflow();
+            LOG.debug("TASK index in workflow..." + taskIndexInWorkflow);
             Assert.isTrue(taskIndexInWorkflow == null || taskIndexInWorkflow >= 0);
         }
+        LOG.debug("getTaskUpdateInfo..");
         TaskUpdateInfo updateInfo = getTaskUpdateInfo(task, workflowfRef, props, connection);
         if (isNewTask) {
+            LOG.debug("isNewTask is TRUE... Add aspects SEARCHABLE.");
             updateInfo.add(IS_SEARCHABLE_FIELD, task.getNode().getAspects().contains(WorkflowSpecificModel.Aspects.SEARCHABLE));
         }
         return updateInfo;
@@ -433,14 +457,22 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
 
     @Override
     public void updateTaskProperties(NodeRef taskRef, Map<QName, Serializable> props) {
+        LOG.debug("update task properties....");
         if (taskRef == null || RepoUtil.isUnsaved(taskRef)) {
+            LOG.error("Task ref is null or unsaved task! taskRef: " + taskRef);
             throw new RuntimeException("Task is not saved, unable to update! taskRef=" + taskRef);
         }
         if (props == null || props.isEmpty()) {
+            LOG.debug("Props is null or empty... return");
             return;
         }
+
+        LOG.debug("New taskUpdateIndo by taskRef...");
         TaskUpdateInfo updateInfo = new TaskUpdateInfo(taskRef);
+
+        LOG.debug("PopulateTaskUpdateInfo...");
         populateTaskUpdateInfo(updateInfo, props, null);
+        LOG.debug("UpdateTaskEntry...");
         updateTaskEntry(updateInfo);
     }
 
@@ -449,6 +481,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             final List<QName> compoundWorkflowTaskSearchableProperties, String compoundWorkflowTaskUpdateString) {
 
         String sql = "UPDATE delta_task SET " + compoundWorkflowTaskUpdateString + " WHERE wfs_compound_workflow_id=?";
+        //LOG.debug("updateCompoundWorkflowTaskSearchableProperties() SQL: " + sql);
         Connection connection = null;
         try {
             // TODO: get "text" constant value from connection? It is database-specific
@@ -497,6 +530,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     public void updateWorkflowTasksStore(NodeRef workflowRef, StoreRef newStoreRef) {
         boolean hasWorkflowRef = workflowRef != null;
         String sqlQuery = "UPDATE delta_task SET store_id=? WHERE workflow_id" + (hasWorkflowRef ? "=?" : " IS NULL");
+        //LOG.debug("updateWorkflowTasksStore() SQL: " + sqlQuery);
         Object[] args;
         if (hasWorkflowRef) {
             args = new Object[] { newStoreRef.toString(), workflowRef.getId() };
@@ -631,6 +665,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
 
     private int updateTaskEntry(TaskUpdateInfo taskInfo, boolean throwIfNotSingleUpdate) {
         String sqlQuery = "UPDATE delta_task SET " + taskInfo.getParameterizedUpdateString() + " WHERE task_id=?";
+        //LOG.debug("updateTaskEntry() SQL: " + sqlQuery);
         Object[] arguments = taskInfo.getArgumentArrayWithTaskId();
         int rowsUpdated = jdbcTemplate.update(sqlQuery, arguments);
         explainQuery(sqlQuery, arguments);
@@ -642,7 +677,18 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     }
 
     private void addTaskEntry(TaskUpdateInfo updateInfo) {
-        jdbcTemplate.update("INSERT INTO delta_task (" + updateInfo.getFieldNameListing() + ") VALUES (" + updateInfo.getArgumentQuestionMarks() + ")"
+        String sqlQuery = "INSERT INTO delta_task (" + updateInfo.getFieldNameListing() + ") VALUES (" + updateInfo
+                .getArgumentQuestionMarks() + ")";
+        //LOG.debug("addTaskEntry() SQL: " + sqlQuery);
+        for (Object entry: updateInfo.getArgumentArray()) {
+            try{
+                //LOG.debug("TASK updateInfo object: " + entry.toString());
+
+            } catch (Exception ex){
+                //LOG.error("TASK updateInfo object: Exception: " + ex.getMessage());
+            }
+        }
+        jdbcTemplate.update(sqlQuery
                 , updateInfo.getArgumentArray());
     }
 
@@ -1425,8 +1471,10 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             return new HashMap<>();
         }
         String sqlQuery = "SELECT " + createSelectFieldListing(propsToLoad) + " FROM delta_task where task_id IN (" + getQuestionMarks(taskRefs.size()) + ")";
+        //LOG.debug("SQL: " + sqlQuery);
         List<String> params = new ArrayList<String>();
         for (NodeRef taskRef : taskRefs) {
+            LOG.debug("TaskRef ID: " + taskRef.getId() + "; nodeRef: " + taskRef.toString());
             params.add(taskRef.getId());
         }
         Object[] paramArray = params.toArray();
@@ -1464,9 +1512,9 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
 
     @Override
     public void createTaskDueDateExtensionAssocEntry(NodeRef initiatingTaskRef, NodeRef nodeRef) {
-        int rowsInserted = jdbcTemplate.update(
-                "INSERT INTO delta_task_due_date_extension_assoc (task_id, extension_task_id) VALUES (?, ?)",
-                new Object[] { initiatingTaskRef.getId(), nodeRef.getId() });
+        String sqlQuery = "INSERT INTO delta_task_due_date_extension_assoc (task_id, extension_task_id) VALUES (?, ?)";
+        //LOG.debug("createTaskDueDateExtensionAssocEntry() SQL: " + sqlQuery);
+        int rowsInserted = jdbcTemplate.update(sqlQuery, new Object[] { initiatingTaskRef.getId(), nodeRef.getId() });
         if (rowsInserted != 1) {
             throw new RuntimeException("Insert failed: inserted " + rowsInserted + " rows for initiatingNodeRef=" + initiatingTaskRef + ", targetNodeRef=" + nodeRef);
         }
@@ -1480,7 +1528,10 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             return;
         }
         final String taskRefId = taskRef.getId();
-        jdbcTemplate.batchUpdate("INSERT INTO delta_task_due_date_history (task_id, previous_date, change_reason, extension_task_id) VALUES (?, ?, ?, ?)",
+        String sqlQuery = "INSERT INTO delta_task_due_date_history (task_id, previous_date, change_reason, " +
+                "extension_task_id) VALUES (?, ?, ?, ?)";
+        //LOG.debug("createTaskDueDateHistoryEntries() SQL: " + sqlQuery);
+        jdbcTemplate.batchUpdate(sqlQuery,
                 new BatchPreparedStatementSetter() {
 
                     @Override
@@ -1560,7 +1611,9 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         }
         Assert.isTrue(!fileNodeRefs.contains(null));
         final String taskRefId = taskRef.getId();
-        jdbcTemplate.batchUpdate("INSERT INTO delta_task_file (task_id, file_id) VALUES (?, ?)",
+        String sqlQuery = "INSERT INTO delta_task_file (task_id, file_id) VALUES (?, ?)";
+        //LOG.debug("createTaskFileEntriesFromNodeRefs() SQL: " + sqlQuery);
+        jdbcTemplate.batchUpdate(sqlQuery,
                 new BatchPreparedStatementSetter() {
 
                     @Override
@@ -2007,14 +2060,15 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     @Override
     public int replaceTaskOutcomes(String oldOutcome, String newOutcome, String taskType) {
         boolean hasType = StringUtils.isNotBlank(taskType);
-        String query = "UPDATE delta_task SET wfc_outcome=? WHERE wfc_outcome=?" + (hasType ? " AND task_type=?" : "");
+        String sqlQuery = "UPDATE delta_task SET wfc_outcome=? WHERE wfc_outcome=?" + (hasType ? " AND task_type=?" : "");
+        //LOG.debug("updateTaskEntry() SQL: " + sqlQuery);
         int tasksUpdated = 0;
         if (hasType) {
-            jdbcTemplate.update(query, newOutcome, oldOutcome, taskType);
-            explainQuery(query, newOutcome, oldOutcome, taskType);
+            jdbcTemplate.update(sqlQuery, newOutcome, oldOutcome, taskType);
+            explainQuery(sqlQuery, newOutcome, oldOutcome, taskType);
         } else {
-            jdbcTemplate.update(query, newOutcome, oldOutcome);
-            explainQuery(query, newOutcome, oldOutcome);
+            jdbcTemplate.update(sqlQuery, newOutcome, oldOutcome);
+            explainQuery(sqlQuery, newOutcome, oldOutcome);
         }
         return tasksUpdated;
     }
@@ -2438,8 +2492,10 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
 
     @Override
     public void addCompoundWorkfowComment(Comment comment) {
-        int rowsInserted = jdbcTemplate.update(
-                "INSERT INTO delta_compound_workflow_comment (compound_workflow_id, created, creator_id, creator_name, comment_text) VALUES (?, ?, ?, ?, ?)",
+        String sqlQuery = "INSERT INTO delta_compound_workflow_comment (compound_workflow_id, created, creator_id, " +
+                "creator_name, comment_text) VALUES (?, ?, ?, ?, ?)";
+        //LOG.debug("addCompoundWorkfowComment() SQL: " + sqlQuery);
+        int rowsInserted = jdbcTemplate.update(sqlQuery,
                 new Object[] { comment.getCompoundWorkflowId(), comment.getCreated(), comment.getCreatorId(), comment.getCreatorName(), comment.getCommentText() });
         if (rowsInserted != 1) {
             throw new RuntimeException("Insert failed: inserted " + rowsInserted + " rows for compoundWorkflowId=" + comment.getCompoundWorkflowId());
@@ -2449,6 +2505,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     @Override
     public void editCompoundWorkflowComment(Long commentId, String commentText) {
         String sqlQuery = "UPDATE delta_compound_workflow_comment SET comment_text=? WHERE comment_id=?";
+        //LOG.debug("editCompoundWorkflowComment() SQL: " + sqlQuery);
         Object[] args = new Object[] { commentText, commentId };
         jdbcTemplate.update(sqlQuery, args);
         explainQuery(sqlQuery, args);
