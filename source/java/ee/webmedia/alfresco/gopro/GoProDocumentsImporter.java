@@ -55,21 +55,25 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.transaction.TransactionService;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.DateUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.apache.xml.security.exceptions.Base64DecodingException;
 import org.apache.xml.security.utils.Base64;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.util.Assert;
 
 import com.csvreader.CsvReader;
 import com.csvreader.CsvWriter;
 
+import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Props;
 import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
@@ -78,6 +82,7 @@ import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.web.DocAdminUtil;
 import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
@@ -94,7 +99,8 @@ import ee.webmedia.alfresco.gopro.GoProDocumentsMapper.PropMapping;
 import ee.webmedia.alfresco.gopro.GoProDocumentsMapper.PropertyValue;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
-import ee.webmedia.alfresco.postipoiss.PostipoissDocumentsMapper;
+import ee.webmedia.alfresco.orgstructure.model.OrganizationStructure;
+import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.utils.FilenameUtil;
@@ -109,6 +115,7 @@ import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
+import ee.webmedia.xtee.client.service.configuration.provider.XTeeProviderPropertiesResolver;
 
 /**
  * Imports documents and files from GoPro.
@@ -144,6 +151,9 @@ public class GoProDocumentsImporter {
      */
     private static final String MAPPINGS_PROP_TO_REG_NUMBER_WITHOUT_INDIVIDUAL = "_regNumberWithoutIndividual";
     private static final String MAPPINGS_PROP_TO_DOCUMENT_TYPE_FROM = "_documentTypeFrom";
+    
+    private static final String DUMMY_USER_ID = "99999999999";
+    private static final String HTML_FILE_META_INFO = "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">";
 
     /*
      * TODO lisada kellaaeg csv'sse
@@ -160,6 +170,8 @@ public class GoProDocumentsImporter {
 
     private final DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
     private final DateFormat dateTimeFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
+    private final DateFormat dateTimeFormatddMMyy = new SimpleDateFormat("dd.MM.yy HH:mm:ss");
+    private final DateFormat dateTimeFormatdMMyy = new SimpleDateFormat("d.MM.yy HH:mm:ss");
 
     protected SAXReader xmlReader = new SAXReader();
 
@@ -168,6 +180,7 @@ public class GoProDocumentsImporter {
     private int batchSize;
     private String defaultOwnerId;
     private String defaultOwnerName;
+    private String defaultOwnerEmail;
     private Collection<StoreRef> storeRefs = new LinkedHashSet<StoreRef>();
 
     // [SPRING BEANS
@@ -179,6 +192,7 @@ public class GoProDocumentsImporter {
     private GoProDocumentsMapper goProDocumentsMapper;
     private BehaviourFilter behaviourFilter;
     private GoProImporter goProImporter;
+    private XTeeProviderPropertiesResolver propertiesResolver;
 
     public GoProDocumentsImporter(GoProImporter goProImporter) {
         // <bean id="postipoissDocumentsImporter" class="ee.webmedia.alfresco.postipoiss.PostipoissDocumentsImporter">
@@ -198,6 +212,9 @@ public class GoProDocumentsImporter {
         // <property name="dictionaryService" ref="DictionaryService" />
         // <property name="generalService" ref="GeneralService" />
         // </bean>
+        final ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("ee/webmedia/alfresco/dvk/service/dhl-service-impl-context.xml");
+        propertiesResolver = (XTeeProviderPropertiesResolver) context.getBean("xTeeServicePropertiesResolver");
+        
         setDocumentService(BeanHelper.getDocumentService());
         setTransactionService(BeanHelper.getTransactionService());
         setGeneralService(BeanHelper.getGeneralService());
@@ -256,14 +273,22 @@ public class GoProDocumentsImporter {
         this.workFolder = workFolder;
         this.batchSize = batchSize;
         this.defaultOwnerId = defaultOwnerId;
-        this.defaultOwnerName = UserUtil.getPersonFullName1(getUserService().getUserProperties(defaultOwnerId));
+        Map<QName, Serializable> defaultUserProps = getUserService().getUserProperties(defaultOwnerId);
+        this.defaultOwnerName = UserUtil.getPersonFullName1(defaultUserProps);
+        this.defaultOwnerEmail = (String)defaultUserProps.get(ContentModel.PROP_EMAIL);
         init();
         // Doc import
         try {
+        	File completedStructureFile = new File(workFolder, StructureImporter.COMPLETED_FILENAME);
+        	if (!completedStructureFile.exists()) {
+                log.info("Skipping documents import, struucture was not imported yet, file does not exist: " + completedStructureFile);
+                return;
+            }
         	storeRefs.add(generalService.getStore());
         	storeRefs.add(generalService.getArchivalsStoreRef());
         	
             mappings = goProDocumentsMapper.loadMetadataMappings(mappingsFile);
+            //loadSeriesMappings();
             loadDocuments();
             loadCompletedDocuments();
             loadPostponedAssocs();
@@ -287,6 +312,7 @@ public class GoProDocumentsImporter {
         postponedAssocs = new TreeMap<String, List<PostponedAssoc>>();
         postponedAssocsCommited = new TreeMap<String, List<PostponedAssoc>>();
         mappings = null;
+        seriesMappings = new HashMap<String, String>();
         indexedFiles = null;
         filesToIndex = null;
         filesToProceed = null;
@@ -305,6 +331,7 @@ public class GoProDocumentsImporter {
     protected File postponedAssocsFile;
 
     private Map<String, Mapping> mappings;
+    private Map<String, String> seriesMappings = new HashMap<String, String>();
 
     protected void loadDocuments() {
         documentsMap = new TreeMap<String, File>();
@@ -312,7 +339,7 @@ public class GoProDocumentsImporter {
         File[] files = dataFolder.listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String name) {
-                return StringUtils.isNotBlank(name) && name.endsWith(".xml") && !name.contains("mapping");
+                return StringUtils.isNotBlank(name) && name.endsWith(".xml") && !name.toLowerCase().contains("mapping");
             }
         });
 
@@ -460,7 +487,7 @@ public class GoProDocumentsImporter {
         });
     }
 
-    private boolean findUserNode(String goProUserName, Map<QName, Serializable> props, QName idQname, QName nameQname) {
+    private boolean findUserNode(String goProUserName, Map<QName, Serializable> props, QName idQname, QName nameQname, QName emailQname) {
     	Node userNode = null;
     	if (StringUtils.isNotBlank(goProUserName)) {
     		String userFullname = parseUserFullName(goProUserName);
@@ -473,11 +500,15 @@ public class GoProDocumentsImporter {
     	if (userNode != null) {
     		String userId = (String)userNode.getProperties().get(ContentModel.PROP_USERNAME);
     		String userName = (String)userNode.getProperties().get(ContentModel.PROP_FIRSTNAME) + " " + (String)userNode.getProperties().get(ContentModel.PROP_LASTNAME);
+    		String email = (String)userNode.getProperties().get(ContentModel.PROP_EMAIL);
     		if (idQname != null) {
     			props.put(idQname, userId);
     		}
     		if (nameQname != null) {
     			props.put(nameQname, (StringUtils.isNotBlank(userName)?userName:userId));
+    		}
+    		if (emailQname != null && StringUtils.isNotBlank(email)) {
+    			props.put(emailQname, email);
     		}
     		return true;
     	} else {
@@ -505,7 +536,7 @@ public class GoProDocumentsImporter {
         boolean ownerFound = false;
         boolean signerFound = false;
         if (StringUtils.isNotBlank(gpOwnerName)) {
-        	ownerFound = findUserNode(gpOwnerName, props, OWNER_ID, DocumentCommonModel.Props.OWNER_NAME);
+        	ownerFound = findUserNode(gpOwnerName, props, OWNER_ID, DocumentCommonModel.Props.OWNER_NAME, DocumentCommonModel.Props.OWNER_EMAIL);
         	if (!ownerFound) {
        			comment = StringUtils.isNotBlank(comment)?comment + " " + DocumentCommonModel.Props.OWNER_NAME.getLocalName() + ":" + gpOwnerName :DocumentCommonModel.Props.OWNER_NAME.getLocalName() + ":" + gpOwnerName;
        		}
@@ -524,7 +555,7 @@ public class GoProDocumentsImporter {
         }
         
         if (StringUtils.isNotBlank(gpSignerName)) {
-       		signerFound = findUserNode(gpOwnerName, props, null, DocumentCommonModel.Props.SIGNER_NAME);
+       		signerFound = findUserNode(gpOwnerName, props, null, DocumentCommonModel.Props.SIGNER_NAME, null);
        		if (!signerFound) {
        			comment = StringUtils.isNotBlank(comment)?comment + " " + DocumentCommonModel.Props.SIGNER_NAME.getLocalName() + ":" + gpSignerName :DocumentCommonModel.Props.SIGNER_NAME.getLocalName() + ":" + gpSignerName;
        		}
@@ -746,6 +777,16 @@ public class GoProDocumentsImporter {
                 }
             }
         });
+    }
+    
+    protected void loadSeriesMappings() throws Exception {
+    	File seriesMappingsXml = new File(workFolder, "seriesMappings.xml");
+        if (!seriesMappingsXml.exists()) {
+            log.info("Skipping loading series mappings, file does not exist: " + seriesMappingsXml);
+            return;
+        }
+        Element root = xmlReader.read(seriesMappingsXml).getRootElement();
+        
     }
 
     protected void loadCompletedDocuments() throws Exception {
@@ -987,7 +1028,7 @@ public class GoProDocumentsImporter {
         Element htmlFile = getElementByAttribudeName(root, GP_ELEMENT_HTML_BODY);
         if (htmlFile != null) {
         	String fileName = "Sisu.html";
-        	NodeRef fileRef = addFile(fileName, htmlFile.getText(), importDocRef, null, true, false);
+        	NodeRef fileRef = addFile(fileName, HTML_FILE_META_INFO + htmlFile.getText(), importDocRef, null, true, false);
         	if (fileNames.length() > 1) {
             	fileNames.append("| ");
             }
@@ -1135,10 +1176,9 @@ public class GoProDocumentsImporter {
         String shortRegNumber = null;
         String regNumber = getElementTextByAttribudeName(root, gpRegNumberWithoutIndividual);
         String caseNumber = getElementTextByAttribudeName(root, GP_ELEMENT_CASE_NUMBER);
-        if (StringUtils.isNotBlank(regNumber) && StringUtils.isNotBlank(caseNumber)) {
+        if (StringUtils.isNotBlank(regNumber) && regNumber.contains("-")) {
         	shortRegNumber = StringUtils.substringAfterLast(regNumber, "-");
-        }
-        if (StringUtils.isNotBlank(regNumber) && StringUtils.isBlank(caseNumber)) {
+        }else if (StringUtils.isNotBlank(regNumber) && regNumber.contains("/")) {
         	shortRegNumber = StringUtils.substringAfterLast(regNumber, "/");
         }
 
@@ -1160,7 +1200,9 @@ public class GoProDocumentsImporter {
         mapChildren(root, mapping, doc.getNode(), new QName[] {}, mapping.typeInfo.propDefs);
 
         addDocumentLogs(documentRef, root, documentId);
-
+        
+        addWorkflowItems(documentRef, root, propsMap, mapping);
+        
         propsMap.put(DocumentCommonModel.Props.DOCUMENT_IS_IMPORTED,
                 Boolean.valueOf(DocumentStatus.FINISHED.getValueName().equals(propsMap.get(DocumentCommonModel.Props.DOC_STATUS))));
 
@@ -1310,13 +1352,15 @@ public class GoProDocumentsImporter {
             	for (int i = 0; i < contractPartiesProps.size() - childNodes.size(); i++) {
             		getDocumentDynamicService().createChildNodesHierarchyAndSetDefaultPropertyValues(node, hierarchy, mapping.typeInfo.docVer);
             	}
-            	childNodes = node.getAllChildAssociations(childAssocType);
-            	Assert.isTrue(contractPartiesProps.size() == childNodes.size());
-            	for (int i = 0; i < contractPartiesProps.size(); i++) {
-            		Map<QName, Serializable> contractPartyPropsMap = contractPartiesProps.get(i);
-            		Node childNode = childNodes.get(i);
-            		checkProps(contractPartyPropsMap, hierarchy, propDefs);
-            		childNode.getProperties().putAll(RepoUtil.toStringProperties(contractPartyPropsMap));
+            	if (contractPartiesProps.size() > 0) {
+	            	childNodes = node.getAllChildAssociations(childAssocType);
+	            	Assert.isTrue(contractPartiesProps.size() == childNodes.size());
+	            	for (int i = 0; i < contractPartiesProps.size(); i++) {
+	            		Map<QName, Serializable> contractPartyPropsMap = contractPartiesProps.get(i);
+	            		Node childNode = childNodes.get(i);
+	            		checkProps(contractPartyPropsMap, hierarchy, propDefs);
+	            		childNode.getProperties().putAll(RepoUtil.toStringProperties(contractPartyPropsMap));
+	            	}
             	}
             } else {
 	            if (index >= childNodes.size()) {
@@ -1809,10 +1853,13 @@ public class GoProDocumentsImporter {
         String appStart = getElementTextByAttribudeName(root, GP_ELEMENT_WF_APPSTART);
         
         Date startedDateTime = null;
+        Date finishedDueDateDateTime = null;
+        Date inProgressDueDateDateTime = DateUtils.addDays(new Date(), 1);
         try {
-        	startedDateTime = dateTimeFormat.parse(appStart + " 00:00:00");
+        	startedDateTime = (appStart.length() == 7)?dateTimeFormatdMMyy.parse(appStart + " 00:00:00"):dateTimeFormatddMMyy.parse(appStart + " 00:00:00");
+        	finishedDueDateDateTime = (appStart.length() == 7)?dateTimeFormatdMMyy.parse(appStart + " 23:59:59"):dateTimeFormatddMMyy.parse(appStart + " 23:59:59");
         } catch (ParseException e) {
-            throw new RuntimeException("Unable to parse APPSTART: " + e.getMessage(), e);
+            throw new RuntimeException("Unable to parse APPSTART: " + appStart + ", error: " + e.getMessage(), e);
         }
         
         LogEntry logEntry = new LogEntry();
@@ -1827,26 +1874,222 @@ public class GoProDocumentsImporter {
         BeanHelper.getLogService().addImportedLogEntry(logEntry, startedDateTime);
         
         
-        List<ReviewTask> reviewTasks = new ArrayList<ReviewTask>();
-        List<String> reviewers = new ArrayList<String>();
+        Map<String, ReviewTask> reviewTasks = parseReviewTasks(approvalHistory);
+        Set<String> reviewers = parseReviewers(processedReviewers);
         
+        boolean finishedWf = isFinishedWf(reviewers, reviewTasks.keySet());
+        Date wfFinishDateTime = (finishedWf)?getMaxTaskFinishDate(reviewTasks):null;
         
+        Pair<NodeRef, Map<QName,Serializable>> wfPair = doWorkflow(docRef, docProps, startedDateTime, approvalDescription, wfFinishDateTime);
+        NodeRef wfRef = wfPair.getFirst();
+        int taskIndex = 0;
         
+        Map<QName, Serializable> taskSearchableProps = wfPair.getSecond();
+        
+        boolean responsibleActiveSet = false;
+        NodeRef firstTaskRef = null;
+        String firstTaskOwnerId = null;
+
+        boolean reviewToOtherOrgEnabled = BeanHelper.getWorkflowConstantsBean().isReviewToOtherOrgEnabled();
+        String creatorInstitutionCode = (propertiesResolver != null)?propertiesResolver.getProperty("x-tee.institution"):null;
+        String creatorInstitutionName = BeanHelper.getParametersService().getStringParameter(Parameters.TASK_OWNER_STRUCT_UNIT);
+        
+    	Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+    	
+
+        
+        WorkflowType workflowType = BeanHelper.getWorkflowConstantsBean().getWorkflowTypes().get(WorkflowSpecificModel.Types.REVIEW_WORKFLOW);
+        for (String reviewer : reviewers) {
+            ReviewTask reviewTaskInfo = reviewTasks.get(reviewer);
+        	if (reviewTaskInfo == null) {
+        		reviewTaskInfo = new ReviewTask();
+        	}
+            
+        	String userId = defaultOwnerId;
+    		String userName = defaultOwnerName;
+    		String email = defaultOwnerEmail;
+        	
+            String institutionName = null;
+            
+            
+    		
+        	Node userNode = null;
+    		List<Node> userNodes = getUserService().searchUsers(reviewer, false, -1);
+    		if (userNodes != null && userNodes.size() == 1) {
+    			userNode = userNodes.get(0);
+    		}
+    		
+        	if (userNode != null) {
+        		userId = (String)userNode.getProperties().get(ContentModel.PROP_USERNAME);
+        		userName = reviewer;
+        		email = (String)userNode.getProperties().get(ContentModel.PROP_EMAIL);
+        	} else if (reviewTaskInfo.getCompletedDateTime() != null) {
+        		userId = DUMMY_USER_ID;
+        		userName = reviewer;
+        	}
+        	
+        	if (!DUMMY_USER_ID.equals(userId)) {
+        		OrganizationStructure organizationStructure = getOwnerInstitution(userId);
+        		institutionName = organizationStructure != null ? organizationStructure.getName() : null;
+        	}
+        	
+            props = new HashMap<QName, Serializable>();
+            props.put(WorkflowSpecificModel.Props.CREATOR_EMAIL, docProps.get(DocumentCommonModel.Props.OWNER_EMAIL));
+            props.put(WorkflowSpecificModel.Props.CREATOR_ID, docProps.get(DocumentCommonModel.Props.OWNER_ID));
+            props.put(WorkflowCommonModel.Props.CREATOR_NAME, docProps.get(DocumentCommonModel.Props.OWNER_NAME));
+            props.put(WorkflowCommonModel.Props.DOCUMENT_TYPE, docProps.get(DocumentAdminModel.Props.OBJECT_TYPE_ID));
+            props.put(WorkflowCommonModel.Props.OWNER_EMAIL, email);
+            props.put(WorkflowCommonModel.Props.OWNER_ID, userId);
+            props.put(WorkflowCommonModel.Props.OWNER_NAME, userName);            
+            
+            if (reviewToOtherOrgEnabled) {
+            	props.put(WorkflowSpecificModel.Props.CREATOR_INSTITUTION_CODE, creatorInstitutionCode);
+            	props.put(WorkflowSpecificModel.Props.CREATOR_INSTITUTION_NAME, creatorInstitutionName);
+            	props.put(WorkflowSpecificModel.Props.INSTITUTION_NAME, institutionName);
+            
+            }
+            
+            props.put(WorkflowCommonModel.Props.STARTED_DATE_TIME, startedDateTime);
+            props.put(WorkflowCommonModel.Props.STOPPED_DATE_TIME, null);
+            props.put(WorkflowCommonModel.Props.STATUS, (reviewTaskInfo.getCompletedDateTime() != null)?Status.FINISHED.getName():Status.IN_PROGRESS.getName());
+            props.put(WorkflowSpecificModel.Props.DUE_DATE, (reviewTaskInfo.getCompletedDateTime() != null)?finishedDueDateDateTime:inProgressDueDateDateTime);
+            props.put(WorkflowSpecificModel.Props.DUE_DATE_DAYS, null);
+            props.put(WorkflowSpecificModel.Props.IS_DUE_DATE_WORKING_DAYS, null);
+            props.put(WorkflowSpecificModel.Props.RESOLUTION, approvalDescription);
+            props.put(WorkflowSpecificModel.Props.WORKFLOW_RESOLUTION, approvalDescription);
+            props.put(WorkflowCommonModel.Props.OUTCOME, reviewTaskInfo.getOutcome());
+            props.put(WorkflowCommonModel.Props.COMPLETED_DATE_TIME, reviewTaskInfo.completedDateTime);
+            props.put(WorkflowSpecificModel.Props.COMMENT, (StringUtils.isBlank(reviewTaskInfo.comment))?"":reviewTaskInfo.getComment());
+
+            props.putAll(taskSearchableProps);
+            Task task = BeanHelper.getWorkflowService().createTaskInMemory(wfRef, workflowType, props);
+            Set<QName> aspects = task.getNode().getAspects();
+            aspects.add(WorkflowSpecificModel.Aspects.SEARCHABLE);
+
+            if (firstTaskRef == null && reviewTaskInfo.getCompletedDateTime() == null) {
+                firstTaskRef = task.getNodeRef();
+                firstTaskOwnerId = userId;
+            }
+            if (!responsibleActiveSet && reviewTaskInfo.getCompletedDateTime() == null && userId.equals(docProps.get(OWNER_ID))) {
+                task.getNode().getProperties().put(WorkflowSpecificModel.Props.ACTIVE.toString(), Boolean.TRUE);
+                aspects.add(WorkflowSpecificModel.Aspects.RESPONSIBLE);
+                responsibleActiveSet = true;
+                getPrivilegeService().setPermissions(docRef, userId, Privilege.EDIT_DOCUMENT);
+            } else {
+                getPrivilegeService().setPermissions(docRef, userId, Privilege.VIEW_DOCUMENT_FILES);
+            }
+            task.setTaskIndexInWorkflow(taskIndex++);
+            BeanHelper.getWorkflowDbService().createTaskEntry(task, wfRef);
+            
+            if (finishedWf) {
+            	docProps.put(DocumentCommonModel.Props.SEARCHABLE_HAS_ALL_FINISHED_COMPOUND_WORKFLOWS, Boolean.TRUE);
+            } else {
+            	docProps.put(DocumentCommonModel.Props.SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS, Boolean.TRUE);
+            }
+            //docProps.put(DocumentCommonModel.Props.DOC_STATUS, DocumentStatus.WORKING.getValueName());
+        }
+    
+        if (!responsibleActiveSet && firstTaskRef != null) {
+            props = new HashMap<QName, Serializable>();
+            props.put(WorkflowSpecificModel.Props.ACTIVE, Boolean.TRUE);
+            getPrivilegeService().setPermissions(docRef, firstTaskOwnerId, Privilege.EDIT_DOCUMENT);
+            BeanHelper.getWorkflowDbService().updateTaskProperties(firstTaskRef, props);
+        }
+	}
+    
+    private boolean isFinishedWf(Set<String> reviewers, Set<String> finishedReviewers) {
+    	if (reviewers.size() > finishedReviewers.size()) {
+    		return false;
+    	}
+    	for (String reviewer: reviewers) {
+    		if (!finishedReviewers.contains(reviewer)) {
+    			return false;
+    		}
+    	}
+    	return true;
     }
     
-    private List<ReviewTask> parseReviewTasks(String tasksInfo) {
-    	List<ReviewTask> reviewTasks = new ArrayList<ReviewTask>();
+    private Date getMaxTaskFinishDate(Map<String, ReviewTask> reviewTasks) {
+    	Date maxDate = null;
+    	for (String reviewer: reviewTasks.keySet()) {
+    		ReviewTask task = reviewTasks.get(reviewer);
+    		if (maxDate == null) {
+    			maxDate = task.getCompletedDateTime();
+    		} else if (maxDate.before(task.getCompletedDateTime())){
+    			maxDate = task.getCompletedDateTime();
+    		}
+    	}
+    	return maxDate;
+    }
+    
+    private Pair<NodeRef, Map<QName, Serializable>>  doWorkflow(NodeRef docRef, Map<QName, Serializable> docProps, Date startDateTime, String resolution, Date finishedDateTime) {
+    	NodeRef wfRef = null;
+        int taskIndex = 0;
+        Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+        Map<QName, Serializable> taskSearchableProps = null;
+
+        WorkflowType workflowType = BeanHelper.getWorkflowConstantsBean().getWorkflowTypes().get(WorkflowSpecificModel.Types.REVIEW_WORKFLOW);
+        
+        props = new HashMap<QName, Serializable>();
+        props.put(WorkflowCommonModel.Props.CREATOR_NAME, docProps.get(DocumentCommonModel.Props.OWNER_NAME));
+        props.put(WorkflowCommonModel.Props.OWNER_ID, docProps.get(DocumentCommonModel.Props.OWNER_ID));
+        props.put(WorkflowCommonModel.Props.OWNER_NAME, docProps.get(DocumentCommonModel.Props.OWNER_NAME));
+        props.put(WorkflowCommonModel.Props.STARTED_DATE_TIME, startDateTime);
+        props.put(WorkflowCommonModel.Props.STATUS, (finishedDateTime != null)?Status.FINISHED.getName():Status.IN_PROGRESS.getName());
+        props.put(WorkflowCommonModel.Props.STOPPED_DATE_TIME, null);
+        if (finishedDateTime != null) {
+        	props.put(WorkflowCommonModel.Props.FINISHED_DATE_TIME, finishedDateTime);
+        }
+        props.put(WorkflowCommonModel.Props.TYPE, CompoundWorkflowType.INDEPENDENT_WORKFLOW.name());
+        props.put(WorkflowCommonModel.Props.TITLE, docProps.get(DocumentCommonModel.Props.DOC_NAME));
+        NodeRef cwfRef = getNodeService().createNode(
+                BeanHelper.getConstantNodeRefsBean().getIndependentWorkflowsRoot(),
+                WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW,
+                WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW,
+                WorkflowCommonModel.Types.COMPOUND_WORKFLOW,
+                props
+                ).getChildRef();
+        getNodeService().createAssociation(docRef, cwfRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT);
+        getWorkflowService().updateMainDocument(cwfRef, docRef);
+
+        props = new HashMap<QName, Serializable>();
+        props.put(WorkflowCommonModel.Props.CREATOR_NAME, docProps.get(DocumentCommonModel.Props.OWNER_NAME));
+        props.put(WorkflowCommonModel.Props.MANDATORY, Boolean.FALSE);
+        props.put(WorkflowCommonModel.Props.PARALLEL_TASKS, Boolean.TRUE);
+        props.put(WorkflowCommonModel.Props.STARTED_DATE_TIME, startDateTime);
+        props.put(WorkflowCommonModel.Props.STOPPED_DATE_TIME, null);
+        props.put(WorkflowCommonModel.Props.STATUS, (finishedDateTime != null)?Status.FINISHED.getName():Status.IN_PROGRESS.getName());
+        props.put(WorkflowCommonModel.Props.STOP_ON_FINISH, Boolean.FALSE);
+        props.put(WorkflowSpecificModel.Props.RESOLUTION, resolution);
+        wfRef = getNodeService().createNode(
+                cwfRef,
+                WorkflowCommonModel.Assocs.WORKFLOW,
+                WorkflowCommonModel.Assocs.WORKFLOW,
+                WorkflowSpecificModel.Types.REVIEW_WORKFLOW,
+                props
+                ).getChildRef();
+        taskSearchableProps = WorkflowUtil.getTaskSearchableProps(props);
+        taskSearchableProps.put(WorkflowSpecificModel.Props.COMPOUND_WORKFLOW_ID, cwfRef.getId());
+
+        return new Pair<NodeRef, Map<QName,Serializable>>(wfRef, taskSearchableProps);
+    }
+    
+    private Map<String, ReviewTask> parseReviewTasks(String tasksInfo) {
+    	Map<String, ReviewTask> reviewTasks = new HashMap<String, ReviewTask>();
     	if (StringUtils.isNotBlank(tasksInfo)) {
         	String [] reviewerTasksArr = tasksInfo.split(";");
         	for (int i = 0; i < reviewerTasksArr.length; i++) {
-        		// TODO: check possible errors
         		String taskInfo = reviewerTasksArr[i];
         		String dateTimeStr = StringUtils.substringBefore(taskInfo, " - ").trim();
         		Date completedDateTime = null;
         		try {
-        			completedDateTime = dateTimeFormat.parse(dateTimeStr);
+        			if (StringUtils.isNotBlank(dateTimeStr) && dateTimeStr.length() == 10) {
+        				completedDateTime = dateFormat.parse(dateTimeStr);
+        			} else {
+        				completedDateTime = dateTimeFormat.parse(dateTimeStr);
+        			}
                 } catch (ParseException e) {
-                	// do nothing, means no finished date
+                	throw new RuntimeException("Unable to parse approval date: " + dateTimeStr + ", taskInfo: " + taskInfo + ", error: " + e.getMessage(), e);
                 }
         		String taskInfoSecond = StringUtils.substringAfter(taskInfo, " - ");
         		String name = StringUtils.substringBefore(taskInfoSecond, " - ").trim();
@@ -1859,6 +2102,7 @@ public class GoProDocumentsImporter {
         		rTask.setCompletedDateTime(completedDateTime);
         		rTask.setOutcome(outcome);
         		rTask.setComment(comment);
+        		reviewTasks.put(name, rTask);
         	}
         }
     	return reviewTasks;
@@ -1908,6 +2152,37 @@ public class GoProDocumentsImporter {
 		}
     	
     	
+    }
+    
+    private OrganizationStructure getOwnerInstitution(String userId) {
+    	Node user = BeanHelper.getUserService().getUser(userId);
+        if (user == null) {
+            return null;
+        }
+        String organizationId = (String) user.getProperties().get(ContentModel.PROP_ORGID);
+        if (StringUtils.isBlank(organizationId)) {
+            return null;
+        }
+        OrganizationStructure organizationStructure = BeanHelper.getOrganizationStructureService().getOrganizationStructure(organizationId);
+        while (organizationStructure != null) {
+            String institutionRegCode = organizationStructure.getInstitutionRegCode();
+            if (StringUtils.isNotBlank(institutionRegCode)) {
+                List<Node> institutions = BeanHelper.getAddressbookService().getContactsByRegNumber(institutionRegCode);
+                if (!institutions.isEmpty()) {
+                    Map<String, Object> orgProps = institutions.get(0).getProperties();
+                    if (Boolean.TRUE.equals(orgProps.get(Props.DVK_CAPABLE))) {
+                        // dvk capable organization contact found
+                        return organizationStructure;
+                    }
+                    
+                    return null;
+                }
+                return null;
+            }
+            organizationStructure = BeanHelper.getOrganizationStructureService().getOrganizationStructure(organizationStructure.getSuperUnitId());
+        }
+        // organization with non-empty reg code is not found
+        return null;
     }
 
 }

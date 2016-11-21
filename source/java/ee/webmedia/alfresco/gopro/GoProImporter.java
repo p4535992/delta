@@ -91,7 +91,6 @@ public class GoProImporter implements SaveListener {
             ImportSettings importData = data.clone();
             StructureImportWork structureImport = new StructureImportWork(importData);
             DocumentImportWork documentImport = new DocumentImportWork(importData);
-            //WorkflowImportWork workflowImport = new WorkflowImportWork(importData);
 
             startImporterThread(structureImport, documentImport);
         } else {
@@ -263,46 +262,7 @@ public class GoProImporter implements SaveListener {
         }
     }
 
-    /**
-     * A class with a callback for importing work-flows.
-     *
-    private class WorkflowImportWork extends BaseImportWork {
-
-        private final ImportSettings importData;
-
-        private WorkflowImporter importer;
-
-        public WorkflowImportWork(ImportSettings importData) {
-            this.importData = importData;
-        }
-
-        @Override
-        public Boolean doWork() {
-            if (!importData.isSharepointOrigin()) {
-                return null;
-            }
-
-            try {
-                status.beginWorkflow();
-                importer = new WorkflowImporter(importData, status, jdbcTemplate);
-                if (importer.init()) {
-                    super.doWork();
-                }
-            } finally {
-                if (importer != null) {
-                    importer.cleanup();
-                }
-                status.endWorkflow();
-            }
-            return null;
-        }
-
-        @Override
-        public Boolean execute() {
-            return importer.doBatch();
-        }
-    }
-    */
+    
     
     public static class StopException extends RuntimeException {
         private static final long serialVersionUID = 1L;
