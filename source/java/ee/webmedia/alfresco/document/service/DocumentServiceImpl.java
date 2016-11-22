@@ -2474,7 +2474,30 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
         List<NodeRef> compoundWorkflowRefs = new ArrayList<NodeRef>();
         for (Task task : tasks) {
             if (!task.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK, WorkflowSpecificModel.Types.LINKED_REVIEW_TASK)) {
+                try{
+                    log.debug("TASK dueDateStr: " + task.getDueDateStr());
+                    log.debug("TASK category:" + task.getCategory());
+                    log.debug("TASK getCreatorEmail:" + task.getCreatorEmail());
+                    log.debug("TASK getInitiatingCompoundWorkflowRef: " + task.getInitiatingCompoundWorkflowRef());
+                    log.debug("TASK getCompoundWorkflowId: " + task.getCompoundWorkflowId());
+                    log.debug("TASK getCreatorId: " + task.getCreatorId());
+                    log.debug("TASK getInstitutionCode: " + task.getInstitutionCode());
+                    log.debug("TASK getStatus: " + task.getStatus());
+                    log.debug("TASK getOwnerEmail: " + task.getOwnerEmail());
+                    log.debug("TASK getOwnerName: " + task.getOwnerName());
+                    log.debug("TASK getViewedByOwner: " + task.getViewedByOwner());
+                    log.debug("TASK nodeRef: " + task.getNodeRef().toString());
+                    log.debug("TASK nodeRef().storeRef():" + task.getNodeRef().getStoreRef().toString());
+
+                } catch (Exception ex){
+                    log.error("ERROR: " + ex.getMessage(), ex);
+                }
+
+
                 NodeRef compoundWorkflowNodeRef = new NodeRef(task.getNodeRef().getStoreRef(), task.getCompoundWorkflowId());
+
+                log.debug("TASK compoundWorkflowNodeRef: " + compoundWorkflowNodeRef.toString());
+
                 compoundWorkflowRefs.add(compoundWorkflowNodeRef);
             }
         }

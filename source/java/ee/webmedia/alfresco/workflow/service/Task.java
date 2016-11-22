@@ -153,6 +153,7 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         return substituteName;
     }
 
+
     public void setOwnerName(String ownerName) {
         setProp(WorkflowCommonModel.Props.OWNER_NAME, ownerName);
     }
