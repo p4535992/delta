@@ -126,7 +126,7 @@ public class GoProDocumentsImporter {
     
     private static final String GP_MAIN_ELEMENT_FIELD = "field";
     private static final String GP_MAIN_ATTRIBUTE_NAME = "name";
-    
+    // doc elements
     private static final String GP_ELEMENT_CREATION_DATE = "CreationDate";
     private static final String GP_ELEMENT_DOC_ACCESS_TYPE = "DocAccessType";
     private static final String GP_ELEMENT_DOC_CAT = "DocCat";
@@ -137,13 +137,20 @@ public class GoProDocumentsImporter {
     private static final String GP_ELEMENT_HTML_BODY = "Body";
     private static final String GP_ELEMENT_DOC_COMMENTS_LIST = "document_comments_list";
     private static final String GP_ELEMENT_LINK = "link";
+    private static final String GP_ELEMENT_PARENT_DOCUMENT_ID = "parentdocumentid";
     private static final String GP_ELEMENT_CASE_LINK = "caseLink";
     private static final String GP_ELEMENT_CASE_NUMBER = "CaseNumber";
-    
+    // wf elements
     private static final String GP_ELEMENT_WF_APPROVAL_DESCRIPTION = "ApprovalDescription";
     private static final String GP_ELEMENT_WF_APPSTART = "APPSTART";
     private static final String GP_ELEMENT_WF_PROCESSED_REVIEWERS = "processedreviewers";
     private static final String GP_ELEMENT_WF_APPROVAL_HISTORY = "approvalhistory";
+    
+    // series mapping elements
+    private static final String GP_ELEMENT_SERIES_MAPPING_PROP = "prop";
+    private static final String GP_ELEMENT_SERIES_MAPPING_FROM = "from";
+    private static final String GP_ELEMENT_SERIES_MAPPING_TO = "to";
+    
     
     
     /**
@@ -182,7 +189,7 @@ public class GoProDocumentsImporter {
     private String defaultOwnerName;
     private String defaultOwnerEmail;
     private Collection<StoreRef> storeRefs = new LinkedHashSet<StoreRef>();
-
+    
     // [SPRING BEANS
     private TransactionService transactionService;
     private DocumentService documentService;
@@ -193,6 +200,7 @@ public class GoProDocumentsImporter {
     private BehaviourFilter behaviourFilter;
     private GoProImporter goProImporter;
     private XTeeProviderPropertiesResolver propertiesResolver;
+    
 
     public GoProDocumentsImporter(GoProImporter goProImporter) {
         // <bean id="postipoissDocumentsImporter" class="ee.webmedia.alfresco.postipoiss.PostipoissDocumentsImporter">
@@ -288,7 +296,8 @@ public class GoProDocumentsImporter {
         	storeRefs.add(generalService.getArchivalsStoreRef());
         	
             mappings = goProDocumentsMapper.loadMetadataMappings(mappingsFile);
-            //loadSeriesMappings();
+            loadSeriesMappings();
+            loadCompletedCaseFilesVolumes();
             loadDocuments();
             loadCompletedDocuments();
             loadPostponedAssocs();
@@ -298,6 +307,8 @@ public class GoProDocumentsImporter {
             documentsMap = null;
             mappings = null;
             postponedAssocs = null;
+            completedCaseFiles = null;
+            completedVolumes = null;
         }
 
 
@@ -311,6 +322,8 @@ public class GoProDocumentsImporter {
         completedDocumentsMap = new TreeMap<String, NodeRef>();
         postponedAssocs = new TreeMap<String, List<PostponedAssoc>>();
         postponedAssocsCommited = new TreeMap<String, List<PostponedAssoc>>();
+        completedCaseFiles = new HashMap<String, GoProVolume>();
+        completedVolumes = new HashMap<String, List<GoProVolume>>();
         mappings = null;
         seriesMappings = new HashMap<String, String>();
         indexedFiles = null;
@@ -323,15 +336,65 @@ public class GoProDocumentsImporter {
     protected NavigableMap<String /* documentId */, NodeRef> readyToIndexDocumentsMap;
     protected NavigableMap<String /* documentId */, List<PostponedAssoc>> postponedAssocs;
     protected NavigableMap<String /* documentId */, List<PostponedAssoc>> postponedAssocsCommited;
-    private final Map<String, org.alfresco.util.Pair<NodeRef, Map<QName, Serializable>>> userDataByUserName = new HashMap<String, org.alfresco.util.Pair<NodeRef, Map<QName, Serializable>>>();
+    private final Map<String, Pair<NodeRef, Map<QName, Serializable>>> userDataByUserName = new HashMap<String, Pair<NodeRef, Map<QName, Serializable>>>();
+    private Map<String, GoProVolume> completedCaseFiles;
+    private Map<String, List<GoProVolume>> completedVolumes;
+
 
     protected NavigableSet<Integer> filesToProceed;
     protected File completedDocumentsFile;
     protected File failedDocumentsFile;
     protected File postponedAssocsFile;
+    
 
     private Map<String, Mapping> mappings;
     private Map<String, String> seriesMappings = new HashMap<String, String>();
+    
+    
+    private void loadCompletedCaseFilesVolumes() throws IOException {
+    	completedCaseFiles = new HashMap<String, GoProVolume>();
+        completedVolumes = new HashMap<String, List<GoProVolume>>();
+        CsvReader reader = new CsvReader(new BufferedInputStream(new FileInputStream(new File(workFolder, "completed_volumes_cases.csv"))), CSV_SEPARATOR,
+                Charset.forName("UTF-8"));
+        try {
+            reader.readHeaders();
+            while (reader.readRecord()) {
+                String volumeType = reader.get(0);
+                String mark = reader.get(1);
+                NodeRef nodeRef = new NodeRef(reader.get(4));
+                Date validFrom = null;
+                try {
+                	validFrom = dateFormat.parse(reader.get(5));
+                } catch (Throwable t) {}
+                Date validTo = null;
+                try {
+                	validTo = dateFormat.parse(reader.get(6));
+                } catch (Throwable e) {}
+                String seriesIdentifier = reader.get(8);
+                String function = reader.get(7);
+                GoProVolume volume = new GoProVolume();
+                volume.nodeRef = nodeRef;
+                volume.mark = mark;
+                volume.seriesIdentifier = seriesIdentifier;
+                volume.function = function;
+                volume.validFrom = validFrom;
+                volume.validTo = validTo;
+                if ("caseFile".equals(volumeType)) {
+                	completedCaseFiles.put(mark, volume);
+                } else {
+                	List<GoProVolume> volumes = completedVolumes.get(seriesIdentifier);
+                	if (volumes == null) {
+                		volumes = new ArrayList<GoProVolume>();
+                		completedVolumes.put(seriesIdentifier, volumes);
+                	}
+                	volumes.add(volume);
+                	
+                }
+            }
+        } finally {
+            reader.close();
+        }
+    }
 
     protected void loadDocuments() {
         documentsMap = new TreeMap<String, File>();
@@ -780,12 +843,23 @@ public class GoProDocumentsImporter {
     }
     
     protected void loadSeriesMappings() throws Exception {
-    	File seriesMappingsXml = new File(workFolder, "seriesMappings.xml");
+    	File seriesMappingsXml = new File(dataFolder, "seriesMappings.xml");
         if (!seriesMappingsXml.exists()) {
             log.info("Skipping loading series mappings, file does not exist: " + seriesMappingsXml);
             return;
         }
         Element root = xmlReader.read(seriesMappingsXml).getRootElement();
+        for (Object prop: root.elements(GP_ELEMENT_SERIES_MAPPING_PROP)) {
+        	String from = ((Element)prop).elementText(GP_ELEMENT_SERIES_MAPPING_FROM);
+        	String to = ((Element)prop).elementText(GP_ELEMENT_SERIES_MAPPING_TO);
+        	if (from != null) {
+        		from = from.trim();
+        	}
+        	if (to != null) {
+        		to = to.trim();
+        	}
+        	seriesMappings.put(from, to);
+        }
         
     }
 
@@ -932,8 +1006,17 @@ public class GoProDocumentsImporter {
             File file = entry.getValue();
             try {
                 ImportedDocument doc = createDocument(documentId, file);
-                batchCompletedDocumentsMap.put(documentId, doc);
-                completedDocumentsMap.put(documentId, doc.nodeRef); // Add immediately to completedDocumentsMap, because other code wants to access it
+                if (doc.nodeRef != null) {
+                	batchCompletedDocumentsMap.put(documentId, doc);
+                	completedDocumentsMap.put(documentId, doc.nodeRef); // Add immediately to completedDocumentsMap, because other code wants to access it
+                } else {
+	                CsvWriter writer = new CsvWriter(new FileWriter(failedDocumentsFile, true), CSV_SEPARATOR);
+	                try {
+	                    writer.writeRecord(new String[] { file.getName(), doc.documentTypeId });
+	                } finally {
+	                    writer.close();
+	                }
+                }
             } catch (Exception e) {
                 CsvWriter writer = new CsvWriter(new FileWriter(failedDocumentsFile, true), CSV_SEPARATOR);
                 try {
@@ -1452,11 +1535,18 @@ public class GoProDocumentsImporter {
     	NodeRef caseFileNodeRef = null;
     	Element caseNumber = getElementByAttribudeName(root, GP_ELEMENT_CASE_NUMBER);
     	if (caseNumber != null) {
-    		List<NodeRef> caseFileRefs = findCaseFiles(storeRefs, caseNumber.getText().trim());
-    		if (caseFileRefs.isEmpty() || caseFileRefs.size() > 1) {
-    			throw new RuntimeException("Could not find volume for document, searched based on caseNumber=" + caseNumber.getStringValue());
-    		} else {
-    			caseFileNodeRef = caseFileRefs.get(0);
+    		String caseMark = caseNumber.getText().trim();
+    		GoProVolume goProVolume = completedCaseFiles.get(caseMark);
+    		if (goProVolume != null) {
+    			caseFileNodeRef = goProVolume.getNodeRef();
+    		}
+    		if (caseFileNodeRef == null) {
+	    		List<NodeRef> caseFileRefs = findCaseFiles(storeRefs, caseMark);
+	    		if (caseFileRefs.isEmpty() || caseFileRefs.size() > 1) {
+	    			throw new RuntimeException("Could not find volume for document, searched based on caseNumber=" + caseNumber.getStringValue());
+	    		} else {
+	    			caseFileNodeRef = caseFileRefs.get(0);
+	    		}
     		}
     	} else {
     		Element docCat = getElementByAttribudeName(root, GP_ELEMENT_DOC_CAT);
@@ -1465,6 +1555,9 @@ public class GoProDocumentsImporter {
     			throw new RuntimeException("Could not find volume for document, both caseNumber and (docCat and/or dateSet) are missing");
     		} else {
     			String seriesIdentifier = StringUtils.substringBefore(docCat.getText(), " ").trim();
+    			if (seriesMappings.containsKey(seriesIdentifier)) {
+    				seriesIdentifier = seriesMappings.get(seriesIdentifier);
+    			}
     			Date dateSetDate = null;
     			try {
     				dateSetDate = dateFormat.parse(dateSet.getText());
@@ -1472,16 +1565,28 @@ public class GoProDocumentsImporter {
     				throw new RuntimeException("Could not find volume for document, invalid dateSet=" + dateSet.getText());
     			}
     			
-    			List<NodeRef> seriesRefs = findSeries(storeRefs, seriesIdentifier);
-    			if (seriesRefs.isEmpty()) {
-    				throw new RuntimeException("Could not find volume for document, searched based on seriesIdentifier = " + seriesIdentifier);
-    			} else {
-    				List<NodeRef> caseFileRefs = findAnnualFiles(storeRefs, seriesRefs, dateSetDate);
-    				if (caseFileRefs.isEmpty() || caseFileRefs.size() > 1) {
-    					throw new RuntimeException("Could not find volume for document, searched based on docCat = " + docCat.getText() + ", and creationDate = " + dateSet.getText());
-    	    		} else {
-    	    			caseFileNodeRef = caseFileRefs.get(0);
-    	    		}
+    			List<GoProVolume> volumes = completedVolumes.get(seriesIdentifier);
+    			if (volumes != null) {
+    				for (GoProVolume volume: volumes) {
+    					if ((dateSetDate.after(volume.validFrom) || dateSetDate.equals(volume.validFrom))  && 
+    							(volume.validTo == null || dateSetDate.before(volume.validTo) || dateSetDate.equals(volume.validTo))) {
+    						caseFileNodeRef = volume.getNodeRef();
+    						break;
+    					}
+    				}	
+    			}
+    			if (caseFileNodeRef == null) {
+	    			List<NodeRef> seriesRefs = findSeries(storeRefs, seriesIdentifier);
+	    			if (seriesRefs.isEmpty()) {
+	    				throw new RuntimeException("Could not find volume for document, searched based on seriesIdentifier = " + seriesIdentifier);
+	    			} else {
+	    				List<NodeRef> caseFileRefs = findAnnualFiles(storeRefs, seriesRefs, dateSetDate);
+	    				if (caseFileRefs.isEmpty() || caseFileRefs.size() > 1) {
+	    					throw new RuntimeException("Could not find volume for document, searched based on docCat = " + docCat.getText() + ", and creationDate = " + dateSet.getText());
+	    	    		} else {
+	    	    			caseFileNodeRef = caseFileRefs.get(0);
+	    	    		}
+	    			}
     			}
     		}
     	}
@@ -1662,6 +1767,12 @@ public class GoProDocumentsImporter {
 
     protected void addAssociations(NodeRef documentRef, String documentId, Element root) {
         List docLinks = getElementsByAttribudeName(root, GP_ELEMENT_LINK);
+        List docParentLinks = getElementsByAttribudeName(root, GP_ELEMENT_PARENT_DOCUMENT_ID);
+        if (docLinks != null && docParentLinks != null) {
+        	docLinks.addAll(docParentLinks);
+        } else if (docLinks == null && docParentLinks != null) {
+        	docLinks = docParentLinks;
+        }
         if (docLinks != null && !docLinks.isEmpty()) {
             for (Object object : docLinks) {
             	String targetDocumentId = ((Element) object).getText();
@@ -1684,15 +1795,24 @@ public class GoProDocumentsImporter {
         List caseLinks = getElementsByAttribudeName(root, GP_ELEMENT_CASE_LINK);
         if (caseLinks != null && !caseLinks.isEmpty()) {
             for (Object object : caseLinks) {
+            	NodeRef caseFileRef = null;
             	String volumeMark = ((Element) object).getText();
                 if (StringUtils.isBlank(volumeMark)) {
                     continue;
                 }
-                List<NodeRef> caseFileRefs = findCaseFiles(storeRefs, volumeMark);
-        		if (caseFileRefs.isEmpty() || caseFileRefs.size() > 1) {
-        			throw new RuntimeException("Could not find volume for document, searched based on caseLink=" + volumeMark);
-        		} else {
-        			NodeRef caseFileRef = caseFileRefs.get(0);
+                GoProVolume goProVolume = completedCaseFiles.get(volumeMark);
+        		if (goProVolume != null) {
+        			caseFileRef = goProVolume.getNodeRef();
+        		}
+        		if (caseFileRef == null) {
+		            List<NodeRef> caseFileRefs = findCaseFiles(storeRefs, volumeMark);
+		    		if (caseFileRefs.isEmpty() || caseFileRefs.size() > 1) {
+		    			throw new RuntimeException("Could not find volume for document, searched based on caseLink=" + volumeMark);
+		    		} else {
+		    			caseFileRef = caseFileRefs.get(0);
+		    		}
+        		}
+        		if (caseFileRef != null) {
         			log.debug("Creating assoc " + volumeMark + " [" + caseFileRef + "] -> " + documentId + " [" + documentRef + "], type=" + AssocType.DEFAULT);
                     createAssoc(caseFileRef, documentRef, volumeMark, documentId, true);
         		}
@@ -2150,6 +2270,54 @@ public class GoProDocumentsImporter {
 		public void setComment(String comment) {
 			this.comment = comment;
 		}
+    	
+    	
+    }
+    
+    private class GoProVolume {
+    	private NodeRef nodeRef;
+		private Date validFrom;
+		private Date validTo;
+    	private String mark;
+    	private String seriesIdentifier;
+    	private String function;
+    	
+    	public NodeRef getNodeRef() {
+			return nodeRef;
+		}
+		public void setNodeRef(NodeRef nodeRef) {
+			this.nodeRef = nodeRef;
+		}
+		public Date getValidFrom() {
+			return validFrom;
+		}
+		public void setValidFrom(Date validFrom) {
+			this.validFrom = validFrom;
+		}
+		public Date getValidTo() {
+			return validTo;
+		}
+		public void setValidTo(Date validTo) {
+			this.validTo = validTo;
+		}
+		public String getMark() {
+			return mark;
+		}
+		public void setMark(String mark) {
+			this.mark = mark;
+		}
+		public String getSeriesIdentifier() {
+			return seriesIdentifier;
+		}
+		public void setSeriesIdentifier(String seriesIdentifier) {
+			this.seriesIdentifier = seriesIdentifier;
+		}
+		public String getFunction() {
+			return function;
+		}
+		public void setFunction(String function) {
+			this.function = function;
+		}    	
     	
     	
     }

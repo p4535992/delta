@@ -93,6 +93,7 @@ public class GoProImporter implements SaveListener {
             DocumentImportWork documentImport = new DocumentImportWork(importData);
 
             startImporterThread(structureImport, documentImport);
+            
         } else {
             LOG.warn("Importer is already running; skipping another request to run import in background");
         }
@@ -202,6 +203,7 @@ public class GoProImporter implements SaveListener {
             } finally {
             	importer.checkSeriesOrders();
                 status.endStruct();
+                status.setStructImportFinished(true);
             }
             return null;
         }
@@ -246,6 +248,20 @@ public class GoProImporter implements SaveListener {
         @Override
         protected Boolean executeWithoutTransaction() {
         	try {
+        		// to let structure import to finish
+                int count = 0;
+                while (!status.isStructImportFinished() && count < 60) {
+                	count++;
+                	try {
+                		Thread.sleep(60000);
+                	} catch (InterruptedException e) {
+                	}
+                }
+                
+                try {
+            		Thread.sleep(180000);
+            	} catch (InterruptedException e) {
+            	}
         		importer.runImport(new File(importData.getDataFolder()), new File(importData.getWorkFolder()), importData.getMappingsFile(), importData.getBatchSize(), importData.getDefaultOwnerId());
         	} catch (Exception e) {
         		LOG.error("GoProDocumentsImporter failed: " + e.getMessage());

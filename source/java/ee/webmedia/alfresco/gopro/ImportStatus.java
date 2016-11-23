@@ -21,8 +21,19 @@ public class ImportStatus implements Serializable {
     private final List<String> messages = new ArrayList<String>(6);
 
     private long start = -1;
+    
+    private boolean structImportFinished = false;
 
-    public void reset() {
+    public boolean isStructImportFinished() {
+		return structImportFinished;
+	}
+
+	public void setStructImportFinished(boolean structImportFinished) {
+		this.structImportFinished = structImportFinished;
+	}
+
+	public void reset() {
+		structImportFinished = false;
         messages.clear();
     }
 

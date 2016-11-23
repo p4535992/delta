@@ -1923,6 +1923,7 @@ public class PostipoissDocumentsImporter {
         boolean responsibleActiveSet = false;
         NodeRef firstTaskRef = null;
         String firstTaskOwnerId = null;
+        boolean isDocumentWfEnabled = BeanHelper.getWorkflowConstantsBean().isDocumentWorkflowEnabled();
 
         for (Object o : root.element("tegevused").elements()) {
             Element tegevus = (Element) o;
@@ -1978,6 +1979,7 @@ public class PostipoissDocumentsImporter {
 
             Date dateTime = StringUtils.isBlank(kuupaev) ? new Date() : kpv;
             NodeRef wfRef = null;
+            NodeRef cwfRef = null;
             int taskIndex = 0;
             Map<QName, Serializable> props = new HashMap<QName, Serializable>();
             Map<QName, Serializable> taskSearchableProps = null;
@@ -2003,17 +2005,19 @@ public class PostipoissDocumentsImporter {
                     props.put(WorkflowCommonModel.Props.STARTED_DATE_TIME, dateTime);
                     props.put(WorkflowCommonModel.Props.STATUS, Status.IN_PROGRESS.getName());
                     props.put(WorkflowCommonModel.Props.STOPPED_DATE_TIME, null);
-                    props.put(WorkflowCommonModel.Props.TYPE, CompoundWorkflowType.INDEPENDENT_WORKFLOW.name());
+                    props.put(WorkflowCommonModel.Props.TYPE, (isDocumentWfEnabled)?CompoundWorkflowType.DOCUMENT_WORKFLOW.name():CompoundWorkflowType.INDEPENDENT_WORKFLOW.name());
                     props.put(WorkflowCommonModel.Props.TITLE, docProps.get(DocumentCommonModel.Props.DOC_NAME));
-                    NodeRef cwfRef = getNodeService().createNode(
-                            BeanHelper.getConstantNodeRefsBean().getIndependentWorkflowsRoot(),
+                    cwfRef = getNodeService().createNode(
+                    		(isDocumentWfEnabled)?docRef:BeanHelper.getConstantNodeRefsBean().getIndependentWorkflowsRoot(),
                             WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW,
                             WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW,
                             WorkflowCommonModel.Types.COMPOUND_WORKFLOW,
                             props
                             ).getChildRef();
-                    getNodeService().createAssociation(docRef, cwfRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT);
-                    getWorkflowService().updateMainDocument(cwfRef, docRef);
+                    if (isDocumentWfEnabled) {
+                    	getNodeService().createAssociation(docRef, cwfRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT);
+                    	getWorkflowService().updateMainDocument(cwfRef, docRef);
+                    }
 
                     props = new HashMap<QName, Serializable>();
                     props.put(WorkflowCommonModel.Props.CREATOR_NAME, kelleltEnimi + " " + kelleltPnimi);
@@ -2068,6 +2072,7 @@ public class PostipoissDocumentsImporter {
                 props.put(WorkflowCommonModel.Props.OUTCOME, null);
                 props.put(WorkflowCommonModel.Props.COMPLETED_DATE_TIME, null);
                 props.put(WorkflowSpecificModel.Props.COMMENT, "");
+                props.put(WorkflowSpecificModel.Props.COMPOUND_WORKFLOW_ID, cwfRef.getId());
 
                 props.putAll(taskSearchableProps);
                 Task task = BeanHelper.getWorkflowService().createTaskInMemory(wfRef, workflowType, props);
@@ -2084,7 +2089,11 @@ public class PostipoissDocumentsImporter {
                     responsibleActiveSet = true;
                     getPrivilegeService().setPermissions(docRef, kelleleIkood, Privilege.EDIT_DOCUMENT);
                 } else {
-                    getPrivilegeService().setPermissions(docRef, kelleleIkood, Privilege.VIEW_DOCUMENT_FILES);
+                    if (isDocumentWfEnabled) {
+                    	getPrivilegeService().setPermissions(docRef, kelleleIkood, Privilege.EDIT_DOCUMENT);
+                    } else {	
+                    	getPrivilegeService().setPermissions(docRef, kelleleIkood, Privilege.VIEW_DOCUMENT_FILES);
+                    }
                 }
                 task.setTaskIndexInWorkflow(taskIndex++);
                 BeanHelper.getWorkflowDbService().createTaskEntry(task, wfRef);
