@@ -169,7 +169,7 @@
 <f:verbatim><br/></f:verbatim>
 
 <f:verbatim><hr/></f:verbatim>
-<h:outputText value="Dokumendi ADR peakirjaks dokumendi liigi nimetuse määramine"/>
+<h:outputText value="Dokumendi ADR pealkirjaks dokumendi liigi nimetuse määramine"/>
 <f:verbatim><br/></f:verbatim>
 <h:outputText value="Kuupäev (k.a., kujul pp.kk.aaaa), millest varem loodud dokumentidel määratakse välja 'ADR pealkiri' tühja väärtuse asemel väärtuseks dokumendi liigi pealkiri: "/>
 <h:inputText id="endDateStr" value="#{adrDocNameUpdater.endDateStr}" size="12" />
@@ -181,6 +181,21 @@
    actionListener="#{adrDocNameUpdater.stopUpdater}"
    rendered="#{adrDocNameUpdater.updaterRunning == true}"
    disabled="#{adrDocNameUpdater.updaterStopping == true}" />
+<f:verbatim><br/></f:verbatim>
+
+<f:verbatim><hr/></f:verbatim>
+<h:outputText value="Dokumendi avalikku registrisse=Ei, lähe ADR-i määramine"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Kuupäev (k.a., kujul pp.kk.aaaa), millest varem loodud dokumentidel määratakse avalikku registrisse=Ei, lähe ADR-i: "/>
+<h:inputText id="ptaEndDateStr" value="#{publishToAdrUpdater.ptaEndDateStr}" size="12" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="startPublishToAdrUpdater" value="Käivita" type="submit"
+   actionListener="#{publishToAdrUpdater.executeUpdaterInBackground}"
+   rendered="#{publishToAdrUpdater.updaterRunning == false}" />
+<h:commandButton id="stopPublishToAdrUpdater" value="Peata" type="submit"
+   actionListener="#{publishToAdrUpdater.stopUpdater}"
+   rendered="#{publishToAdrUpdater.updaterRunning == true}"
+   disabled="#{publishToAdrUpdater.updaterStopping == true}" />
 <f:verbatim><br/></f:verbatim>
 
 <f:verbatim><hr/></f:verbatim>
@@ -916,92 +931,6 @@
 
 <f:verbatim><br/><br/></f:verbatim>
 <f:verbatim><hr/></f:verbatim>
-
-
-<f:verbatim><hr/></f:verbatim>
-
-<h:outputText value="GoPro andmete importimine: " style="font-weight: bold;" />
-<f:verbatim>
-<br/>
-<ul>
-<li>* Enne dokumentide importi peavad kõik kasutajad olema rakendusse tõmmatud.</li>
-<li>* Lucene indekseerimine lülitada välja parema kiiruse saavutamiseks (nii nagu SIM 1.10 -> 2.5 juhendis kirjeldatud juuni 2011), ja pärast teha ühekorraga järgi. Koos indekseerimise välja lülitamisega lülitada välja ka öises taustatöös indeksi andmetes aukude otsimine (findHolesAndIndex.enabled=false).</li>
-<li>* Käivitamise nupp võimalusel jätkab pooleli jäänud kohast (kui workFolder-ites on csv faile kus eelnev progress on kirjas).</li>
-<li>* Peatamise nupp peatab esimesel võimalusel (konktaktide impordi keskel, struktuuri impordi keskel, iga 50 dokumendi importimise või faili importimise või faili indekseerimise vahel)</li>
-<li>* Kui ükskõik milline parameeter grupis (...DataFolder, ...WorkFolder, ...ArchivalsStore, ...MappingsFileName) on tühi, siis liigutakse järgmise parameetrite grupi juurde.</li>
-<li>* Kui ...DataFolder asukohas leidub fail kontaktid.csv, siis teostatakse kontaktide import. Kui faili ei leidu, siis liigutakse järgmisesse sammu, viga ei teki. Kui kontaktide import õnnestub, kirjutatakse ...WorkFolder asukohta fail completed_kontaktid.csv.</li>
-<li>* Struktuuri impordi jaoks loetakse sisse asukohas ...DataFolder olevad failid struktuur.csv ja toimikud.csv. Tekitatakse funktsioonid/sarjad/toimikud arhiivimoodustaja alla, mis on määratud parameetris ...ArchivalsStore. Impordi käigus kirjutatakse asukohta ...WorkFolder fail completed_toimikud.csv.</li>
-<li>* Dokumentide impordil luuakse asukohas ...DataFolder olevad dokumendid ja failid. Mappings.xml faili nimetus on parameetris ...MappingsFileName. Impordi käigus kirjutatakse asukohta ...WorkFolder järgmised failid - completed_docs.csv, completed_files.csv, indexed_files.csv, users_found.csv, users_not_found.csv, postponed_assocs.csv.</li>
-<li>* Impordi progressi, infoteateid ja veateateid saab jälgida rakenduse logist.</li>
-</ul>
-<br/>
-</f:verbatim>
-
-<h:outputText value="GoPro andmete importimise parameetrid: " style="font-weight: bold;" />
-<f:verbatim>
-<ul>
-<li>* <strong>dataFolder</strong> &ndash; absoluutne tee kaustani rakenduse serveris, kus asub ka "struktuur.csv" fail, millest imporditakse.</li>
-<li>* <strong>workFolder</strong> &ndash; absoluutne tee olemasoleva kaustani rakenduse serveris, kuhu kirjutatakse logifailid.</li>
-<li>* <strong>mappingsFileName</strong> &ndash; absoluutne tee GoPro-st eksporditud XML failide ja Delta dokumendi liikide vahelist vastavust kirjedava XML failini.</li>
-<li>* <strong>defaultOwnerId</strong> &ndash; vaikimisi dokumendi/menetluse vastutajaks määratava kasutaja isikukood.</li>
-<li>* <strong>taskOwnerStructUnitAuthority</strong> &ndash; kasutajagrupp, mis lisatakse sarjade õigustesse, et grupi liikmed saaksid sarja dokumente ja faile vaadata.</li>
-<li>* <strong>taskOwnerStructUnit</strong> &ndash; kasutajagrupp, mis lisatakse sarjade õigustesse, et grupi liikmed saaksid sarja dokumente ja faile vaadata.</li>
-</ul>
-<br/>
-</f:verbatim>
-
-<h:outputText value="dataFolder [*]: "/>
-<h:inputText value="#{goproImporter.data.dataFolder}" size="60" />
-<f:verbatim><br/></f:verbatim>
-
-<h:outputText value="workFolder [*]: "/>
-<h:inputText value="#{goproImporter.data.workFolder}" size="60" />
-<f:verbatim><br/></f:verbatim>
-
-<h:outputText value="mappingsFileName [*]: "/>
-<h:inputText value="#{goproImporter.data.mappingsFileName}" size="60" />
-<f:verbatim><br/></f:verbatim>
-
-<h:outputText value="defaultOwnerId [*]: "/>
-<h:inputText value="#{goproImporter.data.defaultOwnerId}" size="60" />
-<f:verbatim><br/></f:verbatim>
-
-<h:outputText value="docListArchivalsSeparatingDate [*]: "/>
-<h:inputText value="#{goproImporter.data.docListArchivalsSeparatingDate}" size="60" converter="javax.faces.DateTime">
-  <f:convertDateTime pattern="dd.MM.yyyy" />
-</h:inputText>
-<f:verbatim><br/></f:verbatim>
-
-<h:outputText value="taskOwnerStructUnitAuthority: "/>
-<h:inputText value="#{goproImporter.data.taskOwnerStructUnitAuthority}" size="60" />
-<f:verbatim><br/></f:verbatim>
-
-<h:outputText value="taskOwnerStructUnitAuthorityPrivileges: " style="align: top"/>
-<h:selectManyListbox size="5" value="#{goproImporter.data.taskOwnerStructUnitAuthorityPrivileges}">
-  <f:selectItem id="viewCaseFile" itemValue="viewCaseFile"/>
-  <f:selectItem id="editCaseFile" itemValue="editCaseFile"/>
-  <f:selectItem id="viewDocumentMetaData" itemValue="viewDocumentMetaData"/>
-  <f:selectItem id="viewDocumentFiles" itemValue="viewDocumentFiles"/>
-  <f:selectItem id="editDocument" itemValue="editDocument"/>
-</h:selectManyListbox>
-<f:verbatim><br/></f:verbatim>
-
-<h:outputText value="numberOfDocumentsProceduresInSingleTransaction [*]: "/>
-<h:inputText value="#{goproImporter.data.batchSize}" size="60" />
-<f:verbatim><br/></f:verbatim>
-
-<h:messages />
-<f:verbatim><br/></f:verbatim>
-<h:outputText escape="false" value="#{goproImporter.status}" />
-<f:verbatim><br/><br/></f:verbatim>
-
-   <h:commandButton value="Käivita GoPro andmete import" type="submit"
-      actionListener="#{goproImporter.startImporterInBackground}"
-      rendered="#{!goproImporter.importerRunning}" />
-   <h:commandButton value="Peata GoPro andmete import" type="submit"
-      actionListener="#{goproImporter.stopImporter}"
-      rendered="#{goproImporter.importerRunning}"
-      disabled="#{goproImporter.importerStopping}" />
 
 
 <f:verbatim><br/></f:verbatim>

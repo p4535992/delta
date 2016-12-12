@@ -413,22 +413,27 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
     
     private X509Certificate getCertificateFromHex(String certificateInHex) {
         byte[] certificateBytes = DatatypeConverter.parseHexBinary(certificateInHex);
-        try (InputStream inStream = new ByteArrayInputStream(certificateBytes)) {
+        InputStream inStream = null;
+        try {
+        	inStream = new ByteArrayInputStream(certificateBytes);
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
             X509Certificate certificate = (X509Certificate)cf.generateCertificate(inStream);
             return certificate;
-        } catch (CertificateException | IOException e) {
+        } catch (CertificateException e) {
             log.error("Error reading certificate: " + e.getMessage());
             throw new RuntimeException(e);
+        } finally {
+        	IOUtils.closeQuietly(inStream);
         }
     }
     
     private X509Certificate getCertificateFromPem(String certificateInPem) {
     	X509Certificate cert = null;
     	StringReader reader = null;
+    	PEMParser pr = null;
         try {
 	    	reader = new StringReader(certificateInPem);
-	        PEMParser pr = new PEMParser(reader);
+	        pr = new PEMParser(reader);
 	        X509CertificateHolder holder = (X509CertificateHolder)pr.readObject();
 	        JcaX509CertificateConverter certConverter = new JcaX509CertificateConverter(); 
 	        cert = certConverter.getCertificate(holder);
@@ -439,11 +444,8 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
         	log.error("Error reading certificate from holder: " + e.getMessage());
             throw new RuntimeException(e);
         } finally {
-        	if (reader != null) {
-		    	try {
-		    		reader.close();
-		    	} catch (Exception e) {}
-        	}
+        	IOUtils.closeQuietly(pr);
+        	IOUtils.closeQuietly(reader);
         }
         return cert;
     }
@@ -669,6 +671,21 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
         }
     }
     
+    /*
+     * test method to validate digidoc container against prod
+    private void validateProdContainer() throws Exception {
+	  Container container = ContainerBuilder.
+	    aContainer().
+	    fromExistingFile("c:/dev/tmp/1-23 14.03.2013 Määrus.ddoc").
+	    withConfiguration(new Configuration(Configuration.Mode.PROD)).
+	    build();
+	  ValidationResult result = container.validate();
+	  String report = result.getReport();
+	  System.out.println("valid = " + result.isValid() + "; report =  " + report);
+	  
+	}
+	*/
+    
     private SignatureItemsAndDataItems getDataItemsAndSignatureItems(Container container, NodeRef nodeRef, boolean includeData) {
         List<SignatureItem> signatureItems = getSignatureItems(nodeRef, container);
         List<DataItem> dataItems = getDataItems(nodeRef, container, includeData);
@@ -769,14 +786,13 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
     public void writeContainer(OutputStream output, List<NodeRef> contents) {
         try {
             Container container = createContainer(contents);
-            try {
-            	IOUtils.copy(container.saveAsStream(),output);
-            } finally {
-                output.close();
-            }
+            IOUtils.copy(container.saveAsStream(),output);
+            
         } catch (Exception e) {
             throw new SignatureRuntimeException("Failed to write bdoc file, output = " + output + ", contents = " + contents, e);
-        }
+        } finally {
+        	IOUtils.closeQuietly(output);
+		}
     }
 
 }

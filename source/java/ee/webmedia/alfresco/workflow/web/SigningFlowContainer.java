@@ -395,6 +395,10 @@ public class SigningFlowContainer implements Serializable {
             signingFiles.putAll(getWorkflowService().getCompoundWorkflowSigningFiles(compoundWorkflowRef));
             for (Map.Entry<NodeRef, List<File>> entry : signingFiles.entrySet()) {
                 List<File> documentFiles = entry.getValue();
+                if (!signTogether && (documentFiles == null || documentFiles.isEmpty())) {
+                	activeFiles.clear();
+                	break;
+                }
                 if (documentFiles != null) {
                     activeFiles.addAll(documentFiles);
                 }

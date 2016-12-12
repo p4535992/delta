@@ -822,17 +822,20 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
                     InputStream input = reader.getContentInputStream();
                     try {
                         IOUtils.copy(input, allOutput);
-                        input.close();
                         allOutput.write('\n');
                     } catch (IOException e) {
                         throw new RuntimeException(e);
+                    } finally {
+                    	IOUtils.closeQuietly(input);
                     }
                 }
             }
         }
 
         try {
-            allOutput.close();
+        	if (allOutput != null) {
+        		allOutput.close();
+        	}
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
