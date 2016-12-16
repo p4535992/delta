@@ -618,7 +618,7 @@ public class GoProDocumentsImporter {
         }
         
         if (StringUtils.isNotBlank(gpSignerName)) {
-       		signerFound = findUserNode(gpOwnerName, props, null, DocumentCommonModel.Props.SIGNER_NAME, null);
+       		signerFound = findUserNode(gpSignerName, props, null, DocumentCommonModel.Props.SIGNER_NAME, null);
        		if (!signerFound) {
        			comment = StringUtils.isNotBlank(comment)?comment + " " + DocumentCommonModel.Props.SIGNER_NAME.getLocalName() + ":" + gpSignerName :DocumentCommonModel.Props.SIGNER_NAME.getLocalName() + ":" + gpSignerName;
        		}
@@ -1279,6 +1279,14 @@ public class GoProDocumentsImporter {
         propsMap.putAll(parentRefs);
 
         checkProps(propsMap, null, mapping.typeInfo.propDefs);
+        
+        Pair<DynamicPropertyDefinition, Field> docNameAdrPropDefinition = mapping.typeInfo.propDefs.get(DocumentDynamicModel.Props.DOC_NAME_ADR.getLocalName());
+        if (docNameAdrPropDefinition != null && docNameAdrPropDefinition.getSecond() != null) {
+        	String docNameAdrDefualt = docNameAdrPropDefinition.getSecond().getClassificatorDefaultValue();
+        	if (StringUtils.isNotBlank(docNameAdrDefualt)) {
+        		propsMap.put(DocumentDynamicModel.Props.DOC_NAME_ADR, docNameAdrDefualt);
+        	}
+        }
 
         mapChildren(root, mapping, doc.getNode(), new QName[] {}, mapping.typeInfo.propDefs);
 

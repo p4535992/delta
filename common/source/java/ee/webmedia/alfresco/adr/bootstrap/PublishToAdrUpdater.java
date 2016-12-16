@@ -1,13 +1,11 @@
 package ee.webmedia.alfresco.adr.bootstrap;
 
 import static ee.webmedia.alfresco.utils.SearchUtil.generateDatePropertyRangeQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyExactQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyNullQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateTypeQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
 import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsOr;
 
-import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -34,7 +32,6 @@ import org.apache.commons.lang.StringUtils;
 import ee.webmedia.alfresco.classificator.enums.PublishToAdr;
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
 import ee.webmedia.alfresco.common.service.BulkLoadNodeService;
-import ee.webmedia.alfresco.common.service.CreateObjectCallback;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
@@ -67,7 +64,10 @@ public class PublishToAdrUpdater extends AbstractNodeUpdater {
 
         String query = joinQueryPartsAnd(
                 generateTypeQuery(DocumentCommonModel.Types.DOCUMENT),
-                generateDatePropertyRangeQuery(null, endDate, org.alfresco.model.ContentModel.PROP_CREATED)
+                joinQueryPartsOr(
+                	generatePropertyNullQuery(DocumentCommonModel.Props.REG_DATE_TIME),
+                	generateDatePropertyRangeQuery(null, endDate, DocumentCommonModel.Props.REG_DATE_TIME)
+                )
                 );
 
         List<ResultSet> result = new ArrayList<>();
