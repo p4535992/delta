@@ -904,8 +904,17 @@
          <param-value>classpath:ee/webmedia/mobile/alfresco/config/mobile-servlet.xml</param-value>
       </init-param>
       <load-on-startup>8</load-on-startup>    
-   </servlet>   
+   </servlet>
 
+   <servlet>
+      <servlet-name>api</servlet-name>
+      <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+      <init-param>
+         <param-name>contextConfigLocation</param-name>
+         <param-value>classpath:ee/webmedia/alfresco/api/api-servlet.xml</param-value>
+      </init-param>
+      <load-on-startup>9</load-on-startup>
+   </servlet>
    <!-- ========== Servlet mappings ========== -->
 
    <servlet-mapping>
@@ -986,8 +995,12 @@
    <servlet-mapping>
       <servlet-name>mobile</servlet-name>
       <url-pattern>/m/*</url-pattern>
-   </servlet-mapping>   
+   </servlet-mapping>
 
+   <servlet-mapping>
+      <servlet-name>api</servlet-name>
+      <url-pattern>/api/*</url-pattern>
+   </servlet-mapping>
    <!-- ========== Other ========== -->
 
    <session-config>
