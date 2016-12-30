@@ -1,0 +1,41 @@
+<component name="libraryTable">
+  <library name="lib">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/remote-api-src/sample/JavaCmisTest/lib/XmlSchema-1.4.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/remote-api-src/sample/JavaCmisTest/lib/xmlsec-1.3.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/remote-api-src/sample/JavaCmisTest/lib/jaxb-xjc-2.1.7.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/remote-api-src/sample/JavaCmisTest/lib/cmis-types.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/remote-api-src/sample/JavaCmisTest/lib/jaxb-impl-2.1.7.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/remote-api-src/sample/JavaCmisTest/lib/geronimo-annotation_1.0_spec-1.1.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/remote-api-src/sample/JavaCmisTest/lib/spring-context-2.0.8.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/remote-api-src/sample/JavaCmisTest/lib/neethi-2.0.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/remote-api-src/sample/JavaCmisTest/lib/wss4j-1.5.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/remote-api-src/sample/JavaCmisTest/lib/commons-logging-1.1.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/remote-api-src/sample/JavaCmisTest/lib/wstx-asl-3.2.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/remote-api-src/sample/JavaCmisTest/lib/xml-resolver-1.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/remote-api-src/sample/JavaCmisTest/lib/geronimo-ws-metadata_2.0_spec-1.1.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/remote-api-src/sample/JavaCmisTest/lib/saaj-impl-1.3.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/remote-api-src/sample/JavaCmisTest/lib/spring-web-2.0.8.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/remote-api-src/sample/JavaCmisTest/lib/wsdl4j-1.6.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/remote-api-src/sample/JavaCmisTest/lib/velocity-dep-1.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/remote-api-src/sample/JavaCmisTest/lib/spring-core-2.0.8.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/remote-api-src/sample/JavaCmisTest/lib/saaj-api-1.3.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/remote-api-src/sample/JavaCmisTest/lib/stax-utils-20060502.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/remote-api-src/sample/JavaCmisTest/lib/velocity-1.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/remote-api-src/sample/JavaCmisTest/lib/cxf-2.1.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/remote-api-src/sample/JavaCmisTest/lib/geronimo-stax-api_1.0_spec-1.0.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/remote-api-src/sample/JavaCmisTest/lib/opensaml-1.0.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/remote-api-src/sample/JavaCmisTest/lib/geronimo-activation_1.1_spec-1.0.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/remote-api-src/sample/JavaCmisTest/lib/geronimo-jaxws_2.1_spec-1.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/remote-api-src/sample/JavaCmisTest/lib/jaxb-api-2.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/remote-api-src/sample/JavaCmisTest/lib/spring-beans-2.0.8.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/remote-api-src/sample/JavaCmisTest/lib/geronimo-javamail_1.4_spec-1.3.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/remote-api-src/sample/JavaCmisTest/lib/FastInfoset-1.2.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/remote-api-src/sample/JavaCmisTest/lib/jetty-6.1.9.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/remote-api-src/sample/JavaCmisTest/lib/jetty-util-6.1.9.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/remote-api-src/sample/JavaCmisTest/lib/geronimo-servlet_2.5_spec-1.2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
