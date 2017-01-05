@@ -430,6 +430,12 @@
 <!--             <ref bean="createOrMoveRootDirBootstrap"/> -->
 <!--          </list> -->
 <!--       </property>       -->
+   </bean>
+   
+   <bean id="foldersPermissionForDocManagerUpdater" class="ee.webmedia.alfresco.common.bootstrap.FoldersPermissionForDocManagerUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="false" />
+      <property name="enabled" value="false" /> <!-- Executed from node-browser -->
    </bean>   
 
    <!-- START: web beans: -->

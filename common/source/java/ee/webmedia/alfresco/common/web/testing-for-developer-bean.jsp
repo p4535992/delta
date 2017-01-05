@@ -199,6 +199,18 @@
 <f:verbatim><br/></f:verbatim>
 
 <f:verbatim><hr/></f:verbatim>
+<h:outputText value="Dokumendi haldurite õiguste parandamine (DVK, Outlook, ...)"/>
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="startPermissionDocManagerUpdater" value="Käivita" type="submit"
+   actionListener="#{foldersPermissionForDocManagerUpdater.executeUpdaterInBackground}"
+   rendered="#{foldersPermissionForDocManagerUpdater.updaterRunning == false}" />
+<h:commandButton id="stopPermissionDocManagerUpdater" value="Peata" type="submit"
+   actionListener="#{foldersPermissionForDocManagerUpdater.stopUpdater}"
+   rendered="#{foldersPermissionForDocManagerUpdater.updaterRunning == true}"
+   disabled="#{foldersPermissionForDocManagerUpdater.updaterStopping == true}" />
+<f:verbatim><br/></f:verbatim>
+
+<f:verbatim><hr/></f:verbatim>
 <h:outputText value="Paranda .ddoc failide mimetype"/>
 <f:verbatim><br/></f:verbatim>
 <h:commandButton id="startFixDdocMimetypeUpdater" value="Käivita" type="submit"
