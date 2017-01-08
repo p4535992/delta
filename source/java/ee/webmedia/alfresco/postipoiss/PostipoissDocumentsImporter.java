@@ -2165,10 +2165,14 @@ public class PostipoissDocumentsImporter {
                 log.debug("dokNr [" + dokNr + "] - Tegevus 'vastamine' don't exist! New task allowed...");
             }
 
-            if(activeTasks.size() == 0){
+            if(activeTasks == null){
+                log.debug("dokNr [" + dokNr + "] - No active TASKs found!...continue;");
+                continue;
+            } elseif(activeTasks.size() == 0){
                 log.debug("dokNr [" + dokNr + "] - No active TASKs found!...continue;");
                 continue;
             }
+            
             log.debug("dokNr [" + dokNr + "] - Found tegevuse nimetus 'edastamine täitmiseks'!");
             Element kellelt = tegevus.element("kellelt");
             log.debug("dokNr [" + dokNr + "] - Kellelt...");
