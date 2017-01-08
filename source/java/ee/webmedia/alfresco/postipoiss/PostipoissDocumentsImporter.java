@@ -1332,7 +1332,16 @@ public class PostipoissDocumentsImporter {
                 ImportedDocument doc = createDocument(documentId, file);
                 log.trace("Put created document to batchCompletedDocumentsMap..");
                 batchCompletedDocumentsMap.put(documentId, doc);
-                log.trace("Add documet to completedDocumentsMap..: docNodeRef: " + doc.nodeRef.toString());
+                if(doc != null){
+                    if(doc.nodeRef != null){
+                        log.trace("Add documet to completedDocumentsMap..: docNodeRef: " + doc.nodeRef.toString());
+                    } else {
+                        log.trace("Add documet to completedDocumentsMap..: docNodeRef is NULL!");
+                    }
+                } else {
+                    log.trace("Add documet to completedDocumentsMap..: doc is NULL!");
+                }
+
                 completedDocumentsMap.put(documentId, doc.nodeRef); // Add immediately to completedDocumentsMap, because other code wants to access it
             } catch (Exception e) {
                 CsvWriter writer = new CsvWriter(new FileWriter(failedDocumentsFile, true), CSV_SEPARATOR);
