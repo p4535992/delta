@@ -1140,7 +1140,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         }
     }
 
-    // deprecated
     public void signDocument() {
         FacesContext facesContext = FacesContext.getCurrentInstance();
         String signatureHex = (String) facesContext.getExternalContext().getRequestParameterMap().get("signatureHex");
@@ -1159,18 +1158,17 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             notifyDialogsIfNeeded(false, finishTask);
         } finally {
             if (signingFlow == null || signingFlow.isSigningQueueEmpty()) {
-            	closeModalDigidoc4j();
+                closeModal();
                 resetSigningData();
             } else {
-            	showModalDigidoc4j();
+                showModalOrSign();
             }
         }
     }
-    
-    // deprecated
+
     private void showModalOrSign() {
         if (signingFlow.needsSignatureInput(signingFlow.getSigningDocument(0))) {
-            showModalDigidoc4j();
+            showModal();
         } else {
             signDocument();
         }
@@ -1205,15 +1203,10 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     }
     
     public void closeSignSuccess() {
-    	if (signingFlow == null || signingFlow.isSigningQueueEmpty()) {
-    		closeModalDigidoc4j();
-            resetSigningData();
-            MessageUtil.addInfoMessage("task_finish_success_defaultMsg");
-            notifyDialogsIfNeeded();
-        } else {
-            showModalOrSign();
-        }
-        
+        closeModalDigidoc4j();
+        resetSigningData();
+        MessageUtil.addInfoMessage("task_finish_success_defaultMsg");
+        notifyDialogsIfNeeded();
     }
 
     public void resetSigningData() {
@@ -1317,7 +1310,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                 notifyDialogsIfNeeded();
             } else {
             	// TODO: redo digidoc4j
-                //showModalOrSign();
+                showModalOrSign();
             }
         }
         
