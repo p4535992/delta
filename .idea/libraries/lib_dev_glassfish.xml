@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="lib-dev-glassfish">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/common/lib-dev-glassfish" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+    <jarDirectory url="file://$PROJECT_DIR$/common/lib-dev-glassfish" recursive="false" />
+  </library>
+</component>

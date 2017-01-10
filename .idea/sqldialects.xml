@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SqlDialectMappings">
+    <file url="file://$PROJECT_DIR$/source/java/ee/webmedia/alfresco/privilege/bootstrap/alf_access_control_list_trigger.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/source/java/ee/webmedia/alfresco/privilege/bootstrap/delta_node_permission_insert.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/source/java/ee/webmedia/alfresco/privilege/bootstrap/delta_node_permission_tables.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/source/java/ee/webmedia/alfresco/privilege/bootstrap/drop_alfresco_permission_tables.sql" dialect="PostgreSQL" />
+  </component>
+</project>
