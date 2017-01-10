@@ -51,8 +51,9 @@ public class DigiDocContentTransformer extends AbstractContentTransformer2 {
         }
         long startTime = System.currentTimeMillis();
         Writer out = null;
+        InputStream is = null;
         try {
-            InputStream is = reader.getContentInputStream();
+            is = reader.getContentInputStream();
             SignatureItemsAndDataItems items = digiDoc4JSignatureService.getDataItemsAndSignatureItems(is, true);
             out = new OutputStreamWriter(writer.getContentOutputStream(), writer.getEncoding());
             for (SignatureItem signatureItem : items.getSignatureItems()) {
@@ -72,9 +73,8 @@ public class DigiDocContentTransformer extends AbstractContentTransformer2 {
             }
             throw e;
         } finally {
-            if (out != null) {
-                out.close();
-            }
+            IOUtils.closeQuietly(out);
+            IOUtils.closeQuietly(is);
         }
         if (log.isDebugEnabled()) {
             log.debug("Finished DigiDoc transformation, produced " + writer.getSize() + " bytes of text, time " + (System.currentTimeMillis() - startTime) + " ms");

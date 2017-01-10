@@ -468,7 +468,11 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
                             String text = (String) html;
                             if (StringUtils.isNotEmpty(text)) {
                                 InputStream inputStream = new ByteArrayInputStream(text.getBytes("UTF-8"));
-                                createBody(document, MimetypeMap.MIMETYPE_HTML, "UTF-8", inputStream, bodyFilename);
+                                try {
+                                	createBody(document, MimetypeMap.MIMETYPE_HTML, "UTF-8", inputStream, bodyFilename);
+                                } finally {
+                                	inputStream.close();
+                                }
                                 saveBody = false;
                             }
                         }

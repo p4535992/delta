@@ -906,22 +906,18 @@ public abstract class DvkServiceImpl implements DvkService {
                     sd.setTextContent(WorkflowUtil.getTaskMessageForRecipient(task));
                     String dvkId;
                     
-                    StringBuilder sentFiles = new StringBuilder();
+                    
                     List<EmailAttachment> attachments = notificationCache.getAttachments().get(docNodeRef);
                     if (attachments == null) {
                         List<NodeRef> docFileRefs = BeanHelper.getFileService().getAllFileRefs(docNodeRef, true);
                         attachments = BeanHelper.getEmailService().getAttachments(docFileRefs, false, null, null);
                         notificationCache.getAttachments().put(docNodeRef, attachments);
                         
-                    	for (NodeRef fileRef : docFileRefs) {
-                            String fileName = (String) nodeService.getProperty(fileRef, ContentModel.PROP_NAME);
-                            if (sentFiles.length() > 0) {
-                            	sentFiles.append("; ");
-                            }
-                            sentFiles.append(fileName);
-                        }
+                    	
                     }
-
+                    
+                    String sentFiles = getSentFiles(docNodeRef);
+                    
                     List<ContentToSend> contentsToSend = CollectionUtils.isNotEmpty(attachments) ? BeanHelper.getSendOutService().prepareContents(attachments)
                             : Collections.<ContentToSend> emptyList();
                     dvkId = sendDocuments(contentsToSend, sd, false);
@@ -935,8 +931,8 @@ public abstract class DvkServiceImpl implements DvkService {
                     props.put(DocumentCommonModel.Props.SEND_INFO_DVK_ID, dvkId);
                     props.put(DocumentCommonModel.Props.SEND_INFO_RESOLUTION, WorkflowUtil.getTaskSendInfoResolution(task));
                     props.put(DocumentCommonModel.Props.SEND_INFO_SENDER, "süsteem");
-                    if (sentFiles.length() > 0) {
-                    	props.put(DocumentCommonModel.Props.SEND_INFO_SENT_FILES, sentFiles.toString());
+                    if (StringUtils.isNotBlank(sentFiles)) {
+                    	props.put(DocumentCommonModel.Props.SEND_INFO_SENT_FILES, sentFiles);
                     }
                     result.setDocRef(docNodeRef);
                     result.addSendInfoProps(props);
@@ -959,6 +955,20 @@ public abstract class DvkServiceImpl implements DvkService {
             }
         }
         return result;
+    }
+    
+    private String getSentFiles(NodeRef docNodeRef) {
+    	StringBuilder sentFiles = new StringBuilder();
+    	List<NodeRef> docFileRefs = BeanHelper.getFileService().getAllFileRefs(docNodeRef, true);
+        for (NodeRef fileRef : docFileRefs) {
+            String fileName = (String) nodeService.getProperty(fileRef, ContentModel.PROP_NAME);
+            if (sentFiles.length() > 0) {
+            	sentFiles.append("; ");
+            }
+            sentFiles.append(fileName);
+        }
+        
+        return sentFiles.toString();
     }
 
     @Override
