@@ -1332,7 +1332,16 @@ public class PostipoissDocumentsImporter {
                 ImportedDocument doc = createDocument(documentId, file);
                 log.trace("Put created document to batchCompletedDocumentsMap..");
                 batchCompletedDocumentsMap.put(documentId, doc);
-                log.trace("Add documet to completedDocumentsMap..: docNodeRef: " + doc.nodeRef.toString());
+                if(doc != null){
+                    if(doc.nodeRef != null){
+                        log.trace("Add documet to completedDocumentsMap..: docNodeRef: " + doc.nodeRef.toString());
+                    } else {
+                        log.trace("Add documet to completedDocumentsMap..: docNodeRef is NULL!");
+                    }
+                } else {
+                    log.trace("Add documet to completedDocumentsMap..: doc is NULL!");
+                }
+
                 completedDocumentsMap.put(documentId, doc.nodeRef); // Add immediately to completedDocumentsMap, because other code wants to access it
             } catch (Exception e) {
                 CsvWriter writer = new CsvWriter(new FileWriter(failedDocumentsFile, true), CSV_SEPARATOR);
@@ -2165,10 +2174,15 @@ public class PostipoissDocumentsImporter {
                 log.debug("dokNr [" + dokNr + "] - Tegevus 'vastamine' don't exist! New task allowed...");
             }
 
-            if(activeTasks.size() == 0){
+            if(activeTasks == null){
                 log.debug("dokNr [" + dokNr + "] - No active TASKs found!...continue;");
                 continue;
             }
+			if(activeTasks.size() == 0){
+                log.debug("dokNr [" + dokNr + "] - No active TASKs found!...continue;");
+                continue;
+            }
+            
             log.debug("dokNr [" + dokNr + "] - Found tegevuse nimetus 'edastamine täitmiseks'!");
             Element kellelt = tegevus.element("kellelt");
             log.debug("dokNr [" + dokNr + "] - Kellelt...");

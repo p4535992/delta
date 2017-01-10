@@ -1201,6 +1201,13 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         resetSigningData();
         notifyDialogsIfNeeded();
     }
+    
+    public void closeSignSuccess() {
+        closeModalDigidoc4j();
+        resetSigningData();
+        MessageUtil.addInfoMessage("task_finish_success_defaultMsg");
+        notifyDialogsIfNeeded();
+    }
 
     public void resetSigningData() {
         signingFlow = null;
@@ -1283,7 +1290,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     	@SuppressWarnings("unchecked")
         Map<String, String> requestParameterMap = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap();
         String signInHex = requestParameterMap.get("signInHex");
-       
+        
         try {
             boolean finishTask = signingFlow.isFinishTaskStep();
             boolean finishedSigning = signingFlow.signDocumentImpl(signInHex);
@@ -1624,6 +1631,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         panelGroupChildren.add(generateLinkWithParam(app, "processCert", "#{" + BEAN_NAME + ".processCert}", "cert"));
         panelGroupChildren.add(generateLinkWithParam(app, "signDocument", "#{" + BEAN_NAME + ".signDocument}", "signature"));
         panelGroupChildren.add(generateLinkWithParam(app, "cancelSign", "#{" + BEAN_NAME + ".cancelSign}", null));
+        panelGroupChildren.add(generateLinkWithParam(app, "closeSignSuccess", "#{" + BEAN_NAME + ".closeSignSuccess}", null));
     }
 
     public static boolean isMobileIdOutcomeAndMobileIdDisabled(QName taskType, int outcomeIndex) {

@@ -39,6 +39,7 @@
    <import resource="classpath:ee/webmedia/alfresco/importer/importer-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/postipoiss/postipoiss-simdhs-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/sharepoint/sharepoint-simdhs-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/gopro/gopro-simdhs-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/mso/mso-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/privilege/privilege-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/thesaurus/thesaurus-context.xml" />
