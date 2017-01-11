@@ -306,6 +306,7 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
     }
 
     public boolean isInWorkspace() {
+<<<<<<< HEAD
 		if (docRef == null) {
 			LOG.error("isInWorkspace(): docRef is NULL!");
 			return false;
@@ -324,6 +325,27 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
 		}
 
 		return docRef.getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE);
+=======
+        if(docRef == null){
+            LOG.error("isInWorkspace(): docRef is NULL!");
+            return false;
+        }
+        LOG.debug("docRef: " + docRef.toString());
+        if(docRef.getStoreRef() == null){
+            LOG.error("isInWorkspace(): docRef.getStoreRef() is NULL!");
+            return false;
+        }
+        if(docRef.getStoreRef().getProtocol() == null){
+            LOG.error("isInWorkspace(): docRef.getStoreRef() is NULL!");
+            return false;
+        }
+        if(StoreRef.PROTOCOL_WORKSPACE == null){
+            LOG.error("isInWorkspace(): StoreRef.PROTOCOL_WORKSPACE is NULL!");
+            return false;
+        }
+        return docRef.getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE);
+
+>>>>>>> FileBlockBean isInWorkspace object null controll.
     }
     
     public boolean isGuest() {
