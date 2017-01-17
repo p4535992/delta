@@ -63,14 +63,12 @@ import org.alfresco.web.ui.common.component.UIModeList;
 import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.richlist.LazyListDataProvider;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
-import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 /**
  * Backing Bean for the Groups Management pages.
@@ -95,8 +93,6 @@ public class GroupsDialog extends BaseDialogBean
     /** personService bean reference */
     transient private PersonService personService;
 
-    transient private WorkflowService workflowService;
-    
     /** Component references */
     protected UIRichList groupsRichList;
     protected UIRichList usersRichList;
@@ -350,22 +346,6 @@ public class GroupsDialog extends BaseDialogBean
         }
         return personService;
     }
-    
-    public void setWorkflowService(WorkflowService workflowService)
-    {
-       this.workflowService = workflowService;
-    }
-    
-    /**
-     * @return the workflowService
-     */
-    protected WorkflowService getWorkflowService()
-    {	
- 	   if (workflowService == null) {
- 		   workflowService = BeanHelper.getWorkflowService();
-        } 
-       return workflowService;
-    }
 
     public UIRichList getGroupsRichList()
     {
@@ -564,8 +544,6 @@ public class GroupsDialog extends BaseDialogBean
                 tx.begin();
 
                 getAuthorityService().removeAuthority(group, authority);
-                String groupDisplayName = getAuthorityService().getAuthorityDisplayName(group);
-                getWorkflowService().removeUserOrGroupFromCompoundWorkflowDefinitions(groupDisplayName, authority);
 
                 // commit the transaction
                 tx.commit();

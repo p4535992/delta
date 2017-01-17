@@ -241,15 +241,8 @@ public class DocumentPropertiesChangeHolder {
         messages.addAll(generateLocationMessages(propDefs, docRef, emptyValue));
         messages.addAll(generateAccessRestrictionMessages(propDefs, docRef, emptyValue));
         messages.addAll(generateChildNodeMessages(docRef, emptyValue));
-        NodeRef parentRef = null;
-        if (!DocumentCommonModel.Types.DOCUMENT.equals(BeanHelper.getNodeService().getType(docRef))) {
-        	parentRef = getDocRefFromDescendant(docRef);
-        }
-        
-        String message = getMessage(MSG_DOC_PROP_CHANGED_SUFIX, (parentRef != null)?parentRef:docRef);
-        
-        
-        for (Field field : getObjectTypeProps((parentRef != null)?parentRef:docRef).values()) {
+        String message = getMessage(MSG_DOC_PROP_CHANGED_SUFIX, docRef);
+        for (Field field : getObjectTypeProps(docRef).values()) {
             if (!nodeChangeMapsMap.containsKey(docRef)) {
                 continue;
             }
@@ -263,23 +256,6 @@ public class DocumentPropertiesChangeHolder {
         }
 
         return messages;
-    }
-    
-    private NodeRef getDocRefFromDescendant(NodeRef childRef) {
-    	NodeRef parentRef = null;
-    	boolean foundOrNull = false;
-    	NodeRef nodeToCheck = childRef;
-    	while (!foundOrNull) {
-    		nodeToCheck = BeanHelper.getNodeService().getPrimaryParent(nodeToCheck).getParentRef();
-    		
-            if (nodeToCheck == null || DocumentCommonModel.Types.DOCUMENT.equals(BeanHelper.getNodeService().getType(nodeToCheck))) {
-            	foundOrNull = true;
-            	parentRef = nodeToCheck;
-            }
-    	}
-    	
-    	return parentRef;
-    	
     }
 
     private String getMessage(String sufix, NodeRef nodeRef) {

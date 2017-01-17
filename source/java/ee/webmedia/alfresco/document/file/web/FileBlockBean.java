@@ -297,7 +297,8 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
     private boolean isDeleteFileAllowed(boolean activeFile) {
         DocumentDialogHelperBean documentDialogHelperBean = getDocumentDialogHelperBean();
         Node docNode = documentDialogHelperBean.getNode();
-        return !documentDialogHelperBean.isNotEditable() && isOwnerOrManagerWithPermissions(docNode);
+        return !documentDialogHelperBean.isNotEditable() && isOwnerOrManagerWithPermissions(docNode)
+                && (!activeFile || !getWorkflowService().hasInprogressCompoundWorkflows(docRef));
     }
 
     private boolean isOwnerOrManagerWithPermissions(Node docNode) {
@@ -306,7 +307,24 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
     }
 
     public boolean isInWorkspace() {
-        return docRef.getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE);
+		if (docRef == null) {
+			LOG.error("isInWorkspace(): docRef is NULL!");
+			return false;
+		}
+
+		LOG.debug("docRef: " + docRef.toString());
+
+		if (docRef.getStoreRef() == null) {
+			LOG.error("isInWorkspace(): docRef.getStoreRef() is NULL!");
+			return false;
+		}
+
+		if (docRef.getStoreRef().getProtocol() == null) {
+			LOG.error("isInWorkspace(): docRef.getStoreRef() is NULL!");
+			return false;
+		}
+
+		return docRef.getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE);
     }
     
     public boolean isGuest() {

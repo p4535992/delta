@@ -7,6 +7,3 @@
 <a:panel id="ab-add-edit-panel" styleClass="mainSubTitle" label="#{DialogManager.bean.panelTitle}">
    <r:propertySheetGrid id="node-props" value="#{DialogManager.bean.entry}" columns="1" externalConfig="true" mode="edit" labelStyleClass="propertiesLabel" />
 </a:panel>
-<a:booleanEvaluator value="#{DialogManager.bean.organizationType}">
-	<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/org-certificates.jsp" />
-</a:booleanEvaluator>
