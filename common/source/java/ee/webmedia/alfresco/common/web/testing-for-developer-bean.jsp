@@ -169,7 +169,7 @@
 <f:verbatim><br/></f:verbatim>
 
 <f:verbatim><hr/></f:verbatim>
-<h:outputText value="Dokumendi ADR peakirjaks dokumendi liigi nimetuse määramine"/>
+<h:outputText value="Dokumendi ADR pealkirjaks dokumendi liigi nimetuse määramine"/>
 <f:verbatim><br/></f:verbatim>
 <h:outputText value="Kuupäev (k.a., kujul pp.kk.aaaa), millest varem loodud dokumentidel määratakse välja 'ADR pealkiri' tühja väärtuse asemel väärtuseks dokumendi liigi pealkiri: "/>
 <h:inputText id="endDateStr" value="#{adrDocNameUpdater.endDateStr}" size="12" />
@@ -181,6 +181,33 @@
    actionListener="#{adrDocNameUpdater.stopUpdater}"
    rendered="#{adrDocNameUpdater.updaterRunning == true}"
    disabled="#{adrDocNameUpdater.updaterStopping == true}" />
+<f:verbatim><br/></f:verbatim>
+
+<f:verbatim><hr/></f:verbatim>
+<h:outputText value="Dokumendi avalikku registrisse=Ei, lähe ADR-i määramine"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Kuupäev (k.a., kujul pp.kk.aaaa), millest varem loodud dokumentidel määratakse avalikku registrisse=Ei, lähe ADR-i: "/>
+<h:inputText id="ptaEndDateStr" value="#{publishToAdrUpdater.ptaEndDateStr}" size="12" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="startPublishToAdrUpdater" value="Käivita" type="submit"
+   actionListener="#{publishToAdrUpdater.executeUpdaterInBackground}"
+   rendered="#{publishToAdrUpdater.updaterRunning == false}" />
+<h:commandButton id="stopPublishToAdrUpdater" value="Peata" type="submit"
+   actionListener="#{publishToAdrUpdater.stopUpdater}"
+   rendered="#{publishToAdrUpdater.updaterRunning == true}"
+   disabled="#{publishToAdrUpdater.updaterStopping == true}" />
+<f:verbatim><br/></f:verbatim>
+
+<f:verbatim><hr/></f:verbatim>
+<h:outputText value="Dokumendi haldurite õiguste parandamine (DVK, Outlook, ...)"/>
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="startPermissionDocManagerUpdater" value="Käivita" type="submit"
+   actionListener="#{foldersPermissionForDocManagerUpdater.executeUpdaterInBackground}"
+   rendered="#{foldersPermissionForDocManagerUpdater.updaterRunning == false}" />
+<h:commandButton id="stopPermissionDocManagerUpdater" value="Peata" type="submit"
+   actionListener="#{foldersPermissionForDocManagerUpdater.stopUpdater}"
+   rendered="#{foldersPermissionForDocManagerUpdater.updaterRunning == true}"
+   disabled="#{foldersPermissionForDocManagerUpdater.updaterStopping == true}" />
 <f:verbatim><br/></f:verbatim>
 
 <f:verbatim><hr/></f:verbatim>
