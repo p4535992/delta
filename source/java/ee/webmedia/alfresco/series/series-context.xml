@@ -62,10 +62,25 @@
       <property name="enabled" value="${updater.volumeassoc.enabled}" />
    </bean>
    
+   <!-- fixes mainDoc ref in independent compound workflows -->
    <bean id="independentCompoundWorkflowMainDocumentUpdater" class="ee.webmedia.alfresco.series.bootstrap.IndependentCompoundWorkflowMainDocumentUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="false" />
       <property name="enabled" value="${updater.icwmaindoc.enabled:false}" />
+   </bean>
+   
+   <!-- fixes docToSign refs in independent compound workflows -->
+   <bean id="independentCompoundWorkflowDocToSignUpdater" class="ee.webmedia.alfresco.series.bootstrap.IndependentCompoundWorkflowDocToSignUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="false" />
+      <property name="enabled" value="${updater.icwdoctosign.enabled:false}" />
+   </bean>
+   
+   <!-- removes lockedFile ref in documents with broken lockedFileRef -->
+   <bean id="documentLockedFileNodeRefUpdater" class="ee.webmedia.alfresco.series.bootstrap.DocumentLockedFileNodeRefUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="false" />
+      <property name="enabled" value="${updater.doclockedfile.enabled:false}" />
    </bean>
 	
    <bean id="seriesService" class="ee.webmedia.alfresco.series.service.SeriesServiceImpl">

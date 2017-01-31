@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.document.sendout.service;
 
+import static ee.webmedia.alfresco.utils.UserUtil.getUserFullNameAndId;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.security.cert.X509Certificate;
@@ -14,6 +16,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.alfresco.model.ContentModel;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -70,6 +74,7 @@ public class SendOutServiceImpl implements SendOutService {
     private ParametersService parametersService;
     private SignatureService _signatureService;
     private SkLdapService skLdapService;
+    private UserService _userService;
 
     @Override
     public List<SendInfo> getDocumentSendInfos(NodeRef document) {
@@ -111,24 +116,25 @@ public class SendOutServiceImpl implements SendOutService {
     @Override
     public List<Pair<String, String>> forward(NodeRef document, List<String> names, List<String> emails, List<String> modes, String fromEmail, String content,
             List<NodeRef> fileRefs) {
-        return sendOut(document, names, emails, modes, null, null, fromEmail, null, content, fileRefs, false, true);
+        return sendOut(document, names, emails, modes, null, null, null, fromEmail, null, content, fileRefs, false, true);
     }
 
     @Override
-    public boolean sendOut(NodeRef document, List<String> names, List<String> emails, List<String> modes, List<String> idCodes, List<String> encryptionIdCodes, String fromEmail,
-            String subject, String content, List<NodeRef> fileRefs, boolean zipIt) {
-        return sendOut(document, names, emails, modes, idCodes, encryptionIdCodes, fromEmail, subject, content, fileRefs, zipIt, false) != null;
+    public boolean sendOut(NodeRef document, List<String> names, List<String> emails, List<String> modes, List<String> idCodes, List<String> encryptionIdCodes, List<X509Certificate> allCertificates, 
+    		String fromEmail, String subject, String content, List<NodeRef> fileRefs, boolean zipIt) {
+        return sendOut(document, names, emails, modes, idCodes, encryptionIdCodes, allCertificates, fromEmail, subject, content, fileRefs, zipIt, false) != null;
     }
 
     private List<Pair<String, String>> sendOut(NodeRef document, List<String> names, List<String> emails, List<String> modes, List<String> idCodes, List<String> encryptionIdCodes,
-            String fromEmail, String subject, String content, List<NodeRef> fileRefs, boolean zipIt, boolean forward) {
-
-        List<X509Certificate> allCertificates = new ArrayList<X509Certificate>();
+    		List<X509Certificate> allCertificates, String fromEmail, String subject, String content, List<NodeRef> fileRefs, boolean zipIt, boolean forward) {
+    	if (allCertificates == null) {
+        	allCertificates = new ArrayList<X509Certificate>();
+    	}
         if (encryptionIdCodes != null) {
             Set<String> encryptionIdCodesSet = new HashSet<String>();
             for (int i = 0; i < names.size(); i++) {
                 String encryptionIdCode = encryptionIdCodes.get(i);
-                if (encryptionIdCodesSet.contains(encryptionIdCode)) {
+                if (StringUtils.isBlank(encryptionIdCode) || encryptionIdCodesSet.contains(encryptionIdCode)) {
                     continue;
                 }
                 List<SkLdapCertificate> skLdapCertificates = skLdapService.getCertificates(encryptionIdCode);
@@ -223,8 +229,20 @@ public class SendOutServiceImpl implements SendOutService {
 
         // Prepare zip file name if needed
         String zipOrEncryptFileTitle = null;
-        if (fileRefs != null && fileRefs.size() > 0 && (zipIt || !allCertificates.isEmpty()) && (toRegNums.size() > 0 || toEmails.size() > 0)) {
-            zipOrEncryptFileTitle = buildZipAndEncryptFileTitle(docProperties);
+        boolean isEncrypted = false;
+        StringBuilder sentFiles = new StringBuilder();
+        if (fileRefs != null && fileRefs.size() > 0 && (toRegNums.size() > 0 || toEmails.size() > 0)) {
+        	if ((zipIt || !allCertificates.isEmpty())) {
+        		zipOrEncryptFileTitle = buildZipAndEncryptFileTitle(docProperties);
+        	}
+            isEncrypted = !allCertificates.isEmpty();
+            for (NodeRef fileRef : fileRefs) {
+                String fileName = (String) nodeService.getProperty(fileRef, ContentModel.PROP_NAME);
+                if (sentFiles.length() > 0) {
+                	sentFiles.append("; ");
+                }
+                sentFiles.append(fileName);
+            }
         }
 
         List<EmailAttachment> attachments = emailService.getAttachments(fileRefs, zipIt, allCertificates, zipOrEncryptFileTitle);
@@ -258,12 +276,29 @@ public class SendOutServiceImpl implements SendOutService {
                 throw new RuntimeException("Document e-mail sending failed", e);
             }
         }
-
+        
+        final String executingUser = AuthenticationUtil.getFullyAuthenticatedUser();
+        String sender = getUserFullNameAndId(getUserService().getUserProperties(executingUser));
         // Create the sendInfo nodes under the document
         for (Map<QName, Serializable> props : sendInfoProps) {
             String sendMode = (String) props.get(DocumentCommonModel.Props.SEND_INFO_SEND_MODE);
             if (SendMode.DVK.getValueName().equalsIgnoreCase(sendMode) || SendMode.STATE_PORTAL_EESTI_EE.getValueName().equalsIgnoreCase(sendMode)) {
                 props.put(DocumentCommonModel.Props.SEND_INFO_DVK_ID, dvkId);
+            }
+            if (zipIt || isEncrypted) {
+            	props.put(DocumentCommonModel.Props.SEND_INFO_IS_ZIPPED, Boolean.TRUE);
+            }
+            
+            if (isEncrypted) {
+            	props.put(DocumentCommonModel.Props.SEND_INFO_IS_ENCRYPTED, Boolean.TRUE);
+            }
+            
+            if (sentFiles.length() > 0) {
+            	props.put(DocumentCommonModel.Props.SEND_INFO_SENT_FILES, sentFiles.toString());
+            }
+            
+            if (StringUtils.isNotBlank(sender)) {
+            	props.put(DocumentCommonModel.Props.SEND_INFO_SENDER, sender);
             }
 
             addSendinfo(document, props);
@@ -422,6 +457,13 @@ public class SendOutServiceImpl implements SendOutService {
             _signatureService = BeanHelper.getSignatureService();
         }
         return _signatureService;
+    }
+    
+    private UserService getUserService() {
+        if (_userService == null) {
+            _userService = BeanHelper.getUserService();
+        }
+        return _userService;
     }
 
     // END: getters / setters

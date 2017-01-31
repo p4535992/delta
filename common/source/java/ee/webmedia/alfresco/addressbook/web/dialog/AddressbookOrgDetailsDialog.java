@@ -9,11 +9,15 @@ import java.util.List;
 import java.util.Map;
 
 import ee.webmedia.alfresco.addressbook.service.AddressbookEntry;
+import ee.webmedia.alfresco.common.web.BeanHelper;
+
+import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.repository.MapNode;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
+import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
 import ee.webmedia.alfresco.utils.TextUtil;
 
 public class AddressbookOrgDetailsDialog extends AddressbookPersonDetailsDialog {
@@ -23,11 +27,13 @@ public class AddressbookOrgDetailsDialog extends AddressbookPersonDetailsDialog 
     MapNode currentNode;
 
     private List<AddressbookEntry> orgPeople;
+    private List<AddressbookEntry> orgCertificates;
 
     @Override
     protected void reset() {
         super.reset();
         orgPeople = null;
+        orgCertificates = null;
         currentNode = null;
     }
 
@@ -46,12 +52,30 @@ public class AddressbookOrgDetailsDialog extends AddressbookPersonDetailsDialog 
     public void setOrgPeople(List<AddressbookEntry> list) {
         orgPeople = list;
     }
+    
+    public List<AddressbookEntry> getOrgCertificates() {
+    	if (getCurrentNode() == null) {
+            return (orgCertificates != null) ? orgCertificates : Collections.<AddressbookEntry>emptyList();
+        }
+
+        if (orgCertificates == null) {
+            List<AddressbookEntry> addressbookEntries = getAddressbookService().listOrganizationCertificates(getCurrentNode().getNodeRef());
+            orgCertificates = (addressbookEntries == null) ? new ArrayList<AddressbookEntry>() : addressbookEntries;
+        }
+        return orgCertificates;
+    	
+    }
+    
+    public void setOrgCertificates(List<AddressbookEntry> list) {
+    	orgCertificates = list;
+    }
 
     @Override
     public void restored() {
         super.restored();
         currentNode = groupNodeValues(super.getCurrentNodeRef());
         orgPeople = null;
+        orgCertificates = null;
     }
 
     @Override
@@ -90,5 +114,9 @@ public class AddressbookOrgDetailsDialog extends AddressbookPersonDetailsDialog 
                                     ))
                     );
         return groupedNode;
+    }
+    
+    public boolean isOrganizationType() {
+    	return getCurrentNode() != null?Types.ORGANIZATION.equals(getCurrentNode().getType()):false;
     }
 }

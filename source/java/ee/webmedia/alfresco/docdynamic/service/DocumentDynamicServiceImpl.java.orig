@@ -1120,7 +1120,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
                         // prop is directly on child node
                         if (!propDef.isMultiValued()) {
                             // duplicate later
-                        	Assert.isTrue(!(value instanceof Collection));
+                            Assert.isTrue(!(value instanceof Collection));
                             propsToDuplicate.put(propName, value);
                             continue;
                         } else if (value != null) {
