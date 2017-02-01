@@ -1268,7 +1268,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         
         try {
             long step0 = System.currentTimeMillis();
-            if (!signingFlow.collectAndCheckSigningFiles()) {
+            if (signingFlow == null || !signingFlow.collectAndCheckSigningFiles()) {
             	closeModalDigidoc4j();
                 resetSigningData();
                 return;
