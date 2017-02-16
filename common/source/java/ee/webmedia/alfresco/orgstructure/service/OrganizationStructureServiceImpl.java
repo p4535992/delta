@@ -58,6 +58,9 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
     private UserRegistry userRegistry;
     private AuthorityService authorityService;
     private ApplicationConstantsBean applicationConstantsBean;
+
+    private String syncActiveStatus;
+
     // START: properties that would cause dependency cycle when trying to inject them
     private UserService _userService;
     private WorkflowService _workflowService;
@@ -95,7 +98,9 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
 
     @Override
     public int updateOrganisationStructureBasedGroups() {
+        log.info("Starting updateOrganisationStructureBasedGroups...");
         if (!applicationConstantsBean.isCreateOrgStructGroups()) {
+            log.info("Cancelling updateOrganisationStructureBasedGroups...(System uses Active Directory!)");
             return 0; // System uses Active Directory
         }
         //clear person and personNodes cache to avoid cache instability
@@ -143,10 +148,15 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
             // update group email
             if (isGeneratedGroupAuthority) {
             	String oldAuthorityEmail = authorityService.getAuthorityEmail(groupAuthority);
-            	
-            	if (StringUtils.isNotBlank(authorityEmail) && (StringUtils.isBlank(oldAuthorityEmail) || StringUtils.isNotBlank(oldAuthorityEmail) && !oldAuthorityEmail.equals(authorityEmail))) {
-            		authorityService.addAuthorityEmail(groupAuthority, authorityEmail);
-            	}
+                log.debug(os.getOrganizationDisplayPath() + ":: oldAuthorityEmail: " + oldAuthorityEmail);
+                if (StringUtils.isNotBlank(authorityEmail) && (StringUtils.isBlank(oldAuthorityEmail) || StringUtils.isNotBlank(oldAuthorityEmail) && !oldAuthorityEmail.equals(authorityEmail))) {
+                    log.debug(os.getOrganizationDisplayPath() + ":: addAuthorityEmail: " + authorityEmail);
+                    authorityService.addAuthorityEmail(groupAuthority, authorityEmail);
+                } else {
+                    log.debug(os.getOrganizationDisplayPath() + "::addAuthorityEmail: NULL! Try to remove units " +
+                            "e-mail...");
+                    authorityService.deleteAuthorityEmail(groupAuthority);
+                }
             }
 
             // Get current users for this group
@@ -199,6 +209,7 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
             
             // Remove users that have been removed from this organization structure
             for (String username : orgStructGroupMembers) {
+                log.debug("Remove users that have been removed from this organization structure... username: " + username);
                 authorityService.removeAuthority(groupAuthority, username);
                 if (!(isGroupAuthorityUserUpdated && isGeneratedGroupAuthority)){
                 	// remove users tasks for compound workflow definitions
@@ -215,11 +226,14 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
 
         // Remove missing organization structures
         for (String missingGeneratedGroup : generatedGroups) {
+            log.info("Removing missing organization structure groups... groupname: " + missingGeneratedGroup);
         	String missingGroupDisplayName = authorityService.getAuthorityDisplayName(missingGeneratedGroup);
             authorityService.deleteAuthority(missingGeneratedGroup);
             getWorkflowService().removeUserOrGroupFromCompoundWorkflowDefinitions(missingGroupDisplayName, null);
 
         }
+
+        log.info("Starting updateOrganisationStructureBasedGroups...Done!");
 
         return 0;
     }
@@ -423,6 +437,21 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
 
     public void setApplicationConstantsBean(ApplicationConstantsBean applicationConstantsBean) {
         this.applicationConstantsBean = applicationConstantsBean;
+    }
+
+    public void setSyncActiveStatus(String syncActiveStatus){
+        if(syncActiveStatus == null){
+            this.syncActiveStatus = "true";
+        } else {
+            this.syncActiveStatus = syncActiveStatus;
+        }
+        log.debug("---------------------------------------------------------");
+        log.debug("setSyncActiveStatus(): Sync active status: " + this.syncActiveStatus);
+        log.debug("---------------------------------------------------------");
+    }
+
+    public String getSyncActiveStatus(){
+        return syncActiveStatus;
     }
 
     // END: getters / setters

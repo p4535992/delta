@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.orgstructure.job;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
@@ -23,17 +24,30 @@ public class UpdateUsersGroupsOrganizationsListJob implements StatefulJob {
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
-        log.debug("Starting UpdateUsersGroupsOrganizationsListJob");
+        log.info("Starting UpdateUsersGroupsOrganizationsListJob");
         JobDataMap jobData = context.getJobDetail().getJobDataMap();
 
+        if(getSyncActiveStatus() == "true"){
+        log.info("USERS AND GROUPS SYNC IS ACTIVE....");
         // Run the jobs
+        log.info("UPDATE ORGANISATIONSTRUCTURE...");
         updateOrganisationStructure(jobData);
+
+        log.info("UPDATE USERS AND GROUPS...");
         updateUsersAndGroups(jobData);
+
+        log.info("UPDATE ORGANISATION STRUCTURE-BASED GROUPS...");
         updateOrganisationStructureBasedGroups(jobData);
 
-        if (log.isDebugEnabled()) {
-            log.debug("UpdateUsersGroupsOrganizationsListJob done");
+        } else {
+            log.info("USERS AND GROUPS SYNC IS SWITCHED OFF FROM CONFIGURATION FILE....getSyncActiveStatus():" + getSyncActiveStatus());
         }
+
+        log.info("UpdateUsersGroupsOrganizationsListJob done");
+    }
+
+    public String getSyncActiveStatus() {
+        return BeanHelper.getOrganizationStructureService().getSyncActiveStatus();
     }
 
     private void updateOrganisationStructureBasedGroups(JobDataMap jobData) {

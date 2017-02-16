@@ -1,23 +1,15 @@
 package ee.webmedia.alfresco.orgstructure.amr.service;
 
-import java.math.BigInteger;
-
 import org.springframework.ws.client.core.WebServiceTemplate;
-
-import smit.ametnik.services.AmetnikByAsutusId2RequestDocument;
+import smit.ametnik.services.*;
 import smit.ametnik.services.AmetnikByAsutusId2RequestDocument.AmetnikByAsutusId2Request;
-import smit.ametnik.services.AmetnikByAsutusId2ResponseDocument;
 import smit.ametnik.services.AmetnikByAsutusId2ResponseDocument.AmetnikByAsutusId2Response;
-import smit.ametnik.services.AmetnikByIsikukood2RequestDocument;
 import smit.ametnik.services.AmetnikByIsikukood2RequestDocument.AmetnikByIsikukood2Request;
-import smit.ametnik.services.AmetnikByIsikukood2ResponseDocument;
 import smit.ametnik.services.AmetnikByIsikukood2ResponseDocument.AmetnikByIsikukood2Response;
-import smit.ametnik.services.AmetnikExt;
-import smit.ametnik.services.YksusByAsutusId2RequestDocument;
 import smit.ametnik.services.YksusByAsutusId2RequestDocument.YksusByAsutusId2Request;
-import smit.ametnik.services.YksusByAsutusId2ResponseDocument;
 import smit.ametnik.services.YksusByAsutusId2ResponseDocument.YksusByAsutusId2Response;
-import smit.ametnik.services.YksusExt;
+
+import java.math.BigInteger;
 
 /**
  * Web service, to communicate with AmetnikeRegister
@@ -26,6 +18,7 @@ public class AMRServiceImpl extends WebServiceTemplate implements AMRService {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(AMRServiceImpl.class);
 
     private BigInteger asutusId;
+    private Boolean removeGroupsEmail = true;
 
     @Override
     public YksusExt[] getYksusByAsutusId() {
@@ -72,6 +65,36 @@ public class AMRServiceImpl extends WebServiceTemplate implements AMRService {
 
     public void setAsutusId(String asutusId) {
         this.asutusId = new BigInteger(asutusId);
+    }
+
+    /*
+    public void setRemoveGroupsEmail(String removeGroupsEmail){
+        this.removeGroupsEmail = false;
+
+        log.debug("---------------------------------------------------------------------------");
+        if(removeGroupsEmail == null){
+            log.warn("removeGroupsEmail param is not set in global-config! Using default value: " + this.removeGroupsEmail);
+        } else {
+            try {
+                this.removeGroupsEmail = Boolean.valueOf(removeGroupsEmail);
+                log.debug("removeGroupsEmail value found: " + removeGroupsEmail);
+            } catch (Exception ex){
+                log.error("removeGroupsEmail param value ("+removeGroupsEmail
+                        +") convert from string to boolean failed! using default value: " +this.removeGroupsEmail);
+            }
+        }
+        log.debug("---------------------------------------------------------------------------");
+
+    }
+    */
+
+
+    //@Override
+    public boolean getRemoveGroupsEmail(){
+        log.debug("---------------------------------------------------------------------------");
+        log.debug("getRemoveGroupsEmail config value: " + this.removeGroupsEmail);
+        log.debug("---------------------------------------------------------------------------");
+        return  this.removeGroupsEmail;
     }
 
 }
