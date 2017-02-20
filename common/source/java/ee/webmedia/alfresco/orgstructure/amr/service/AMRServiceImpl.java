@@ -1,23 +1,16 @@
 package ee.webmedia.alfresco.orgstructure.amr.service;
 
-import java.math.BigInteger;
-
 import org.springframework.ws.client.core.WebServiceTemplate;
-
-import smit.ametnik.services.AmetnikByAsutusId2RequestDocument;
+import ee.webmedia.alfresco.utils.TextUtil;
+import smit.ametnik.services.*;
 import smit.ametnik.services.AmetnikByAsutusId2RequestDocument.AmetnikByAsutusId2Request;
-import smit.ametnik.services.AmetnikByAsutusId2ResponseDocument;
 import smit.ametnik.services.AmetnikByAsutusId2ResponseDocument.AmetnikByAsutusId2Response;
-import smit.ametnik.services.AmetnikByIsikukood2RequestDocument;
 import smit.ametnik.services.AmetnikByIsikukood2RequestDocument.AmetnikByIsikukood2Request;
-import smit.ametnik.services.AmetnikByIsikukood2ResponseDocument;
 import smit.ametnik.services.AmetnikByIsikukood2ResponseDocument.AmetnikByIsikukood2Response;
-import smit.ametnik.services.AmetnikExt;
-import smit.ametnik.services.YksusByAsutusId2RequestDocument;
 import smit.ametnik.services.YksusByAsutusId2RequestDocument.YksusByAsutusId2Request;
-import smit.ametnik.services.YksusByAsutusId2ResponseDocument;
 import smit.ametnik.services.YksusByAsutusId2ResponseDocument.YksusByAsutusId2Response;
-import smit.ametnik.services.YksusExt;
+
+import java.math.BigInteger;
 
 /**
  * Web service, to communicate with AmetnikeRegister
@@ -26,6 +19,7 @@ public class AMRServiceImpl extends WebServiceTemplate implements AMRService {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(AMRServiceImpl.class);
 
     private BigInteger asutusId;
+    private Boolean removeGroupsEmail = false;
 
     @Override
     public YksusExt[] getYksusByAsutusId() {
@@ -70,8 +64,25 @@ public class AMRServiceImpl extends WebServiceTemplate implements AMRService {
         return response.getAmetnik();
     }
 
+    // START: getters / setters
+
     public void setAsutusId(String asutusId) {
         this.asutusId = new BigInteger(asutusId);
     }
 
+    public void setRemoveGroupsEmail(boolean removeGroupsEmail){
+        this.removeGroupsEmail = removeGroupsEmail;
+        log.debug("---------------------------------------------------------------------------");
+        log.debug("setRemoveGroupsEmail(): value = " + this.removeGroupsEmail);
+        log.debug("---------------------------------------------------------------------------");
+    }
+
+    public boolean getRemoveGroupsEmail(){
+        log.debug("---------------------------------------------------------------------------");
+        log.debug("getRemoveGroupsEmail config value: " + this.removeGroupsEmail);
+        log.debug("---------------------------------------------------------------------------");
+        return  this.removeGroupsEmail;
+    }
+
+    // END: getters / setters
 }

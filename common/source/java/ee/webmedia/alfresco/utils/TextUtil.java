@@ -21,6 +21,7 @@ import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.common.converter.MultiValueConverter;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 
@@ -33,6 +34,8 @@ import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 
 public class TextUtil {
+
+    private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(TextUtil.class);
 
     public static final String LIST_SEPARATOR = ", ";
     public static final String SEMICOLON_SEPARATOR = "; ";
@@ -382,6 +385,43 @@ public class TextUtil {
         } catch (UnsupportedEncodingException e) {
             return str;
         }
+    }
+
+    /**
+     * Convert string to boolean
+     * @param target
+     * @return
+     */
+    public static boolean toBoolean(String target) {
+        if (target == null) return false;
+        return target.matches("(?i:^(1|y|Y|n|N|Yes|YES|yes|No|NO|no|true|false|True|False|TRUE|FALSE)$)");
+    }
+
+    /**
+     * Converts string to boolean:
+     * accepted string values: y|Y|n|N|Yes|YES|yes|No|NO|no|true|false|True|False|TRUE|FALSE|NULL (false)
+     *
+     * @param value
+     * @return
+     */
+    public static Boolean formatStringToBoolean(String value) {
+        if (value == null) {
+            log.warn("formatStringToBoolean(): Value is NULL! Can't convert string to boolean! Return FALSE!");
+            return false;
+        }
+
+        String[] values = new String[]{"y", "Y", "n", "N", "Yes", "YES", "yes", "no", "No", "NO", "true", "false", "True", "False", "TRUE", "FALSE", null};
+        for (String booleanStr : values) {
+            System.out.println("Str =" + booleanStr + ": boolean =" + BooleanUtils.toBoolean(booleanStr));
+        }
+
+        if (value.equalsIgnoreCase("true") || value.equalsIgnoreCase("false")) {
+            log.debug("formatStringToBoolean(): Value exists! Convert to boolean: " + value);
+            return Boolean.valueOf(value);
+        }
+
+        log.warn("formatStringToBoolean(): Value is not TRUE nor FALSE! Can't convert to boolean! Return FALSE!");
+        return false;
     }
 
 }

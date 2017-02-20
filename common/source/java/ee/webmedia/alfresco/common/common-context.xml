@@ -20,6 +20,7 @@
       <property name="finishUnregisteredDocumentEnabled" value="${conf.document.finish-unregistered-document.enabled}" />
       <property name="volumeColumnEnabled" value="${conf.documents-list.volume-column.enabled}" />
       <property name="myTasksAndDocumentsMenuClosed" value="${conf.myTasksAndDocuments.menu.closed}" />
+      <property name="syncActiveStatus" value="${sync.active.status}" />
    </bean>
    
    <bean id="constantNodeRefsBean" class="ee.webmedia.alfresco.common.service.ConstantNodeRefsBean" scope="application" 

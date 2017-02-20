@@ -1,15 +1,17 @@
 package ee.webmedia.alfresco.common.service;
 
-import org.springframework.beans.factory.InitializingBean;
-
 import ee.webmedia.alfresco.utils.MessageUtil;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.InitializingBean;
 
 /**
  * Bean for holding application configuration data that is not going to change during uptime.
  */
 public class ApplicationConstantsBean implements InitializingBean {
-
     public static final String BEAN_NAME = "applicationConstantsBean";
+
+    private static Log log = LogFactory.getLog(ApplicationConstantsBean.class);
 
     /**
      * If document list contains more than given number of rows, then only initial sorting is performed when loading list
@@ -46,6 +48,7 @@ public class ApplicationConstantsBean implements InitializingBean {
     private boolean finishUnregisteredDocumentEnabled;
     private boolean volumeColumnEnabled;
     private boolean myTasksAndDocumentsMenuClosed;
+    private boolean syncActiveStatus;
 
     public boolean isGenerateNewRegNumberInReregistration() {
         return generateNewRegNumberInReregistration;
@@ -145,4 +148,17 @@ public class ApplicationConstantsBean implements InitializingBean {
         this.myTasksAndDocumentsMenuClosed = myTasksAndDocumentsMenuClosed;
     }
 
+    public void setSyncActiveStatus(boolean syncActiveStatus) {
+        log.debug("---------------------------------------------------------");
+        log.debug("setSyncActiveStatus(): Sync active status: " + syncActiveStatus);
+        log.debug("---------------------------------------------------------");
+        this.syncActiveStatus = syncActiveStatus; //syncActiveStatus;
+    }
+
+    public boolean isSyncActiveStatus() {
+        log.debug("---------------------------------------------------------");
+        log.debug("getSyncActiveStatus(): Sync active status: " + this.syncActiveStatus);
+        log.debug("---------------------------------------------------------");
+        return this.syncActiveStatus;
+    }
 }
