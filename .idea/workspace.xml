@@ -5,22 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8ea4693e-baea-4529-837d-a24ee1d01876" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/codeStyleSettings.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/libraries/lib3.xml" afterPath="$PROJECT_DIR$/.idea/libraries/lib3.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/common/source/java/ee/webmedia/alfresco/common/common-context.xml" afterPath="$PROJECT_DIR$/common/source/java/ee/webmedia/alfresco/common/common-context.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/common/source/java/ee/webmedia/alfresco/common/service/ApplicationConstantsBean.java" afterPath="$PROJECT_DIR$/common/source/java/ee/webmedia/alfresco/common/service/ApplicationConstantsBean.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/common/source/java/ee/webmedia/alfresco/orgstructure/amr/AMRUserRegistry.java" afterPath="$PROJECT_DIR$/common/source/java/ee/webmedia/alfresco/orgstructure/amr/AMRUserRegistry.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/common/source/java/ee/webmedia/alfresco/orgstructure/amr/service/AMRServiceImpl.java" afterPath="$PROJECT_DIR$/common/source/java/ee/webmedia/alfresco/orgstructure/amr/service/AMRServiceImpl.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/common/source/java/ee/webmedia/alfresco/orgstructure/amr/service/amrService-context.xml" afterPath="$PROJECT_DIR$/common/source/java/ee/webmedia/alfresco/orgstructure/amr/service/amrService-context.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/common/source/java/ee/webmedia/alfresco/orgstructure/job/UpdateUsersGroupsOrganizationsListJob.java" afterPath="$PROJECT_DIR$/common/source/java/ee/webmedia/alfresco/orgstructure/job/UpdateUsersGroupsOrganizationsListJob.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/common/source/java/ee/webmedia/alfresco/orgstructure/organizationStructure-context.xml" afterPath="$PROJECT_DIR$/common/source/java/ee/webmedia/alfresco/orgstructure/organizationStructure-context.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/common/source/java/ee/webmedia/alfresco/orgstructure/service/OrganizationStructureService.java" afterPath="$PROJECT_DIR$/common/source/java/ee/webmedia/alfresco/orgstructure/service/OrganizationStructureService.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/common/source/java/ee/webmedia/alfresco/orgstructure/service/OrganizationStructureServiceImpl.java" afterPath="$PROJECT_DIR$/common/source/java/ee/webmedia/alfresco/orgstructure/service/OrganizationStructureServiceImpl.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/common/source/java/ee/webmedia/alfresco/utils/TextUtil.java" afterPath="$PROJECT_DIR$/common/source/java/ee/webmedia/alfresco/utils/TextUtil.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/etc/conf/sim-example/classes/alfresco-global.properties" afterPath="$PROJECT_DIR$/etc/conf/sim-example/classes/alfresco-global.properties" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/source/java/ee/webmedia/alfresco/simdhs/simdhs-alfresco-global.properties" afterPath="$PROJECT_DIR$/source/java/ee/webmedia/alfresco/simdhs/simdhs-alfresco-global.properties" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/source/test/java/ee/webmedia/alfresco/orgstructure/amr/service/AMRServiceImplTest.java" afterPath="$PROJECT_DIR$/source/test/java/ee/webmedia/alfresco/orgstructure/amr/service/AMRServiceImplTest.java" />
     </list>
     <ignored path="bitbucket-delta.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -134,11 +119,21 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="simdhs-alfresco-global.properties" pinned="false" current-in-tab="true">
+      <file leaf-file-name="simdhs-alfresco-global.properties" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/source/java/ee/webmedia/alfresco/simdhs/simdhs-alfresco-global.properties">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="1101">
               <caret line="274" column="0" selection-start-line="274" selection-start-column="0" selection-end-line="278" selection-end-column="29" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="project.properties" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/project.properties">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="0">
+              <caret line="0" column="26" selection-start-line="0" selection-start-column="26" selection-end-line="0" selection-end-column="26" />
               <folding />
             </state>
           </provider>
@@ -1083,12 +1078,12 @@
       <workItem from="1487059104702" duration="7999000" />
       <workItem from="1487227445342" duration="10266000" />
       <workItem from="1487319559023" duration="8199000" />
-      <workItem from="1487572928009" duration="9433000" />
+      <workItem from="1487572928009" duration="9989000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="47413000" />
+    <option name="totallyTimeSpent" value="47969000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="2576" height="1426" extended-state="6" />
@@ -1298,13 +1293,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="17">
           <caret line="35" column="4" selection-start-line="35" selection-start-column="4" selection-end-line="35" selection-end-column="4" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/project.properties">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="26" selection-start-line="0" selection-start-column="26" selection-end-line="0" selection-end-column="26" />
         </state>
       </provider>
     </entry>
@@ -1570,6 +1558,14 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1101">
           <caret line="274" column="0" selection-start-line="274" selection-start-column="0" selection-end-line="278" selection-end-column="29" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/project.properties">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="26" selection-start-line="0" selection-start-column="26" selection-end-line="0" selection-end-column="26" />
           <folding />
         </state>
       </provider>
