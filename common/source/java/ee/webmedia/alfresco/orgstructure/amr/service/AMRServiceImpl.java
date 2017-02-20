@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.orgstructure.amr.service;
 
 import org.springframework.ws.client.core.WebServiceTemplate;
+import ee.webmedia.alfresco.utils.TextUtil;
 import smit.ametnik.services.*;
 import smit.ametnik.services.AmetnikByAsutusId2RequestDocument.AmetnikByAsutusId2Request;
 import smit.ametnik.services.AmetnikByAsutusId2ResponseDocument.AmetnikByAsutusId2Response;
@@ -18,7 +19,7 @@ public class AMRServiceImpl extends WebServiceTemplate implements AMRService {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(AMRServiceImpl.class);
 
     private BigInteger asutusId;
-    private Boolean removeGroupsEmail = true;
+    private Boolean removeGroupsEmail = false;
 
     @Override
     public YksusExt[] getYksusByAsutusId() {
@@ -63,33 +64,19 @@ public class AMRServiceImpl extends WebServiceTemplate implements AMRService {
         return response.getAmetnik();
     }
 
+    // START: getters / setters
+
     public void setAsutusId(String asutusId) {
         this.asutusId = new BigInteger(asutusId);
     }
 
-    /*
-    public void setRemoveGroupsEmail(String removeGroupsEmail){
-        this.removeGroupsEmail = false;
-
+    public void setRemoveGroupsEmail(boolean removeGroupsEmail){
+        this.removeGroupsEmail = removeGroupsEmail;
         log.debug("---------------------------------------------------------------------------");
-        if(removeGroupsEmail == null){
-            log.warn("removeGroupsEmail param is not set in global-config! Using default value: " + this.removeGroupsEmail);
-        } else {
-            try {
-                this.removeGroupsEmail = Boolean.valueOf(removeGroupsEmail);
-                log.debug("removeGroupsEmail value found: " + removeGroupsEmail);
-            } catch (Exception ex){
-                log.error("removeGroupsEmail param value ("+removeGroupsEmail
-                        +") convert from string to boolean failed! using default value: " +this.removeGroupsEmail);
-            }
-        }
+        log.debug("setRemoveGroupsEmail(): value = " + this.removeGroupsEmail);
         log.debug("---------------------------------------------------------------------------");
-
     }
-    */
 
-
-    //@Override
     public boolean getRemoveGroupsEmail(){
         log.debug("---------------------------------------------------------------------------");
         log.debug("getRemoveGroupsEmail config value: " + this.removeGroupsEmail);
@@ -97,4 +84,5 @@ public class AMRServiceImpl extends WebServiceTemplate implements AMRService {
         return  this.removeGroupsEmail;
     }
 
+    // END: getters / setters
 }

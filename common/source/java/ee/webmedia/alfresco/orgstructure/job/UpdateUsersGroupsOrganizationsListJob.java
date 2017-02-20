@@ -27,27 +27,26 @@ public class UpdateUsersGroupsOrganizationsListJob implements StatefulJob {
         log.info("Starting UpdateUsersGroupsOrganizationsListJob");
         JobDataMap jobData = context.getJobDetail().getJobDataMap();
 
-        if(getSyncActiveStatus() == "true"){
-        log.info("USERS AND GROUPS SYNC IS ACTIVE....");
-        // Run the jobs
-        log.info("UPDATE ORGANISATIONSTRUCTURE...");
-        updateOrganisationStructure(jobData);
+        if(getSyncActiveStatus() == true){
+            log.info("USERS AND GROUPS SYNC IS ACTIVE....");
+            // Run the jobs
+            log.info("UPDATE ORGANISATIONSTRUCTURE...");
+            updateOrganisationStructure(jobData);
 
-        log.info("UPDATE USERS AND GROUPS...");
-        updateUsersAndGroups(jobData);
+            log.info("UPDATE USERS AND GROUPS...");
+            updateUsersAndGroups(jobData);
 
-        log.info("UPDATE ORGANISATION STRUCTURE-BASED GROUPS...");
-        updateOrganisationStructureBasedGroups(jobData);
-
+            log.info("UPDATE ORGANISATION STRUCTURE-BASED GROUPS...");
+            updateOrganisationStructureBasedGroups(jobData);
         } else {
             log.info("USERS AND GROUPS SYNC IS SWITCHED OFF FROM CONFIGURATION FILE....getSyncActiveStatus():" + getSyncActiveStatus());
         }
 
-        log.info("UpdateUsersGroupsOrganizationsListJob done");
+        log.info("UpdateUsersGroupsOrganizationsListJob done!");
     }
 
-    public String getSyncActiveStatus() {
-        return BeanHelper.getOrganizationStructureService().getSyncActiveStatus();
+    public Boolean getSyncActiveStatus() {
+        return BeanHelper.getApplicationConstantsBean().isSyncActiveStatus();
     }
 
     private void updateOrganisationStructureBasedGroups(JobDataMap jobData) {

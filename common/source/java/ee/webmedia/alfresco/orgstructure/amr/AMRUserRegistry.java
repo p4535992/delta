@@ -166,6 +166,7 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
 
         // -----------------------------------------------------------------------------
         if (amrService.getRemoveGroupsEmail()){
+            log.debug("RemoveGroupsEmail is TRUE! Set email to NULL: value war: " + email);
             email = null;
         }
         // -----------------------------------------------------------------------------

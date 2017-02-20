@@ -97,7 +97,6 @@
       <property name="authorityService" ref="AuthorityService" />
       <property name="orgStructPropertiesCache" ref="orgStructPropertiesCache" /> 
       <property name="applicationConstantsBean" ref="applicationConstantsBean" />
-      <property name="syncActiveStatus" value="${sync.active.status}" />
    </bean>
 
    <bean id="OrganizationStructureService" class="org.springframework.aop.framework.ProxyFactoryBean">

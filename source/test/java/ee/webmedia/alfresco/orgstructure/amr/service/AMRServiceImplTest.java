@@ -13,6 +13,30 @@ import smit.ametnik.services.YksusExt;
  * Test {@link AMRServiceImpl}
  */
 public class AMRServiceImplTest extends TestCase {
+    public void testGetYksusByAsutusId() throws Exception {
+
+    }
+
+    public void testGetAmetnikByAsutusId1() throws Exception {
+
+    }
+
+    public void testGetAmetnikByIsikukood1() throws Exception {
+
+    }
+
+    public void testSetAsutusId() throws Exception {
+
+    }
+
+    public void testSetRemoveGroupsEmail() throws Exception {
+
+    }
+
+    public void testGetRemoveGroupsEmail() throws Exception {
+
+    }
+
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(AMRServiceImplTest.class);
     static final AMRService amrService;
     static final ClassPathXmlApplicationContext appC;
