@@ -14,4 +14,7 @@ public interface AMRService {
     AmetnikExt[] getAmetnikByAsutusId();
 
     AmetnikExt getAmetnikByIsikukood(String socialSecurityNr);
+
+    boolean getRemoveGroupsEmail();
+
 }

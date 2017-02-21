@@ -502,9 +502,15 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
     }
     
     private void addDataFile(NodeRef nodeRef, Container container) throws DigiDoc4JException, IOException {
-        String fileName = getFileName(nodeRef);
-        ContentReader reader = fileFolderService.getReader(nodeRef);
-        container.addDataFile(reader.getContentInputStream(), fileName, reader.getMimetype());
+    	InputStream is = null;
+    	ContentReader reader = fileFolderService.getReader(nodeRef);
+    	try {
+    		String fileName = getFileName(nodeRef);
+    		is = reader.getContentInputStream();
+    		container.addDataFile(is, fileName, reader.getMimetype());
+    	} finally {
+        	IOUtils.closeQuietly(is);
+        }
     }
     
     private SignatureChallenge getSignatureChallenge(Container container, DataToSign dataToSign, String phoneNo, String idCode) throws DigiDocException {
