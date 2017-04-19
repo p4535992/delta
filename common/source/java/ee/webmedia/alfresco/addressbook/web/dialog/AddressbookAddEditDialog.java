@@ -37,6 +37,7 @@ import ee.webmedia.alfresco.utils.WebUtil;
 
 public class AddressbookAddEditDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
+    private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(AddressbookAddEditDialog.class);
 
     public static final String BEAN_NAME = "AddressbookAddEditDialog";
     public static final String PERSON_CODE_EXISTS_ERROR = "addressbook_save_person_error_codeExists";
@@ -120,11 +121,15 @@ public class AddressbookAddEditDialog extends BaseDialogBean {
     	
     	if (skLdapCerts != null && !skLdapCerts.isEmpty()) {
     		// update orgCertificates
+            log.debug("Found org certificates: " + skLdapCerts.size());
+            int i = 0;
     		for (SkLdapCertificate skLdapCert: skLdapCerts) {
     			X509Certificate cert = getSignatureService().getCertificateForEncryption(skLdapCert);
+    			i++;
     			if (cert != null) {
     				String cnName = skLdapCert.getCn();
     				Date validTo = cert.getNotAfter();
+    				log.debug(i + ") X509Certificate: CN name: [" + cnName + "]; Valid to: " + validTo);
     				if (!isAlreadyAddedCert(cnName, validTo)) {
     					String base64Cert = Base64.encodeBase64String(skLdapCert.getUserCertificate());
     					Node orgCertNode = getAddressbookService().getEmptyNode(AddressbookModel.Types.ORGCERTIFICATE);
@@ -142,11 +147,15 @@ public class AddressbookAddEditDialog extends BaseDialogBean {
     }
     
     private boolean isAlreadyAddedCert(String cnName, Date validTo) {
+        log.debug("IS IN ADDRESSBOOK? CN cert name: [" + cnName + "]; ValidTo: [" + validTo + "]");
     	for (AddressbookEntry orgCert: orgCertificates) {
+    	    log.debug("Check addressbook: CN cert name: [" + orgCert.getCertName() + "]; ValidTo: [" + orgCert.getCertValidTo() + "]... ");
     		if (cnName.equals(orgCert.getCertName()) && validTo.equals(orgCert.getCertValidTo())) {
+                log.debug("Check addressbook: CN cert name: [" + orgCert.getCertName() + "]; ValidTo: [" + orgCert.getCertValidTo() + "]... FOUND!");
     			return true;
     		}
 		}
+        log.debug("IS IN ADDRESSBOOK? CN cert name: [" + cnName + "]; ValidTo: [" + validTo + "]... NOT FOUND");
     	return false;
     }
 
