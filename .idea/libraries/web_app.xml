@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="web_app">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/repository-src/test-resources/web_app.zip!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
