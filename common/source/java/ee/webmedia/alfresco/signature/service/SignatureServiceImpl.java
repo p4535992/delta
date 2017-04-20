@@ -326,6 +326,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         ArrayList<X509Certificate> results = new ArrayList<X509Certificate>();
         outer: for (SkLdapCertificate skLdapCertificate : certificates) {
             try {
+                log.debug("Read certificate...");
                 X509Certificate cert = SignedDoc.readCertificate(skLdapCertificate.getUserCertificate());
 
                 // In DigiDoc Client 2 and 3, only certificates which contain KeyEncipherment in KeyUsage, are suitable for encryption
@@ -333,6 +334,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
                 // According to https://svn.eesti.ee/projektid/idkaart_public/trunk/qdigidoc/crypto/KeyDialog.cpp
                 // * c.keyUsage().contains( SslCertificate::KeyEncipherment )
                 boolean keyEncipherment = cert.getKeyUsage()[2];
+                log.debug("Is keyEncipherment in use: " + keyEncipherment);
                 if (!keyEncipherment) {
                     continue;
                 }
@@ -367,14 +369,22 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
     public X509Certificate getCertificateForEncryption(byte [] certData, String certName) {
     	X509Certificate cert = null;
     	try {
+    	    log.debug("Reading certificate...");
             cert = SignedDoc.readCertificate(certData);
 
             // In DigiDoc Client 2 and 3, only certificates which contain KeyEncipherment in KeyUsage, are suitable for encryption
             // (in DigiDoc Client < 3.6 DataEncipherment was checked)
             // According to https://svn.eesti.ee/projektid/idkaart_public/trunk/qdigidoc/crypto/KeyDialog.cpp
             // * c.keyUsage().contains( SslCertificate::KeyEncipherment )
-            boolean keyEncipherment = cert.getKeyUsage()[2];
+
+            boolean[] keyUsageArray = cert.getKeyUsage();
+
+            keyUsageLog(keyUsageArray);
+
+            boolean keyEncipherment = keyUsageArray[2];
+            log.debug("Is KeyEncipherment in use: " + keyEncipherment);
             if (!keyEncipherment) {
+                log.debug("keyEncipherment is not in use! Returning NULL!");
             	return null;
             }
             
@@ -388,7 +398,9 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
             // * return MobileIDType;
             List<String> objectIdentifiers = getPolicyObjectIdentifiers(cert);
             for (String objectIdentifier : objectIdentifiers) {
+                log.debug("GetPolicyObjectIdentifiers: identifier: " + objectIdentifier );
                 if (objectIdentifier.startsWith("1.3.6.1.4.1.10015.1.3") || objectIdentifier.startsWith("1.3.6.1.4.1.10015.11.1")) {
+                    log.debug("GetPolicyObjectIdentifiers: identifier: starts with '1.3.6.1.4.1.10015.1.3' OR with '1.3.6.1.4.1.10015.11.1'! Returnig Null");
                 	return null;
                 }
             }
@@ -396,6 +408,47 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         } catch (Exception e) {
             throw new SignatureRuntimeException("Failed to parse certificate for " + certName, e);
         }
+    }
+
+    private void keyUsageLog(boolean[] keyUsageArray){
+        // In DigiDoc Client
+        // enum KeyUsage
+        //{
+        //    KeyUsageNone = -1,
+        //    DigitalSignature = 0,
+        //    NonRepudiation,
+        //    KeyEncipherment,
+        //    DataEncipherment,
+        //    KeyAgreement,
+        //    KeyCertificateSign,
+        //    CRLSign,
+        //    EncipherOnly,
+        //    DecipherOnly
+        //};
+
+        List<String> keyUsageParams = new ArrayList<>();
+        keyUsageParams.add(0, "KeyUsageNone");
+        keyUsageParams.add(1, "DigitalSignature");
+        keyUsageParams.add(2, "NonRepudiation");
+        keyUsageParams.add(3, "KeyEncipherment");
+        keyUsageParams.add(4, "DataEncipherment");
+        keyUsageParams.add(5, "KeyAgreement");
+        keyUsageParams.add(6, "KeyCertificateSign");
+        keyUsageParams.add(7, "CRLSign");
+        keyUsageParams.add(8, "EncipherOnly");
+        keyUsageParams.add(9, "DecipherOnly");
+
+        int i = 0;
+        for(boolean keyUsage: keyUsageArray){
+            try{
+                log.trace("KeyUsage: "+keyUsageParams.get(i)+": " + keyUsage);
+            } catch (Exception e){
+                log.error("KeyUsage: NULL: " + keyUsage);
+            }
+            i++;
+        }
+
+        keyUsageParams.clear();
     }
 
     private static List<String> getPolicyObjectIdentifiers(X509Certificate cert) {

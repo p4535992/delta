@@ -124,14 +124,21 @@ public class AddressbookAddEditDialog extends BaseDialogBean {
             log.debug("Found org certificates: " + skLdapCerts.size());
             int i = 0;
     		for (SkLdapCertificate skLdapCert: skLdapCerts) {
-    			X509Certificate cert = getSignatureService().getCertificateForEncryption(skLdapCert);
     			i++;
+                String cnName = skLdapCert.getCn();
+                log.debug(i + ") X509Certificate: CN name: [" + cnName + "]");
+                String base64Cert = Base64.encodeBase64String(skLdapCert.getUserCertificate());
+                X509Certificate cert = getSignatureService().getCertificateForEncryption(skLdapCert);
     			if (cert != null) {
-    				String cnName = skLdapCert.getCn();
-    				Date validTo = cert.getNotAfter();
-    				log.debug(i + ") X509Certificate: CN name: [" + cnName + "]; Valid to: " + validTo);
+                    Date validTo = cert.getNotAfter();
+                    log.debug(i + ") X509Certificate: CN name: [" + cnName + "] -- validTo: " + validTo + "; CERT: [" + base64Cert + "]");
+
+                    if(!validTo.after(new Date())){
+                        log.warn("Certificate is expired!: [" + cnName + "] -- validTo: " + validTo);
+                        continue;
+                    }
+                    
     				if (!isAlreadyAddedCert(cnName, validTo)) {
-    					String base64Cert = Base64.encodeBase64String(skLdapCert.getUserCertificate());
     					Node orgCertNode = getAddressbookService().getEmptyNode(AddressbookModel.Types.ORGCERTIFICATE);
     					Map<String, Object> properties = orgCertNode.getProperties();
     					properties.put(AddressbookModel.Props.ORG_CERT_NAME.toString(), cnName);
@@ -139,7 +146,9 @@ public class AddressbookAddEditDialog extends BaseDialogBean {
     					properties.put(AddressbookModel.Props.ORG_CERT_CONTENT.toString(), base64Cert);
     					orgCertificates.add(new AddressbookEntry(orgCertNode, entry.getNodeRef()));
     				}
-    			}
+    			} else {
+                    log.debug(i + ") ERROR: Can't parse X509Certificate Cert for Signing: [" + base64Cert + "]");
+                }
     		}
     	} else {
     		MessageUtil.addInfoMessage("addressbook_org_certs_empty_error");

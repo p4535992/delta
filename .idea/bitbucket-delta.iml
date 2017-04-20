@@ -15,6 +15,32 @@
       <sourceFolder url="file://$MODULE_DIR$/common/source/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/common/source/test" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/common/etc" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/build/account" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/build/accountlist" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/build/addDocument" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/build/adr" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/build/adr-classes" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/build/amr" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/build/deltaKK" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/build/digidocservice" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/build/digidocserviceV2" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/build/dimensionslist" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/build/einvoice" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/build/ikt" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/build/mso" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/build/mso-classes" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/build/mso2" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/build/mso2-classes" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/build/ocr" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/build/ocr-classes" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/build/relvastus" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/build/rs" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/build/sellerslist" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/build/vatcodelist" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/build/exploded/WEB-INF/classes" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/build/exploded/WEB-INF/jsp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/build/exploded/WEB-INF/lib" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/build/exploded" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

@@ -69,6 +69,10 @@ public class SkLdapServiceImpl implements SkLdapService {
             long stopTime = System.nanoTime();
             LOG.info("PERFORMANCE: query skLdapSearchBySerialNumber - " + duration(startTime, stopTime) + " ms");
             MonitoringUtil.logSuccess(MonitoredService.OUT_SK_LDAP);
+            if (list != null && !list.isEmpty()) {
+                // update orgCertificates
+                LOG.info("Found certificates: " + list.size());
+            }
             return list;
         } catch (NamingException e) {
             long stopTime = System.nanoTime();
