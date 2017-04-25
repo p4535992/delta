@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="custom-config">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../../../TARKVARA/alfresco-community-sdk-3.2/src/core-src/test-resources/custom-config.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>
