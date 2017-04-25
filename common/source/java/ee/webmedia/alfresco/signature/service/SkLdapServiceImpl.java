@@ -8,13 +8,11 @@ import ee.webmedia.alfresco.utils.UnableToPerformException;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.ldap.NamingException;
 import org.springframework.ldap.core.DirContextOperations;
-import org.springframework.ldap.core.DirContextProcessor;
 import org.springframework.ldap.core.simple.AbstractParameterizedContextMapper;
 import org.springframework.ldap.core.simple.SimpleLdapTemplate;
 import org.springframework.ldap.core.support.LdapContextSource;
 import org.springframework.util.Assert;
 
-import javax.naming.directory.SearchControls;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,8 +25,6 @@ public class SkLdapServiceImpl implements SkLdapService {
 
     private int pageSize = 1000;
     private SimpleLdapTemplate ldapTemplate;
-    private SearchControls controls;
-    private DirContextProcessor processor;
 
     @Override
     public List<SkLdapCertificate> getCertificates(String serialNumber) {
@@ -58,7 +54,7 @@ public class SkLdapServiceImpl implements SkLdapService {
         long startTime = System.nanoTime();
         try {
             LOG.debug("LDAP search filter: [" + filter + "]");
-            List<SkLdapCertificate> list = ldapTemplate.search("", filter, controls, new SkLdapCertificateMapper(), processor);
+            List<SkLdapCertificate> list = ldapTemplate.search("", filter,  new SkLdapCertificateMapper());
             if(list != null){
                 LOG.debug("Find certificates: " + list.size());
             }
