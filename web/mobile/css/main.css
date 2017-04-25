@@ -195,16 +195,7 @@ hr {
 .headerwrapper a {
 	display: inline-block;
 }
-#logo {	
-	float: left;
-	height: 45px;
-	width: 70px;
-	margin-top: 4px;
-	text-align: left; 
-	text-indent: -9rem;
-	overflow: hidden;
-	background: transparent url(../gfx/rik_logo.svg) 50% 50% no-repeat;
-}
+
 .mainmenu {
 	float: right;
 	margin: 0;
