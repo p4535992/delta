@@ -327,7 +327,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         outer: for (SkLdapCertificate skLdapCertificate : certificates) {
             try {
                 log.debug("Read certificate...");
-                X509Certificate cert = SignedDoc.readCertificate(skLdapCertificate.getUserCertificate());
+                X509Certificate cert = SignedDoc.readCertificate(skLdapCertificate.getUserEncryptionCertificate());
 
                 // In DigiDoc Client 2 and 3, only certificates which contain KeyEncipherment in KeyUsage, are suitable for encryption
                 // (in DigiDoc Client < 3.6 DataEncipherment was checked)
@@ -363,9 +363,23 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
     }
     
     public X509Certificate getCertificateForEncryption(SkLdapCertificate skLdapCertificate) {
-    	return getCertificateForEncryption(skLdapCertificate.getUserCertificate(), skLdapCertificate.getCn());
+        List<byte []> certificate = skLdapCertificate.getUserCertificate();
+        String certName = skLdapCertificate.getCn();
+
+        X509Certificate cert = null;
+
+        for(byte[] certData : certificate){
+            cert = getCertificateForEncryption(certData, certName);
+            if(cert != null){
+
+                break;
+            }
+        }
+        return cert;
+    	//return getCertificateForEncryption(skLdapCertificate.getUserCertificate(), skLdapCertificate.getCn());
     }
-    
+
+
     public X509Certificate getCertificateForEncryption(byte [] certData, String certName) {
     	X509Certificate cert = null;
     	try {
