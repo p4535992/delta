@@ -149,6 +149,7 @@ public class SkLdapServiceImpl implements SkLdapService {
                     return null;
                 }
 
+                LOG.debug("FOUND certificate with encryption support! Returning it...");
                 return certData;
             } catch (Exception e) {
                 LOG.error("Failed to get encryption certificate!", e);
