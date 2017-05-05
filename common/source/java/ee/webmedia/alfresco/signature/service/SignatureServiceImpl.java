@@ -327,13 +327,35 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         outer: for (SkLdapCertificate skLdapCertificate : certificates) {
             try {
                 log.debug("Read certificate...");
-                X509Certificate cert = SignedDoc.readCertificate(skLdapCertificate.getUserEncryptionCertificate());
+                if(skLdapCertificate == null){
+                    log.error("Certificate is NULL!");
+                    continue;
+                }
+                log.debug("Certificate info: " + skLdapCertificate.toString());
+                if(skLdapCertificate.getUserEncryptionCertificate() == null){
+                    log.warn("Certificate don't have encryption part!");
+                    continue;
+                } else {
+                    log.debug("Certificate encryption part FOUND!");
+                }
 
+                X509Certificate cert = SignedDoc.readCertificate(skLdapCertificate.getUserEncryptionCertificate());
+                if(cert == null){
+                    log.error("SignedDoc Certificate read failed! NULL!");
+                    continue;
+                }
+                log.debug("Get certificate keyUsage params...");
+                boolean[] certKeyUsage = cert.getKeyUsage();
+                if(certKeyUsage == null){
+                    log.error("Certifiace Key Usage boolean list is NULL!");
+                } else {
+                    log.debug("Certificate key Usage boolean list length: " + certKeyUsage.length );
+                }
                 // In DigiDoc Client 2 and 3, only certificates which contain KeyEncipherment in KeyUsage, are suitable for encryption
                 // (in DigiDoc Client < 3.6 DataEncipherment was checked)
                 // According to https://svn.eesti.ee/projektid/idkaart_public/trunk/qdigidoc/crypto/KeyDialog.cpp
                 // * c.keyUsage().contains( SslCertificate::KeyEncipherment )
-                boolean keyEncipherment = cert.getKeyUsage()[2];
+                boolean keyEncipherment = certKeyUsage[2];
                 log.debug("Is keyEncipherment in use: " + keyEncipherment);
                 if (!keyEncipherment) {
                     continue;
@@ -347,13 +369,22 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
                 // * if( p.indexOf( QRegExp( "^1\\.3\\.6\\.1\\.4\\.1\\.10015\\.1\\.3.*" ) ) != -1 ||
                 // * p.indexOf( QRegExp( "^1\\.3\\.6\\.1\\.4\\.1\\.10015\\.11\\.1.*" ) ) != -1 )
                 // * return MobileIDType;
+                log.debug("Get certificate policy object identifiers..");
                 List<String> objectIdentifiers = getPolicyObjectIdentifiers(cert);
+                if(objectIdentifiers == null){
+                    log.warn("Object identifiers is NULL!");
+                } else {
+                    log.debug("Object identifiers found: " + objectIdentifiers.size());
+                }
                 for (String objectIdentifier : objectIdentifiers) {
+                    log.debug("Object identifier value: " + objectIdentifier);
                     if (objectIdentifier.startsWith("1.3.6.1.4.1.10015.1.3") || objectIdentifier.startsWith("1.3.6.1.4.1.10015.11.1")) {
+                        log.debug("Object identifier starts with '1.3.6.1.4.1.10015.1.3' or '1.3.6.1.4.1.10015.11.1':: continue to outer...");
                         continue outer;
                     }
                 }
 
+                log.debug("Add certificate to result list...");
                 results.add(cert);
             } catch (Exception e) {
                 throw new SignatureRuntimeException("Failed to parse certificate for " + skLdapCertificate.getCn(), e);
