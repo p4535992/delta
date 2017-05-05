@@ -164,13 +164,22 @@ public abstract class DvkServiceImpl implements DvkService {
 
     @Override
     public int updateOrganizationsDvkCapability() {
+        log.info("UPDATE ORGANIZATIONS DVK CAPABILITY....");
         final Map<String /* regNum */, String /* orgName */> sendingOptions = getSendingOptions();
         final List<Node> organizations = addressbookService.listOrganization();
+        if(organizations != null){
+            log.debug("Found organizations... " + organizations.size());
+        } else {
+            log.debug("Found organizations... NULL!");
+        }
         int dvkCapableOrgs = 0;
         for (Node orgNode : organizations) {
             final Map<String, Object> oProps = orgNode.getProperties();
             String orgCode = (String) oProps.get(AddressbookModel.Props.ORGANIZATION_CODE.toString());
+            log.debug("OrgCode: " + orgCode);
+
             final boolean dvkCapable = sendingOptions.containsKey(orgCode);
+            log.debug("DVK Capable... " + dvkCapable);
             oProps.put(AddressbookModel.Props.DVK_CAPABLE.toString(), dvkCapable);
             addressbookService.updateNode(orgNode);
             if (dvkCapable) {
@@ -194,6 +203,7 @@ public abstract class DvkServiceImpl implements DvkService {
 
     @Override
     public void updateOrganizationList() {
+        log.info("UPDATE ORGANIZATION LIST...");
         try {
             dhlXTeeService.getDvkOrganizationsHelper().updateDvkCapableOrganisationsCache();
             MonitoringUtil.logSuccess(MonitoredService.OUT_XTEE_DVK);
@@ -205,14 +215,21 @@ public abstract class DvkServiceImpl implements DvkService {
 
     @Override
     public Collection<String> receiveDocuments() {
+        log.info("RECEIVE DOCUMENTS...");
         final long maxReceiveDocumentsNr = parametersService.getLongParameter(Parameters.DVK_MAX_RECEIVE_DOCUMENTS_NR);
+        log.debug("Max receive documents nr: " + maxReceiveDocumentsNr);
+
         final String dvkReceiveDocumentsInvoiceFolder = parametersService.getStringParameter(Parameters.DVK_RECEIVE_DOCUMENTS_INVOICE_FOLDER);
+        log.debug("DVK receive documents invoice folder: " +dvkReceiveDocumentsInvoiceFolder);
         final NodeRef dvkIncomingFolder = BeanHelper.getConstantNodeRefsBean().getReceivedDvkDocumentsRoot();
+
+        log.debug("DVK incoming folder: StoreRef: " + dvkIncomingFolder.toString());
         log.info("Starting to receive documents (max " + maxReceiveDocumentsNr + " documents at the time)");
         final Set<String> receiveDocuments = new HashSet<String>();
         Collection<String> lastReceiveDocuments;
         Collection<String> lastFailedDocuments;
         final Collection<String> previouslyFailedDvkIds = getPreviouslyFailedDvkIds();
+        log.debug("Previously failed DVK ID's list size: " + previouslyFailedDvkIds.size());
         int countServiceCalls = 0;
         do {
         	Pair<Collection<String>, Collection<String>> results = BeanHelper.getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Pair<Collection<String>, Collection<String>>>() {
@@ -719,14 +736,17 @@ public abstract class DvkServiceImpl implements DvkService {
             String messageForRecipient);
 
     protected Collection<String> getPreviouslyFailedDvkIds() {
+        log.debug("GET PREVIOUSLY FAILED DVK ID'S....");
         NodeRef corruptFolderRef = BeanHelper.getConstantNodeRefsBean().getDvkCorruptRoot();
         final List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(corruptFolderRef);
         final HashSet<String> failedDvkIds = new HashSet<String>(childAssocs.size());
         for (ChildAssociationRef failedAssocRef : childAssocs) {
             final NodeRef failedRef = failedAssocRef.getChildRef();
             String dvkId = (String) nodeService.getProperty(failedRef, DvkModel.Props.DVK_ID);
+            log.debug("DVK ID: " + dvkId);
             failedDvkIds.add(dvkId);
         }
+        log.debug("GET PREVIOUSLY FAILED DVK ID'S.... RETURN ID's");
         return failedDvkIds;
     }
 

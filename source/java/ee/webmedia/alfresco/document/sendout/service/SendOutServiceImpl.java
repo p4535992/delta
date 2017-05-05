@@ -138,7 +138,13 @@ public class SendOutServiceImpl implements SendOutService {
                     continue;
                 }
                 List<SkLdapCertificate> skLdapCertificates = skLdapService.getCertificates(encryptionIdCode);
-                List<X509Certificate> certificates = getSignatureService().getCertificatesForEncryption(skLdapCertificates);
+                List<X509Certificate> certificates = null;
+                if(skLdapCertificates != null){
+                    log.debug("SK LDAP certificates list size: " + skLdapCertificates.size());
+                    certificates = getSignatureService().getCertificatesForEncryption(skLdapCertificates);
+                } else {
+                    log.warn("SK LDAP certificates list size: NULL!");
+                }
                 if (certificates.isEmpty()) {
                     throw new UnableToPerformException("document_send_out_encryptionRecipient_notFound", names.get(i), encryptionIdCode);
                 }

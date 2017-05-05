@@ -27,6 +27,7 @@ public class DvkBean implements Serializable {
 
         FacesContext context = FacesContext.getCurrentInstance();
         String msg = MessageUtil.getMessage(context, "dvk_received_documents", docs.size());
+        LOG.debug("Reveived Documents message: " + msg);
         context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, msg, msg));
 
         UIContextService.getInstance(context).notifyBeans();
