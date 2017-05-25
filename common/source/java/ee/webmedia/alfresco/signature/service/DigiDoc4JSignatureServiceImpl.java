@@ -701,14 +701,29 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
     private List<SignatureItem> getSignatureItems(NodeRef nodeRef, Container bdoc) {
         List<SignatureItem> items = new ArrayList<SignatureItem>();
         for (Signature signature: bdoc.getSignatures()) {
+            log.debug("Signature method: " + signature.getSignatureMethod());
+            log.debug("Signature id: " + signature.getId());
+
+
             X509Cert certValue = signature.getSigningCertificate();
+
+            log.debug("X509Cert serial: " + certValue.getSerial());
+            log.debug("X509Cert getX509Certificate type: " + certValue.getX509Certificate().getType());
+            log.debug("X509Cert getX509Certificate sigAlgName: " + certValue.getX509Certificate().getSigAlgName());
+            log.debug("X509Cert getX509Certificate sigAlgOID: " + certValue.getX509Certificate().getSigAlgOID());
+
+            log.debug("X509Cert getX509Certificate version: " + certValue.getX509Certificate().getVersion());
             /*
              * TODO: change to this code when this issue is fixed https://github.com/open-eid/digidoc4j/issues/13
             */
             String subjectFirstName = certValue.getSubjectName(X509Cert.SubjectName.GIVENNAME);
+            log.debug("X509Cert subject firstname: " + subjectFirstName);
             String subjectLastName = certValue.getSubjectName(X509Cert.SubjectName.SURNAME);
+            log.debug("X509Cert subject lastname: " + subjectLastName);
             String legalCode = certValue.getSubjectName(X509Cert.SubjectName.SERIALNUMBER);
+            log.debug("X509Cert subject serialnumber: " + legalCode);
             String name = UserUtil.getPersonFullName(subjectFirstName, subjectLastName);
+
             
 //            X509Certificate cert = certValue.getX509Certificate();
 //            String subjectFirstName = SignedDoc.getSubjectFirstName(cert);
@@ -718,13 +733,23 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
             
             Date signingTime = signature.getOCSPResponseCreationTime();
             String address = getSignatureAddress(signature.getCity(), signature.getPostalCode(), signature.getCountryName()); 
+            log.debug("Signature address: " + address);
 
             SignatureValidationResult validationResult = signature.validateSignature();
             if (!validationResult.isValid() && log.isDebugEnabled()) {
                 log.debug("Signature (id = " + signature.getId() + ") verification returned errors" + (nodeRef != null ? ", nodeRef = " + nodeRef : "") + " : \n" + validationResult.getErrors());
             }
 
-            SignatureItem item = new SignatureItem(name, legalCode, signingTime, signature.getSignerRoles(), address, validationResult.isValid());
+            String sigAlgName = certValue.getX509Certificate().getSigAlgName();
+            String encryptionType = "";
+            if(sigAlgName.toLowerCase().equals("sha1withrsa")){
+                encryptionType = "SHA-1";
+            } else if(sigAlgName.toLowerCase().equals("sha256withrsa")){
+                encryptionType = "SHA-256";
+            } else {
+                encryptionType = sigAlgName;
+            }
+            SignatureItem item = new SignatureItem(name, legalCode, signingTime, signature.getSignerRoles(), address, validationResult.isValid(), encryptionType);
             items.add(item);
         }
         return items;
