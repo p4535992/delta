@@ -52,7 +52,7 @@ import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.workflow.bootstrap.CompoundWorkflowOwnerPropsUpdater;
 import ee.webmedia.alfresco.workflow.bootstrap.TaskUpdater;
-import ee.webmedia.xtee.client.dhl.DhlXTeeServiceImplFSStub;
+import ee.webmedia.xtee.client.dhl.DhlFSStubXTeeServiceImpl;
 
 /**
  * Bean with method {@link #handleTestEvent(ActionEvent)} that developers can use to test arbitrary code
@@ -114,7 +114,7 @@ public class TestingForDeveloperBean implements Serializable {
 
     public void receiveDocStub(@SuppressWarnings("unused") ActionEvent event) {
         DvkService stubDvkService = BeanHelper.getStubDvkService();
-        DhlXTeeServiceImplFSStub dhlXTeeServiceImplFSStub = BeanHelper.getDhlXTeeServiceImplFSStub();
+        DhlFSStubXTeeServiceImpl dhlXTeeServiceImplFSStub = BeanHelper.getDhlXTeeServiceImplFSStub();
         dhlXTeeServiceImplFSStub.setHasDocuments(true);
         String xmlFile = fileName;
         dhlXTeeServiceImplFSStub.setDvkXmlFile(xmlFile);

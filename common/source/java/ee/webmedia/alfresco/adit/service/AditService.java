@@ -2,7 +2,7 @@ package ee.webmedia.alfresco.adit.service;
 
 import java.util.Set;
 
-import ee.webmedia.xtee.client.exception.XTeeServiceConsumptionException;
+import com.nortal.jroad.client.exception.XRoadServiceConsumptionException;
 
 public interface AditService {
 
@@ -11,6 +11,6 @@ public interface AditService {
 
     int updateAditDocViewedStatuses();
 
-    Set<String> getUnregisteredAditUsers(Set<String> userIdCodes) throws XTeeServiceConsumptionException;
+    Set<String> getUnregisteredAditUsers(Set<String> userIdCodes) throws XRoadServiceConsumptionException;
 
 }

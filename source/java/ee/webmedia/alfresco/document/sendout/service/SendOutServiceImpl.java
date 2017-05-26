@@ -55,8 +55,8 @@ import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.WebUtil;
-import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
-import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
+import com.nortal.jroad.client.dhl.DhlXTeeService.ContentToSend;
+import com.nortal.jroad.client.dhl.DhlXTeeService.SendStatus;
 
 public class SendOutServiceImpl implements SendOutService {
 
@@ -263,6 +263,14 @@ public class SendOutServiceImpl implements SendOutService {
 
             // Construct content items
             List<ContentToSend> contentsToSend = prepareContents(attachments);
+            
+            Set<String> userIds = new HashSet<>();
+            userIds.add("37801113714");
+            try {
+            	BeanHelper.getAditService().getUnregisteredAditUsers(userIds);
+            } catch (Exception e) {
+            	log.error("adit error: ", e);
+            }
 
             // Send it out
             dvkId = forward ? getDvkService().forwardDecDocument(contentsToSend, sd) : getDvkService().sendDocuments(contentsToSend, sd);

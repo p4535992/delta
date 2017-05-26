@@ -70,18 +70,18 @@ import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
-import ee.webmedia.xtee.client.dhl.DhlXTeeService;
-import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
-import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendDocumentsDecContainerCallback;
+import com.nortal.jroad.client.dhl.DhlXTeeService;
+import com.nortal.jroad.client.dhl.DhlXTeeService.ContentToSend;
+import com.nortal.jroad.client.dhl.DhlXTeeService.SendDocumentsDecContainerCallback;
 import ee.webmedia.xtee.client.dhl.DhlXTeeServiceImplTest;
-import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument;
-import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer;
-import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer.Transport;
-import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer.Transport.DecRecipient;
-import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer.Transport.DecSender;
+import com.nortal.jroad.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument;
+import com.nortal.jroad.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer;
+import com.nortal.jroad.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer.Transport;
+import com.nortal.jroad.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer.Transport.DecRecipient;
+import com.nortal.jroad.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer.Transport.DecSender;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({ BeanHelper.class, DvkServiceImpl.class, SendDocumentsDecContainerCallback.class, Node.class, DecContainerHandler.class, WorkflowUtil.class })
+@PrepareForTest({ BeanHelper.class, DvkServiceImpl.class, com.nortal.jroad.client.dhl.DhlXTeeService.SendDocumentsDecContainerCallback.class, Node.class, DecContainerHandler.class, WorkflowUtil.class })
 public class DecContainerV2_1Test extends TestCase {
 
     private static final NodeRef NODE_REF = new NodeRef("workspace://SpacesStore/e447a3c5-0e83-4fcc-98a7-8acf79fb810b");
@@ -91,7 +91,7 @@ public class DecContainerV2_1Test extends TestCase {
     private static final String ORG_NAME = "DVK_ORGANIZATION_NAME";
     private static final String SENDER_EMAIL = "container.test@sender.email";
 
-    private DhlXTeeService dhl;
+    private com.nortal.jroad.client.dhl.DhlXTeeService dhl;
 
     public static junit.framework.Test suite() { // this is needed to run tests via ant target
         return new JUnit4TestAdapter(DecContainerV2_1Test.class);
