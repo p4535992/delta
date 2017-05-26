@@ -656,23 +656,40 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
     
     @Override
     public SignatureItemsAndDataItems getDataItemsAndSignatureItems(NodeRef nodeRef, boolean includeData) throws SignatureException {
+        log.debug("getDataItemsAndSignatureItems... nodeRef");
         Container signedContainer = null;
         try {
+            log.debug("Get digidoc conteiner from nodeRef...");
         	signedContainer = getContainer(nodeRef);
+            if(signedContainer == null){
+                log.warn("Failed to get conteiner from nodeRef... NULL!");
+            }
+            log.debug("getDataItemsAndSignatureItems...");
             return getDataItemsAndSignatureItems(signedContainer, nodeRef, includeData);
         } catch (Exception e) {
-            throw new SignatureException("Failed to get digidoc data and signature items, nodeRef = " + nodeRef, e);
+            log.error("Failed to get digidoc data and signature items, nodeRef = " + nodeRef
+                    + ", includeData = " + includeData);
+            throw new SignatureException("Failed to get digidoc data and signature items, nodeRef = " + nodeRef
+                    + ", includeData = " + includeData, e);
         }
     }
     
     @Override
     public SignatureItemsAndDataItems getDataItemsAndSignatureItems(InputStream inputStream, boolean includeData) throws SignatureException {
+        log.debug("getDataItemsAndSignatureItems... file");
     	Container signedContainer = null;
         try {
+            log.debug("Get digidoc conteiner from inputStream...");
         	signedContainer = getContainerFromStream(inputStream);
+        	if(signedContainer == null){
+        	    log.warn("Failed to get conteiner from inputStream... NULL!");
+            }
+            log.debug("getDataItemsAndSignatureItems...");
             return getDataItemsAndSignatureItems(signedContainer, null, includeData);
         } catch (Exception e) {
-            throw new SignatureException("Failed to get diigidoc data and signature items, inputStream = "
+            log.error("Failed to get digidoc data and signature items, inputStream = "
+                    + ObjectUtils.identityToString(inputStream) + ", includeData = " + includeData);
+            throw new SignatureException("Failed to get digidoc data and signature items, inputStream = "
                     + ObjectUtils.identityToString(inputStream) + ", includeData = " + includeData, e);
         }
     }
@@ -693,8 +710,11 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
 	*/
     
     private SignatureItemsAndDataItems getDataItemsAndSignatureItems(Container container, NodeRef nodeRef, boolean includeData) {
+        log.debug("Get signature items list...");
         List<SignatureItem> signatureItems = getSignatureItems(nodeRef, container);
+        log.debug("Get data items list...");
         List<DataItem> dataItems = getDataItems(nodeRef, container, includeData);
+        log.debug("Returning signatureItemsAndDataItem object...");
         return new SignatureItemsAndDataItems(signatureItems, dataItems);
     }
     
@@ -735,9 +755,16 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
             String address = getSignatureAddress(signature.getCity(), signature.getPostalCode(), signature.getCountryName()); 
             log.debug("Signature address: " + address);
 
-            SignatureValidationResult validationResult = signature.validateSignature();
-            if (!validationResult.isValid() && log.isDebugEnabled()) {
-                log.debug("Signature (id = " + signature.getId() + ") verification returned errors" + (nodeRef != null ? ", nodeRef = " + nodeRef : "") + " : \n" + validationResult.getErrors());
+            boolean isCertValid = false;
+            try{
+                SignatureValidationResult validationResult = signature.validateSignature();
+                isCertValid = validationResult.isValid();
+                if (!validationResult.isValid() && log.isDebugEnabled()) {
+                    log.debug("Signature (id = " + signature.getId() + ") verification returned errors" + (nodeRef != null ? ", nodeRef = " + nodeRef : "") + " : \n" + validationResult.getErrors());
+                }
+
+            } catch (Exception e){
+                log.error("Can't validate certificate! " + e.getMessage(), e);
             }
 
             String sigAlgName = certValue.getX509Certificate().getSigAlgName();
@@ -749,7 +776,8 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
             } else {
                 encryptionType = sigAlgName;
             }
-            SignatureItem item = new SignatureItem(name, legalCode, signingTime, signature.getSignerRoles(), address, validationResult.isValid(), encryptionType);
+            SignatureItem item = new SignatureItem(name, legalCode, signingTime, signature.getSignerRoles(), address, isCertValid, encryptionType);
+            log.debug("Add signature item to items list...");
             items.add(item);
         }
         return items;
@@ -781,9 +809,13 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
     
     private List<DataItem> getDataItems(NodeRef nodeRef, Container container, boolean includeData) {
         List<DataItem> items = new ArrayList<DataItem>();
+        log.debug("Get data items from conteiner...");
         for (int i = 0; i < container.getDataFiles().size(); i++) {
+            log.debug("data file: " + (i+1) + " of " + container.getDataFiles().size());
         	DataFile dataFile = container.getDataFiles().get(i);
+        	log.debug("Get dataItem file...");
             DataItem item = getDataItem(nodeRef, dataFile, dataFile.getId(), includeData, i);
+            log.debug("Add dataItem to items list...");
             items.add(item);
         }
         return items;
@@ -791,11 +823,15 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
     
     private DataItem getDataItem(NodeRef nodeRef, DataFile dataFile, String id, boolean includeData, int orderNr) {
         String fileName = dataFile.getName();
+        log.debug("Conteiner datafile: fileName: " + fileName);
         String mimeType = dataFile.getMediaType();
+        log.debug("Conteiner datafile: mimeType: " + mimeType);
         String guessedMimetype = mimetypeService.guessMimetype(fileName);
+        log.debug("Conteiner datafile: guessedMimetype: " + guessedMimetype);
         if (MimetypeMap.MIMETYPE_BINARY.equals(guessedMimetype) && org.apache.commons.lang.StringUtils.isNotBlank(mimeType)) {
             guessedMimetype = mimeType;
         }
+        log.debug("Check if include data to dataItem... " + includeData);
         if (includeData) {
             return new DataItem(nodeRef, id, fileName, guessedMimetype, dataFile.getFileSize(), dataFile, orderNr);
         }
