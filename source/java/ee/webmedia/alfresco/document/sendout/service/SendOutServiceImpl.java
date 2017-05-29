@@ -263,14 +263,6 @@ public class SendOutServiceImpl implements SendOutService {
 
             // Construct content items
             List<ContentToSend> contentsToSend = prepareContents(attachments);
-            
-            Set<String> userIds = new HashSet<>();
-            userIds.add("37801113714");
-            try {
-            	BeanHelper.getAditService().getUnregisteredAditUsers(userIds);
-            } catch (Exception e) {
-            	log.error("adit error: ", e);
-            }
 
             // Send it out
             dvkId = forward ? getDvkService().forwardDecDocument(contentsToSend, sd) : getDvkService().sendDocuments(contentsToSend, sd);

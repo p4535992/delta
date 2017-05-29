@@ -2658,9 +2658,9 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
                         long step4 = System.currentTimeMillis();
                         documentLogService.addDocumentLog(document, MessageUtil.getMessage("applog_doc_file_generated", uniqueFilename));
                         long step5 = System.currentTimeMillis();
-                        if (signSeparately) {
+                        //if (signSeparately) {
                             getFileService().setAllFilesInactiveExcept(document, bdoc);
-                        }
+                        //}
                         long step6 = System.currentTimeMillis();
                         if (signSeparately) {
                             getFileService().deleteGeneratedFilesByType(document, GeneratedFileType.SIGNED_PDF);
