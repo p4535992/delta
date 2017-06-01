@@ -4,7 +4,7 @@ import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.workflow.model.Status;
-import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
+import com.nortal.jroad.client.dhl.DhlXTeeService.SendStatus;
 
 public interface DocumentCommonModel {
     String DOCCOM_URI = "http://alfresco.webmedia.ee/model/document/common/1.0";

@@ -8,6 +8,7 @@
             <constructor-arg ref="dataSource" />
          </bean>
       </property>
+      <property name="institutionCode" value="${x-tee.institution}" />
    </bean>
 
 </beans>

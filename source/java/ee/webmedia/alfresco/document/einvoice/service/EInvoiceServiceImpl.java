@@ -120,7 +120,7 @@ import ee.webmedia.alfresco.utils.DvkUtil;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.XmlUtil;
-import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
+import com.nortal.jroad.client.dhl.DhlXTeeService.ContentToSend;
 
 public class EInvoiceServiceImpl implements EInvoiceService {
 

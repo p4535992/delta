@@ -70,6 +70,8 @@ import org.apache.myfaces.shared_impl.renderkit.JSFAttr;
 import org.apache.myfaces.shared_impl.renderkit.html.HTML;
 import org.apache.myfaces.shared_impl.taglib.UIComponentTagUtils;
 
+import com.nortal.jroad.client.exception.XRoadServiceConsumptionException;
+
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.service.AddressbookEntry;
 import ee.webmedia.alfresco.addressbook.util.AddressbookUtil;
@@ -103,7 +105,6 @@ import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
-import ee.webmedia.xtee.client.exception.XTeeServiceConsumptionException;
 
 /**
  * Bean for sending out document dialog.
@@ -382,7 +383,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         List<String> recDvkCapable = new ArrayList<>(names.size());
         String dvkNo = MessageUtil.getMessage("document_send_out_dvk_capable_no");
         String dvkYes = MessageUtil.getMessage("document_send_out_dvk_capable_yes");
-        	
+        
         for (int i = 0; i < names.size(); i++) {
         	String dvkCapableMsg = dvkNo;
         	String recSendModeValue = "";
@@ -715,7 +716,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             Set<String> unregisteredAditUsers = null;
             try {
                 unregisteredAditUsers = BeanHelper.getAditService().getUnregisteredAditUsers(idCodesToCheck);
-            } catch (XTeeServiceConsumptionException e) {
+            } catch (XRoadServiceConsumptionException e) {
                 valid = false;
                 String faultMessage = e.getNonTechnicalFaultString();
                 MessageUtil.addErrorMessage(context, "document_send_failed_xtee_query", StringUtils.isNotBlank(faultMessage) ? faultMessage : e.getFaultString());
