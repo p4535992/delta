@@ -115,7 +115,6 @@ import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
-import ee.webmedia.xtee.client.service.configuration.provider.XTeeProviderPropertiesResolver;
 
 /**
  * Imports documents and files from GoPro.
@@ -185,6 +184,7 @@ public class GoProDocumentsImporter {
     private File dataFolder;
     private File workFolder;
     private int batchSize;
+    private String institutionCode;
     private String defaultOwnerId;
     private String defaultOwnerName;
     private String defaultOwnerEmail;
@@ -199,7 +199,6 @@ public class GoProDocumentsImporter {
     private GoProDocumentsMapper goProDocumentsMapper;
     private BehaviourFilter behaviourFilter;
     private GoProImporter goProImporter;
-    private XTeeProviderPropertiesResolver propertiesResolver;
     
 
     public GoProDocumentsImporter(GoProImporter goProImporter) {
@@ -220,8 +219,6 @@ public class GoProDocumentsImporter {
         // <property name="dictionaryService" ref="DictionaryService" />
         // <property name="generalService" ref="GeneralService" />
         // </bean>
-        final ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("ee/webmedia/alfresco/dvk/service/dhl-service-impl-context.xml");
-        propertiesResolver = (XTeeProviderPropertiesResolver) context.getBean("xTeeServicePropertiesResolver");
         
         setDocumentService(BeanHelper.getDocumentService());
         setTransactionService(BeanHelper.getTransactionService());
@@ -275,11 +272,12 @@ public class GoProDocumentsImporter {
     /**
      * Runs documents import process
      */
-    public void runImport(File dataFolder, File workFolder, File mappingsFile, int batchSize, String defaultOwnerId)
+    public void runImport(File dataFolder, File workFolder, File mappingsFile, int batchSize, String defaultOwnerId, String institutionCode)
                     throws Exception {
         this.dataFolder = dataFolder;
         this.workFolder = workFolder;
         this.batchSize = batchSize;
+        this.institutionCode = institutionCode;
         this.defaultOwnerId = defaultOwnerId;
         Map<QName, Serializable> defaultUserProps = getUserService().getUserProperties(defaultOwnerId);
         this.defaultOwnerName = UserUtil.getPersonFullName1(defaultUserProps);
@@ -2019,7 +2017,7 @@ public class GoProDocumentsImporter {
         String firstTaskOwnerId = null;
 
         boolean reviewToOtherOrgEnabled = BeanHelper.getWorkflowConstantsBean().isReviewToOtherOrgEnabled();
-        String creatorInstitutionCode = (propertiesResolver != null)?propertiesResolver.getProperty("x-tee.institution"):null;
+        String creatorInstitutionCode = institutionCode;
         String creatorInstitutionName = BeanHelper.getParametersService().getStringParameter(Parameters.TASK_OWNER_STRUCT_UNIT);
         
     	Map<QName, Serializable> props = new HashMap<QName, Serializable>();

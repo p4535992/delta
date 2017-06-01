@@ -20,14 +20,16 @@ public class SignatureItem implements Serializable {
      */
     private final String address;
     private final boolean valid;
+    private final String encrytionType;
 
-    public SignatureItem(String name, String legalCode, Date signingTime, List<String> claimedRoles, String address, boolean valid) {
+    public SignatureItem(String name, String legalCode, Date signingTime, List<String> claimedRoles, String address, boolean valid, String encrytionType) {
         this.name = name;
         this.legalCode = legalCode;
         this.signingTime = signingTime;
         this.claimedRoles = claimedRoles;
         this.address = address;
         this.valid = valid;
+        this.encrytionType = encrytionType;
     }
 
     public boolean isValid() {
@@ -62,4 +64,7 @@ public class SignatureItem implements Serializable {
         return address;
     }
 
+    public String getEncrytionType(){
+        return encrytionType;
+    }
 }
