@@ -177,7 +177,7 @@ import ee.webmedia.alfresco.workflow.web.DelegationBean;
 import ee.webmedia.alfresco.workflow.web.MyTasksBean;
 import ee.webmedia.alfresco.workflow.web.RelatedUrlListBlock;
 import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
-import ee.webmedia.xtee.client.dhl.DhlXTeeServiceImplFSStub;
+import ee.webmedia.xtee.client.dhl.DhlFSStubXTeeServiceImpl;
 
 /**
  * Helper class for web environment for accessing beans simply through getter. If getter for your bean is missing then just add it
@@ -708,8 +708,8 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
         return getService(DvkService.class, "StubDvkService"); // same class, but with stub xteeService implementation
     }
 
-    public static DhlXTeeServiceImplFSStub getDhlXTeeServiceImplFSStub() {
-        return getService(DhlXTeeServiceImplFSStub.class, DhlXTeeServiceImplFSStub.BEAN_NAME);
+    public static DhlFSStubXTeeServiceImpl getDhlXTeeServiceImplFSStub() {
+        return getService(DhlFSStubXTeeServiceImpl.class, DhlFSStubXTeeServiceImpl.BEAN_NAME);
     }
 
     public static DocumentLogService getDocumentLogService() {
