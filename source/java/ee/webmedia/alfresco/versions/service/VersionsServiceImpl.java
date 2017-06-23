@@ -80,6 +80,8 @@ public class VersionsServiceImpl implements VersionsService {
             // if not locked, then a new version can be made
             boolean isLocked = getVersionLockableAspect(nodeRef);
             if (!isLocked) {
+            	boolean result = true;
+            	
             	Date frozenModifiedTime = (Date)getNodeService().getProperty(nodeRef, ContentModel.PROP_MODIFIED);
             	String modifier = (String)getNodeService().getProperty(nodeRef, ContentModel.PROP_MODIFIER);
             	// If the versionable aspect is not there then add it
@@ -93,19 +95,21 @@ public class VersionsServiceImpl implements VersionsService {
                         // previousLatestVer.getVersionProperty(name)
                         if (DateUtils.isSameDay(frozenModifiedTime, new Date()) && StringUtils.equals(AuthenticationUtil.getFullyAuthenticatedUser(), modifier)) {
                             logger.info("not creating new version of file with nodeRef=" + nodeRef + " - latest version is modified by same user today");
-                            return false;
+                            result = false;
                         }
                     //}
                 }
+                
+                if (result) { 
+	                // create a new version
+	                org.alfresco.service.cmr.version.Version version = versionServiceExt.createVersion(nodeRef, sourceFileProp);
+	                logger.info("Created new version (" + version.getVersionLabel() + ") from " + nodeRef + " ( " + filename + "). VersionedNodeRef: " + version.getVersionedNodeRef()
+	                        + " FrozenStateNodeRef: " + version.getFrozenStateNodeRef());
+	                // check the flag as true to prevent creation of new versions until the node is unlocked in UnlockMethod
+	                setVersionLockableAspect(nodeRef, true);
 
-                // create a new version
-                org.alfresco.service.cmr.version.Version version = versionServiceExt.createVersion(nodeRef, sourceFileProp);
-                logger.info("Created new version (" + version.getVersionLabel() + ") from " + nodeRef + " ( " + filename + "). VersionedNodeRef: " + version.getVersionedNodeRef()
-                        + " FrozenStateNodeRef: " + version.getFrozenStateNodeRef());
-                // check the flag as true to prevent creation of new versions until the node is unlocked in UnlockMethod
-                setVersionLockableAspect(nodeRef, true);
-
-                getNodeService().removeProperty(nodeRef, FileModel.Props.COMMENT);
+                	getNodeService().removeProperty(nodeRef, FileModel.Props.COMMENT);
+                }
 
                 // log the event
                 NodeRef parentRef = getNodeService().getPrimaryParent(nodeRef).getParentRef();
@@ -117,7 +121,7 @@ public class VersionsServiceImpl implements VersionsService {
                     documentLogService.addDocumentLog(parentRef //
                             , I18NUtil.getMessage("document_log_status_fileChanged", filename));
                 }
-                return true;
+                return result;
             }
             logger.warn("not creating new version of nodeRef=" + nodeRef + " - it is locked!");
         } else {
