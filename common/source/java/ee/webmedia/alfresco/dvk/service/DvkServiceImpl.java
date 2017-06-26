@@ -83,7 +83,7 @@ import com.nortal.jroad.client.dhl.types.ee.riik.schemas.dhl.MetaxmlDocument.Met
 import com.nortal.jroad.client.dhl.types.ee.riik.schemas.dhl.TagasisideType;
 import com.nortal.jroad.client.dhl.types.ee.riik.schemas.dhl.rkelLetter.Letter;
 import com.nortal.jroad.client.dhl.types.ee.riik.schemas.dhl_meta_automatic.impl.DhlKaustDocumentImpl;
-import com.nortal.jroad.client.dhl.types.ee.riik.xrd.dhl.producers.producer.dhl.SendDocumentsV2RequestType;
+import com.nortal.jroad.client.dhl.types.ee.riik.xrd.dhl.producers.producer.dhl.SendDocumentsV4RequestType;
 import com.nortal.jroad.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
 import com.nortal.jroad.client.dhl.types.ee.sk.digiDoc.v13.SignedDocType;
 
@@ -878,7 +878,7 @@ public abstract class DvkServiceImpl implements DvkService {
                     callback, new SendDocumentsRequestCallback() {
 
                         @Override
-                        public void doWithRequest(SendDocumentsV2RequestType dokumentDocument) {
+                        public void doWithRequest(SendDocumentsV4RequestType dokumentDocument) {
                             final Long dvkRetainDaysPeriod = parametersService.getLongParameter(Parameters.DVK_RETAIN_PERIOD);
                             final Calendar retainCal = Calendar.getInstance();
                             retainCal.add(Calendar.DAY_OF_MONTH, dvkRetainDaysPeriod.intValue());
@@ -1032,7 +1032,7 @@ public abstract class DvkServiceImpl implements DvkService {
         return new SendDocumentsRequestCallback() {
 
             @Override
-            public void doWithRequest(SendDocumentsV2RequestType request) {
+            public void doWithRequest(SendDocumentsV4RequestType request) {
                 setSailitustahtaeg(request);
             }
         };
@@ -1041,7 +1041,7 @@ public abstract class DvkServiceImpl implements DvkService {
     public SendDocumentsRequestCallback getSendDocumentToFolderRequestCallback(final String folder) {
         return new SendDocumentsRequestCallback() {
             @Override
-            public void doWithRequest(SendDocumentsV2RequestType request) {
+            public void doWithRequest(SendDocumentsV4RequestType request) {
                 setSailitustahtaeg(request);
                 if (StringUtils.isNotBlank(folder)) {
                     request.setKaust(folder);
@@ -1050,7 +1050,7 @@ public abstract class DvkServiceImpl implements DvkService {
         };
     }
 
-    private void setSailitustahtaeg(SendDocumentsV2RequestType request) {
+    private void setSailitustahtaeg(SendDocumentsV4RequestType request) {
         final Long dvkRetainDaysPeriod = parametersService.getLongParameter(Parameters.DVK_RETAIN_PERIOD);
         final Calendar retainCal = Calendar.getInstance();
         retainCal.add(Calendar.DAY_OF_MONTH, dvkRetainDaysPeriod.intValue());
