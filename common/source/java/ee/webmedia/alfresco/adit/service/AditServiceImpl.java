@@ -16,16 +16,15 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.monitoring.MonitoredService;
 import ee.webmedia.alfresco.monitoring.MonitoringUtil;
-import com.nortal.jroad.client.adit.AditProp;
-import com.nortal.jroad.client.adit.AditXTeeService;
-import com.nortal.jroad.client.exception.XRoadServiceConsumptionException;
-
+import ee.webmedia.xtee.client.ametlikuddokumendid.AditProp;
+import ee.webmedia.xtee.client.ametlikuddokumendid.AmetlikudDokumendidXTeeService;
+import ee.webmedia.xtee.client.exception.XTeeServiceConsumptionException;
 
 public class AditServiceImpl implements AditService {
 
     private DocumentSearchService documentSearchService;
     private NodeService nodeService;
-    private AditXTeeService aditXTeeService;
+    private AmetlikudDokumendidXTeeService ametlikudDokumendidXTeeService;
 
     @Override
     public int updateAditDocViewedStatuses() {
@@ -39,12 +38,12 @@ public class AditServiceImpl implements AditService {
         }
         Map<String, List<Map<String, Serializable>>> sendStatuses = null;
         try {
-            sendStatuses = aditXTeeService.getSendStatusV1(dvkIds, null);
+            sendStatuses = ametlikudDokumendidXTeeService.getSendStatusV1(dvkIds, null);
             MonitoringUtil.logSuccess(MonitoredService.OUT_XTEE_ADIT);
         } catch (RuntimeException e) {
             MonitoringUtil.logError(MonitoredService.OUT_XTEE_ADIT, e);
             throw e;
-        } catch (XRoadServiceConsumptionException e) {
+        } catch (XTeeServiceConsumptionException e) {
             MonitoringUtil.logError(MonitoredService.OUT_XTEE_ADIT, e);
             String faultMessage = e.getNonTechnicalFaultString() != null ? e.getNonTechnicalFaultCode() : e.getFaultString();
             throw new RuntimeException(faultMessage);
@@ -70,10 +69,10 @@ public class AditServiceImpl implements AditService {
     }
 
     @Override
-    public Set<String> getUnregisteredAditUsers(Set<String> userIdCodes) throws XRoadServiceConsumptionException {
+    public Set<String> getUnregisteredAditUsers(Set<String> userIdCodes) throws XTeeServiceConsumptionException {
         Set<String> unregisteredUsers = new HashSet<String>();
         String runAsUser = AuthenticationUtil.getRunAsUser();
-        Map<String, Map<String, Serializable>> results = aditXTeeService.getUserInfoV1(userIdCodes, runAsUser);
+        Map<String, Map<String, Serializable>> results = ametlikudDokumendidXTeeService.getUserInfoV1(userIdCodes, runAsUser);
         if (!results.isEmpty()) {
             for (String userId : userIdCodes) {
                 Map<String, Serializable> props = results.get(userId);
@@ -92,8 +91,8 @@ public class AditServiceImpl implements AditService {
         return unregisteredUsers;
     }
 
-    public void setAditXTeeService(AditXTeeService aditXTeeService) {
-        this.aditXTeeService = aditXTeeService;
+    public void setAmetlikudDokumendidXTeeService(AmetlikudDokumendidXTeeService ametlikudDokumendidXTeeService) {
+        this.ametlikudDokumendidXTeeService = ametlikudDokumendidXTeeService;
     }
 
     public void setNodeService(NodeService nodeService) {

@@ -8,15 +8,12 @@ import java.io.InputStreamReader;
 
 import org.apache.commons.io.IOUtils;
 
-import com.nortal.jroad.client.service.configuration.provider.XRoadServiceConfigurationProvider;
-import com.nortal.jroad.client.service.consumer.XRoadConsumer;
-
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 
 /**
  * Implementation of DhlXTeeServiceImplStub that creates <dhl:dokument> element from file in File System
  */
-public class DhlFSStubXTeeServiceImpl extends DhlXTeeServiceImplStub {
+public class DhlXTeeServiceImplFSStub extends DhlXTeeServiceImplStub {
     public static String BEAN_NAME = "stubDhlXTeeService";
     private File dvkXmlFile;
 
@@ -51,14 +48,6 @@ public class DhlFSStubXTeeServiceImpl extends DhlXTeeServiceImplStub {
             throw new UnableToPerformException("File doesn't exist: '" + file + "'");
         }
         dvkXmlFile = tmp;
-    }
-    
-    protected void setXRoadServiceConfigurationProvider(XRoadServiceConfigurationProvider xRoadServiceConfigurationProvider) {
-        this.xRoadServiceConfigurationProvider = xRoadServiceConfigurationProvider;
-    }
-    
-    protected void setXRoadConsumer(XRoadConsumer xRoadConsumer) {
-        this.xRoadConsumer = xRoadConsumer;
     }
 
 }

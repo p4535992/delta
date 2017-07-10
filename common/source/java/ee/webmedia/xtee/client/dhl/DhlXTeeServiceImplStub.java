@@ -1,7 +1,7 @@
 package ee.webmedia.xtee.client.dhl;
 
-import static com.nortal.jroad.client.dhl.DhlDocumentVersion.VER_1;
-import static com.nortal.jroad.client.dhl.DhlDocumentVersion.VER_2;
+import static ee.webmedia.xtee.client.dhl.DhlDocumentVersion.VER_1;
+import static ee.webmedia.xtee.client.dhl.DhlDocumentVersion.VER_2;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -29,17 +29,13 @@ import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
-
-import com.nortal.jroad.client.dhl.VersionedDhlDocument;
-import com.nortal.jroad.client.dhl.DhlDocumentVersion;
-import com.nortal.jroad.client.dhl.DhlXTeeServiceImpl;
-import com.nortal.jroad.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument;
-import com.nortal.jroad.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer;
-import com.nortal.jroad.client.dhl.types.ee.riik.schemas.dhl.DhlDokumentType;
-import com.nortal.jroad.client.dhl.types.ee.riik.schemas.dhl.DokumentDocument;
-import com.nortal.jroad.client.dhl.types.ee.riik.schemas.dhl.MetainfoDocument.Metainfo;
-import com.nortal.jroad.client.dhl.types.ee.riik.schemas.dhl.TagasisideType;
-import com.nortal.jroad.client.dhl.types.ee.sk.digiDoc.v13.SignedDocType;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.DhlDokumentType;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.DokumentDocument;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.MetainfoDocument.Metainfo;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.TagasisideType;
+import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.SignedDocType;
 
 /**
  * Base class that helps to imitate importing documents from DVK web service. Subclass just needs to <br>
@@ -263,6 +259,11 @@ public abstract class DhlXTeeServiceImplStub extends DhlXTeeServiceImpl {
 
         }
 
+    }
+
+    @Override
+    public void markDocumentsReceived(Collection<String> receivedDocumentIds) {
+        LOG.debug("NOT MARKING DOCUMENTS RECEIVED");
     }
 
     @Override

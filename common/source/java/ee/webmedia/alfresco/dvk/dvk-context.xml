@@ -183,10 +183,11 @@
    <bean id="dvkServiceBase" abstract="true">
       <property name="receivedDvkDocumentsPath" value="${dvk.received.parent.folder.xpath}${dvk.received.folder.name}" />
       <property name="corruptDvkDocumentsPath" value="${dvk.received.parent.folder.xpath}${dvk.corrupt.folder.name}" />
-      <property name="dhlXTeeService" ref="dhlXRoadService" />
+      <property name="dhlXTeeService" ref="dhlXTeeService" />
       <property name="nodeService" ref="NodeService" />
       <property name="fileFolderService" ref="FileFolderService" />
       <property name="mimetypeService" ref="MimetypeService" />
+      <property name="propertiesResolver" ref="xTeeServicePropertiesResolver" />
       <property name="noTitleSpacePrefix" value="fail_" />
       <property name="generalService" ref="GeneralService" />
       <property name="parametersService" ref="ParametersService" />

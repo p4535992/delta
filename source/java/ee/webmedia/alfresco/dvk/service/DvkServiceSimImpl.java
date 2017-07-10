@@ -111,15 +111,15 @@ import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
-import com.nortal.jroad.client.dhl.DhlDocumentVersion;
-import com.nortal.jroad.client.dhl.DhlXTeeService;
-import com.nortal.jroad.client.dhl.DhlXTeeService.ContentToSend;
-import com.nortal.jroad.client.dhl.DhlXTeeService.ReceivedDocumentsWrapper.ReceivedDocument;
-import com.nortal.jroad.client.dhl.DhlXTeeService.SendStatus;
-import com.nortal.jroad.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument;
-import com.nortal.jroad.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer.Transport.DecRecipient;
-import com.nortal.jroad.client.dhl.types.ee.riik.schemas.dhl.EdastusDocument.Edastus;
-import com.nortal.jroad.client.dhl.types.ee.riik.xrd.dhl.producers.producer.dhl.GetSendStatusV2ResponseTypeUnencoded.Item;
+import ee.webmedia.xtee.client.dhl.DhlDocumentVersion;
+import ee.webmedia.xtee.client.dhl.DhlXTeeService;
+import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
+import ee.webmedia.xtee.client.dhl.DhlXTeeService.ReceivedDocumentsWrapper.ReceivedDocument;
+import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer.Transport.DecRecipient;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.EdastusDocument.Edastus;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.xtee.dhl.producers.producer.dhl.GetSendStatusResponseTypeUnencoded.Item;
 
 public class DvkServiceSimImpl extends DvkServiceImpl {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DvkServiceSimImpl.class);

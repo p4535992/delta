@@ -7,7 +7,7 @@ import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 
-import com.nortal.jroad.client.dhl.DhlXTeeService.SendStatus;
+import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;

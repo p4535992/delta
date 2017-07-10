@@ -6,7 +6,7 @@
 
   <bean id="aditService" class="ee.webmedia.alfresco.adit.service.AditServiceImpl" >
     <property name="nodeService" ref="NodeService" />
-    <property name="aditXTeeService" ref="aditXRoadService" />
+    <property name="ametlikudDokumendidXTeeService" ref="ametlikudDokumendidXTeeService" />
     <property name="documentSearchService" ref="DocumentSearchService" />
   </bean>
 

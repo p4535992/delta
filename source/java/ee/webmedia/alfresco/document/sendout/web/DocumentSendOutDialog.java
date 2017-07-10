@@ -65,12 +65,9 @@ import org.apache.commons.collections.Transformer;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.validator.EmailValidator;
-import org.apache.cxf.message.MessageUtils;
 import org.apache.myfaces.shared_impl.renderkit.JSFAttr;
 import org.apache.myfaces.shared_impl.renderkit.html.HTML;
 import org.apache.myfaces.shared_impl.taglib.UIComponentTagUtils;
-
-import com.nortal.jroad.client.exception.XRoadServiceConsumptionException;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.service.AddressbookEntry;
@@ -105,6 +102,7 @@ import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
+import ee.webmedia.xtee.client.exception.XTeeServiceConsumptionException;
 
 /**
  * Bean for sending out document dialog.
@@ -716,7 +714,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             Set<String> unregisteredAditUsers = null;
             try {
                 unregisteredAditUsers = BeanHelper.getAditService().getUnregisteredAditUsers(idCodesToCheck);
-            } catch (XRoadServiceConsumptionException e) {
+            } catch (XTeeServiceConsumptionException e) {
                 valid = false;
                 String faultMessage = e.getNonTechnicalFaultString();
                 MessageUtil.addErrorMessage(context, "document_send_failed_xtee_query", StringUtils.isNotBlank(faultMessage) ? faultMessage : e.getFaultString());

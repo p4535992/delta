@@ -15,7 +15,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.util.BaseAlfrescoSpringTest;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 
-import com.nortal.jroad.client.dhl.DhlXTeeService.ContentToSend;
+import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
 
 public class DvkServiceImplTest extends BaseAlfrescoSpringTest {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DvkServiceImplTest.class);

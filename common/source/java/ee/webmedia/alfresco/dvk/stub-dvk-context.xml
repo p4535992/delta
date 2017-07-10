@@ -5,7 +5,9 @@
    <!-- import this file from subproject spring context file dvk-<projectName>-context.xml using
       <import resource="classpath:ee/webmedia/alfresco/dvk/stub-dvk-context.xml" />
     -->
-   <bean id="stubDhlXTeeService" class="ee.webmedia.xtee.client.dhl.DhlFSStubXTeeServiceImpl" init-method="init">
+   <bean id="stubDhlXTeeService" class="ee.webmedia.xtee.client.dhl.DhlXTeeServiceImplFSStub" init-method="init">
+      <property name="xTeeServiceConfigurationProvider" ref="xTeeServiceConfigurationProvider" />
+      <property name="xTeeConsumer" ref="xTeeConsumer" />
    </bean>
 
   <bean id="stubDvkService" parent="dvkService">

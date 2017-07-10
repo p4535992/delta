@@ -22,7 +22,7 @@ import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeOrCaseFile;
 import ee.webmedia.alfresco.workflow.service.Task;
-import com.nortal.jroad.client.dhl.DhlXTeeService.SendStatus;
+import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 
 /**
  * Note: Use method names that start with "query" for methods that require a read-write transaction.

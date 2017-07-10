@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.privilege.model.PrivMappings;
@@ -90,5 +91,7 @@ public interface PrivilegeService {
     Map<String, List<String>> getCreateCaseFilePrivileges(Set<String> nodeRefIds);
 
     Set<NodeRef> getNodeRefWithSetViewPrivilege(List<NodeRef> nodeRefsToCheck, List<String> authorities);
+    
+    Set<NodeRef> getAllNodesWithPermissions(StoreRef storeRef);
 
 }

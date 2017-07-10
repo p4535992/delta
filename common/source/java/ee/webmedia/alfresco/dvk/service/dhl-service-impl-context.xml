@@ -3,26 +3,34 @@
    xsi:schemaLocation="
 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
+   <!-- XTee conf -->
 
-  
+   <bean id="webServiceTemplate" class="org.springframework.ws.client.core.WebServiceTemplate" />
 
-<!-- X-road client configuration -->
-	<!-- Spring webservice template which is needed by X-road services consumer -->
-	<bean id="webServiceTemplate" class="org.springframework.ws.client.core.WebServiceTemplate" />
+   <bean id="xTeeConsumer" class="ee.webmedia.xtee.client.service.consumer.StandardXTeeConsumer">
+      <property name="webServiceTemplate" ref="webServiceTemplate" />
+   </bean>
 
-	<!-- Generated X-road database services implementation with minimal implementation -->
-	<bean id="dhlXRoadDatabase" class="com.nortal.jroad.client.dhl.database.DhlXRoadDatabaseImpl" />
-	<!-- X-road services implementation - usually services wrap generated database implementation -->
-	<bean id="dhlXRoadService" class="com.nortal.jroad.client.dhl.DhlXTeeServiceImpl">							  
-		<property name="receivedDocumentsFolder" value="${x-tee.receivedDocumentsFolder}" />
-    	<property name="sentDocumentsFolder" value="${x-tee.sentDocumentsFolder}" />
-	</bean>
-	<!-- X-road services consumer which prepares and processes service consumption -->
-	<bean id="xRoadConsumer" class="com.nortal.jroad.client.service.consumer.StandardXRoadConsumer">
-		<property name="webServiceTemplate" ref="webServiceTemplate" />
-	</bean>
-	<!-- X-road services configuration -->
-	<bean id="xRoadServiceConfigurationProvider" class="com.nortal.jroad.client.service.configuration.provider.PropertiesBasedXRoadServiceConfigurationProvider">
-		<property name="resource" value="classpath:xroad.properties" />
-	</bean>
+   <bean id="xTeeServiceConfigurationProvider" class="ee.webmedia.xtee.client.service.configuration.provider.SimpleXTeeServiceConfigurationProvider">
+      <property name="securityServer" value="${x-tee.security-server}" />
+      <property name="institution" value="${x-tee.institution}" />
+      <property name="idCode" value="${x-tee.id-code}" />
+      <property name="useDeprecatedApi" value="false" />
+   </bean>
+
+   <bean id="dhlXTeeService" class="ee.webmedia.xtee.client.dhl.DhlXTeeServiceImpl" init-method="init">
+      <property name="database" value="dhl" /><!-- can be unset - then read from the classname prefix -->
+      <property name="xTeeServiceConfigurationProvider" ref="xTeeServiceConfigurationProvider" />
+      <property name="xTeeConsumer" ref="xTeeConsumer" />
+      <property name="receivedDocumentsFolder" value="${x-tee.receivedDocumentsFolder}" />
+      <property name="sentDocumentsFolder" value="${x-tee.sentDocumentsFolder}" />
+   </bean>
+
+   <!-- /XTee conf -->
+
+   <!-- Used by DvkServiceImpl and DhlXTeeServiceImplTest -->
+   <bean id="xTeeServicePropertiesResolver" class="ee.webmedia.xtee.client.service.configuration.provider.XTeeProviderPropertiesResolver" init-method="init">
+      <property name="resource" value="classpath:alfresco-global.properties" />
+   </bean>
+
 </beans>
