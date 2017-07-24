@@ -1124,7 +1124,7 @@
 <h:inputTextarea id="missingOwnerIdArea" value="#{TestingForDeveloperBean.missingOwnerId}" readonly="true" styleClass="expand19-200" style="font-family: monospace;" />
 
 <f:verbatim><hr/></f:verbatim>
-<h:outputText value="Sarja organizatsiooni uuendamine"/>
+<h:outputText value="Sarja organizatsiooni ja seotud grippide uuendamine"/>
 <f:verbatim><br/></f:verbatim>
 <h:outputText value="* Ruum: "/>
 <h:inputText id="seriesStructUnitUpdaterStoreString" value="#{seriesStructUnitUpdater.storeString}" size="50" />
@@ -1135,6 +1135,10 @@
 <h:outputText value="* MappingsFile: "/>
 <h:inputText id="seriesStructUnitUpdaterStructUnitMappingFileName" value="#{seriesStructUnitUpdater.mappingFileName}" size="50" />
 <f:verbatim><br/></f:verbatim>
+<h:outputText value="* GroupsMappingsFile: "/>
+<h:inputText id="seriesStructUnitUpdaterGroupsMappingFileName" value="#{seriesStructUnitUpdater.groupsMappingFileName}" size="50" />
+<f:verbatim><br/></f:verbatim>
+
 <h:commandButton id="startSeriesStructUnitUpdater" value="Käivita" type="submit"
    actionListener="#{seriesStructUnitUpdater.executeUpdaterInBackground}"
    rendered="#{seriesStructUnitUpdater.updaterRunning == false}" />

@@ -102,8 +102,9 @@ public class NodePermissionsImporter extends AbstractNodeUpdater {
     		String groupsMapKey = StringUtils.substringAfter(authority, GROUP_PREFIX);
     		if (permission.isDirect() && (authority.startsWith(GROUP_PREFIX) && groupsMap.containsKey(groupsMapKey) || 
 	    				!authority.startsWith(GROUP_PREFIX))) { 
-	    		String privileges = authorities.get(authority);
+	    		
 	    		String newAuthority = ((authority.startsWith(GROUP_PREFIX)))?GROUP_PREFIX + groupsMap.get(groupsMapKey):authority;
+	    		String privileges = authorities.get(newAuthority);
 	    		if (StringUtils.isNotBlank(privileges)) {
 	    			privileges += "," + permission.getPrivilege().getPrivilegeName();
 	    		} else {
@@ -129,6 +130,21 @@ public class NodePermissionsImporter extends AbstractNodeUpdater {
 
     @Override
     protected void executeUpdater() throws Exception {
+    	try{
+
+    		File importedNodePermissionsFile = new File(dataFolder + "importedNodePermissions.csv");
+
+    		if(importedNodePermissionsFile.delete()){
+    			log.info(importedNodePermissionsFile.getName() + " is deleted!");
+    		}else{
+    			log.info("Delete operation is failed.");
+    		}
+
+    	}catch(Exception e){
+
+    		e.printStackTrace();
+
+    	}
     	fillGroupsMap();
         super.executeUpdater();
         resetFields();

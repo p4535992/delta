@@ -55,7 +55,15 @@ public class NodePermissionsExporter extends AbstractNodeUpdater {
     	try {
     		Map<String, Set<Privilege>> authorityPrivilegesMap = nodesGroupsMap.get(nodeRef);
     		for (String authority: authorityPrivilegesMap.keySet()) {
+    			Set<Privilege> privileges = authorityPrivilegesMap.get(authority);
+    			StringBuilder sbPrivs = new StringBuilder();
+    			for (Privilege priv: privileges) {
+    				sbPrivs.append(", " + priv.getPrivilegeName());
+    			}
+    			log.info("authority = " + authority + " exist = " + BeanHelper.getAuthorityService().authorityExists(authority));
+    			log.info("adding for node: " + nodeRef + " for authority = " + authority + " permissions# " + sbPrivs);
     			BeanHelper.getPrivilegeService().setPermissions(nodeRef, authority, authorityPrivilegesMap.get(authority));
+    			
     		}
     	} catch (Exception e) {
     	    LOG.error("Failed to collect permissions for node: " + nodeRef, e);
