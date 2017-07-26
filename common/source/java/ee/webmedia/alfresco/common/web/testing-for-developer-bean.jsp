@@ -1124,6 +1124,73 @@
 <h:inputTextarea id="missingOwnerIdArea" value="#{TestingForDeveloperBean.missingOwnerId}" readonly="true" styleClass="expand19-200" style="font-family: monospace;" />
 
 <f:verbatim><hr/></f:verbatim>
+<h:outputText value="Sarja organizatsiooni ja seotud grippide uuendamine"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="* Ruum: "/>
+<h:inputText id="seriesStructUnitUpdaterStoreString" value="#{seriesStructUnitUpdater.storeString}" size="50" />
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="* DataFolder: "/>
+<h:inputText id="seriesStructUnitUpdaterDataFolder" value="#{seriesStructUnitUpdater.dataFolder}" size="50" />
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="* MappingsFile: "/>
+<h:inputText id="seriesStructUnitUpdaterStructUnitMappingFileName" value="#{seriesStructUnitUpdater.mappingFileName}" size="50" />
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="* GroupsMappingsFile: "/>
+<h:inputText id="seriesStructUnitUpdaterGroupsMappingFileName" value="#{seriesStructUnitUpdater.groupsMappingFileName}" size="50" />
+<f:verbatim><br/></f:verbatim>
+
+<h:commandButton id="startSeriesStructUnitUpdater" value="Käivita" type="submit"
+   actionListener="#{seriesStructUnitUpdater.executeUpdaterInBackground}"
+   rendered="#{seriesStructUnitUpdater.updaterRunning == false}" />
+<h:commandButton id="stopSeriesStructUnitUpdater" value="Peata" type="submit"
+   actionListener="#{seriesStructUnitUpdater.stopUpdater}"
+   rendered="#{seriesStructUnitUpdater.updaterRunning == true}"
+   disabled="#{seriesStructUnitUpdater.updaterStopping == true}" />
+<f:verbatim><br/></f:verbatim>
+
+<f:verbatim><hr/></f:verbatim>
+<h:outputText value="Nodeide õiguste importimine (vana AD)"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="* Ruum: "/>
+<h:inputText id="nodePermissionsImporterStoreString" value="#{nodePermissionsImporter.storeString}" size="50" />
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="* DataFolder: "/>
+<h:inputText id="nodePermissionsImporterDataFolder" value="#{nodePermissionsImporter.dataFolder}" size="50" />
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="* MappingsFile: "/>
+<h:inputText id="nodePermissionsImporterMappingFileName" value="#{nodePermissionsImporter.mappingFileName}" size="50" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="startNodePermissionsImporter" value="Käivita" type="submit"
+   actionListener="#{nodePermissionsImporter.executeUpdaterInBackground}"
+   rendered="#{nodePermissionsImporter.updaterRunning == false}" />
+<h:commandButton id="stopNodePermissionsImporter" value="Peata" type="submit"
+   actionListener="#{nodePermissionsImporter.stopUpdater}"
+   rendered="#{nodePermissionsImporter.updaterRunning == true}"
+   disabled="#{nodePermissionsImporter.updaterStopping == true}" />
+<f:verbatim><br/></f:verbatim>
+
+<f:verbatim><hr/></f:verbatim>
+<h:outputText value="Nodeide õiguste exportimine (uus AD)"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="*Ruum: "/>
+<h:inputText id="nodePermissionsExporterStoreString" value="#{nodePermissionsExporter.storeString}" size="50" />
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="* DataFolder: "/>
+<h:inputText id="nodePermissionsExporterDataFolder" value="#{nodePermissionsExporter.dataFolder}" size="50" />
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="* MappingsFile: "/>
+<h:inputText id="nodePermissionsExporterMappingFileName" value="#{nodePermissionsExporter.mappingFileName}" size="50" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="startNodePermissionsExporter" value="Käivita" type="submit"
+   actionListener="#{nodePermissionsExporter.executeUpdaterInBackground}"
+   rendered="#{nodePermissionsExporter.updaterRunning == false}" />
+<h:commandButton id="stopNodePermissionsExporter" value="Peata" type="submit"
+   actionListener="#{nodePermissionsExporter.stopUpdater}"
+   rendered="#{nodePermissionsExporter.updaterRunning == true}"
+   disabled="#{nodePermissionsExporter.updaterStopping == true}" />
+<f:verbatim><br/></f:verbatim>
+
+<f:verbatim><hr/></f:verbatim>
 
 <h:outputText styleClass="mainTitle" value="Arendajale testimiseks"/>
 <f:verbatim><br/></f:verbatim>

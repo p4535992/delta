@@ -9,6 +9,9 @@ public class AuthorityConverter extends MultiSelectConverterBase {
     @Override
     protected String convertSelectedValueToString(Object selectedValue) {
         Authority authority = getUserService().getAuthorityOrNull((String) selectedValue);
+        if (authority == null) {
+        	return (String)selectedValue;
+        }
         if (authority.isGroup()) {
             return authority.getName();
         }

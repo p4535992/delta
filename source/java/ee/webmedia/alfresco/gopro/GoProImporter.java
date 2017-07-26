@@ -45,9 +45,15 @@ public class GoProImporter implements SaveListener {
     private int threadCounter;
 
     private SimpleJdbcTemplate jdbcTemplate;
+    
+    private String institutionCode;
 
     public void setJdbcTemplate(SimpleJdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
+    }
+    
+    public void setInstitutionCode(String institutionCode) {
+        this.institutionCode = institutionCode;
     }
 
     public ImportSettings getData() {
@@ -262,7 +268,7 @@ public class GoProImporter implements SaveListener {
             		Thread.sleep(180000);
             	} catch (InterruptedException e) {
             	}
-        		importer.runImport(new File(importData.getDataFolder()), new File(importData.getWorkFolder()), importData.getMappingsFile(), importData.getBatchSize(), importData.getDefaultOwnerId());
+        		importer.runImport(new File(importData.getDataFolder()), new File(importData.getWorkFolder()), importData.getMappingsFile(), importData.getBatchSize(), importData.getDefaultOwnerId(), institutionCode);
         	} catch (Exception e) {
         		LOG.error("GoProDocumentsImporter failed: " + e.getMessage());
         		return false;

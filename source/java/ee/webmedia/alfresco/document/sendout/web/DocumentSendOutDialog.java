@@ -65,7 +65,6 @@ import org.apache.commons.collections.Transformer;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.validator.EmailValidator;
-import org.apache.cxf.message.MessageUtils;
 import org.apache.myfaces.shared_impl.renderkit.JSFAttr;
 import org.apache.myfaces.shared_impl.renderkit.html.HTML;
 import org.apache.myfaces.shared_impl.taglib.UIComponentTagUtils;
@@ -382,7 +381,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         List<String> recDvkCapable = new ArrayList<>(names.size());
         String dvkNo = MessageUtil.getMessage("document_send_out_dvk_capable_no");
         String dvkYes = MessageUtil.getMessage("document_send_out_dvk_capable_yes");
-        	
+        
         for (int i = 0; i < names.size(); i++) {
         	String dvkCapableMsg = dvkNo;
         	String recSendModeValue = "";
