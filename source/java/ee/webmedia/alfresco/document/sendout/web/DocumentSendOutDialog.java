@@ -65,11 +65,15 @@ import org.apache.commons.collections.Transformer;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.validator.EmailValidator;
+import org.apache.cxf.message.MessageUtils;
 import org.apache.myfaces.shared_impl.renderkit.JSFAttr;
 import org.apache.myfaces.shared_impl.renderkit.html.HTML;
 import org.apache.myfaces.shared_impl.taglib.UIComponentTagUtils;
 
+import com.nortal.jroad.client.exception.XRoadServiceConsumptionException;
+
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
+import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
 import ee.webmedia.alfresco.addressbook.service.AddressbookEntry;
 import ee.webmedia.alfresco.addressbook.util.AddressbookUtil;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
@@ -78,7 +82,9 @@ import ee.webmedia.alfresco.classificator.enums.StorageType;
 import ee.webmedia.alfresco.classificator.model.Classificator;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent;
+import ee.webmedia.alfresco.common.service.CreateObjectCallback;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.docdynamic.model.DocumentChildModel;
@@ -102,7 +108,6 @@ import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
-import ee.webmedia.xtee.client.exception.XTeeServiceConsumptionException;
 
 /**
  * Bean for sending out document dialog.
@@ -714,7 +719,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             Set<String> unregisteredAditUsers = null;
             try {
                 unregisteredAditUsers = BeanHelper.getAditService().getUnregisteredAditUsers(idCodesToCheck);
-            } catch (XTeeServiceConsumptionException e) {
+            } catch (XRoadServiceConsumptionException e) {
                 valid = false;
                 String faultMessage = e.getNonTechnicalFaultString();
                 MessageUtil.addErrorMessage(context, "document_send_failed_xtee_query", StringUtils.isNotBlank(faultMessage) ? faultMessage : e.getFaultString());
@@ -907,12 +912,14 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         Map<Pair<String /* name */, String /* email */>, String /* idCode */> organizationCodeByNameAndEmail = new HashMap<>();
         Map<Pair<String /* name */, String /* email */>, NodeRef /* idCode */> organizationNodeRefByNameAndEmail = new HashMap<>();
         Map<Pair<String /* name */, String /* email */>, Boolean /* isOrganizationType */> isOrganizationTypeByNameAndEmail = new HashMap<>();
+        List<NodeRef> orgs = new ArrayList<>();
         for (Node contact : getAddressbookService().listOrganizationAndPerson()) {
             String name = AddressbookUtil.getContactFullName(RepoUtil.toQNameProperties(contact.getProperties()), contact.getType());
             String email = (String) contact.getProperties().get(AddressbookModel.Props.EMAIL.toString());
             Pair<String, String> nameEmail = Pair.newInstance(name.toLowerCase(), email.toLowerCase());
             String idCode = null;
             if (contact.getType().equals(AddressbookModel.Types.ORGANIZATION)) {
+            	orgs.add(contact.getNodeRef());
             	if (StringUtils.isNotBlank(name) && StringUtils.isNotBlank(email)) {
             		String orgIdCode = (String) contact.getProperties().get(AddressbookModel.Props.ORGANIZATION_CODE.toString());
             		isOrganizationTypeByNameAndEmail.put(nameEmail, true);
@@ -929,6 +936,28 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             if (StringUtils.isNotBlank(name) && StringUtils.isNotBlank(email) && StringUtils.isNotBlank(idCode)) {
                 idCodesByNameAndEmail.put(nameEmail, idCode);
             }
+        }
+        
+        if (!orgs.isEmpty()) {
+	        Map<NodeRef, List<Node>> personsByOrg = BeanHelper.getBulkLoadNodeService().loadChildNodes(orgs, new HashSet<QName>(), Types.ORGPERSON, null,
+	                new CreateObjectCallback<Node>() {
+	                    @Override
+	                    public Node create(NodeRef nodeRef, Map<QName, Serializable> properties) {
+	                        return new WmNode(nodeRef, Types.ORGPERSON, null, properties);
+	                    }
+	                });
+	
+	        for (Map.Entry<NodeRef, List<Node>> addressbookEntries : personsByOrg.entrySet()) {
+	            for (Node node : addressbookEntries.getValue()) {
+	            	String name = AddressbookUtil.getContactFullName(RepoUtil.toQNameProperties(node.getProperties()), node.getType());
+	                String email = (String) node.getProperties().get(AddressbookModel.Props.EMAIL.toString());
+	                Pair<String, String> nameEmail = Pair.newInstance(name.toLowerCase(), email.toLowerCase());
+	                String idCode = (String) node.getProperties().get(AddressbookModel.Props.PERSON_ID.toString());
+	                if (StringUtils.isNotBlank(email) && StringUtils.isNotBlank(idCode)) {
+	                	idCodesByNameAndEmail.put(nameEmail, idCode);
+	                }
+	            }
+	        }
         }
         
     	encryptionRecipients = new ArrayList<>();

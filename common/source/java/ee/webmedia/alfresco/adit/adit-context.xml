@@ -6,8 +6,9 @@
 
   <bean id="aditService" class="ee.webmedia.alfresco.adit.service.AditServiceImpl" >
     <property name="nodeService" ref="NodeService" />
-    <property name="ametlikudDokumendidXTeeService" ref="ametlikudDokumendidXTeeService" />
+    <property name="aditXTeeService" ref="aditXRoadService" />
     <property name="documentSearchService" ref="DocumentSearchService" />
+    <property name="infoSystem" value="${x-tee.adit.infosystem}" />
   </bean>
 
   <bean id="AditService" class="org.springframework.aop.framework.ProxyFactoryBean">

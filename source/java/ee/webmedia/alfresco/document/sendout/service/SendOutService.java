@@ -13,7 +13,7 @@ import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.email.model.EmailAttachment;
-import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
+import com.nortal.jroad.client.dhl.DhlXTeeService.ContentToSend;
 
 /**
  * Provides service methods for sending out documents and managing the sendInfo blocks.

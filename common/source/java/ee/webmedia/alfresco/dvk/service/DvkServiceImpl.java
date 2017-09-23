@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -54,6 +55,38 @@ import org.jsoup.Jsoup;
 import org.jsoup.examples.HtmlToPlainText;
 import org.springframework.util.Assert;
 
+import com.nortal.jroad.client.dhl.DhlDocumentVersion;
+import com.nortal.jroad.client.dhl.DhlXTeeService;
+import com.nortal.jroad.client.dhl.DhlXTeeService.ContentToSend;
+import com.nortal.jroad.client.dhl.DhlXTeeService.MetainfoHelper;
+import com.nortal.jroad.client.dhl.DhlXTeeService.ReceivedDocumentsWrapper;
+import com.nortal.jroad.client.dhl.DhlXTeeService.ReceivedDocumentsWrapper.ReceivedDocument;
+import com.nortal.jroad.client.dhl.DhlXTeeService.SendDocumentsDecContainerCallback;
+import com.nortal.jroad.client.dhl.DhlXTeeService.SendDocumentsDokumentCallback;
+import com.nortal.jroad.client.dhl.DhlXTeeService.SendDocumentsRequestCallback;
+import com.nortal.jroad.client.dhl.DhlXTeeService.SendStatus;
+import com.nortal.jroad.client.dhl.types.ee.riik.schemas.deccontainer.vers21.AccessConditionType;
+import com.nortal.jroad.client.dhl.types.ee.riik.schemas.deccontainer.vers21.ContactDataType;
+import com.nortal.jroad.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument;
+import com.nortal.jroad.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer;
+import com.nortal.jroad.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer.Access;
+import com.nortal.jroad.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer.Recipient;
+import com.nortal.jroad.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer.Transport;
+import com.nortal.jroad.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer.Transport.DecRecipient;
+import com.nortal.jroad.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer.Transport.DecSender;
+import com.nortal.jroad.client.dhl.types.ee.riik.schemas.deccontainer.vers21.OrganisationType;
+import com.nortal.jroad.client.dhl.types.ee.riik.schemas.deccontainer.vers21.PersonType;
+import com.nortal.jroad.client.dhl.types.ee.riik.schemas.dhl.AadressType;
+import com.nortal.jroad.client.dhl.types.ee.riik.schemas.dhl.DhlDokumentType;
+import com.nortal.jroad.client.dhl.types.ee.riik.schemas.dhl.DokumentDocument;
+import com.nortal.jroad.client.dhl.types.ee.riik.schemas.dhl.MetaxmlDocument.Metaxml;
+import com.nortal.jroad.client.dhl.types.ee.riik.schemas.dhl.TagasisideType;
+import com.nortal.jroad.client.dhl.types.ee.riik.schemas.dhl.rkelLetter.Letter;
+import com.nortal.jroad.client.dhl.types.ee.riik.schemas.dhl_meta_automatic.impl.DhlKaustDocumentImpl;
+import com.nortal.jroad.client.dhl.types.ee.riik.xrd.dhl.producers.producer.dhl.SendDocumentsV4RequestType;
+import com.nortal.jroad.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
+import com.nortal.jroad.client.dhl.types.ee.sk.digiDoc.v13.SignedDocType;
+
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
 import ee.webmedia.alfresco.adit.service.AditService;
@@ -92,7 +125,6 @@ import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
 import ee.webmedia.alfresco.signature.service.SignatureService;
 import ee.webmedia.alfresco.utils.DvkUtil;
 import ee.webmedia.alfresco.utils.FilenameUtil;
-import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
@@ -103,37 +135,6 @@ import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
-import ee.webmedia.xtee.client.dhl.DhlDocumentVersion;
-import ee.webmedia.xtee.client.dhl.DhlXTeeService;
-import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
-import ee.webmedia.xtee.client.dhl.DhlXTeeService.MetainfoHelper;
-import ee.webmedia.xtee.client.dhl.DhlXTeeService.ReceivedDocumentsWrapper;
-import ee.webmedia.xtee.client.dhl.DhlXTeeService.ReceivedDocumentsWrapper.ReceivedDocument;
-import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendDocumentsDecContainerCallback;
-import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendDocumentsDokumentCallback;
-import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendDocumentsRequestCallback;
-import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
-import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.AccessConditionType;
-import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.ContactDataType;
-import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument;
-import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer;
-import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer.Access;
-import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer.Recipient;
-import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer.Transport;
-import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer.Transport.DecRecipient;
-import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer.Transport.DecSender;
-import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.OrganisationType;
-import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.PersonType;
-import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.AadressType;
-import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.DhlDokumentType;
-import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.DokumentDocument;
-import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.MetaxmlDocument.Metaxml;
-import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.rkelLetter.Letter;
-import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl_meta_automatic.impl.DhlKaustDocumentImpl;
-import ee.webmedia.xtee.client.dhl.types.ee.riik.xtee.dhl.producers.producer.dhl.SendDocumentsV2RequestType;
-import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
-import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.SignedDocType;
-import ee.webmedia.xtee.client.service.configuration.provider.XTeeProviderPropertiesResolver;
 
 public abstract class DvkServiceImpl implements DvkService {
 
@@ -158,7 +159,6 @@ public abstract class DvkServiceImpl implements DvkService {
     private DocumentAdminService documentAdminService;
     private String institutionCode;
 
-    private XTeeProviderPropertiesResolver propertiesResolver;
 
     private String noTitleSpacePrefix;
 
@@ -225,8 +225,18 @@ public abstract class DvkServiceImpl implements DvkService {
 	                if (lastReceiveDocuments.size() != 0 || lastFailedDocuments.size() != 0) {
 	                    final ArrayList<String> markReceived = new ArrayList<String>(lastReceiveDocuments);
 	                    markReceived.addAll(lastFailedDocuments);
+	                    Collection<TagasisideType> tagasisideTypeMarkreceived = new ArrayList<>();
+	                    for (String dhlId: markReceived) {
+	                    	try {
+	                    	TagasisideType tagasisideType = TagasisideType.Factory.newInstance();
+	                    	tagasisideType.setDhlId(new BigInteger(dhlId));
+	                    	tagasisideTypeMarkreceived.add(tagasisideType);
+	                    	} catch (NumberFormatException e) {
+	                    		log.warn("Failed to parse to number dhlId = " + dhlId, e);
+	                    	}
+	                    }
 	                    try {
-	                        dhlXTeeService.markDocumentsReceived(markReceived);
+	                        dhlXTeeService.markDocumentsReceivedV2(tagasisideTypeMarkreceived);
 	                        MonitoringUtil.logSuccess(MonitoredService.OUT_XTEE_DVK);
 	                    } catch (RuntimeException e) {
 	                        MonitoringUtil.logError(MonitoredService.OUT_XTEE_DVK, e);
@@ -339,7 +349,7 @@ public abstract class DvkServiceImpl implements DvkService {
 
         try {
             Assert.isTrue(StringUtils.isNotBlank(dhlId), "dhlId can't be blank");
-            ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.TransportDocument.Transport transport = dhlDokument.getTransport();
+            com.nortal.jroad.client.dhl.types.ee.riik.schemas.dhl.TransportDocument.Transport transport = dhlDokument.getTransport();
             AadressType saatja = transport.getSaatja();
 
             Assert.isTrue(StringUtils.isNotBlank(saatja.getRegnr()), "sender regNr can't be blank");
@@ -396,7 +406,8 @@ public abstract class DvkServiceImpl implements DvkService {
     }
 
     protected List<NodeRef> storeDocumentV2(ReceivedDocument receivedDocument, String dhlId, NodeRef dvkIncomingFolder, Collection<String> previouslyFailedDvkIds) {
-        DecContainer decContainer = receivedDocument.getDhlDocumentV2();
+    	
+    	DecContainer decContainer = receivedDocument.getDhlDocumentV2();
         if (log.isTraceEnabled()) {
             log.trace("dokument element=\n" + decContainer + "'");
             DecSender decSender = decContainer.getTransport().getDecSender();
@@ -847,7 +858,7 @@ public abstract class DvkServiceImpl implements DvkService {
                     callback, new SendDocumentsRequestCallback() {
 
                         @Override
-                        public void doWithRequest(SendDocumentsV2RequestType dokumentDocument) {
+                        public void doWithRequest(SendDocumentsV4RequestType dokumentDocument) {
                             final Long dvkRetainDaysPeriod = parametersService.getLongParameter(Parameters.DVK_RETAIN_PERIOD);
                             final Calendar retainCal = Calendar.getInstance();
                             retainCal.add(Calendar.DAY_OF_MONTH, dvkRetainDaysPeriod.intValue());
@@ -905,13 +916,19 @@ public abstract class DvkServiceImpl implements DvkService {
                     sd.setDocumentNodeRef(docNodeRef);
                     sd.setTextContent(WorkflowUtil.getTaskMessageForRecipient(task));
                     String dvkId;
-
+                    
+                    
                     List<EmailAttachment> attachments = notificationCache.getAttachments().get(docNodeRef);
                     if (attachments == null) {
                         List<NodeRef> docFileRefs = BeanHelper.getFileService().getAllFileRefs(docNodeRef, true);
                         attachments = BeanHelper.getEmailService().getAttachments(docFileRefs, false, null, null);
                         notificationCache.getAttachments().put(docNodeRef, attachments);
+                        
+                    	
                     }
+                    
+                    String sentFiles = getSentFiles(docNodeRef);
+                    
                     List<ContentToSend> contentsToSend = CollectionUtils.isNotEmpty(attachments) ? BeanHelper.getSendOutService().prepareContents(attachments)
                             : Collections.<ContentToSend> emptyList();
                     dvkId = sendDocuments(contentsToSend, sd, false);
@@ -924,6 +941,10 @@ public abstract class DvkServiceImpl implements DvkService {
                     props.put(DocumentCommonModel.Props.SEND_INFO_SEND_STATUS, SendStatus.SENT.toString());
                     props.put(DocumentCommonModel.Props.SEND_INFO_DVK_ID, dvkId);
                     props.put(DocumentCommonModel.Props.SEND_INFO_RESOLUTION, WorkflowUtil.getTaskSendInfoResolution(task));
+                    props.put(DocumentCommonModel.Props.SEND_INFO_SENDER, "süsteem");
+                    if (StringUtils.isNotBlank(sentFiles)) {
+                    	props.put(DocumentCommonModel.Props.SEND_INFO_SENT_FILES, sentFiles);
+                    }
                     result.setDocRef(docNodeRef);
                     result.addSendInfoProps(props);
                     result.markSent();
@@ -945,6 +966,20 @@ public abstract class DvkServiceImpl implements DvkService {
             }
         }
         return result;
+    }
+    
+    private String getSentFiles(NodeRef docNodeRef) {
+    	StringBuilder sentFiles = new StringBuilder();
+    	List<NodeRef> docFileRefs = BeanHelper.getFileService().getAllFileRefs(docNodeRef, true);
+        for (NodeRef fileRef : docFileRefs) {
+            String fileName = (String) nodeService.getProperty(fileRef, ContentModel.PROP_NAME);
+            if (sentFiles.length() > 0) {
+            	sentFiles.append("; ");
+            }
+            sentFiles.append(fileName);
+        }
+        
+        return sentFiles.toString();
     }
 
     @Override
@@ -977,7 +1012,7 @@ public abstract class DvkServiceImpl implements DvkService {
         return new SendDocumentsRequestCallback() {
 
             @Override
-            public void doWithRequest(SendDocumentsV2RequestType request) {
+            public void doWithRequest(SendDocumentsV4RequestType request) {
                 setSailitustahtaeg(request);
             }
         };
@@ -986,7 +1021,7 @@ public abstract class DvkServiceImpl implements DvkService {
     public SendDocumentsRequestCallback getSendDocumentToFolderRequestCallback(final String folder) {
         return new SendDocumentsRequestCallback() {
             @Override
-            public void doWithRequest(SendDocumentsV2RequestType request) {
+            public void doWithRequest(SendDocumentsV4RequestType request) {
                 setSailitustahtaeg(request);
                 if (StringUtils.isNotBlank(folder)) {
                     request.setKaust(folder);
@@ -995,7 +1030,7 @@ public abstract class DvkServiceImpl implements DvkService {
         };
     }
 
-    private void setSailitustahtaeg(SendDocumentsV2RequestType request) {
+    private void setSailitustahtaeg(SendDocumentsV4RequestType request) {
         final Long dvkRetainDaysPeriod = parametersService.getLongParameter(Parameters.DVK_RETAIN_PERIOD);
         final Calendar retainCal = Calendar.getInstance();
         retainCal.add(Calendar.DAY_OF_MONTH, dvkRetainDaysPeriod.intValue());
@@ -1047,7 +1082,7 @@ public abstract class DvkServiceImpl implements DvkService {
 
     protected DecSender getSenderAddress() {
         DecSender sender = DecSender.Factory.newInstance();
-        sender.setOrganisationCode(propertiesResolver.getProperty("x-tee.institution"));
+        sender.setOrganisationCode(institutionCode);
         return sender;
     }
 
@@ -1490,10 +1525,6 @@ public abstract class DvkServiceImpl implements DvkService {
 
     public void setDhlXTeeService(DhlXTeeService dhlXTeeService) {
         this.dhlXTeeService = dhlXTeeService;
-    }
-
-    public void setPropertiesResolver(XTeeProviderPropertiesResolver propertiesResolver) {
-        this.propertiesResolver = propertiesResolver;
     }
 
     public void setNoTitleSpacePrefix(String noTitleSpacePrefix) {

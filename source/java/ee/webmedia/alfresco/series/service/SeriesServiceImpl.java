@@ -90,7 +90,9 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     }
 
     private List<NodeRef> getSeriesByFunctionNodeRefs(NodeRef functionRef) {
-        return bulkLoadNodeService.loadChildRefs(functionRef, SeriesModel.Types.SERIES);
+    	List<NodeRef> seriesRefs = bulkLoadNodeService.loadChildRefs(functionRef, SeriesModel.Types.SERIES);
+    	
+    	return seriesRefs;
     }
 
     @Override
@@ -98,8 +100,15 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         List<NodeRef> childRefs = getSeriesByFunctionNodeRefs(functionNodeRef);
         List<UnmodifiableSeries> seriesList = new ArrayList<>();
         Map<Long, QName> propertyTypes = new HashMap<>();
+        final Date now = new Date();
+        boolean isAdministrator = userService.isAdministrator();
         for (NodeRef seriesRef : childRefs) {
             UnmodifiableSeries series = getUnmodifiableSeries(seriesRef, functionNodeRef, propertyTypes);
+            if (!isAdministrator && series.getValidFrom() != null && now.before(series.getValidFrom())) {
+                log.debug("Skipping serie '" + series.getTitle() + "', current date "
+                        + now + " is earlier than serie valid from date " + series.getValidFrom());
+                continue;
+            }
             seriesList.add(series);
         }
         Collections.sort(seriesList);

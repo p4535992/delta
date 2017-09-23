@@ -55,8 +55,8 @@ import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.WebUtil;
-import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
-import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
+import com.nortal.jroad.client.dhl.DhlXTeeService.ContentToSend;
+import com.nortal.jroad.client.dhl.DhlXTeeService.SendStatus;
 
 public class SendOutServiceImpl implements SendOutService {
 

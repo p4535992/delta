@@ -24,7 +24,7 @@ import ee.webmedia.alfresco.document.einvoice.model.Transaction;
 import ee.webmedia.alfresco.document.einvoice.model.TransactionDescParameter;
 import ee.webmedia.alfresco.document.einvoice.model.TransactionTemplate;
 import ee.webmedia.alfresco.document.file.model.File;
-import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
+import com.nortal.jroad.client.dhl.DhlXTeeService.ContentToSend;
 
 /**
  * Handle e-invoices conversion between document and xml

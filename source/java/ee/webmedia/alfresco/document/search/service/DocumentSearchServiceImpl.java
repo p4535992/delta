@@ -135,7 +135,7 @@ import ee.webmedia.alfresco.workflow.search.model.CompoundWorkflowSearchModel;
 import ee.webmedia.alfresco.workflow.search.model.TaskSearchModel;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
-import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
+import com.nortal.jroad.client.dhl.DhlXTeeService.SendStatus;
 
 public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl implements DocumentSearchService {
 
