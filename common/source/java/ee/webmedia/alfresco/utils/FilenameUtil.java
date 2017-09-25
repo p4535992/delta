@@ -54,7 +54,7 @@ public class FilenameUtil {
             extension = MimetypeMap.EXTENSION_BINARY;
         }
         extension = StringUtils.deleteWhitespace(stripForbiddenWindowsCharactersAndRedundantWhitespaces(extension));
-        int maxLength = 254 - extension.length();
+        int maxLength = 249 - extension.length();
         String nameWithoutExtension = trimDotsAndSpaces(stripForbiddenWindowsCharactersAndRedundantWhitespaces(title));
         if (nameWithoutExtension.length() > maxLength) {
             nameWithoutExtension = nameWithoutExtension.substring(0, maxLength);

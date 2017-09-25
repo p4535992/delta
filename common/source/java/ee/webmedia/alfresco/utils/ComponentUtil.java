@@ -148,8 +148,12 @@ public class ComponentUtil {
     public static void writeModalHeader(ResponseWriter out, String modalId, String modalTitle, String closeOnClick) throws IOException {
         writeModalHeader(out, modalId, modalTitle, "", closeOnClick);
     }
-
+    
     public static void writeModalHeader(ResponseWriter out, String modalId, String modalTitle, String modalWrapStyleClass, String closeOnClick) throws IOException {
+    	writeModalHeader(out, modalId, modalTitle, modalWrapStyleClass, closeOnClick, "");
+    }
+
+    public static void writeModalHeader(ResponseWriter out, String modalId, String modalTitle, String modalWrapStyleClass, String closeOnClick, String modalHeaderStyleClass) throws IOException {
         StringBuilder sb = new StringBuilder();
         sb.append("<div id=\"");
         sb.append(modalId);
@@ -164,7 +168,7 @@ public class ComponentUtil {
         }
         sb.append("\">");
         sb.append(MessageUtil.getMessage("close_window"));
-        sb.append("</a></p></div><div class=\"modalpopup-content\"><div class=\"modalpopup-content-inner modalpopup-filter\">");
+        sb.append("</a></p></div><div class=\"modalpopup-content clear\"><div class=\"modalpopup-content-inner modalpopup-filter\">");
 
         out.write(sb.toString());
     }

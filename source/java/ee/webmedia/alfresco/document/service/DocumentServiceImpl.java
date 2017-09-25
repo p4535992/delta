@@ -1973,7 +1973,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
         log.info("PERFORMANCE: registerDocument calculating regNumber " + (stopTime - startTime) + " ms" + (allDocs == null ? "" : ", scanned " + allDocs.size() + " documents"));
         if (StringUtils.isNotBlank(holder.getRegNumber())) {
             String documentTypeId = (String) props.get(Props.OBJECT_TYPE_ID);
-            if (hasReplyAssoc) {
+            if (!isRelocating && hasReplyAssoc) {
                 manageSpecificTypes(firstReplyAssocRef, holder, now, documentTypeId);
             }
             String oldRegNumber = (String) nodeService.getProperty(docRef, REG_NUMBER);
@@ -2050,23 +2050,24 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
         }
         else if (SystematicDocumentType.OUTGOING_LETTER.isSameType(documentTypeId)) {
             try {
-                String comment = MessageUtil.getMessage("task_comment_finished_by_register_doc", holder.getRegNumber(), DATE_FORMAT.format(now));
-                if (!getWorkflowService().hasInProgressOtherUserOrderAssignmentTasks(firstReplyAssocRef)) {
+            	String comment = MessageUtil.getMessage("task_comment_finished_by_register_doc", holder.getRegNumber(), DATE_FORMAT.format(now));
+                // DELTA-1255, says that complienceDate and notation have to be set in any case
+            	//if (!getWorkflowService().hasInProgressOtherUserOrderAssignmentTasks(firstReplyAssocRef)) {
                     Node originalDocNode = getNode(firstReplyAssocRef, OUTGOING_LETTER_PROPS);
                     Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs = getPropDefs(originalDocNode);
                     if (hasProp(COMPLIENCE_DATE, propDefs)) {
                         Date complienceDate = (Date) originalDocNode.getProperties().get(COMPLIENCE_DATE);
                         if (complienceDate == null) {
                             setPropertyAsSystemUser(COMPLIENCE_DATE, now, firstReplyAssocRef);
-                            setDocStatusFinished(firstReplyAssocRef);
                         }
+                        setDocStatusFinished(firstReplyAssocRef);
                     }
                     if (hasProp(COMPLIENCE_NOTATION, propDefs)) {
                         String complienceNotation = (String) originalDocNode.getProperties().get(COMPLIENCE_NOTATION);
                         setPropertyAsSystemUser(COMPLIENCE_NOTATION, StringUtils.isBlank(complienceNotation) ? comment : complienceNotation
                                 + " " + comment, firstReplyAssocRef);
                     }
-                }
+                //}
                 getWorkflowService().finishTasksByRegisteringReplyLetter(firstReplyAssocRef, comment);
             } catch (NodeLockedException e) {
                 e.setCustomMessageId("document_registerDoc_error_docLocked_initialDocument");

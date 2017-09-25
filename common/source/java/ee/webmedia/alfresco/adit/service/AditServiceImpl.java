@@ -26,6 +26,7 @@ public class AditServiceImpl implements AditService {
     private DocumentSearchService documentSearchService;
     private NodeService nodeService;
     private AditXTeeService aditXTeeService;
+    private String infoSystem;
 
     @Override
     public int updateAditDocViewedStatuses() {
@@ -39,7 +40,7 @@ public class AditServiceImpl implements AditService {
         }
         Map<String, List<Map<String, Serializable>>> sendStatuses = null;
         try {
-            sendStatuses = aditXTeeService.getSendStatusV1(dvkIds, null);
+            sendStatuses = aditXTeeService.getSendStatusV1(dvkIds, infoSystem);
             MonitoringUtil.logSuccess(MonitoredService.OUT_XTEE_ADIT);
         } catch (RuntimeException e) {
             MonitoringUtil.logError(MonitoredService.OUT_XTEE_ADIT, e);
@@ -73,7 +74,7 @@ public class AditServiceImpl implements AditService {
     public Set<String> getUnregisteredAditUsers(Set<String> userIdCodes) throws XRoadServiceConsumptionException {
         Set<String> unregisteredUsers = new HashSet<String>();
         String runAsUser = AuthenticationUtil.getRunAsUser();
-        Map<String, Map<String, Serializable>> results = aditXTeeService.getUserInfoV1(userIdCodes, runAsUser);
+        Map<String, Map<String, Serializable>> results = aditXTeeService.getUserInfoV1(userIdCodes, infoSystem);
         if (!results.isEmpty()) {
             for (String userId : userIdCodes) {
                 Map<String, Serializable> props = results.get(userId);
@@ -94,6 +95,10 @@ public class AditServiceImpl implements AditService {
 
     public void setAditXTeeService(AditXTeeService aditXTeeService) {
         this.aditXTeeService = aditXTeeService;
+    }
+    
+    public void setInfoSystem(String infoSystem) {
+        this.infoSystem = infoSystem;
     }
 
     public void setNodeService(NodeService nodeService) {

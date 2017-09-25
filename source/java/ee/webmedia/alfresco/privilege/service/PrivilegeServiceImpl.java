@@ -284,6 +284,28 @@ public class PrivilegeServiceImpl implements PrivilegeService {
 
         return setPrivileges;
     }
+    
+    @Override
+    public Set<NodeRef> getAllNodesWithPermissions(final StoreRef storeRef) {
+        final Set<NodeRef> nodes = new HashSet<NodeRef>();
+
+        String sql = "SELECT node_uuid FROM delta_node_permission GROUP BY node_uuid";
+
+        jdbcTemplate.query(sql, new ParameterizedRowMapper<Object>() {
+
+            @Override
+            public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+                String nodeId = rs.getString(COLUMN_NODE_UUID);
+                NodeRef nodeRef = new NodeRef(storeRef, nodeId);
+                if (nodeService.exists(nodeRef)) {
+                	nodes.add(nodeRef);
+                }
+                return null;
+            }
+        });
+
+        return nodes;
+    }
 
     @Override
     public Set<Privilege> getAllCurrentUserPermissions(NodeRef nodeRef, QName type, Map<String, Object> properties) {
