@@ -162,7 +162,8 @@ public class DhlXTeeServiceImplTest extends TestCase {
             assertTrue(StringUtils.isNotBlank(dhlId));
         }
     }
-
+    
+    /*
     public void testGetSendStatus1() {
         final List<Item> items = dhl.getSendStatuses(sentDocIds);
         log.debug("got " + items.size() + " items with send statuses:");
@@ -205,6 +206,7 @@ public class DhlXTeeServiceImplTest extends TestCase {
             }
         }
     }
+    */
 
     /**
      * Test method for {@link DhlXTeeService#receiveDocuments(int)
@@ -294,6 +296,7 @@ public class DhlXTeeServiceImplTest extends TestCase {
     /**
      * Test method for {@link ee.webmedia.xtee.dvk.service.impl.DvkServiceImpl#getSendStatuses(String)
      */
+    /*
     public void testGetSendStatus2() {
         final List<Item> items = dhl.getSendStatuses(sentDocIds);
         assertTrue("expected to receive at least one DVK dokument, but got " + items.size(), items.size() > 0 || sentDocIds.size() == 0);
@@ -357,7 +360,7 @@ public class DhlXTeeServiceImplTest extends TestCase {
             assertTrue(errMsg + ". DhlIds=" + dhlIds, false);
         }
     }
-
+*/
     public void testGetOccupationList() {
         List<OccupationType> responseList = dhl.getOccupationList(Arrays.asList(SENDER_REG_NR));
         log.debug("Occupations list contains " + responseList.size() + " occupations:");

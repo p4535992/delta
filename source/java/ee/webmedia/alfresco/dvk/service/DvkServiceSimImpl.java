@@ -13,7 +13,6 @@ import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -55,6 +54,15 @@ import org.apache.xmlbeans.XmlTokenSource;
 import org.springframework.util.Assert;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
+
+import com.nortal.jroad.client.dhl.DhlDocumentVersion;
+import com.nortal.jroad.client.dhl.DhlXTeeService;
+import com.nortal.jroad.client.dhl.DhlXTeeService.ContentToSend;
+import com.nortal.jroad.client.dhl.DhlXTeeService.ReceivedDocumentsWrapper.ReceivedDocument;
+import com.nortal.jroad.client.dhl.DhlXTeeService.SendStatus;
+import com.nortal.jroad.client.dhl.GetSendStatusProp;
+import com.nortal.jroad.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument;
+import com.nortal.jroad.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer.Transport.DecRecipient;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.adit.service.AditService;
@@ -111,15 +119,6 @@ import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
-import com.nortal.jroad.client.dhl.DhlDocumentVersion;
-import com.nortal.jroad.client.dhl.DhlXTeeService;
-import com.nortal.jroad.client.dhl.DhlXTeeService.ContentToSend;
-import com.nortal.jroad.client.dhl.DhlXTeeService.ReceivedDocumentsWrapper.ReceivedDocument;
-import com.nortal.jroad.client.dhl.DhlXTeeService.SendStatus;
-import com.nortal.jroad.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument;
-import com.nortal.jroad.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer.Transport.DecRecipient;
-import com.nortal.jroad.client.dhl.types.ee.riik.schemas.dhl.EdastusDocument.Edastus;
-import com.nortal.jroad.client.dhl.types.ee.riik.xrd.dhl.producers.producer.dhl.GetSendStatusV2ResponseTypeUnencoded.Item;
 
 public class DvkServiceSimImpl extends DvkServiceImpl {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DvkServiceSimImpl.class);
@@ -162,7 +161,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
             taskDvkIdsAndRegNrs.put(dvkId, value.getSecond());
         }
 
-        List<Item> sendStatuses = null;
+        Map<String, List<Map<String, Serializable>>> sendStatuses = null;
         // get sendStatus for each dvkId
         try {
             sendStatuses = dhlXTeeService.getSendStatuses(dvkIds);
@@ -171,25 +170,36 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
             MonitoringUtil.logError(MonitoredService.OUT_XTEE_DVK, e);
             throw e;
         }
+        
         // fill map containing statuses by ids
         final HashMap<String /* dhlId */, Map<String, Pair<SendStatus, Date>>> statusesByIds = new HashMap<String, Map<String, Pair<SendStatus, Date>>>();
-        for (Item item : sendStatuses) {
-            Map<String, Pair<SendStatus, Date>> statusesForDvkId = new HashMap<String, Pair<SendStatus, Date>>();
-            String dhlId = item.getDhlId();
-            statusesByIds.put(dhlId, statusesForDvkId);
-            List<Edastus> forwardings = item.getEdastusList();
-            for (Edastus forwarding : forwardings) {
-                Calendar read = forwarding.getLoetud();
-                Date receiveTime = read != null ? read.getTime() : null;
-                Pair<SendStatus, Date> sendStatusAndReceivedTime = new Pair<SendStatus, Date>(SendStatus.get(forwarding.getStaatus()), receiveTime);
-                String regNr = taskDvkIdsAndRegNrs.containsKey(dhlId) ? taskDvkIdsAndRegNrs.get(dhlId) : forwarding.getSaaja().getRegnr();
-                if (AditService.NAME.equalsIgnoreCase(regNr)) {
-                    // For documents that were sent to "adit" the recipient regNr value will be "adit". Use id codes instead to distinguish between recipients.
-                    regNr = forwarding.getSaaja().getIsikukood();
-                }
-                statusesForDvkId.put(regNr, sendStatusAndReceivedTime);
-            }
+	    if (sendStatuses != null) {    
+	        for (String dhlId : sendStatuses.keySet()) {
+	            Map<String, Pair<SendStatus, Date>> statusesForDvkId = new HashMap<String, Pair<SendStatus, Date>>();
+	            
+	            statusesByIds.put(dhlId, statusesForDvkId);
+	            log.info("VASSILI: dhl_id = " + dhlId);
+	            List<Map<String, Serializable>> forwardings = sendStatuses.get(dhlId);
+	            for (Map<String, Serializable> forwarding : forwardings) {
+	                Date receiveTime = (Date)forwarding.get(GetSendStatusProp.Edastus.LOETUD.getName());
+	                String staatus = (String)forwarding.get(GetSendStatusProp.Edastus.STAATUS.getName());
+	                log.info("VASSILI: receiveTime = " + receiveTime);
+	                log.info("VASSILI: staatus = " + staatus);
+	                Pair<SendStatus, Date> sendStatusAndReceivedTime = new Pair<SendStatus, Date>(SendStatus.get(staatus), receiveTime);
+	                String regNr = taskDvkIdsAndRegNrs.containsKey(dhlId) ? taskDvkIdsAndRegNrs.get(dhlId) : (String)forwarding.get(GetSendStatusProp.Edastus.REGNR.getName());
+	                log.info("VASSILI: regNr = " + regNr);
+	                if (AditService.NAME.equalsIgnoreCase(regNr)) {
+	                    // For documents that were sent to "adit" the recipient regNr value will be "adit". Use id codes instead to distinguish between recipients.
+	                    regNr = (String)forwarding.get(GetSendStatusProp.Edastus.ISIKUKOOD.getName());
+	                }
+	                statusesForDvkId.put(regNr, sendStatusAndReceivedTime);
+	            }
+	        }
+        } else {
+        	log.info("VASSILI: send statuses = null");
         }
+	    
+	    log.info("VASSILI: statusesByIds size = " + statusesByIds.size());
 
         int updatedNodesCount = updateNodeSendStatus(docRefsAndIds, statusesByIds, DocumentCommonModel.Props.SEND_INFO_SEND_STATUS)
                 + updateNodeSendStatus(taskRefsAndIds, statusesByIds, WorkflowSpecificModel.Props.SEND_STATUS);
