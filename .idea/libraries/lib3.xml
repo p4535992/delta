@@ -1,0 +1,15 @@
+<component name="libraryTable">
+  <library name="lib3">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/common/lib" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/common/lib" />
+      <root url="jar://$USER_HOME$/.ideaLibSources/spring-beans-3.2.4.RELEASE-sources.jar!/" />
+      <root url="jar://$USER_HOME$/.ideaLibSources/digidoc4j-1.0.5-sources.jar!/" />
+    </SOURCES>
+    <jarDirectory url="file://$PROJECT_DIR$/common/lib" recursive="false" />
+    <jarDirectory url="file://$PROJECT_DIR$/common/lib" recursive="false" type="SOURCES" />
+  </library>
+</component>
