@@ -391,15 +391,28 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
             throw new SignatureException("Failed to parse ddoc file, nodeRef = " + nodeRef, e);
         }
     }
-    
-    private Container getContainerFromStream(InputStream contentInputStream) throws SignatureException {
+
+    private Container getContainerFromStream(InputStream contentInputStream, String ext) throws SignatureException {
+        log.debug("getContainerFromStream...");
         try {
+
             if (contentInputStream != null) {
-            	Container container = ContainerBuilder.
-                        aContainer().
-                        fromStream(contentInputStream).
-                        withConfiguration(configuration).
-                        build();
+                log.debug("content input stream is not null. Creating conteiner...");
+                Container container = null;
+                if(ext == null){
+                    container = ContainerBuilder.
+                            aContainer().
+                            fromStream(contentInputStream).
+                            withConfiguration(configuration).
+                            build();
+                } else {
+                    container = ContainerBuilder.
+                            aContainer(ext).
+                            fromStream(contentInputStream).
+                            withConfiguration(configuration).
+                            build();
+                }
+                log.debug("Return conteiner...");
                 return container;
             }
             throw new SignatureException("contentInputStream is empty.");
@@ -409,6 +422,10 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
             }
             throw new SignatureException("Failed to parse digidoc file", e);
         }
+    }
+
+    private Container getContainerFromStream(InputStream contentInputStream) throws SignatureException {
+        return getContainerFromStream(contentInputStream, null);
     }
     
     private X509Certificate getCertificateFromHex(String certificateInHex) {
@@ -673,16 +690,16 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
                     + ", includeData = " + includeData, e);
         }
     }
-    
+
     @Override
-    public SignatureItemsAndDataItems getDataItemsAndSignatureItems(InputStream inputStream, boolean includeData) throws SignatureException {
+    public SignatureItemsAndDataItems getDataItemsAndSignatureItems(InputStream inputStream, boolean includeData, String filext) throws SignatureException {
         log.debug("getDataItemsAndSignatureItems... file");
-    	Container signedContainer = null;
+        Container signedContainer = null;
         try {
             log.debug("Get digidoc conteiner from inputStream...");
-        	signedContainer = getContainerFromStream(inputStream);
-        	if(signedContainer == null){
-        	    log.warn("Failed to get conteiner from inputStream... NULL!");
+            signedContainer = getContainerFromStream(inputStream, filext);
+            if(signedContainer == null){
+                log.warn("Failed to get conteiner from inputStream... NULL!");
             }
             log.debug("getDataItemsAndSignatureItems...");
             return getDataItemsAndSignatureItems(signedContainer, null, includeData);
@@ -692,6 +709,11 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
             throw new SignatureException("Failed to get digidoc data and signature items, inputStream = "
                     + ObjectUtils.identityToString(inputStream) + ", includeData = " + includeData, e);
         }
+    }
+
+    @Override
+    public SignatureItemsAndDataItems getDataItemsAndSignatureItems(InputStream inputStream, boolean includeData) throws SignatureException {
+        return getDataItemsAndSignatureItems(inputStream, includeData, null);
     }
     
     /*

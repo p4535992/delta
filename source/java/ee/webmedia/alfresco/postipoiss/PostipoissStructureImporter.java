@@ -909,7 +909,7 @@ public class PostipoissStructureImporter {
     // }
 
     private boolean sameOrderExists(int order, NodeRef fRef) {
-        for (UnmodifiableSeries s : seriesService.getAllSeriesByFunction(fRef)) {
+        for (UnmodifiableSeries s : seriesService.getAllSeriesByFunction(fRef, true)) {
             if (order == s.getOrder()) {
                 return true;
             }

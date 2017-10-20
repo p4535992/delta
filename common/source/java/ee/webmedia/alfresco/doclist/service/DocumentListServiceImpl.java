@@ -117,7 +117,7 @@ public class DocumentListServiceImpl implements DocumentListService {
     private void printFunctions(CsvWriter csvWriter, List<UnmodifiableFunction> functions) {
         Map<QName, Pair<Long, QName>> propertyTypes = new HashMap<QName, Pair<Long, QName>>();
         for (UnmodifiableFunction function : functions) {
-            List<UnmodifiableSeries> series = seriesService.getAllSeriesByFunction(function.getNodeRef());
+            List<UnmodifiableSeries> series = seriesService.getAllSeriesByFunction(function.getNodeRef(), true);
             Map<NodeRef, Integer> seriesDocCount = new HashMap<NodeRef, Integer>();
             printLine(csvWriter, function.getType(), function.getMark(), function.getTitle(), getContainingDocsCount(series, seriesDocCount), "", "",
                     function.getStatus());
@@ -189,7 +189,7 @@ public class DocumentListServiceImpl implements DocumentListService {
         long counter = 0;
         Map<Long, QName> propertyTypes = new HashMap<Long, QName>();
         for (UnmodifiableFunction function : functionsService.getAllFunctions()) {
-            for (UnmodifiableSeries series : seriesService.getAllSeriesByFunction(function.getNodeRef())) {
+            for (UnmodifiableSeries series : seriesService.getAllSeriesByFunction(function.getNodeRef(), true)) {
                 for (UnmodifiableVolume unmodifiableVolume : volumeService.getAllValidVolumesBySeries(series.getSeriesRef())) {
                     if (DocListUnitStatus.OPEN.equals(unmodifiableVolume.getStatus()) && VolumeType.ANNUAL_FILE.name().equals(unmodifiableVolume.getVolumeType())) {
                         Volume volume = volumeService.getVolumeByNodeRef(unmodifiableVolume.getNodeRef(), propertyTypes);
@@ -217,7 +217,7 @@ public class DocumentListServiceImpl implements DocumentListService {
         long counter = 0;
         Map<Long, QName> propertyTypes = new HashMap<Long, QName>();
         for (UnmodifiableFunction function : functionsService.getAllFunctions()) {
-            for (UnmodifiableSeries series : seriesService.getAllSeriesByFunction(function.getNodeRef())) {
+            for (UnmodifiableSeries series : seriesService.getAllSeriesByFunction(function.getNodeRef(), true)) {
                 for (UnmodifiableVolume volume : volumeService.getAllOpenExpiredVolumesBySeries(series.getSeriesRef())) {
                     volumeService.closeVolume(volume.getNodeRef(), propertyTypes);
                     counter++;

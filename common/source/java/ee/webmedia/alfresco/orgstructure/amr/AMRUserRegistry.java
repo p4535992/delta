@@ -38,9 +38,16 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
 
     @Override
     public Iterator<NodeDescription> getPersons(Date modifiedSince) {
+        log.info("Get Persons...");
         AmetnikExt[] ametnikArray = amrService.getAmetnikByAsutusId();
+        if(ametnikArray != null){
+            log.info("Found AMR persons: " + ametnikArray.length);
+        }
         ArrayList<NodeDescription> persons = new ArrayList<NodeDescription>(ametnikArray.length);
         boolean isRestrictedDelta = rsService.isRestrictedDelta();
+
+        log.info("Is Restricted DELTA?: " + isRestrictedDelta);
+
         List<String> restrictedDeltaUsers = new ArrayList<String>();
         if (isRestrictedDelta) {
             // avoid retrieving restricted delta users if not in restricted delta
@@ -146,9 +153,14 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
 
     @Override
     public Iterator<NodeDescription> getOrganizationStructures() {
+        log.info("Get organization structures...");
         YksusExt[] yksusArray = amrService.getYksusByAsutusId();
+        if(yksusArray != null){
+            log.info("Found organization structure units: " + yksusArray.length);
+        }
         List<NodeDescription> orgStructures = new ArrayList<NodeDescription>(yksusArray.length);
         for (YksusExt yksus : yksusArray) {
+            log.info("UNIT id: [" + yksus.getId()+ "] fullpath: [" + yksus.getYksusRada() + "]");
             orgStructures.add(yksusToOrganizationStructure(yksus));
         }
         return orgStructures.iterator();

@@ -340,7 +340,9 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
         try {
             if (FilenameUtil.isDigiDocFile(fileName)) {
                 log.debug("filename (" + fileName + ") if digidoc!");
-                BeanHelper.getDigiDoc4JSignatureService().getDataItemsAndSignatureItems(new FileInputStream(file), false);
+                String digiDocFileExt = FilenameUtil.getDigiDocExt(fileName);
+                log.debug("file ext: " + digiDocFileExt);
+                BeanHelper.getDigiDoc4JSignatureService().getDataItemsAndSignatureItems(new FileInputStream(file), false, digiDocFileExt.toUpperCase());
             }
         } catch (SignatureException e) {
             throw new UnableToPerformException("file_digidoc_not_valid", fileName, getDigiDocFormat(fileName));

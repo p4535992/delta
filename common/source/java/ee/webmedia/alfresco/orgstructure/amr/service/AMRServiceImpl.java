@@ -27,9 +27,8 @@ public class AMRServiceImpl extends WebServiceTemplate implements AMRService {
         YksusByAsutusId2Request request = YksusByAsutusId2RequestDocument.Factory.newInstance().addNewYksusByAsutusId2Request();
         request.setAsutusId(asutusId);
         YksusByAsutusId2ResponseDocument response = (YksusByAsutusId2ResponseDocument) marshalSendAndReceive(request);
-        if (log.isDebugEnabled()) {
-            log.debug("getYksusByAsutusId asutusId '" + asutusId + "', time " + (System.currentTimeMillis() - startTime) + " ms, responseDoc:\n" + response);
-        }
+        log.info("YksusByAsutusId2 Request asutusId '" + asutusId + "', time " + (System.currentTimeMillis() - startTime) + " ms, responseDoc:\n" + response);
+
         YksusByAsutusId2Response yksusByAsutusId2Response = response.getYksusByAsutusId2Response();
         return yksusByAsutusId2Response.getYksusArray();
     }
@@ -41,10 +40,9 @@ public class AMRServiceImpl extends WebServiceTemplate implements AMRService {
         request.setAsutusId(asutusId);
         request.setYksusetaAmetnikudOnly(false);
         AmetnikByAsutusId2ResponseDocument responseDoc = (AmetnikByAsutusId2ResponseDocument) marshalSendAndReceive(request);
-        if (log.isDebugEnabled()) {
-            log.debug("getAmetnikByAsutusId asutusId '" + asutusId + "', time " + (System.currentTimeMillis() - startTime) + " ms, responseDoc:\n"
+        log.info("AmetnikByAsutusId2 Request: asutusId '" + asutusId + "', time " + (System.currentTimeMillis() - startTime) + " ms, responseDoc:\n"
                     + responseDoc);
-        }
+
         AmetnikByAsutusId2Response response = responseDoc.getAmetnikByAsutusId2Response();
         return response.getAmetnikArray();
     }
@@ -57,7 +55,7 @@ public class AMRServiceImpl extends WebServiceTemplate implements AMRService {
         request.setAsutusId(asutusId);
         AmetnikByIsikukood2ResponseDocument responseDoc = (AmetnikByIsikukood2ResponseDocument) marshalSendAndReceive(request);
         if (log.isDebugEnabled()) {
-            log.debug("getAmetnikByIsikukood socialSecurityNr '" + socialSecurityNr + "', time " + (System.currentTimeMillis() - startTime)
+            log.debug("AmetnikByIsikukood2 Request socialSecurityNr '" + socialSecurityNr + "', time " + (System.currentTimeMillis() - startTime)
                     + " ms, responseDoc:\n" + responseDoc);
         }
         AmetnikByIsikukood2Response response = responseDoc.getAmetnikByIsikukood2Response();
@@ -72,15 +70,15 @@ public class AMRServiceImpl extends WebServiceTemplate implements AMRService {
 
     public void setRemoveGroupsEmail(boolean removeGroupsEmail){
         this.removeGroupsEmail = removeGroupsEmail;
-        log.debug("---------------------------------------------------------------------------");
-        log.debug("setRemoveGroupsEmail(): value = " + this.removeGroupsEmail);
-        log.debug("---------------------------------------------------------------------------");
+        log.info("---------------------------------------------------------------------------");
+        log.info("setRemoveGroupsEmail(): value = " + this.removeGroupsEmail);
+        log.info("---------------------------------------------------------------------------");
     }
 
     public boolean getRemoveGroupsEmail(){
-        log.debug("---------------------------------------------------------------------------");
-        log.debug("getRemoveGroupsEmail config value: " + this.removeGroupsEmail);
-        log.debug("---------------------------------------------------------------------------");
+        log.info("---------------------------------------------------------------------------");
+        log.info("getRemoveGroupsEmail config value: " + this.removeGroupsEmail);
+        log.info("---------------------------------------------------------------------------");
         return  this.removeGroupsEmail;
     }
 

@@ -274,7 +274,7 @@ public class FunctionsServiceImpl implements FunctionsService {
 
     @Override
     public boolean closeFunction(Function function) {
-        List<UnmodifiableSeries> allSeries = seriesService.getAllSeriesByFunction(function.getNodeRef());
+        List<UnmodifiableSeries> allSeries = seriesService.getAllSeriesByFunction(function.getNodeRef(), true);
         for (UnmodifiableSeries series : allSeries) {
             if (!DocListUnitStatus.CLOSED.equals(series.getStatus())) {
                 return false;

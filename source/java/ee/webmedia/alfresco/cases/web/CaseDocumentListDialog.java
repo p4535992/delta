@@ -91,7 +91,7 @@ public class CaseDocumentListDialog extends DocumentListDialog {
             MessageUtil.addInfoMessage("volume_noderef_not_found");
             return;
         }
-        super.setup(event, false);
+        super.setup(event, true);
         showAll(volumeRef);
     }
 
