@@ -140,7 +140,7 @@
       <sourceFolder url="file://$MODULE_DIR$/build/exploded/WEB-INF/lib" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/build/exploded" isTestSource="false" />
     </content>
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="JDK1.7.0_80" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="repository-src" />
     <orderEntry type="library" name="lib" level="project" />
