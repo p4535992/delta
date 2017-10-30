@@ -208,6 +208,11 @@ public class FilenameUtil {
         return lowerCase.endsWith(DDOC_EXTENSION) || lowerCase.endsWith(BDOC_EXTENSION) || lowerCase.endsWith(ASICE_EXTENSION) || lowerCase.endsWith(SCE_EXTENSION) || lowerCase.endsWith(ASICS_EXTENSION);
     }
 
+    public static String getDigiDocExt(String fileName){
+        String fn = fileName.toUpperCase();
+        return FilenameUtils.getExtension(fn);
+    }
+
     public static boolean isDigiDocContainerFile(FileInfo fileInfo) {
         return FilenameUtil.isDigiDocFile(fileInfo.getName()) && !fileInfo.isFolder();
     }
