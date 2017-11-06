@@ -305,7 +305,13 @@ public class PageTag extends TagSupport
             // (http://forum.skype.com/index.php?showtopic=78380)
             out.write("<meta name=\"SKYPE_TOOLBAR\" content=\"SKYPE_TOOLBAR_PARSER_COMPATIBLE\" />\n");
          }
-         
+
+         out.write("<script src=\"/scripts/pa.js" + "?r=" + getUrlsuffix() + "\" \n" +
+                 "  data-plumbr='{\"accountId\":\"d1v7sonc3lf6gincm8opllcll8\",\n" +
+                 "                \"appName\":\"SIM_DELTA_TEST\",\n" +
+                 "                \"serverUrl\":\"https://plumbr.smit.sise\"}'>\n" +
+                 "</script>");
+
          // CSS style includes
          for (final String css : PageTag.CSS)
          {
@@ -378,6 +384,8 @@ public class PageTag extends TagSupport
          generateWindowOnloadCode(out);
 
          out.write("</script>\n"); // end - generate naked javascript code
+
+
 
          if (!Application.inPortalServer())
          {
