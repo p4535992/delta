@@ -7,6 +7,11 @@
       <property name="namespaceService" ref="NamespaceService" />
       <property name="nodeService" ref="NodeService" />
       <property name="generalService" ref="GeneralService" />
+      <property name="plumbrActive" value="${conf.plumbr.active}" />
+      <property name="plumbrScriptSrc" value="${conf.plumbr.script.src}" />
+      <property name="plumbrAccountId" value="${conf.plumbr.accountId}" />
+      <property name="plumbrAppName" value="${conf.plumbr.appName}" />
+      <property name="plumbrServerUrl" value="${conf.plumbr.server.url}" />
    </bean>
 
    <bean id="BaseService" class="org.springframework.aop.framework.ProxyFactoryBean">
