@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+    <bean id="plumbrService" class="ee.smit.alfresco.plumbr.PlumbrServiceImpl">
+        <property name="plumbrActive" value="${conf.plumbr.active}" />
+        <property name="plumbrScriptSrc" value="${conf.plumbr.script.src}" />
+        <property name="plumbrAccountId" value="${conf.plumbr.accountId}" />
+        <property name="plumbrAppName" value="${conf.plumbr.appName}" />
+        <property name="plumbrServerUrl" value="${conf.plumbr.server.url}" />
+
+    </bean>
+
+    <bean id="PlumbrService" class="org.springframework.aop.framework.ProxyFactoryBean">
+        <property name="proxyInterfaces">
+            <list>
+                <value>ee.smit.alfresco.plumbr.PlumbrService</value>
+            </list>
+        </property>
+        <property name="target" ref="plumbrService" />
+        <property name="interceptorNames">
+            <list>
+                <idref bean="commonTransactionInterceptor" />
+            </list>
+        </property>
+    </bean>
+
+
+</beans>

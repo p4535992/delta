@@ -164,6 +164,8 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         Map<String, List<Map<String, Serializable>>> sendStatuses = null;
         // get sendStatus for each dvkId
         try {
+
+            log.debug("X-TEE: getSendStatuses(dvkIds): " + StringUtils.join(dvkIds, ", "));
             sendStatuses = dhlXTeeService.getSendStatuses(dvkIds);
             MonitoringUtil.logSuccess(MonitoredService.OUT_XTEE_DVK);
         } catch (RuntimeException e) {
@@ -200,9 +202,16 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         }
 	    
 	    log.info("VASSILI: statusesByIds size = " + statusesByIds.size());
+        int updatedNodesCount = 0;
 
-        int updatedNodesCount = updateNodeSendStatus(docRefsAndIds, statusesByIds, DocumentCommonModel.Props.SEND_INFO_SEND_STATUS)
-                + updateNodeSendStatus(taskRefsAndIds, statusesByIds, WorkflowSpecificModel.Props.SEND_STATUS);
+        int updatedNodesCount_SendInfoSendStatus = updateNodeSendStatus(docRefsAndIds, statusesByIds, DocumentCommonModel.Props.SEND_INFO_SEND_STATUS);
+        log.info("UPDATE NODE SEND STATUS: SEND_INFO_SEND_STATUS..." + updatedNodesCount_SendInfoSendStatus);
+
+        updatedNodesCount += updatedNodesCount_SendInfoSendStatus;
+
+        int updatedNodesCount_SendStatus = updateNodeSendStatus(taskRefsAndIds, statusesByIds, WorkflowSpecificModel.Props.SEND_STATUS);
+        log.info("UPDATE NODE SEND STATUS: SEND_INFO_SEND_STATUS..." + updatedNodesCount_SendStatus);
+        updatedNodesCount += updatedNodesCount_SendStatus;
 
         return updatedNodesCount;
     }
@@ -285,15 +294,22 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
     private int updateNodeSendStatus(final Map<NodeRef, Pair<String, String>> refsAndIds, final HashMap<String, Map<String, Pair<SendStatus, Date>>> statusesByIds, QName propToSet) {
         final HashSet<String> dhlIdsStatusChanged = new HashSet<String>();
         boolean isDocSendInfo = DocumentCommonModel.Props.SEND_INFO_SEND_STATUS.equals(propToSet);
+        log.debug("Is doc send info: " + isDocSendInfo);
+
         WorkflowDbService workflowDbService = null;
         if (!isDocSendInfo) {
+            log.debug("Is doc send info is FALSE! getWorkFlowDbService()...");
             workflowDbService = BeanHelper.getWorkflowDbService();
         }
         // update each sendInfoRef if status has changed(from SENT to RECEIVED or CANCELLED)
         for (Entry<NodeRef, Pair<String, String>> refAndDvkId : refsAndIds.entrySet()) {
             final NodeRef sendInfoRef = refAndDvkId.getKey();
+            log.trace("sendIfnoRef: " + sendInfoRef.toString());
             final String dvkId = refAndDvkId.getValue().getFirst();
+            log.debug("DVK_ID: " + dvkId);
             final String recipientRegNr = refAndDvkId.getValue().getSecond();
+            log.debug("Recipent reg_nr: " + recipientRegNr);
+
             Map<String, Pair<SendStatus, Date>> recipientStatuses = statusesByIds.get(dvkId);
             SendStatus status = null;
             Date receivedDateTime = null;
@@ -301,19 +317,30 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
                 Pair<SendStatus, Date> sendStatusAndReceivedTime = recipientStatuses.get(recipientRegNr);
                 if (sendStatusAndReceivedTime != null) {
                     status = sendStatusAndReceivedTime.getFirst();
+                    if(status == null){
+                        log.trace("Status is NULL!");
+                    } else {
+                        log.trace("Status: " + status.toString());
+                    }
                     receivedDateTime = sendStatusAndReceivedTime.getSecond();
                 }
+            } else {
+                log.trace("Recipient statuses id NULL!");
             }
             if (status != null && !status.equals(SendStatus.SENT)) {
                 dhlIdsStatusChanged.add(dvkId);
+                log.debug("Status is SENT!");
                 Map<QName, Serializable> propsToUpdate = new HashMap<QName, Serializable>();
                 propsToUpdate.put(propToSet, status.toString());
                 if (status.equals(SendStatus.RECEIVED) && receivedDateTime != null) {
+                    log.debug("Status is RECEIVED!");
                     propsToUpdate.put(isDocSendInfo ? DocumentCommonModel.Props.SEND_INFO_RECEIVED_DATE_TIME : WorkflowSpecificModel.Props.RECEIVED_DATE_TIME, receivedDateTime);
                 }
                 if (isDocSendInfo) {
+                    log.debug("Add node properties... update");
                     nodeService.addProperties(sendInfoRef, propsToUpdate);
                 } else if (workflowDbService != null) {
+                    log.debug("Update task properties...");
                     workflowDbService.updateTaskProperties(sendInfoRef, propsToUpdate);
                 }
             }
