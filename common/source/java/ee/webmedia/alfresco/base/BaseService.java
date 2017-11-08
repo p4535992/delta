@@ -8,7 +8,6 @@ import org.alfresco.service.namespace.QNamePattern;
 
 import ee.webmedia.alfresco.utils.Predicate;
 import ee.webmedia.alfresco.utils.RepoUtil;
-import org.apache.xpath.operations.String;
 
 public interface BaseService {
 

@@ -306,11 +306,14 @@ public class PageTag extends TagSupport
             out.write("<meta name=\"SKYPE_TOOLBAR\" content=\"SKYPE_TOOLBAR_PARSER_COMPATIBLE\" />\n");
          }
 
-         out.write("<script src=\"/scripts/pa.js" + "?r=" + getUrlsuffix() + "\" \n" +
-                 "  data-plumbr='{\"accountId\":\"d1v7sonc3lf6gincm8opllcll8\",\n" +
-                 "                \"appName\":\"SIM_DELTA_TEST\",\n" +
-                 "                \"serverUrl\":\"https://plumbr.smit.sise\"}'>\n" +
-                 "</script>");
+         if(BeanHelper.getPlumbrService().isPlumbrActive()){
+            out.write("<script src=\"" + BeanHelper.getPlumbrService().getPlumbrScriptSrc() + "?r=" + getUrlsuffix() + "\" \n" +
+                    "  data-plumbr='{\"accountId\":\"" + BeanHelper.getPlumbrService().getPlumbrAccountId() + "\",\n" +
+                    "                \"appName\":\"" + BeanHelper.getPlumbrService().getPlumbrAppName() + "\",\n" +
+                    "                \"serverUrl\":\"" + BeanHelper.getPlumbrService().getPlumbrServerUrl() + "\"}'>\n" +
+                    "</script>");
+
+         }
 
          // CSS style includes
          for (final String css : PageTag.CSS)
