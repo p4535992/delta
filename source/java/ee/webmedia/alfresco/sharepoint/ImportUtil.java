@@ -1,11 +1,9 @@
 package ee.webmedia.alfresco.sharepoint;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import com.csvreader.CsvReader;
+import com.csvreader.CsvWriter;
+
+import java.io.*;
 import java.nio.charset.Charset;
 import java.sql.Timestamp;
 import java.text.DateFormat;
@@ -13,9 +11,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
-
-import com.csvreader.CsvReader;
-import com.csvreader.CsvWriter;
 
 public class ImportUtil {
 
@@ -278,7 +273,11 @@ public class ImportUtil {
     }
 
     public static CsvReader createDataReader(File logFile) throws FileNotFoundException {
-        CsvReader reader = new CsvReader(new BufferedInputStream(new FileInputStream(logFile)), ';', CHARSET_UTF8);
+        return createDataReader(logFile, ';');
+    }
+
+    public static CsvReader createDataReader(File logFile, char delimiter) throws FileNotFoundException {
+        CsvReader reader = new CsvReader(new BufferedInputStream(new FileInputStream(logFile)), delimiter, CHARSET_UTF8);
         reader.setTrimWhitespace(true);
         reader.setSkipEmptyRecords(true);
         return reader;
