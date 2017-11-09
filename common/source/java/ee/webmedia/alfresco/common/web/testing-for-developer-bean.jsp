@@ -1189,7 +1189,14 @@
    rendered="#{nodePermissionsExporter.updaterRunning == true}"
    disabled="#{nodePermissionsExporter.updaterStopping == true}" />
 <f:verbatim><br/></f:verbatim>
-
+<f:verbatim><hr/></f:verbatim>
+<h:outputText value="Hävitamisakti genereerinime"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="* CSV faili asukoht serveri kõvakettal: "/>
+<h:inputText id="nodeRefsFileGenerationFileName" value="#{TestingForDeveloperBean.dispositionFileName}" size="100" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="startNodeRefsFileGeneration" value="Genereeri" type="submit"
+                 actionListener="#{TestingForDeveloperBean.generateDispositionReport}" />
 <f:verbatim><hr/></f:verbatim>
 
 <h:outputText styleClass="mainTitle" value="Arendajale testimiseks"/>
