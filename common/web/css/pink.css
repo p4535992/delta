@@ -1,0 +1,21 @@
+body {
+    line-height: 1;
+    color: #2D2C2D;
+    background-color: #FFF4F4 ;
+}
+
+#menu li {
+    background: url("../images/parts/menu-separator-pink.png") no-repeat center
+    right;
+}
+
+#menu > ul {
+    background: url("../images/parts/menu-bg-pink.png") repeat-x;
+}
+
+DIV.modalpopup-header {
+    height: 35px;
+    padding: 0 15px;
+    background: #00467B url(../images/parts/menu-bg-pink.png);
+    color: #fff;
+}
