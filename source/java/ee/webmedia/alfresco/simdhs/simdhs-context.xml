@@ -5,6 +5,7 @@
    <!-- Entry point to include other components -->
    <!-- Be sure to also include necessary JSF configuration files in web/WEB-INF/web.xml -->
    <import resource="classpath:ee/smit/alfresco/plumbr/plumbr-context.xml" />
+   <import resource="classpath:ee/smit/alfresco/visual/visual-context.xml"/>
    <import resource="classpath:ee/webmedia/alfresco/person/person-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/log/log-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/help/help-context.xml" />

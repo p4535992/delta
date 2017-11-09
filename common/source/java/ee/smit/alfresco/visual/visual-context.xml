@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+    <bean id="visualService" class="ee.smit.alfresco.visual.VisualServiceImpl">
+        <property name="visualUsernames" value="${conf.special.visual.users}" />
+
+    </bean>
+
+    <bean id="VisualService" class="org.springframework.aop.framework.ProxyFactoryBean">
+        <property name="proxyInterfaces">
+            <list>
+                <value>ee.smit.alfresco.visual.VisualService</value>
+            </list>
+        </property>
+        <property name="target" ref="visualService" />
+        <property name="interceptorNames">
+            <list>
+                <idref bean="commonTransactionInterceptor" />
+            </list>
+        </property>
+    </bean>
+
+
+</beans>
