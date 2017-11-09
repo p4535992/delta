@@ -68,6 +68,9 @@ public class VersionsListBean<D extends DynamicType> implements DialogBlockBean<
             }, new NullComparator());
             Collections.sort(savedVersionsList, byVersionComparator);
         }
+        if (savedVersionsList == null) {
+        	savedVersionsList = new ArrayList<DocumentTypeVersionListItem>();
+        }
         return savedVersionsList;
     }
 

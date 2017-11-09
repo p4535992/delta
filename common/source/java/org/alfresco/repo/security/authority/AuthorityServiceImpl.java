@@ -261,7 +261,12 @@ public class AuthorityServiceImpl implements AuthorityService, InitializingBean
             throw new AuthorityException("Trying to modify a fixed authority");
         }
     }
-    
+
+    public void deleteAuthorityEmail(String authorityName) {
+        logger.debug("Delete Authority Email by authorityName: " + authorityName);
+        authorityDAO.removeAuthorityEmail(authorityName);
+    }
+
     public String createAuthority(AuthorityType type, String shortName)
     {
         return createAuthority(type, shortName, shortName, getDefaultZones());

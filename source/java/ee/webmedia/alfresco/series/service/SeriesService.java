@@ -26,7 +26,7 @@ public interface SeriesService {
      */
     void saveOrUpdateWithoutReorder(Series series);
 
-    List<UnmodifiableSeries> getAllSeriesByFunction(NodeRef functionNodeRef);
+    List<UnmodifiableSeries> getAllSeriesByFunction(NodeRef functionNodeRef, boolean checkAdmin);
 
     List<UnmodifiableSeries> getAllCaseFileSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status);
 

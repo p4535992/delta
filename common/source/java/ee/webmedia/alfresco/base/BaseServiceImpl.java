@@ -40,6 +40,8 @@ public class BaseServiceImpl implements BaseService {
     private NodeService nodeService;
     private GeneralService generalService;
 
+
+
     private final Map<QName, Class<? extends BaseObject>> typeMappings = new HashMap<QName, Class<? extends BaseObject>>();
 
     @Override
@@ -345,5 +347,7 @@ public class BaseServiceImpl implements BaseService {
     public void setGeneralService(GeneralService generalService) {
         this.generalService = generalService;
     }
+
+
     // END: setters
 }

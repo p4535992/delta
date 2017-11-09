@@ -373,7 +373,7 @@ public class MenuServiceImpl implements MenuService, InitializingBean {
     private void addFunctionVolumeShortcutsForUsers(List<NodeRef> userRefs, List<NodeRef> functionRefs) {
         List<ShortcutMenuItem> shortcutMenuItems = new ArrayList<ShortcutMenuItem>();
         for (NodeRef functionRef : functionRefs) {
-            for (UnmodifiableSeries series : BeanHelper.getSeriesService().getAllSeriesByFunction(functionRef)) {
+            for (UnmodifiableSeries series : BeanHelper.getSeriesService().getAllSeriesByFunction(functionRef, true)) {
                 for (UnmodifiableVolume volume : BeanHelper.getVolumeService().getAllVolumesBySeries(series.getSeriesRef())) {
                     ShortcutMenuItemOutcome outcome = volume.isDynamic() ? ShortcutMenuItemOutcome.CASE_FILE : ShortcutMenuItemOutcome.VOLUME;
                     shortcutMenuItems.add(new ShortcutMenuItem(null, outcome, volume.getNodeRef()));

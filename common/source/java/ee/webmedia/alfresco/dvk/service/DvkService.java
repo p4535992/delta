@@ -17,7 +17,7 @@ import ee.webmedia.alfresco.dvk.model.DvkSendDocuments;
 import ee.webmedia.alfresco.notification.model.NotificationCache;
 import ee.webmedia.alfresco.notification.model.NotificationResult;
 import ee.webmedia.alfresco.workflow.service.Task;
-import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
+import com.nortal.jroad.client.dhl.DhlXTeeService.ContentToSend;
 
 public interface DvkService {
     String BEAN_NAME = "DvkService";

@@ -335,6 +335,16 @@
 		<war destfile="${project.build.result.war}" duplicate="fail">
 			<fileset dir="${project.dir.exploded}" />
 		</war>
+		<antcall target="echotime" />
+		<echo message="DELTA version: ${currentVersion}" />
+	</target>
+
+	<target name="echotime">
+		<tstamp>
+			<format property="CURRENTTIME_EE" pattern="yyyy-MM-dd HH:mm:ss:sss zzz"
+					locale="cn,CN"/>
+		</tstamp>
+		<echo>the system date/time is ${CURRENTTIME_EE}</echo>
 	</target>
 
 	<target name="zip" depends="war" description="Build ZIP file from WAR and helper files needed for distributsion package">
@@ -598,7 +608,7 @@
    <target name="generate-all" depends="setup-exploded-done" description="Generate code from WSDL files using JAX-WS">
       <antcall target="generate-xmlbeans-conditionally">
          <param name="name" value="amr" />
-         <param name="wsdl" value="amr.wsdl" />
+         <param name="wsdl" value="amrservices.wsdl" />
       </antcall>
     <antcall target="generate-xmlbeans-conditionally">
        <param name="name" value="rs" />

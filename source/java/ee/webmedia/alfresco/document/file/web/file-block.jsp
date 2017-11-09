@@ -219,6 +219,12 @@
                      <h:outputText id="inner-txt5" value="#{msg.ddoc_signature_invalid}" style="color: red;" />
                   </a:booleanEvaluator>
                </h:column>
+               <h:column id="col6-inner">
+                  <f:facet name="header">
+                     <h:outputText id="col2-inner-header" value="#{msg.ddoc_signature_encryption_type}" styleClass=" header" />
+                  </f:facet>
+                  <h:outputText id="inner-txt2" value="#{v.encrytionType}" />
+               </h:column>
             </h:dataTable>
          </a:panel>
       </a:column>

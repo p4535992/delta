@@ -1,13 +1,11 @@
 package ee.webmedia.alfresco.orgstructure.service;
 
-import java.util.List;
-
-import javax.faces.event.ActionEvent;
-
+import ee.webmedia.alfresco.orgstructure.model.OrganizationStructure;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.repository.Node;
 
-import ee.webmedia.alfresco.orgstructure.model.OrganizationStructure;
+import javax.faces.event.ActionEvent;
+import java.util.List;
 
 /**
  * Service for searching and listing organization structures.
@@ -78,5 +76,6 @@ public interface OrganizationStructureService {
     OrganizationStructure getOrganizationStructure(NodeRef nodeRef);
 
     void loadUserUnit(Node user);
+
 
 }

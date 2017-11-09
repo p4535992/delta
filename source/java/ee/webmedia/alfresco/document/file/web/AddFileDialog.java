@@ -41,6 +41,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
 import org.springframework.util.Assert;
 import org.springframework.web.jsf.FacesContextUtils;
 
@@ -73,6 +74,9 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 
 public class AddFileDialog extends BaseDialogBean implements Validator {
+
+    private static Logger log = Logger.getLogger(AddFileDialog.class);
+
     private static final long serialVersionUID = 1L;
     public static final String BEAN_NAME = "AddFileDialog";
 
@@ -320,8 +324,10 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
     }
 
     private void checkDigiDoc(NodeRef fileNodeRef, String fileName) {
+        log.debug("Check digidoc...from nodeRef");
         try {
             if (FilenameUtil.isDigiDocFile(fileName)) {
+                log.debug("filename (" + fileName + ") if digidoc!");
                 BeanHelper.getDigiDoc4JSignatureService().getDataItemsAndSignatureItems(fileNodeRef, false);
             }
         } catch (SignatureException e) {
@@ -330,9 +336,13 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
     }
 
     private void checkDigiDoc(java.io.File file, String fileName) {
+        log.debug("Check digidoc...from file");
         try {
             if (FilenameUtil.isDigiDocFile(fileName)) {
-                BeanHelper.getDigiDoc4JSignatureService().getDataItemsAndSignatureItems(new FileInputStream(file), false);
+                log.debug("filename (" + fileName + ") if digidoc!");
+                String digiDocFileExt = FilenameUtil.getDigiDocExt(fileName);
+                log.debug("file ext: " + digiDocFileExt);
+                BeanHelper.getDigiDoc4JSignatureService().getDataItemsAndSignatureItems(new FileInputStream(file), false, digiDocFileExt.toUpperCase());
             }
         } catch (SignatureException e) {
             throw new UnableToPerformException("file_digidoc_not_valid", fileName, getDigiDocFormat(fileName));

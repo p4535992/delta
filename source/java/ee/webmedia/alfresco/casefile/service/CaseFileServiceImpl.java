@@ -316,6 +316,7 @@ public class CaseFileServiceImpl implements CaseFileService, BeanFactoryAware {
         }
         nodeService.setProperty(caseFileRef, DocumentDynamicModel.Props.STATUS, DocListUnitStatus.CLOSED.getValueName());
         caseFileLogService.addCaseFileLog(caseFileRef, "casefile_log_close");
+        volumeService.removeFromCache(caseFileRef);
     }
 
     @Override
@@ -327,6 +328,7 @@ public class CaseFileServiceImpl implements CaseFileService, BeanFactoryAware {
         }
         nodeService.setProperty(caseFileRef, DocumentDynamicModel.Props.STATUS, DocListUnitStatus.OPEN.getValueName());
         caseFileLogService.addCaseFileLog(caseFileRef, "casefile_log_open");
+        volumeService.removeFromCache(caseFileRef);
     }
 
     @Override

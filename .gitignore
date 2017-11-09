@@ -1,0 +1,8 @@
+common/lib-server/
+build/
+WEB-INF/alfresco.tld
+WEB-INF/c.tld
+WEB-INF/mDelta.tld
+WEB-INF/wcm.tld
+WEB-INF/wm.tld
+jdigidoc.log

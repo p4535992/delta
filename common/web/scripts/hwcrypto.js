@@ -1,19 +1,16 @@
-// JavaScript library as described in
-// https://github.com/open-eid/hwcrypto.js
+/*! This is hwcrypto.js 0.0.12 generated on 2017-09-21 */
+/* DO NOT EDIT (use src/hwcrypto.js) */
+
 var hwcrypto = function hwcrypto() {
     "use strict";
     var _debug = function(x) {};
     _debug("hwcrypto.js activated");
     window.addEventListener = window.addEventListener || window.attachEvent;
     function hasPluginFor(mime) {
-        if (navigator.mimeTypes && mime in navigator.mimeTypes) {
-            return true;
-        }
-        return false;
+        return navigator.mimeTypes && mime in navigator.mimeTypes;
     }
     function hasExtensionFor(cls) {
-        if (typeof window[cls] === "function") return true;
-        return false;
+        return typeof window[cls] === "function";
     }
     function _hex2array(str) {
         if (typeof str == "string") {
@@ -78,7 +75,7 @@ var hwcrypto = function hwcrypto() {
                 return USER_CANCEL;
 
               case 2:
-                return INVALID_ARGUMENT;
+                return NO_CERTIFICATES;
 
               case 17:
                 return INVALID_ARGUMENT;
@@ -113,7 +110,8 @@ var hwcrypto = function hwcrypto() {
             }
             return new Promise(function(resolve, reject) {
                 try {
-                    var v = p.getCertificate();
+                    var ver = p.version.split(".");
+                    var v = ver[0] >= 3 && ver[1] >= 13 ? p.getCertificate(options.filter) : p.getCertificate();
                     if (parseInt(p.errorCode) !== 0) {
                         reject(code2err(p.errorCode));
                     } else {
@@ -134,7 +132,9 @@ var hwcrypto = function hwcrypto() {
                 if (cid) {
                     try {
                         var language = options.lang || "en";
-                        var v = p.sign(cid, hash.hex, language);
+                        var info = options.info || "";
+                        var ver = p.version.split(".");
+                        var v = ver[0] >= 3 && ver[1] >= 13 ? p.sign(cid, hash.hex, language, info) : p.sign(cid, hash.hex, language);
                         resolve({
                             hex: v
                         });
@@ -231,7 +231,7 @@ var hwcrypto = function hwcrypto() {
                 _debug("Assuming IE BHO, testing");
                 return tryDigiDocPlugin();
             }
-            if (navigator.userAgent.indexOf("Chrome") != -1 && hasExtensionFor(digidoc_chrome)) {
+            if (hasExtensionFor(digidoc_chrome)) {
                 _testAndUse(DigiDocExtension).then(function(result) {
                     if (result) {
                         resolve(true);
@@ -266,7 +266,7 @@ var hwcrypto = function hwcrypto() {
     };
     fields.debug = function() {
         return new Promise(function(resolve, reject) {
-            var hwversion = "hwcrypto.js 0.0.10";
+            var hwversion = "hwcrypto.js 0.0.12";
             _autodetect().then(function(result) {
                 _backend.getVersion().then(function(version) {
                     resolve(hwversion + " with " + _backend._name + " " + version);

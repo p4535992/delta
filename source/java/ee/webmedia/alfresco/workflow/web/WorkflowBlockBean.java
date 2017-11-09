@@ -1140,6 +1140,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         }
     }
 
+    // deprecated
     public void signDocument() {
         FacesContext facesContext = FacesContext.getCurrentInstance();
         String signatureHex = (String) facesContext.getExternalContext().getRequestParameterMap().get("signatureHex");
@@ -1158,17 +1159,18 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             notifyDialogsIfNeeded(false, finishTask);
         } finally {
             if (signingFlow == null || signingFlow.isSigningQueueEmpty()) {
-                closeModal();
+            	closeModalDigidoc4j();
                 resetSigningData();
             } else {
-                showModalOrSign();
+            	showModalDigidoc4j();
             }
         }
     }
-
+    
+    // deprecated
     private void showModalOrSign() {
         if (signingFlow.needsSignatureInput(signingFlow.getSigningDocument(0))) {
-            showModal();
+            showModalDigidoc4j();
         } else {
             signDocument();
         }
@@ -1203,10 +1205,15 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     }
     
     public void closeSignSuccess() {
-        closeModalDigidoc4j();
-        resetSigningData();
-        MessageUtil.addInfoMessage("task_finish_success_defaultMsg");
-        notifyDialogsIfNeeded();
+    	if (signingFlow == null || signingFlow.isSigningQueueEmpty()) {
+    		closeModalDigidoc4j();
+            resetSigningData();
+            MessageUtil.addInfoMessage("task_finish_success_defaultMsg");
+            notifyDialogsIfNeeded();
+        } else {
+            showModalOrSign();
+        }
+        
     }
 
     public void resetSigningData() {
@@ -1261,7 +1268,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         
         try {
             long step0 = System.currentTimeMillis();
-            if (!signingFlow.collectAndCheckSigningFiles()) {
+            if (signingFlow == null || !signingFlow.collectAndCheckSigningFiles()) {
             	closeModalDigidoc4j();
                 resetSigningData();
                 return;
@@ -1291,6 +1298,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         Map<String, String> requestParameterMap = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap();
         String signInHex = requestParameterMap.get("signInHex");
         
+        boolean isNotifiedAndClosed = false;
         try {
             boolean finishTask = signingFlow.isFinishTaskStep();
             boolean finishedSigning = signingFlow.signDocumentImpl(signInHex);
@@ -1302,15 +1310,19 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                 	getDocLockService().unlockIfOwner(lockedCompoundWorkflowNodeRef);
                 }
             }
-            notifyDialogsIfNeeded(false, finishTask);
+            
+            //notifyDialogsIfNeeded(true, finishTask);
+            isNotifiedAndClosed = true;
         } finally {
             if (signingFlow == null || signingFlow.isSigningQueueEmpty()) {
-            	closeModalDigidoc4j();
                 resetSigningData();
-                notifyDialogsIfNeeded();
+                if (!isNotifiedAndClosed) {
+                //closeModalDigidoc4j();
+                	//notifyDialogsIfNeeded();
+                }
             } else {
             	// TODO: redo digidoc4j
-                showModalOrSign();
+                //showModalOrSign();
             }
         }
         

@@ -1,23 +1,13 @@
 package ee.webmedia.alfresco.orgstructure.service;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getPersonService;
-import static java.util.Arrays.asList;
-
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.faces.event.ActionEvent;
-
+import ee.webmedia.alfresco.common.service.ApplicationConstantsBean;
+import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.orgstructure.model.OrganizationStructure;
+import ee.webmedia.alfresco.orgstructure.model.OrganizationStructureModel;
+import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
+import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.cache.SimpleCache;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
@@ -33,16 +23,16 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.collections.comparators.NullComparator;
+import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 
-import ee.webmedia.alfresco.common.service.ApplicationConstantsBean;
-import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.orgstructure.model.OrganizationStructure;
-import ee.webmedia.alfresco.orgstructure.model.OrganizationStructureModel;
-import ee.webmedia.alfresco.user.service.UserService;
-import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
-import ee.webmedia.alfresco.workflow.service.WorkflowService;
+import javax.faces.event.ActionEvent;
+import java.io.Serializable;
+import java.util.*;
+
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getPersonService;
+import static java.util.Arrays.asList;
 
 public class OrganizationStructureServiceImpl implements OrganizationStructureService {
 
@@ -58,12 +48,17 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
     private UserRegistry userRegistry;
     private AuthorityService authorityService;
     private ApplicationConstantsBean applicationConstantsBean;
+
+    private Boolean syncActiveStatus = true;
+
     // START: properties that would cause dependency cycle when trying to inject them
     private UserService _userService;
     private WorkflowService _workflowService;
     // END: properties that would cause dependency cycle when trying to inject them
 
-    /** a transactionally-safe cache to be injected */
+    /**
+     * a transactionally-safe cache to be injected
+     */
     private SimpleCache<String, OrganizationStructure> orgStructPropertiesCache;
 
     private NodeRef orgStructsRoot;
@@ -95,7 +90,9 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
 
     @Override
     public int updateOrganisationStructureBasedGroups() {
+        log.info("Starting updateOrganisationStructureBasedGroups...");
         if (!applicationConstantsBean.isCreateOrgStructGroups()) {
+            log.info("Cancelling updateOrganisationStructureBasedGroups...(System uses Active Directory!)");
             return 0; // System uses Active Directory
         }
         //clear person and personNodes cache to avoid cache instability
@@ -139,14 +136,19 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
                 groupAuthority = authorityService.createAuthority(AuthorityType.GROUP, groupName, groupName, authorityEmail,
                         new HashSet<String>(Arrays.asList(STRUCT_UNIT_BASED, AuthorityService.ZONE_AUTH_ALFRESCO, AuthorityService.ZONE_APP_DEFAULT)));
             }
-            
+
             // update group email
             if (isGeneratedGroupAuthority) {
-            	String oldAuthorityEmail = authorityService.getAuthorityEmail(groupAuthority);
-            	
-            	if (StringUtils.isNotBlank(authorityEmail) && (StringUtils.isBlank(oldAuthorityEmail) || StringUtils.isNotBlank(oldAuthorityEmail) && !oldAuthorityEmail.equals(authorityEmail))) {
-            		authorityService.addAuthorityEmail(groupAuthority, authorityEmail);
-            	}
+                String oldAuthorityEmail = authorityService.getAuthorityEmail(groupAuthority);
+                log.debug(os.getOrganizationDisplayPath() + ":: oldAuthorityEmail: " + oldAuthorityEmail);
+                if (StringUtils.isNotBlank(authorityEmail) && (StringUtils.isBlank(oldAuthorityEmail) || StringUtils.isNotBlank(oldAuthorityEmail) && !oldAuthorityEmail.equals(authorityEmail))) {
+                    log.debug(os.getOrganizationDisplayPath() + ":: addAuthorityEmail: " + authorityEmail);
+                    authorityService.addAuthorityEmail(groupAuthority, authorityEmail);
+                } else {
+                    log.debug(os.getOrganizationDisplayPath() + ":: addAuthorityEmail: NULL! Try to remove units " +
+                            "e-mail...");
+                    authorityService.deleteAuthorityEmail(groupAuthority);
+                }
             }
 
             // Get current users for this group
@@ -154,7 +156,8 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
 
             boolean isGroupAuthorityUserUpdated = false;
             // Update groups users
-            OUTER: for (Map<QName, Serializable> props : users) {
+            OUTER:
+            for (Map<QName, Serializable> props : users) {
                 String username = (String) props.get(ContentModel.PROP_USERNAME);
                 boolean isAlreadyGroupMember = orgStructGroupMembers.contains(username);
 
@@ -196,30 +199,34 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
             // Remove processed groups
             generatedGroups.remove(groupAuthority);
             String groupDisplayName = authorityService.getAuthorityDisplayName(groupAuthority);
-            
+
             // Remove users that have been removed from this organization structure
             for (String username : orgStructGroupMembers) {
+                log.debug("Remove users that have been removed from this organization structure... username: " + username);
                 authorityService.removeAuthority(groupAuthority, username);
-                if (!(isGroupAuthorityUserUpdated && isGeneratedGroupAuthority)){
-                	// remove users tasks for compound workflow definitions
-                	getWorkflowService().removeUserOrGroupFromCompoundWorkflowDefinitions(groupDisplayName, username);
+                if (!(isGroupAuthorityUserUpdated && isGeneratedGroupAuthority)) {
+                    // remove users tasks for compound workflow definitions
+                    getWorkflowService().removeUserOrGroupFromCompoundWorkflowDefinitions(groupDisplayName, username);
                 }
             }
-            
+
             // update group users tasks for compound workflow definitions 
-            if (isGroupAuthorityUserUpdated && isGeneratedGroupAuthority){
-            	Set<String> groupMembers = new HashSet<String>(authorityService.getContainedAuthorities(AuthorityType.USER, groupAuthority, true));
-            	getWorkflowService().updateGroupUsersForCompoundWorkflowDefinitions(groupDisplayName, groupMembers);
+            if (isGroupAuthorityUserUpdated && isGeneratedGroupAuthority) {
+                Set<String> groupMembers = new HashSet<String>(authorityService.getContainedAuthorities(AuthorityType.USER, groupAuthority, true));
+                getWorkflowService().updateGroupUsersForCompoundWorkflowDefinitions(groupDisplayName, groupMembers);
             }
         }
 
         // Remove missing organization structures
         for (String missingGeneratedGroup : generatedGroups) {
-        	String missingGroupDisplayName = authorityService.getAuthorityDisplayName(missingGeneratedGroup);
+            log.info("Removing missing organization structure groups... groupname: " + missingGeneratedGroup);
+            String missingGroupDisplayName = authorityService.getAuthorityDisplayName(missingGeneratedGroup);
             authorityService.deleteAuthority(missingGeneratedGroup);
             getWorkflowService().removeUserOrGroupFromCompoundWorkflowDefinitions(missingGroupDisplayName, null);
 
         }
+
+        log.info("Starting updateOrganisationStructureBasedGroups...Done!");
 
         return 0;
     }
@@ -386,6 +393,8 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
 
     // END: private methods
 
+
+
     // START: getters / setters
     public UserService getUserService() {
         if (_userService == null) {
@@ -393,10 +402,10 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
         }
         return _userService;
     }
-    
+
     public WorkflowService getWorkflowService() {
         if (_workflowService == null) {
-        	_workflowService = BeanHelper.getWorkflowService();
+            _workflowService = BeanHelper.getWorkflowService();
         }
         return _workflowService;
     }
@@ -424,6 +433,5 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
     public void setApplicationConstantsBean(ApplicationConstantsBean applicationConstantsBean) {
         this.applicationConstantsBean = applicationConstantsBean;
     }
-
     // END: getters / setters
 }

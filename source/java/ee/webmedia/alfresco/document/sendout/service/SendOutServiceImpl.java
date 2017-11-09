@@ -55,8 +55,8 @@ import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.WebUtil;
-import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
-import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
+import com.nortal.jroad.client.dhl.DhlXTeeService.ContentToSend;
+import com.nortal.jroad.client.dhl.DhlXTeeService.SendStatus;
 
 public class SendOutServiceImpl implements SendOutService {
 
@@ -138,7 +138,13 @@ public class SendOutServiceImpl implements SendOutService {
                     continue;
                 }
                 List<SkLdapCertificate> skLdapCertificates = skLdapService.getCertificates(encryptionIdCode);
-                List<X509Certificate> certificates = getSignatureService().getCertificatesForEncryption(skLdapCertificates);
+                List<X509Certificate> certificates = null;
+                if(skLdapCertificates != null){
+                    log.debug("SK LDAP certificates list size: " + skLdapCertificates.size());
+                    certificates = getSignatureService().getCertificatesForEncryption(skLdapCertificates);
+                } else {
+                    log.warn("SK LDAP certificates list size: NULL!");
+                }
                 if (certificates.isEmpty()) {
                     throw new UnableToPerformException("document_send_out_encryptionRecipient_notFound", names.get(i), encryptionIdCode);
                 }

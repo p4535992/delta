@@ -104,7 +104,7 @@ public class SeriesListDialog extends BaseDialogBean {
         		series = getSeriesService().getAllSeriesByFunctionForRelatedUsersGroups(getFunctionRef(), AuthenticationUtil.getRunAsUser());
         	}
         } else {
-            series = getSeriesService().getAllSeriesByFunction(getFunction().getNodeRef());
+            series = getSeriesService().getAllSeriesByFunction(getFunction().getNodeRef(), true);
         }
     }
 

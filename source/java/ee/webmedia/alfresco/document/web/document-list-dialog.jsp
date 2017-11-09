@@ -55,7 +55,9 @@
 <h:panelGroup binding="#{DialogManager.bean.panel}" />
 
 <a:panel id="document-panel" styleClass="panel-100 with-pager" label="#{DialogManager.bean.listTitle}" progressive="true">
-
+<%
+   if (((BaseDocumentListDialog)Application.getDialogManager().getBean()).getDocuments() != null) {
+%>
    <%-- Main List --%>
    <a:richList id="documentList" styleClass="duplicate-header" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
       width="100%" value="<%=((BaseDocumentListDialog)Application.getDialogManager().getBean()).getDocumentListValueBinding()%>" var="r" binding="#{DialogManager.bean.richList}" refreshOnBind="true" >
@@ -74,6 +76,9 @@
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
       <a:dataPager id="pager2" styleClass="pager" />
    </a:richList>
+<%
+   }
+%>
 </a:panel>
 
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-finish-button.jsp" />

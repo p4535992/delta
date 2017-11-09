@@ -824,17 +824,20 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
                     InputStream input = reader.getContentInputStream();
                     try {
                         IOUtils.copy(input, allOutput);
-                        input.close();
                         allOutput.write('\n');
                     } catch (IOException e) {
                         throw new RuntimeException(e);
+                    } finally {
+                    	IOUtils.closeQuietly(input);
                     }
                 }
             }
         }
 
         try {
-            allOutput.close();
+        	if (allOutput != null) {
+        		allOutput.close();
+        	}
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -1970,7 +1973,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
         log.info("PERFORMANCE: registerDocument calculating regNumber " + (stopTime - startTime) + " ms" + (allDocs == null ? "" : ", scanned " + allDocs.size() + " documents"));
         if (StringUtils.isNotBlank(holder.getRegNumber())) {
             String documentTypeId = (String) props.get(Props.OBJECT_TYPE_ID);
-            if (hasReplyAssoc) {
+            if (!isRelocating && hasReplyAssoc) {
                 manageSpecificTypes(firstReplyAssocRef, holder, now, documentTypeId);
             }
             String oldRegNumber = (String) nodeService.getProperty(docRef, REG_NUMBER);
@@ -2047,23 +2050,24 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
         }
         else if (SystematicDocumentType.OUTGOING_LETTER.isSameType(documentTypeId)) {
             try {
-                String comment = MessageUtil.getMessage("task_comment_finished_by_register_doc", holder.getRegNumber(), DATE_FORMAT.format(now));
-                if (!getWorkflowService().hasInProgressOtherUserOrderAssignmentTasks(firstReplyAssocRef)) {
+            	String comment = MessageUtil.getMessage("task_comment_finished_by_register_doc", holder.getRegNumber(), DATE_FORMAT.format(now));
+                // DELTA-1255, says that complienceDate and notation have to be set in any case
+            	//if (!getWorkflowService().hasInProgressOtherUserOrderAssignmentTasks(firstReplyAssocRef)) {
                     Node originalDocNode = getNode(firstReplyAssocRef, OUTGOING_LETTER_PROPS);
                     Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs = getPropDefs(originalDocNode);
                     if (hasProp(COMPLIENCE_DATE, propDefs)) {
                         Date complienceDate = (Date) originalDocNode.getProperties().get(COMPLIENCE_DATE);
                         if (complienceDate == null) {
                             setPropertyAsSystemUser(COMPLIENCE_DATE, now, firstReplyAssocRef);
-                            setDocStatusFinished(firstReplyAssocRef);
                         }
+                        setDocStatusFinished(firstReplyAssocRef);
                     }
                     if (hasProp(COMPLIENCE_NOTATION, propDefs)) {
                         String complienceNotation = (String) originalDocNode.getProperties().get(COMPLIENCE_NOTATION);
                         setPropertyAsSystemUser(COMPLIENCE_NOTATION, StringUtils.isBlank(complienceNotation) ? comment : complienceNotation
                                 + " " + comment, firstReplyAssocRef);
                     }
-                }
+                //}
                 getWorkflowService().finishTasksByRegisteringReplyLetter(firstReplyAssocRef, comment);
             } catch (NodeLockedException e) {
                 e.setCustomMessageId("document_registerDoc_error_docLocked_initialDocument");
@@ -2474,7 +2478,30 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
         List<NodeRef> compoundWorkflowRefs = new ArrayList<NodeRef>();
         for (Task task : tasks) {
             if (!task.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK, WorkflowSpecificModel.Types.LINKED_REVIEW_TASK)) {
+                try{
+                    log.debug("TASK dueDateStr: " + task.getDueDateStr());
+                    log.debug("TASK category:" + task.getCategory());
+                    log.debug("TASK getCreatorEmail:" + task.getCreatorEmail());
+                    log.debug("TASK getInitiatingCompoundWorkflowRef: " + task.getInitiatingCompoundWorkflowRef());
+                    log.debug("TASK getCompoundWorkflowId: " + task.getCompoundWorkflowId());
+                    log.debug("TASK getCreatorId: " + task.getCreatorId());
+                    log.debug("TASK getInstitutionCode: " + task.getInstitutionCode());
+                    log.debug("TASK getStatus: " + task.getStatus());
+                    log.debug("TASK getOwnerEmail: " + task.getOwnerEmail());
+                    log.debug("TASK getOwnerName: " + task.getOwnerName());
+                    log.debug("TASK getViewedByOwner: " + task.getViewedByOwner());
+                    log.debug("TASK nodeRef: " + task.getNodeRef().toString());
+                    log.debug("TASK nodeRef().storeRef():" + task.getNodeRef().getStoreRef().toString());
+
+                } catch (Exception ex){
+                    log.error("ERROR: " + ex.getMessage(), ex);
+                }
+
+
                 NodeRef compoundWorkflowNodeRef = new NodeRef(task.getNodeRef().getStoreRef(), task.getCompoundWorkflowId());
+
+                log.debug("TASK compoundWorkflowNodeRef: " + compoundWorkflowNodeRef.toString());
+
                 compoundWorkflowRefs.add(compoundWorkflowNodeRef);
             }
         }
@@ -2655,9 +2682,9 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
                         long step4 = System.currentTimeMillis();
                         documentLogService.addDocumentLog(document, MessageUtil.getMessage("applog_doc_file_generated", uniqueFilename));
                         long step5 = System.currentTimeMillis();
-                        if (signSeparately) {
+                        //if (signSeparately) {
                             getFileService().setAllFilesInactiveExcept(document, bdoc);
-                        }
+                        //}
                         long step6 = System.currentTimeMillis();
                         if (signSeparately) {
                             getFileService().deleteGeneratedFilesByType(document, GeneratedFileType.SIGNED_PDF);

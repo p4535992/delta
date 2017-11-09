@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.document.web;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -32,6 +33,9 @@ public class VisitedDocumentsBean implements Serializable {
     }
 
     public void resetVisitedDocuments(DocumentListDataProvider documentsProvider) {
+    	if (documentsProvider == null) {
+            documentsProvider = new DocumentListDataProvider(new ArrayList<NodeRef>());
+        }
         documentsProvider.reloadRows(getVisitedDocuments());
         clearVisitedDocuments();
     }

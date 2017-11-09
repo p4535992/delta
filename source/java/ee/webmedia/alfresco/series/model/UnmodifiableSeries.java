@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.series.model;
 import static ee.webmedia.alfresco.utils.RepoUtil.getProp;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.List;
 
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -19,6 +20,7 @@ public class UnmodifiableSeries implements Serializable, Comparable<Unmodifiable
     private final String title;
     private final String seriesLabel;
     private final String status;
+    private final Date validFrom;
     private final List<String> volType;
     private final List<String> docTypes;
     private final List<String> structUnits;
@@ -35,6 +37,7 @@ public class UnmodifiableSeries implements Serializable, Comparable<Unmodifiable
         seriesIdentifier = getProp(SeriesModel.Props.SERIES_IDENTIFIER, node);
         title = getProp(SeriesModel.Props.TITLE, node);
         status = getProp(SeriesModel.Props.STATUS, node);
+        validFrom = getProp(SeriesModel.Props.VALID_FROM_DATE, node);
         volType = getProp(SeriesModel.Props.VOL_TYPE, node);
         docTypes = getProp(SeriesModel.Props.DOC_TYPE, node);
         structUnits = getProp(SeriesModel.Props.STRUCT_UNIT, node);
@@ -78,6 +81,10 @@ public class UnmodifiableSeries implements Serializable, Comparable<Unmodifiable
 
     public String getStatus() {
         return status;
+    }
+    
+    public Date getValidFrom() {
+        return validFrom;
     }
 
     public List<String> getVolType() {

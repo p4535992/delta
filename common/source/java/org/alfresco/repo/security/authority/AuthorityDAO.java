@@ -24,10 +24,10 @@
  */
 package org.alfresco.repo.security.authority;
 
-import java.util.Set;
-
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.security.AuthorityType;
+
+import java.util.Set;
 
 public interface AuthorityDAO
 {
@@ -46,6 +46,12 @@ public interface AuthorityDAO
      * @param authorityEmail
      */
     void addAuthorityEmail(String authorityName, String authorityEmail);
+
+    /**
+     * Remove an authority email;
+     * @param authorityName
+     */
+    void removeAuthorityEmail(String authorityName);
 
     /**
      * Create an authority.

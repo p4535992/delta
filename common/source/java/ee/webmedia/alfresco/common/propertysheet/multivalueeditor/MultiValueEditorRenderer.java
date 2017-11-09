@@ -4,6 +4,8 @@ import static ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.Comb
 import static ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditor.NO_ADD_LINK_LABEL;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -11,6 +13,7 @@ import javax.faces.component.UIComponent;
 import javax.faces.component.html.HtmlPanelGroup;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
+import javax.faces.el.ValueBinding;
 import javax.faces.event.PhaseId;
 
 import org.alfresco.web.app.Application;
@@ -197,7 +200,7 @@ public class MultiValueEditorRenderer extends BaseRenderer {
         boolean deleteEnabled = !ComponentUtil.isComponentDisabledOrReadOnly(multiValueEditor);
         String previousGroupingValue = null;
         boolean inGroup = false;
-        String groupRowControls = generateGroupRowControls(context, multiValueEditor);
+        List<String> groupSendModes = getGroupSendModes(context);
         List<UIComponent> children = multiValueEditor.getChildren();
         int renderedRowCount = ComponentUtil.getRenderedChildrenCount(multiValueEditor);
         for (UIComponent child : children) {
@@ -214,7 +217,7 @@ public class MultiValueEditorRenderer extends BaseRenderer {
                         inGroup = false;
                     }
 
-                    generateGroupRow(out, context, (MultiValueEditor) multiValueEditor, groupByColumnValue, rowIndex, renderedColumnCount, deleteEnabled, groupRowControls);
+                    generateGroupRow(out, context, (MultiValueEditor) multiValueEditor, groupByColumnValue, rowIndex, renderedColumnCount, deleteEnabled, groupSendModes);
                     out.write("<tbody class=\"hidden\">");
                     inGroup = true;
                     previousGroupingValue = groupByColumnValue;
@@ -283,12 +286,12 @@ public class MultiValueEditorRenderer extends BaseRenderer {
                 }
 
                 out.write("</td></tr>");
-                rowIndex++;
+                 rowIndex++;
             }
         }
     }
 
-    private String generateGroupRowControls(FacesContext context, UIComponent multiValueEditor) {
+    private String generateGroupRowControls(FacesContext context, UIComponent multiValueEditor, int rowIndex, List<String> groupSendModes) {
         String html = null;
         String rowControls = (String) multiValueEditor.getAttributes().get(MultiValueEditor.GROUP_ROW_CONTROLS);
         if (StringUtils.isBlank(rowControls)) {
@@ -298,11 +301,16 @@ public class MultiValueEditorRenderer extends BaseRenderer {
         if (GROUP_CONTROL_SEND_OUT.equals(rowControls)) {
             ClassificatorService classificatorService = BeanHelper.getClassificatorService();
             List<ClassificatorValue> activeClassificatorValues = classificatorService.getActiveClassificatorValues(classificatorService.getClassificatorByName("sendMode"));
-
+            
+            
+            String value = (rowIndex < groupSendModes.size())?groupSendModes.get(rowIndex):"";
+            
             StringBuilder s = new StringBuilder("<select class=\"changeSendOutMode resetSendOutGroupSendMode width120\">");
             s.append("<option value=\"\">").append(MessageUtil.getMessage("select_default_label")).append("</option>");
             for (ClassificatorValue classificatorValue : activeClassificatorValues) {
-                s.append("<option value=\"").append(classificatorValue.getValueName()).append("\">").append(classificatorValue.getValueName()).append("</option>");
+                s.append("<option value=\"").append(classificatorValue.getValueName()).append("\"")
+                .append((classificatorValue.getValueName().equals(value))?" selected=\"selected\"":"").append(">")
+                .append(classificatorValue.getValueName()).append("</option>");
             }
             s.append("</select>");
             html = s.toString();
@@ -310,10 +318,68 @@ public class MultiValueEditorRenderer extends BaseRenderer {
 
         return html;
     }
+    
+    private List<String> getGroupSendModes(FacesContext context) {
+    	List<String> groupSendModes = new ArrayList<>();
+    	
+    	ValueBinding vb = createValueBinding(context, "recipientSendMode");
+        List<String> recipientSendModes = (ArrayList<String>)vb.getValue(context);
+        vb = createValueBinding(context, "recipientGroup");
+        List<String> recipientGroups = (ArrayList<String>)vb.getValue(context);
+        
+    	
+    	String groupToCheck = null;
+    	String sendModeToCheck = null;
+    	int indexFrom = 0;
+    	int indexTo = 0;
+    	boolean allEqual = true;
+    	if (recipientGroups != null) {
+	    	for (int i = 0; i < recipientGroups.size(); i++) {
+	    		String recipientGroup = recipientGroups.get(i);
+	    		String sendMode = recipientSendModes.get(i);
+	    		if (recipientGroup == null) {
+	    			addGroupSendModes(groupSendModes, indexFrom, indexTo, sendModeToCheck, allEqual);
+	    			groupSendModes.add(null);
+	    			groupToCheck = null;
+	    			sendModeToCheck = null;
+	    			indexTo = 0;
+	    			continue;
+	    		}
+	    		if (groupToCheck == null || !groupToCheck.equals(recipientGroup)) {
+	    			addGroupSendModes(groupSendModes, indexFrom, indexTo, sendModeToCheck, allEqual);
+	    			groupToCheck = recipientGroup;
+	    			sendModeToCheck = sendMode;
+	    			indexFrom = i;
+	    			allEqual = true;
+	    		} else {
+	    			indexTo = i;
+	    			if (sendModeToCheck != null && !sendModeToCheck.equals(sendMode)) {
+	    				allEqual = false;
+	    			}
+	    		}
+	    	}
+	    	addGroupSendModes(groupSendModes, indexFrom, indexTo, sendModeToCheck, allEqual);
+    	}
+    	return groupSendModes;
+    }
+    
+    private void addGroupSendModes(List<String> groupSendModes, int indexFrom, int indexTo, String sendModeToCheck, boolean allEqual) {
+    	if (indexFrom < indexTo) {
+			for (int j = indexFrom; j <= indexTo; j++) {
+				if (allEqual) {
+					groupSendModes.add(sendModeToCheck);
+				} else {
+					groupSendModes.add(null);
+				}
+			}
+		}
+    }
+
 
     private void generateGroupRow(ResponseWriter out, FacesContext context, MultiValueEditor multiValueEditor, String groupByColumnValue, int rowIndex, int columnCount,
-            boolean deleteEnabled, String rowControlComponent) throws IOException {
-
+            boolean deleteEnabled, List<String> groupSendModes) throws IOException {
+    	
+    	String rowControlComponent = generateGroupRowControls(context, multiValueEditor, rowIndex, groupSendModes);
         if (rowControlComponent != null) {
             columnCount -= 1;
         }
@@ -329,9 +395,11 @@ public class MultiValueEditorRenderer extends BaseRenderer {
             out.write("\"");
         }
         out.write("><a href=\"#\" onclick=\"return false;\" class=\"icon-link toggle-tbody plus\"></a>");
+        
         out.write(groupByColumnValue);
         out.write("</td>");
 
+        
         if (rowControlComponent != null) {
             out.write("<td>");
             out.write(rowControlComponent);
@@ -348,6 +416,18 @@ public class MultiValueEditorRenderer extends BaseRenderer {
         }
 
         out.write("</tr>");
+    }
+    
+    private ValueBinding createValueBinding(FacesContext context, String propName, int rowIndex) {
+        ValueBinding vb = context.getApplication().createValueBinding(
+        		"#{DocumentSendOutDialog.model.properties[\"" + propName + "\"][" + rowIndex + "]}");
+        return vb;
+    }
+    
+    private ValueBinding createValueBinding(FacesContext context, String propName) {
+        ValueBinding vb = context.getApplication().createValueBinding(
+        		"#{DocumentSendOutDialog.model.properties[\"" + propName + "\"]}");
+        return vb;
     }
 
     private boolean hasSearchSuggest(UIComponent multiValueEditor, UIComponent column) {

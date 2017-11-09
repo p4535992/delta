@@ -32,6 +32,7 @@ public class FilenameUtil {
     public static final String DDOC_EXTENSION = ".ddoc";
     public static final String BDOC_EXTENSION = ".bdoc";
     public static final String ASICE_EXTENSION = ".asice";
+    public static final String ASICS_EXTENSION = ".asics"; // ajatempliga arhiivifail.
     public static final String SCE_EXTENSION = ".sce";
 
     private static final int FILE_MAX_LENGTH = 50;
@@ -53,7 +54,7 @@ public class FilenameUtil {
             extension = MimetypeMap.EXTENSION_BINARY;
         }
         extension = StringUtils.deleteWhitespace(stripForbiddenWindowsCharactersAndRedundantWhitespaces(extension));
-        int maxLength = 254 - extension.length();
+        int maxLength = 249 - extension.length();
         String nameWithoutExtension = trimDotsAndSpaces(stripForbiddenWindowsCharactersAndRedundantWhitespaces(title));
         if (nameWithoutExtension.length() > maxLength) {
             nameWithoutExtension = nameWithoutExtension.substring(0, maxLength);
@@ -199,12 +200,17 @@ public class FilenameUtil {
     }
 
     public static boolean isBdocFile(String fileName) {
-        return fileName.toLowerCase().endsWith(BDOC_EXTENSION) || fileName.toLowerCase().endsWith(ASICE_EXTENSION) || fileName.toLowerCase().endsWith(SCE_EXTENSION);
+        return fileName.toLowerCase().endsWith(BDOC_EXTENSION) || fileName.toLowerCase().endsWith(ASICE_EXTENSION) || fileName.toLowerCase().endsWith(SCE_EXTENSION) || fileName.toLowerCase().endsWith(ASICS_EXTENSION);
     }
 
     public static boolean isDigiDocFile(String fileName) {
         String lowerCase = fileName.toLowerCase();
-        return lowerCase.endsWith(DDOC_EXTENSION) || lowerCase.endsWith(BDOC_EXTENSION) || lowerCase.endsWith(ASICE_EXTENSION) || lowerCase.endsWith(SCE_EXTENSION);
+        return lowerCase.endsWith(DDOC_EXTENSION) || lowerCase.endsWith(BDOC_EXTENSION) || lowerCase.endsWith(ASICE_EXTENSION) || lowerCase.endsWith(SCE_EXTENSION) || lowerCase.endsWith(ASICS_EXTENSION);
+    }
+
+    public static String getDigiDocExt(String fileName){
+        String fn = fileName.toUpperCase();
+        return FilenameUtils.getExtension(fn);
     }
 
     public static boolean isDigiDocContainerFile(FileInfo fileInfo) {

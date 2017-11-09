@@ -87,7 +87,11 @@ public class ModalLayerComponent extends UICommand implements Serializable {
         ResponseWriter out = context.getResponseWriter();
         JSONSerializer serializer = new JSONSerializer();
         String modalStyleClass = (String) getAttributes().get(ATTR_STYLE_CLASS);
+        
         String headerKeyArg = (String) getAttributes().get(ATTR_HEADER_KEY_ARG);
+        if (StringUtils.isNotBlank(headerKeyArg) && headerKeyArg.length() > 59) {
+        	headerKeyArg = headerKeyArg.substring(0, 55) + "...";
+        }
         String headerTitle = (StringUtils.isNotBlank(headerKeyArg))?MessageUtil.getMessage((String) getAttributes().get(ATTR_HEADER_KEY), headerKeyArg):MessageUtil.getMessage((String) getAttributes().get(ATTR_HEADER_KEY));
         ComponentUtil.writeModalHeader(
                 out,

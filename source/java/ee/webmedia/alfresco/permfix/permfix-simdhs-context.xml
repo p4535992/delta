@@ -1,0 +1,41 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   
+   
+   <bean id="seriesStructUnitUpdater" class="ee.webmedia.alfresco.permfix.SeriesStructUnitUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="false" />
+      <property name="enabled" value="false" /> <!-- Executed from node-browser -->
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
+   </bean>
+   
+   <bean id="nodePermissionsImporter" class="ee.webmedia.alfresco.permfix.NodePermissionsImporter" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="false" />
+      <property name="enabled" value="false" /> <!-- Executed from node-browser -->
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
+   </bean>
+   
+   <bean id="nodePermissionsExporter" class="ee.webmedia.alfresco.permfix.NodePermissionsExporter" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="false" />
+      <property name="enabled" value="false" /> <!-- Executed from node-browser -->
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
+   </bean>
+
+
+</beans>

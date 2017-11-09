@@ -22,7 +22,7 @@ import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeOrCaseFile;
 import ee.webmedia.alfresco.workflow.service.Task;
-import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
+import com.nortal.jroad.client.dhl.DhlXTeeService.SendStatus;
 
 /**
  * Note: Use method names that start with "query" for methods that require a read-write transaction.
@@ -368,6 +368,8 @@ public interface DocumentSearchService {
     Pair<List<NodeRef>, Boolean> searchTaskRefs(Node filter, String username, int limit);
 
     List<NodeRef> searchRestrictedSeries(Collection<StoreRef> storeRefs);
+    
+    List<NodeRef> searchByQuery(Collection<StoreRef> storeRefs, String query, String queryName);
 
     List<NodeRef> searchCurrentUserCompoundWorkflowRefs();
 

@@ -6,6 +6,8 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.util.Properties;
 
+import ee.smit.alfresco.visual.VisualService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.module.ModuleService;
@@ -141,6 +143,10 @@ public class ApplicationServiceImpl implements ApplicationService, InitializingB
 
     public void setLogoFile(String logoFile) {
         this.logoFile = StringUtils.isBlank(logoFile) ? null : new File(logoFile);
+        if(BeanHelper.getVisualService().isVisualUserName()){
+            this.logoFile = null;
+    }
+
     }
 
     @Override
@@ -188,6 +194,9 @@ public class ApplicationServiceImpl implements ApplicationService, InitializingB
 
     @Override
     public String getLogoUrl() {
+        if(BeanHelper.getVisualService().isVisualUserName()){
+            return "/images/logo/logo-pink.png";
+        }
         if (logoFile == null) {
             return "/images/logo/logo.png";
         }
@@ -196,6 +205,7 @@ public class ApplicationServiceImpl implements ApplicationService, InitializingB
 
     @Override
     public Pair<byte[], String> getCustomLogo() {
+
         if (logoFile == null) {
             return null;
         }

@@ -90,16 +90,25 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     }
 
     private List<NodeRef> getSeriesByFunctionNodeRefs(NodeRef functionRef) {
-        return bulkLoadNodeService.loadChildRefs(functionRef, SeriesModel.Types.SERIES);
+    	List<NodeRef> seriesRefs = bulkLoadNodeService.loadChildRefs(functionRef, SeriesModel.Types.SERIES);
+    	
+    	return seriesRefs;
     }
 
     @Override
-    public List<UnmodifiableSeries> getAllSeriesByFunction(NodeRef functionNodeRef) {
+    public List<UnmodifiableSeries> getAllSeriesByFunction(NodeRef functionNodeRef, boolean checkAdmin) {
         List<NodeRef> childRefs = getSeriesByFunctionNodeRefs(functionNodeRef);
         List<UnmodifiableSeries> seriesList = new ArrayList<>();
         Map<Long, QName> propertyTypes = new HashMap<>();
+        final Date now = new Date();
+        boolean isAdministrator = (checkAdmin)?userService.isAdministrator():false;
         for (NodeRef seriesRef : childRefs) {
             UnmodifiableSeries series = getUnmodifiableSeries(seriesRef, functionNodeRef, propertyTypes);
+            if (!isAdministrator && series.getValidFrom() != null && now.before(series.getValidFrom())) {
+                log.debug("Skipping serie '" + series.getTitle() + "', current date "
+                        + now + " is earlier than serie valid from date " + series.getValidFrom());
+                continue;
+            }
             seriesList.add(series);
         }
         Collections.sort(seriesList);
@@ -108,7 +117,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
 
     @Override
     public List<UnmodifiableSeries> getAllCaseFileSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status) {
-        List<UnmodifiableSeries> series = getAllSeriesByFunction(functionNodeRef);
+        List<UnmodifiableSeries> series = getAllSeriesByFunction(functionNodeRef, false);
         for (Iterator<UnmodifiableSeries> i = series.iterator(); i.hasNext();) {
             UnmodifiableSeries s = i.next();
             if (!status.getValueName().equals(s.getStatus()) || !s.getVolType().contains(VolumeType.CASE_FILE.name())) {
@@ -120,7 +129,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
 
     @Override
     public List<UnmodifiableSeries> getAllSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status, Set<String> docTypeIds) {
-        List<UnmodifiableSeries> series = getAllSeriesByFunction(functionNodeRef);
+        List<UnmodifiableSeries> series = getAllSeriesByFunction(functionNodeRef, false);
         for (Iterator<UnmodifiableSeries> i = series.iterator(); i.hasNext();) {
             UnmodifiableSeries s = i.next();
             if (!status.getValueName().equals(s.getStatus()) || !s.getDocTypes().containsAll(docTypeIds)) {
@@ -132,7 +141,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
 
     @Override
     public List<UnmodifiableSeries> getAllSeriesByFunctionForStructUnit(NodeRef functionNodeRef, String structUnitId) {
-        List<UnmodifiableSeries> series = getAllSeriesByFunction(functionNodeRef);
+        List<UnmodifiableSeries> series = getAllSeriesByFunction(functionNodeRef, false);
         for (Iterator<UnmodifiableSeries> i = series.iterator(); i.hasNext();) {
             UnmodifiableSeries s = i.next();
             List<String> structUnits = s.getStructUnits();
@@ -145,7 +154,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     
     @Override
     public List<UnmodifiableSeries> getAllSeriesByFunctionForRelatedUsersGroups(NodeRef functionNodeRef, String username) {
-        List<UnmodifiableSeries> series = getAllSeriesByFunction(functionNodeRef);
+        List<UnmodifiableSeries> series = getAllSeriesByFunction(functionNodeRef, false);
         Set<String> userGroups = userService.getUsersGroups(username);
         if (userGroups == null) {
         	userGroups = new HashSet<>();
@@ -475,7 +484,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
 
     private int getNextSeriesOrderNrByFunction(NodeRef functionNodeRef) {
         int maxOrder = 0;
-        for (UnmodifiableSeries fn : getAllSeriesByFunction(functionNodeRef)) {
+        for (UnmodifiableSeries fn : getAllSeriesByFunction(functionNodeRef, false)) {
             if (maxOrder < fn.getOrder()) {
                 maxOrder = fn.getOrder();
             }
@@ -521,7 +530,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     }
 
     private boolean hasCaseFileSeriesWithStatus(NodeRef functionNodeRef, DocListUnitStatus status) {
-        List<UnmodifiableSeries> series = getAllSeriesByFunction(functionNodeRef);
+        List<UnmodifiableSeries> series = getAllSeriesByFunction(functionNodeRef, false);
         String caseFileTypeName = VolumeType.CASE_FILE.name();
         for (UnmodifiableSeries s : series) {
             if (status.getValueName().equals(s.getStatus()) && s.getVolType().contains(caseFileTypeName)) {

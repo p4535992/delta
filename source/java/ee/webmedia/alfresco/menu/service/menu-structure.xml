@@ -349,6 +349,15 @@
       <hidden>#{MenuBean.isMenuItemHidden}</hidden>
    </item>
 
+   <!-- MOBILE VIEW -->
+   <!--
+   <item id="mobileview" title-id="menu_mobile_view" accountant="true" document-manager="true" supervisor="true"
+         archivist="true">
+      <href>/m/</href>
+      <hidden>#{MenuBean.isMenuItemHidden}</hidden>
+   </item>
+   -->
+
    <!-- "Alusta uut dokumenti" and "Alusta uut..." have css set float: left, so in browser they appear in reverse order than defined here -->
    <!-- ALUSTA UUT DOKUMENTI -->
    <dropdown id="documentDynamicTypes" title-id="menu_start_new_document" skinnable="true" temporary="true">

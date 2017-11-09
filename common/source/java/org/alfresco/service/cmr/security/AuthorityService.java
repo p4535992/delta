@@ -220,7 +220,15 @@ public interface AuthorityService
      */
     @Auditable(parameters = { "authorityName", "authorityEmail" })
     void addAuthorityEmail(String authorityName, String authorityEmail);
-    
+
+    /**
+     * Delete an authority email.
+     *
+     * @param authorityName
+     */
+    @Auditable(parameters = { "authorityName" })
+    void deleteAuthorityEmail(String authorityName);
+
     /**
      * Remove an authority as a member of another authority. The child authority
      * will still exist. If the child authority was not created as a root

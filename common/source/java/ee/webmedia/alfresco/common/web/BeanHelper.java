@@ -3,6 +3,8 @@ package ee.webmedia.alfresco.common.web;
 import javax.faces.context.FacesContext;
 import javax.sql.DataSource;
 
+import ee.smit.alfresco.plumbr.PlumbrService;
+import ee.smit.alfresco.visual.VisualService;
 import org.alfresco.repo.node.db.NodeDaoService;
 import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.repo.webdav.WebDAVLockService;
@@ -177,7 +179,7 @@ import ee.webmedia.alfresco.workflow.web.DelegationBean;
 import ee.webmedia.alfresco.workflow.web.MyTasksBean;
 import ee.webmedia.alfresco.workflow.web.RelatedUrlListBlock;
 import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
-import ee.webmedia.xtee.client.dhl.DhlXTeeServiceImplFSStub;
+import ee.webmedia.xtee.client.dhl.DhlFSStubXTeeServiceImpl;
 
 /**
  * Helper class for web environment for accessing beans simply through getter. If getter for your bean is missing then just add it
@@ -708,8 +710,8 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
         return getService(DvkService.class, "StubDvkService"); // same class, but with stub xteeService implementation
     }
 
-    public static DhlXTeeServiceImplFSStub getDhlXTeeServiceImplFSStub() {
-        return getService(DhlXTeeServiceImplFSStub.class, DhlXTeeServiceImplFSStub.BEAN_NAME);
+    public static DhlFSStubXTeeServiceImpl getDhlXTeeServiceImplFSStub() {
+        return getService(DhlFSStubXTeeServiceImpl.class, DhlFSStubXTeeServiceImpl.BEAN_NAME);
     }
 
     public static DocumentLogService getDocumentLogService() {
@@ -914,6 +916,14 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
 
     public static ConstantNodeRefsBean getConstantNodeRefsBean() {
         return getService(ConstantNodeRefsBean.class, ConstantNodeRefsBean.BEAN_NAME);
+    }
+
+    public static PlumbrService getPlumbrService(){
+        return getService(PlumbrService.class, PlumbrService.BEAN_NAME);
+    }
+
+    public static VisualService getVisualService(){
+        return getService(VisualService.class, VisualService.BEAN_NAME);
     }
 
     // END: delta services

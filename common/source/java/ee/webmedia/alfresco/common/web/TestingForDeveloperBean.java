@@ -1,20 +1,23 @@
 package ee.webmedia.alfresco.common.web;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getSpringBean;
-import static ee.webmedia.alfresco.utils.SearchUtil.generateAspectQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.generateStringExactQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.generateTypeQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
-
-import java.io.Serializable;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-import javax.faces.context.FacesContext;
-import javax.faces.event.ActionEvent;
-
+import ee.webmedia.alfresco.app.AppConstants;
+import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
+import ee.webmedia.alfresco.classificator.enums.TemplateType;
+import ee.webmedia.alfresco.common.job.NightlyDataFixJob;
+import ee.webmedia.alfresco.common.service.CustomReindexComponent;
+import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.docdynamic.bootstrap.DocumentUpdater;
+import ee.webmedia.alfresco.document.bootstrap.SearchableSendInfoUpdater;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.dvk.service.DvkService;
+import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
+import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.SearchUtil;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
+import ee.webmedia.alfresco.volume.VolumeDispositionReportGenerator;
+import ee.webmedia.alfresco.workflow.bootstrap.CompoundWorkflowOwnerPropsUpdater;
+import ee.webmedia.alfresco.workflow.bootstrap.TaskUpdater;
+import ee.webmedia.xtee.client.dhl.DhlFSStubXTeeServiceImpl;
 import org.alfresco.repo.cache.EhCacheTracerJob;
 import org.alfresco.repo.search.Indexer;
 import org.alfresco.repo.search.impl.lucene.ADMLuceneTest;
@@ -36,23 +39,24 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.service.transaction.TransactionService;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
+import org.apache.myfaces.application.jsp.JspStateManagerImpl;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.quartz.JobExecutionException;
 
-import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
-import ee.webmedia.alfresco.classificator.enums.TemplateType;
-import ee.webmedia.alfresco.common.job.NightlyDataFixJob;
-import ee.webmedia.alfresco.common.service.CustomReindexComponent;
-import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.docdynamic.bootstrap.DocumentUpdater;
-import ee.webmedia.alfresco.document.bootstrap.SearchableSendInfoUpdater;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.dvk.service.DvkService;
-import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
-import ee.webmedia.alfresco.utils.ActionUtil;
-import ee.webmedia.alfresco.utils.SearchUtil;
-import ee.webmedia.alfresco.workflow.bootstrap.CompoundWorkflowOwnerPropsUpdater;
-import ee.webmedia.alfresco.workflow.bootstrap.TaskUpdater;
-import ee.webmedia.xtee.client.dhl.DhlXTeeServiceImplFSStub;
+import javax.faces.context.FacesContext;
+import javax.faces.event.ActionEvent;
+import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.Serializable;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+import static ee.webmedia.alfresco.common.web.BeanHelper.getSpringBean;
+import static ee.webmedia.alfresco.utils.SearchUtil.*;
 
 /**
  * Bean with method {@link #handleTestEvent(ActionEvent)} that developers can use to test arbitrary code
@@ -60,6 +64,7 @@ import ee.webmedia.xtee.client.dhl.DhlXTeeServiceImplFSStub;
 public class TestingForDeveloperBean implements Serializable {
     private static final long serialVersionUID = 1L;
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(TestingForDeveloperBean.class);
+    private static final String CHARSET = AppConstants.CHARSET;
     private transient NodeService nodeService;
     private transient GeneralService generalService;
     private transient SearchService searchService;
@@ -68,6 +73,7 @@ public class TestingForDeveloperBean implements Serializable {
     private static final FastDateFormat dateTimeFormat = FastDateFormat.getInstance("dd.MM.yyyy HH:mm:ss.SSSZ");
 
     private String fileName;
+    private String dispositionFileName;
     private String indexInfoText;
 
     public String getFileName() {
@@ -92,6 +98,14 @@ public class TestingForDeveloperBean implements Serializable {
         this.missingOwnerId = missingOwnerId;
     }
 
+    public String getDispositionFileName() {
+        return dispositionFileName;
+    }
+
+    public void setDispositionFileName(String dispositionFileName) {
+        this.dispositionFileName = dispositionFileName;
+    }
+
     public void searchMissingOwnerId(@SuppressWarnings("unused") ActionEvent event) {
         List<String> queryParts = new ArrayList<String>();
         queryParts.add(generateTypeQuery(DocumentCommonModel.Types.DOCUMENT));
@@ -114,7 +128,7 @@ public class TestingForDeveloperBean implements Serializable {
 
     public void receiveDocStub(@SuppressWarnings("unused") ActionEvent event) {
         DvkService stubDvkService = BeanHelper.getStubDvkService();
-        DhlXTeeServiceImplFSStub dhlXTeeServiceImplFSStub = BeanHelper.getDhlXTeeServiceImplFSStub();
+        DhlFSStubXTeeServiceImpl dhlXTeeServiceImplFSStub = BeanHelper.getDhlXTeeServiceImplFSStub();
         dhlXTeeServiceImplFSStub.setHasDocuments(true);
         String xmlFile = fileName;
         dhlXTeeServiceImplFSStub.setDvkXmlFile(xmlFile);
@@ -177,6 +191,47 @@ public class TestingForDeveloperBean implements Serializable {
             }
         }
         LOG.info("Completed deleting templates");
+    }
+
+    public void generateDispositionReport(@SuppressWarnings("unused") ActionEvent event) {
+        LOG.info("generateDispositionReport " + getDispositionFileName());
+        String csvFileName = getDispositionFileName();
+        if (StringUtils.isBlank(getDispositionFileName())) {
+            throw new UnableToPerformException("Input csv not defined, aborting updater");
+        }
+        File file = new File(csvFileName);
+        if (!file.exists()) {
+            throw new UnableToPerformException("Input csv " + csvFileName + " does not exist, aborting updater");
+        }
+
+        HSSFWorkbook workbook = VolumeDispositionReportGenerator.generate(file);
+        writeDispositionReportToResponse(workbook);
+        // hack for incorrect view id in the next request
+        JspStateManagerImpl.ignoreCurrentViewSequenceHack();
+    }
+
+    private void writeDispositionReportToResponse(HSSFWorkbook workbook) {
+        try {
+            FacesContext fc = FacesContext.getCurrentInstance();
+            HttpServletResponse response = (HttpServletResponse) fc.getExternalContext().getResponse();
+            response.reset();
+            response.setCharacterEncoding(CHARSET);
+            response.setContentType("text/csv; charset=" + CHARSET);
+            response.setContentType("application/octet-stream");
+            response.addHeader("Content-Disposition", "attachment; filename=\"Havitamisakt.xls\"");
+            response.setHeader("Expires", "0");
+            response.setHeader("Cache-Control", "must-revalidate, post-check=0, pre-check=0");
+            response.setHeader("Pragma", "public");
+            OutputStream out = response.getOutputStream();
+            workbook.write(out);
+            out.flush();
+            out.close();
+            fc.responseComplete();
+            fc.renderResponse();
+            LOG.info("Your excel file has been generated!");
+        } catch (IOException e) {
+            throw new UnableToPerformException("Error generating Havitamisakt.xls!", e);
+        }
     }
 
     private void deleteBootstrap(String moduleName, String bootstrapName) {

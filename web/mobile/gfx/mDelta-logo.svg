@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid" width="80" height="35" viewBox="0 0 80 35">
+  <defs>
+    <style>
+      .cls-1, .cls-2 {
+        font-size: 24px;
+      }
+
+      .cls-2 {
+        fill: #fff;
+        text-anchor: middle;
+        font-family: "Swiss921 BT";
+      }
+    </style>
+  </defs>
+  <text x="40" y="27" class="cls-1"><tspan x="40" class="cls-2">mDELTA</tspan></text>
+</svg>

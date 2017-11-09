@@ -4,6 +4,8 @@
 
    <!-- Entry point to include other components -->
    <!-- Be sure to also include necessary JSF configuration files in web/WEB-INF/web.xml -->
+   <import resource="classpath:ee/smit/alfresco/plumbr/plumbr-context.xml" />
+   <import resource="classpath:ee/smit/alfresco/visual/visual-context.xml"/>
    <import resource="classpath:ee/webmedia/alfresco/person/person-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/log/log-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/help/help-context.xml" />
@@ -39,6 +41,8 @@
    <import resource="classpath:ee/webmedia/alfresco/importer/importer-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/postipoiss/postipoiss-simdhs-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/sharepoint/sharepoint-simdhs-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/gopro/gopro-simdhs-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/permfix/permfix-simdhs-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/mso/mso-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/privilege/privilege-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/thesaurus/thesaurus-context.xml" />

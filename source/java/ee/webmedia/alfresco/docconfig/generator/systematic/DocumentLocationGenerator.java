@@ -859,7 +859,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
         private List<UnmodifiableSeries> getAllSeries(NodeRef functionRef, boolean isSearchFilter, Set<String> idList) {
             List<UnmodifiableSeries> allSeries;
             if (isSearchFilter || idList == null) {
-                allSeries = _getSeriesService().getAllSeriesByFunction(functionRef);
+                allSeries = _getSeriesService().getAllSeriesByFunction(functionRef, false);
             } else if (getGeneralService().getStore().equals(functionRef.getStoreRef())) {
                 allSeries = documentType
                         ? _getSeriesService().getAllSeriesByFunction(functionRef, DocListUnitStatus.OPEN, idList)
