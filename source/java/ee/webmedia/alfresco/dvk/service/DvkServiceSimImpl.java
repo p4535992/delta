@@ -178,16 +178,12 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
 	            Map<String, Pair<SendStatus, Date>> statusesForDvkId = new HashMap<String, Pair<SendStatus, Date>>();
 	            
 	            statusesByIds.put(dhlId, statusesForDvkId);
-	            log.info("VASSILI: dhl_id = " + dhlId);
 	            List<Map<String, Serializable>> forwardings = sendStatuses.get(dhlId);
 	            for (Map<String, Serializable> forwarding : forwardings) {
 	                Date receiveTime = (Date)forwarding.get(GetSendStatusProp.Edastus.LOETUD.getName());
 	                String staatus = (String)forwarding.get(GetSendStatusProp.Edastus.STAATUS.getName());
-	                log.info("VASSILI: receiveTime = " + receiveTime);
-	                log.info("VASSILI: staatus = " + staatus);
 	                Pair<SendStatus, Date> sendStatusAndReceivedTime = new Pair<SendStatus, Date>(SendStatus.get(staatus), receiveTime);
 	                String regNr = taskDvkIdsAndRegNrs.containsKey(dhlId) ? taskDvkIdsAndRegNrs.get(dhlId) : (String)forwarding.get(GetSendStatusProp.Edastus.REGNR.getName());
-	                log.info("VASSILI: regNr = " + regNr);
 	                if (AditService.NAME.equalsIgnoreCase(regNr)) {
 	                    // For documents that were sent to "adit" the recipient regNr value will be "adit". Use id codes instead to distinguish between recipients.
 	                    regNr = (String)forwarding.get(GetSendStatusProp.Edastus.ISIKUKOOD.getName());
@@ -195,11 +191,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
 	                statusesForDvkId.put(regNr, sendStatusAndReceivedTime);
 	            }
 	        }
-        } else {
-        	log.info("VASSILI: send statuses = null");
         }
-	    
-	    log.info("VASSILI: statusesByIds size = " + statusesByIds.size());
 
         int updatedNodesCount = updateNodeSendStatus(docRefsAndIds, statusesByIds, DocumentCommonModel.Props.SEND_INFO_SEND_STATUS)
                 + updateNodeSendStatus(taskRefsAndIds, statusesByIds, WorkflowSpecificModel.Props.SEND_STATUS);
