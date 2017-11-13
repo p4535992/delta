@@ -24,6 +24,7 @@ import org.alfresco.web.app.Application;
 import org.alfresco.web.ui.common.component.data.IGridDataModel;
 import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.apache.commons.lang.CharUtils;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.springframework.util.Assert;
@@ -162,7 +163,8 @@ public class CSVExporter {
     private void writeRow(Writer writer, List<String> row) throws IOException {
         for (Iterator<String> iterator = row.iterator(); iterator.hasNext();) {
             String val = iterator.next();
-            writer.write(escape(val));
+            String unescaped = StringEscapeUtils.unescapeHtml(val);
+            writer.write(escape(unescaped));
             if (iterator.hasNext()) {
                 writer.write(SEPARATOR);
             }
