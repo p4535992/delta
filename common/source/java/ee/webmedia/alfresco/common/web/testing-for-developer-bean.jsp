@@ -1190,7 +1190,7 @@
    disabled="#{nodePermissionsExporter.updaterStopping == true}" />
 <f:verbatim><br/></f:verbatim>
 <f:verbatim><hr/></f:verbatim>
-<h:outputText value="Hävitamisakti genereerinime"/>
+<h:outputText value="Hävitamisakti genereerimine"/>
 <f:verbatim><br/></f:verbatim>
 <h:outputText value="* CSV faili asukoht serveri kõvakettal: "/>
 <h:inputText id="nodeRefsFileGenerationFileName" value="#{TestingForDeveloperBean.dispositionFileName}" size="100" />

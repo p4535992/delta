@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.alfresco.web.app.Application;
 import org.alfresco.web.ui.common.component.data.UIRichList;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.springframework.util.Assert;
 
 import com.csvreader.CsvWriter;
@@ -102,7 +103,8 @@ public class EscapingCSVExporter extends CSVExporter {
     private void writeRow(CsvWriter writer, List<String> dataRow) {
         for (String column : dataRow) {
             try {
-                writer.write(column);
+            	String unescaped = StringEscapeUtils.unescapeHtml(column);
+                writer.write(unescaped);
             } catch (IOException e) {
                 throw new RuntimeException("Failed to write column:\n'" + column + "'", e);
             }
