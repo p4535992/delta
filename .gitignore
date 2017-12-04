@@ -6,3 +6,6 @@ WEB-INF/mDelta.tld
 WEB-INF/wcm.tld
 WEB-INF/wm.tld
 jdigidoc.log
+.idea/
+WEB-INF/repo.tld
+win-1.bat
