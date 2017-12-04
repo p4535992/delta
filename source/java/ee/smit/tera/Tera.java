@@ -62,9 +62,9 @@ public class Tera {
 
     NodeService nodeService;
 
-    public void getListOfDdocs(){
+    public void getListOfDDOCFiles(){
         SearchParameters sp = new SearchParameters();
-        sp.addStore();
+        //sp.addStore();
     }
 
 }
