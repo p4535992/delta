@@ -154,7 +154,7 @@ public class BeanCleanupHelper implements Serializable {
         DIALOGS_TO_CLEAN.put(RegisterDetailsDialog.BEAN_NAME, null);
         DIALOGS_TO_CLEAN.put(VolumeListDialog.BEAN_NAME,
                 Arrays.asList(CaseDocumentListDialog.DIALOG_NAME, CaseFileDialog.BEAN_NAME, VolumeDetailsDialog.BEAN_NAME, VolumeEventPlanDialog.BEAN_NAME,
-                        SeriesListDialog.BEAN_NAME));
+                        SeriesListDialog.BEAN_NAME, DocumentListDialog.BEAN_NAME));
         DIALOGS_TO_CLEAN.put(SeriesListDialog.BEAN_NAME, Arrays.asList(VolumeListDialog.BEAN_NAME, SeriesDetailsDialog.BEAN_NAME));
         DIALOGS_TO_CLEAN.put(FunctionsListDialog.BEAN_NAME, Arrays.asList(SeriesListDialog.BEAN_NAME));
         DIALOGS_TO_CLEAN.put(ManageInheritablePrivilegesDialog.BEAN_NAME, Collections.singletonList(GroupUsersListDialog.BEAN_NAME));
