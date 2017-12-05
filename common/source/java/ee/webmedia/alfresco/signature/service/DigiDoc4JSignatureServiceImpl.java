@@ -393,6 +393,13 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
         }
     }
 
+    /**
+     *
+     * @param contentInputStream
+     * @param ext BDOC or DDOC type
+     * @return
+     * @throws SignatureException
+     */
     private Container getContainerFromStream(InputStream contentInputStream, String ext) throws SignatureException {
         log.debug("getContainerFromStream...");
         try {
@@ -699,7 +706,7 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
 
     @Override
     public SignatureItemsAndDataItems getDataItemsAndSignatureItems(InputStream inputStream, boolean includeData, String filext) throws SignatureException {
-        log.debug("getDataItemsAndSignatureItems... file");
+        log.debug("getDataItemsAndSignatureItems... InputStream");
         Container signedContainer = null;
         try {
             log.debug("Get digidoc conteiner from inputStream...");
