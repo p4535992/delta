@@ -139,7 +139,7 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         }
     }
 
-    public void setup(ActionEvent event, boolean navigate) {
+    public void setup(ActionEvent event, boolean navigate, String dialogName) {
         final Map<String, String> parameterMap = ((UIActionLink) event.getSource()).getParameterMap();
         final String param;
         if (parameterMap.containsKey(VOLUME_NODE_REF)) {
@@ -162,7 +162,7 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         doInitialSearch();
         BeanHelper.getVisitedDocumentsBean().clearVisitedDocuments();
         if (navigate) {
-            WebUtil.navigateTo(AlfrescoNavigationHandler.DIALOG_PREFIX + "documentListDialog");
+            WebUtil.navigateTo(AlfrescoNavigationHandler.DIALOG_PREFIX + dialogName);
         }
     }
 
@@ -176,7 +176,7 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
     }
 
     public void setup(ActionEvent event) {
-        setup(event, true);
+        setup(event, true, "documentListDialog");
     }
 
     public void updateLocationSelect(@SuppressWarnings("unused") ActionEvent event) {
