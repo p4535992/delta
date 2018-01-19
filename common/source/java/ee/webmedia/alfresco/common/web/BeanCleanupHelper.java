@@ -153,7 +153,7 @@ public class BeanCleanupHelper implements Serializable {
         DIALOGS_TO_CLEAN.put(RegisterListDialog.BEAN_NAME, Collections.singletonList(RegisterDetailsDialog.BEAN_NAME));
         DIALOGS_TO_CLEAN.put(RegisterDetailsDialog.BEAN_NAME, null);
         DIALOGS_TO_CLEAN.put(VolumeListDialog.BEAN_NAME,
-                Arrays.asList(CaseDocumentListDialog.DIALOG_NAME, CaseFileDialog.BEAN_NAME, VolumeDetailsDialog.BEAN_NAME, VolumeEventPlanDialog.BEAN_NAME,
+                Arrays.asList(CaseDocumentListDialog.DIALOG_NAME, CaseDocumentListDialog.BEAN_NAME, CaseFileDialog.BEAN_NAME, VolumeDetailsDialog.BEAN_NAME, VolumeEventPlanDialog.BEAN_NAME,
                         SeriesListDialog.BEAN_NAME, DocumentListDialog.BEAN_NAME));
         DIALOGS_TO_CLEAN.put(SeriesListDialog.BEAN_NAME, Arrays.asList(VolumeListDialog.BEAN_NAME, SeriesDetailsDialog.BEAN_NAME));
         DIALOGS_TO_CLEAN.put(FunctionsListDialog.BEAN_NAME, Arrays.asList(SeriesListDialog.BEAN_NAME));
@@ -163,7 +163,8 @@ public class BeanCleanupHelper implements Serializable {
         DIALOGS_TO_CLEAN.put(FieldDefinitionListDialog.BEAN_NAME, Arrays.asList(FieldDetailsDialog.BEAN_NAME));
         DIALOGS_TO_CLEAN.put(FieldDetailsDialog.BEAN_NAME, null);
         DIALOGS_TO_CLEAN.put(GroupsDialog.BEAN_NAME, null);
-        DIALOGS_TO_CLEAN.put(CaseDocumentListDialog.BEAN_NAME, Arrays.asList(DocumentListDialog.BEAN_NAME, CaseDetailsDialog.BEAN_NAME, DocumentDynamicDialog.BEAN_NAME));
+        DIALOGS_TO_CLEAN.put(CaseDocumentListDialog.BEAN_NAME, Arrays.asList(DocumentListDialog.BEAN_NAME, CaseDetailsDialog.BEAN_NAME, DocumentDynamicDialog.BEAN_NAME, 
+        		VolumeDetailsDialog.BEAN_NAME, VolumeEventPlanDialog.BEAN_NAME, SeriesListDialog.BEAN_NAME));
         DIALOGS_TO_CLEAN.put(UserDetailsDialog.BEAN_NAME, Arrays.asList(GroupUsersListDialog.BEAN_NAME, SubstituteListDialog.BEAN_NAME));
     }
 
