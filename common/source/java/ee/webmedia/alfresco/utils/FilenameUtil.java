@@ -22,11 +22,14 @@ import org.apache.commons.lang.StringUtils;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
+import org.apache.log4j.Logger;
 
 /**
  * Helps to strip illegal characters from filenames
  */
 public class FilenameUtil {
+
+    private static Logger log = Logger.getLogger(FilenameUtil.class);
 
     public static final String ERR_INVALID_FILE_NAME = "add_file_invalid_file_name";
     public static final String DDOC_EXTENSION = ".ddoc";

@@ -44,7 +44,6 @@ import ee.webmedia.alfresco.docconfig.generator.systematic.AccessRestrictionGene
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.eventplan.model.EventPlanModel;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
-import ee.webmedia.alfresco.functions.model.UnmodifiableFunction;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.log.PropDiffHelper;
 import ee.webmedia.alfresco.log.model.LogEntry;
@@ -97,11 +96,16 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
 
     @Override
     public List<UnmodifiableSeries> getAllSeriesByFunction(NodeRef functionNodeRef, boolean checkAdmin) {
-        List<NodeRef> childRefs = getSeriesByFunctionNodeRefs(functionNodeRef);
+    	boolean isAdministrator = (checkAdmin)?userService.isAdministrator():false;
+    	
+        return getAllSeriesByFunctionFiltered(functionNodeRef, isAdministrator);
+    }
+    
+    private List<UnmodifiableSeries> getAllSeriesByFunctionFiltered(NodeRef functionNodeRef, boolean isAdministrator) {
+    	List<NodeRef> childRefs = getSeriesByFunctionNodeRefs(functionNodeRef);
         List<UnmodifiableSeries> seriesList = new ArrayList<>();
         Map<Long, QName> propertyTypes = new HashMap<>();
         final Date now = new Date();
-        boolean isAdministrator = (checkAdmin)?userService.isAdministrator():false;
         for (NodeRef seriesRef : childRefs) {
             UnmodifiableSeries series = getUnmodifiableSeries(seriesRef, functionNodeRef, propertyTypes);
             if (!isAdministrator && series.getValidFrom() != null && now.before(series.getValidFrom())) {
@@ -484,7 +488,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
 
     private int getNextSeriesOrderNrByFunction(NodeRef functionNodeRef) {
         int maxOrder = 0;
-        for (UnmodifiableSeries fn : getAllSeriesByFunction(functionNodeRef, false)) {
+        for (UnmodifiableSeries fn : getAllSeriesByFunctionFiltered(functionNodeRef, true)) {
             if (maxOrder < fn.getOrder()) {
                 maxOrder = fn.getOrder();
             }

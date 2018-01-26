@@ -7,6 +7,7 @@
 <%@ page isELIgnored="false"%>
 <%@ page import="org.alfresco.web.app.Application" %>
 <%@ page import="ee.webmedia.alfresco.document.web.BaseDocumentListDialog" %>
+<%@ page import="ee.webmedia.alfresco.document.web.FavoritesDocumentListDialog" %>
 <%@ page import="ee.webmedia.alfresco.utils.MessageUtil" %>
 
 <%-- NB! Use DialogManager.bean references, because this JSP is included from other dialog JSPs --%>
@@ -56,7 +57,7 @@
 
 <a:panel id="document-panel" styleClass="panel-100 with-pager" label="#{DialogManager.bean.listTitle}" progressive="true">
 <%
-   if (((BaseDocumentListDialog)Application.getDialogManager().getBean()).getDocuments() != null) {
+   if ((Application.getDialogManager().getBean() instanceof FavoritesDocumentListDialog) || ((BaseDocumentListDialog)Application.getDialogManager().getBean()).getDocuments() != null) {
 %>
    <%-- Main List --%>
    <a:richList id="documentList" styleClass="duplicate-header" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"

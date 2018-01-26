@@ -948,7 +948,14 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
                 if (logger.isDebugEnabled()) {
                     logger.debug("current view is already top of the view stack!");
                 }
-            } else {
+            } else if (objectForStack instanceof DialogState &&
+                        topOfStack instanceof DialogState &&
+                        "dialog:volumeListDialog".equals(topOfStack.toString()) &&
+                        "dialog:volumeListDialog".equals(objectForStack.toString())) {
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("volumeListDialog is already added to the view stack!");
+                    }
+            } else {            	
                 stack.push(objectForStack);
 
                 if (logger.isDebugEnabled()) {

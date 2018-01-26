@@ -35,6 +35,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
@@ -392,6 +393,13 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
         }
     }
 
+    /**
+     *
+     * @param contentInputStream
+     * @param ext BDOC or DDOC type
+     * @return
+     * @throws SignatureException
+     */
     private Container getContainerFromStream(InputStream contentInputStream, String ext) throws SignatureException {
         log.debug("getContainerFromStream...");
         try {
@@ -523,6 +531,11 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
     	ContentReader reader = fileFolderService.getReader(nodeRef);
     	try {
     		String fileName = getFileName(nodeRef);
+    		if (fileName != null && fileName.length() > 260) {
+    			String baseName = FilenameUtils.removeExtension(fileName);
+    			String extension = FilenameUtils.getExtension(fileName);
+    			fileName = baseName.substring(0, 200) + FilenameUtils.EXTENSION_SEPARATOR + extension;
+    		}
     		is = reader.getContentInputStream();
     		container.addDataFile(is, fileName, reader.getMimetype());
     	} finally {
@@ -693,7 +706,7 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
 
     @Override
     public SignatureItemsAndDataItems getDataItemsAndSignatureItems(InputStream inputStream, boolean includeData, String filext) throws SignatureException {
-        log.debug("getDataItemsAndSignatureItems... file");
+        log.debug("getDataItemsAndSignatureItems... InputStream");
         Container signedContainer = null;
         try {
             log.debug("Get digidoc conteiner from inputStream...");

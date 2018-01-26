@@ -108,6 +108,11 @@ public class AddressbookUtil {
                 label.append(orgName);
                 label.append(" (");
                 label.append(MessageUtil.getMessage("addressbook_org").toLowerCase());
+                String orgAcronym = (String) props.get(Props.ORGANIZATION_ACRONYM.toString());
+                if (StringUtils.isNotBlank(orgAcronym)) {
+                	label.append(", ");
+                    label.append(orgAcronym);
+                }
             } else if (node.getType().equals(Types.CONTACT_GROUP)) {
                 label.append((String) props.get(Props.GROUP_NAME));
             } else {

@@ -42,6 +42,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.digidoc4j.ContainerBuilder;
 import org.springframework.util.Assert;
 import org.springframework.web.jsf.FacesContextUtils;
 
@@ -341,6 +342,11 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
             if (FilenameUtil.isDigiDocFile(fileName)) {
                 log.debug("filename (" + fileName + ") if digidoc!");
                 String digiDocFileExt = FilenameUtil.getDigiDocExt(fileName);
+                if(FilenameUtil.isBdocFile(fileName)){
+                    log.debug("File type is BDOC...");
+                    digiDocFileExt = ContainerBuilder.BDOC_CONTAINER_TYPE;
+                }
+
                 log.debug("file ext: " + digiDocFileExt);
                 BeanHelper.getDigiDoc4JSignatureService().getDataItemsAndSignatureItems(new FileInputStream(file), false, digiDocFileExt.toUpperCase());
             }

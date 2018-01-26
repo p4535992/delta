@@ -322,7 +322,7 @@ public class SearchRenderer extends BaseRenderer {
         }
 
         if (rowIndex > -1) {
-            picker.setId(SEARCH_MSG + rowIndex);
+            picker.setId(SEARCH_MSG);
         }
 
         out.write("<a class=\"icon-link margin-left-4 search\" onclick=\"");
