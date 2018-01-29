@@ -271,7 +271,7 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
         try {
         	containerToSign = getContainer(nodeRef);
             DataToSign dataToSign = getDataToSign(containerToSign, certHex, false);
-            SignatureDigest signatureDigest = new SignatureDigest(DatatypeConverter.printHexBinary(dataToSign.getDigestToSign()), certHex, new Date(), dataToSign);
+            SignatureDigest signatureDigest = new SignatureDigest(DatatypeConverter.printHexBinary(dataToSign.getDataToSign()), certHex, new Date(), dataToSign);
             return signatureDigest;
         } catch (Exception e) {
             throw new SignatureException("Failed to calculate signed info digest of bdoc file, nodeRef = " + nodeRef + ", certHex = " + certHex, e);
@@ -284,7 +284,7 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
         try {
         	containerToSign = createContainer(contents);
             DataToSign dataToSign = getDataToSign(containerToSign, certHex, false);
-            SignatureDigest signatureDigest = new SignatureDigest(DatatypeConverter.printHexBinary(dataToSign.getDigestToSign()), certHex, new Date(), dataToSign);
+            SignatureDigest signatureDigest = new SignatureDigest(DatatypeConverter.printHexBinary(dataToSign.getDataToSign()), certHex, new Date(), dataToSign);
             return signatureDigest;
         } catch (Exception e) {
             throw new SignatureException("Failed to calculate signed info digest from contents = " + contents + ", certHex = " + certHex, e);
@@ -548,7 +548,7 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
     	phoneNo = StringUtils.stripToEmpty(phoneNo);
         idCode = StringUtils.stripToEmpty(idCode);
         
-        String hash = DatatypeConverter.printHexBinary(dataToSign.getDigestToSign());
+        String hash = DatatypeConverter.printHexBinary(dataToSign.getDataToSign());
         
         long startTime = System.nanoTime();
         Pair<String, String> testIdCodeAndCountry = getTestPhoneNumberAndCountry(phoneNo);
