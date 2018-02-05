@@ -57,6 +57,7 @@ import org.digidoc4j.SignatureProfile;
 import org.digidoc4j.SignatureValidationResult;
 import org.digidoc4j.X509Cert;
 import org.digidoc4j.exceptions.DigiDoc4JException;
+import org.digidoc4j.impl.asic.asics.AsicSContainerBuilder;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 
@@ -483,7 +484,14 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
         addDataFiles(container, nodeRefs);
         return container;
     }
-    
+
+    private Container createAsicSContainer(NodeRef nodeRef) throws DigiDoc4JException, IOException {
+        Container container =  AsicSContainerBuilder.aContainer().withConfiguration(configuration).withTimeStampToken(eu.europa.esig.dss.DigestAlgorithm.SHA256).build();
+        //Container container = ContainerBuilder.aContainer("ASICS").withConfiguration(configuration).build();
+        addDataFile(nodeRef, container);
+        return container;
+    }
+
     private void addDataFiles(Container container, List<NodeRef> nodeRefs) throws DigiDoc4JException, IOException {
         for (NodeRef ref : nodeRefs) {
             addDataFile(ref, container);

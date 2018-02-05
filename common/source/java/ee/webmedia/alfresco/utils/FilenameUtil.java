@@ -212,6 +212,30 @@ public class FilenameUtil {
         return lowerCase.endsWith(DDOC_EXTENSION) || lowerCase.endsWith(BDOC_EXTENSION) || lowerCase.endsWith(ASICE_EXTENSION) || lowerCase.endsWith(SCE_EXTENSION) || lowerCase.endsWith(ASICS_EXTENSION) || lowerCase.endsWith(PADES_EXTENSION);
     }
 
+
+    /**
+     * Checks if filename ends with .bdoc
+     * @param fileName
+     * @return
+     */
+    public static boolean isFileBdoc(String fileName){
+        return fileName.toLowerCase().endsWith(BDOC_EXTENSION);
+    }
+
+    /**
+     * Checks if filename ends with .ddoc
+     * @param fileName
+     * @return
+     */
+    public static boolean isFileDdoc(String fileName) {
+        return fileName.toLowerCase().endsWith(DDOC_EXTENSION);
+    }
+
+    /**
+     *
+     * @param fileName
+     * @return
+     */
     public static String getDigiDocExt(String fileName){
         String fn = fileName.toUpperCase();
         return FilenameUtils.getExtension(fn);

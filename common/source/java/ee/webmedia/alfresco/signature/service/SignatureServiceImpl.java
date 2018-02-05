@@ -355,9 +355,16 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
                 // (in DigiDoc Client < 3.6 DataEncipherment was checked)
                 // According to https://svn.eesti.ee/projektid/idkaart_public/trunk/qdigidoc/crypto/KeyDialog.cpp
                 // * c.keyUsage().contains( SslCertificate::KeyEncipherment )
+
                 boolean keyEncipherment = certKeyUsage[2];
-                log.debug("Is keyEncipherment in use: " + keyEncipherment);
-                if (!keyEncipherment) {
+                log.debug("Is KeyEncipherment in use: " + keyEncipherment);
+                boolean keyAgreement = certKeyUsage[4];
+                log.debug("Is KeyAgreement in use: " + keyAgreement);
+
+                if (keyEncipherment == true || keyAgreement == true) {
+                    log.debug("FOUND certificate with encryption support! Returning it...");
+                } else {
+                    log.debug("keyEncipherment is not in use! Returning NULL!");
                     continue;
                 }
 
@@ -428,11 +435,17 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
 
             boolean keyEncipherment = keyUsageArray[2];
             log.debug("Is KeyEncipherment in use: " + keyEncipherment);
-            if (!keyEncipherment) {
+            boolean keyAgreement = keyUsageArray[4];
+            log.debug("Is KeyAgreement in use: " + keyAgreement);
+
+            if (keyEncipherment == true || keyAgreement == true) {
+                log.debug("FOUND certificate with encryption support! Returning it...");
+            } else {
                 log.debug("keyEncipherment is not in use! Returning NULL!");
-            	return null;
+                return null;
             }
-            
+
+
             // In DigiDoc Client 3 (but not 2), additionally Mobile-ID certificates are filtered out (because decryption is not implemented in Mobile-ID)
             // According to https://svn.eesti.ee/projektid/idkaart_public/trunk/qdigidoc/crypto/KeyDialog.cpp
             // * c.type() != SslCertificate::MobileIDType
