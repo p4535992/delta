@@ -40,7 +40,7 @@ public class SkLdapServiceImpl implements SkLdapService {
         String filter = "(serialNumber=" + serialNumber + ")";
         return skLdapRequestByFilter(filter);
     }
-    
+
     @Override
     public List<SkLdapCertificate> getCertificatesByName(String cnName) {
         LOG.debug("Get certificates by cnName...");
@@ -88,19 +88,18 @@ public class SkLdapServiceImpl implements SkLdapService {
 
         @Override
         protected SkLdapCertificate doMapFromContext(DirContextOperations ctx) {
-        	String cn = ctx.getStringAttribute("cn");
-        	LOG.debug("doMapFromContext(ctx): CN:" + cn);
-        	String serialNumber = ctx.getStringAttribute("serialNumber");
+            String cn = ctx.getStringAttribute("cn");
+            LOG.debug("doMapFromContext(ctx): CN:" + cn);
+            String serialNumber = ctx.getStringAttribute("serialNumber");
             LOG.debug("doMapFromContext(ctx): serialNumber:" + serialNumber);
-        	if (StringUtils.isBlank(cn) || StringUtils.isBlank(serialNumber)) {
+            if (StringUtils.isBlank(cn) || StringUtils.isBlank(serialNumber)) {
                 LOG.warn("doMapFromContext(ctx): CN or SerialNumber is BLANK! Return NULL...");
-        		return null;
-        	} else {
+                return null;
+            } else {
                 List<byte[]> certList = new ArrayList<>();
                 Object[] c = ctx.getObjectAttributes("userCertificate;binary");
                 for (Object o : c){
-                    LOG.debug("CERT object: " + o.toString());
-                    LOG.debug("CERT object class: " + o.getClass().toString());
+
                     if(o.getClass().toString().equals("class [B")){
                         LOG.debug("Use byte[] format...");
                         byte[] cert = (byte[]) o;
@@ -110,17 +109,17 @@ public class SkLdapServiceImpl implements SkLdapService {
                     }
                 }
 
-        	    byte[] userEncryptionCertificate = null;
-        	    if(certList != null){
-        	        LOG.debug("cerList size(): " + certList);
-        	        userEncryptionCertificate = getCertificateForEncryption(certList);
+                byte[] userEncryptionCertificate = null;
+                if(certList != null){
+                    LOG.debug("cerList size(): " + certList.size());
+                    userEncryptionCertificate = getCertificateForEncryption(certList);
                 }
-        		return new SkLdapCertificate(
-                    ctx.getStringAttribute("cn"),
-                    ctx.getStringAttribute("serialNumber"),
-                    certList,
-                    userEncryptionCertificate);
-        	}
+                return new SkLdapCertificate(
+                        ctx.getStringAttribute("cn"),
+                        ctx.getStringAttribute("serialNumber"),
+                        certList,
+                        userEncryptionCertificate);
+            }
         }
 
         private static byte [] getCertificateForEncryption(List<byte[]> certList) {
@@ -141,23 +140,35 @@ public class SkLdapServiceImpl implements SkLdapService {
                 cert = SignedDoc.readCertificate(certData);
 
                 boolean[] keyUsageArray = cert.getKeyUsage();
-
+                if(keyUsageArray != null){
+                    int i = 0;
+                    for(boolean keyUsage: keyUsageArray){
+                        LOG.debug("Key Usage: [" + i + "] == >" + keyUsage);
+                        i++;
+                    }
+                }
                 boolean keyEncipherment = keyUsageArray[2];
+                boolean keyAgreement = keyUsageArray[4];
+
                 LOG.debug("Is KeyEncipherment in use: " + keyEncipherment);
-                if (!keyEncipherment) {
+                if (keyEncipherment == true || keyAgreement == true) {
+                    LOG.debug("FOUND certificate with encryption support! Returning it...");
+                    return certData;
+                } else {
                     LOG.debug("keyEncipherment is not in use! Returning NULL!");
                     return null;
                 }
 
-                LOG.debug("FOUND certificate with encryption support! Returning it...");
-                return certData;
             } catch (Exception e) {
                 LOG.error("Failed to get encryption certificate!", e);
                 return null;
             }
         }
 
+
+
     }
+
 
     public void setLdapContextSource(LdapContextSource ldapContextSource) {
         ldapTemplate = new SimpleLdapTemplate(ldapContextSource);
