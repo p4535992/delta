@@ -1561,7 +1561,7 @@ DIV.modalpopup-header {
 }
 DIV.modalpopup-header H1 {
 	float: left;
-	width: 650px;
+	width: 75%;
 	margin: 10px 0 0;
 	border: none;
 	color: #fff;
