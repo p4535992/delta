@@ -1403,10 +1403,18 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             String taskNodeRefId = myTaskNode.getId();
 
             UIPropertySheet sheet = new WMUIPropertySheet();
-            if (isDelegatableTask(taskType)) {
-                // must use a copy of tasks workflow, as there might be at the same time 2 tasks of the same workflow for delegation
-                myTask = initDelegatableTask(sheet, myTask.getNodeRef(), taskType);
+            if(!isDelegatableTask(taskType) && myTask.isType(WorkflowSpecificModel.Types.OPINION_TASK)){               
+            	myTask = initDelegatableTask(sheet, myTask.getNodeRef(), taskType);	
                 myTaskNode = myTask.getNode();
+                taskType = myTaskNode.getType();
+
+                taskList.set(index, myTask);
+            }
+            
+            if (isDelegatableTask(taskType)) {
+            	// must use a copy of tasks workflow, as there might be at the same time 2 tasks of the same workflow for delegation	
+            	myTask = initDelegatableTask(sheet, myTask.getNodeRef(), taskType);
+            	myTaskNode = myTask.getNode();
                 taskType = myTaskNode.getType();
 
                 taskList.set(index, myTask);
@@ -1441,6 +1449,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             getChildren(panel).add(panelGrid);
             panelGroupChildren.add(panel);
         }
+        
     }
 
     private Task initDelegatableTask(UIPropertySheet sheet, NodeRef myTaskNodeRef, QName taskType) {
