@@ -63,7 +63,6 @@ import org.alfresco.web.ui.common.component.UIModeList;
 import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.richlist.LazyListDataProvider;
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -747,14 +746,61 @@ public class GroupsDialog extends BaseDialogBean
         }
 
         public GroupDataProvider(Set<String> authorities) {
+
+        	//Estonian Alphabet for correct sorting order with Estonian letters
+        	final String ORDER= "AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsŠšZzŽžTtUuVvWwÕõÄäÖöÜüXxYy";
+        	
+        	Map<String, String> systemGroupsNamesToEstonianNames = new HashMap< String, String>();    	
+        	systemGroupsNamesToEstonianNames.put("GROUP_ALFRESCO_ADMINISTRATORS", "GROUP_Administraatorid");
+        	systemGroupsNamesToEstonianNames.put("GROUP_ARCHIVISTS", "GROUP_Arhivaarid");
+        	systemGroupsNamesToEstonianNames.put("GROUP_DOCUMENT_MANAGERS", "GROUP_Dokumendihaldurid");
+        	systemGroupsNamesToEstonianNames.put("GROUP_GUESTS", "GROUP_Külalised");
+        	systemGroupsNamesToEstonianNames.put("GROUP_SUPERVISION", "GROUP_Järelevalve");
+        	
             objectKeys = new ArrayList<String>(authorities);
+            //Replace by Estonian names for correct sorting order
+            for(Map.Entry<String, String> entry: systemGroupsNamesToEstonianNames.entrySet()){
+            	int objectIndex = objectKeys.indexOf(entry.getKey());
+            	objectKeys.set(objectIndex, entry.getValue());
+            	
+            }          
+            
             Collections.sort(objectKeys, new Comparator<String>() {
-        	    public int compare(String s1, String s2){
-        	        return s1.compareToIgnoreCase(s2);
-        	    }
-    		});
+            	
+        	public int compare(String s1, String s2){
+                	int pos1 = 0;
+                	int pos2 = 0;
+                	for (int i = 0; i < Math.min(s1.length(), s2.length()) && pos1 == pos2; i++) {
+                		      		
+                	    pos1 = ORDER.indexOf(s1.charAt(i)); 
+                	    //toUpperCase
+                	    if (pos1 % 2 != 0) {
+                	    	pos1--;
+                		} 
+                	    pos2 = ORDER.indexOf(s2.charAt(i));
+                	    //toUpperCase
+                	    if (pos2 % 2 != 0) {
+                	    	pos2--;
+                		}
+                	}
+
+                	if (pos1 == pos2 && s1.length() != s2.length()) {
+                	    return s1.length() - s2.length();
+                	}
+
+                	return pos1  - pos2  ;
+                }
+            });
+            
+            //Replace back to English system names
+            for(Map.Entry<String, String> entry: systemGroupsNamesToEstonianNames.entrySet()){
+            	int objectIndex = objectKeys.indexOf(entry.getValue());
+            	objectKeys.set(objectIndex, entry.getKey());
+            	
+            }
         }
 
+ 
         @Override
         protected boolean loadOrderFromDb(String column, boolean descending) {
             return true;
