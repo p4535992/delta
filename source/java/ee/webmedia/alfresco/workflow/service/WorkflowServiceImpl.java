@@ -3985,7 +3985,10 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     public void changeInitiatingTaskDueDate(Task task, WorkflowEventQueue queue) {
         Task initiatingTask = getInitiatingTask(task);
         addDueDateHistoryRecord(initiatingTask, task);
-        initiatingTask.setDueDate(task.getConfirmedDueDate());
+        Date confirmedDueDate = task.getConfirmedDueDate();
+        confirmedDueDate.setHours(23);
+        confirmedDueDate.setMinutes(59);
+        initiatingTask.setDueDate(confirmedDueDate);
         saveTask(initiatingTask);
         NodeRef initiatingCompoundWorkflowNodeRef = generalService.getAncestorNodeRefWithType(initiatingTask.getWorkflowNodeRef(), WorkflowCommonModel.Types.COMPOUND_WORKFLOW);
         logDueDateExtension(initiatingTask, task.getParent().getParent(), initiatingCompoundWorkflowNodeRef, "applog_compoundWorkflow_due_date_extension_accepted");
