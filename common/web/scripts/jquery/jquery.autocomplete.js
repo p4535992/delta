@@ -10,6 +10,10 @@ jQuery.autocomplete = function(input, options) {
    // Create jQuery object for input element
    var $input = jQuery(input).attr("autocomplete", "off");
 
+   jQuery(window).load(function () {
+	   $input.blur(); 
+	});
+
    // Apply inputClass if necessary
    if (options.inputClass) $input.addClass(options.inputClass);
 
@@ -134,7 +138,8 @@ jQuery.autocomplete = function(input, options) {
       // track whether the field has focus
       hasFocus = false;
       hideResults();
-   }).bind('textareaResized', function() {
+   })
+   .bind('textareaResized', function() {
       if ($results.css('display') != 'none') {
          showResults();
       }
