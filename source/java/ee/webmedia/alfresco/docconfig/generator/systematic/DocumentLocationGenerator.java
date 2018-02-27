@@ -377,6 +377,17 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             	caseRef = null;
             }
             
+            if (seriesRef != null) {
+	            // chack that serie is not in the future
+	            Map<Long, QName> propertyTypes = new HashMap<>();
+	            final Date now = new Date();
+	            UnmodifiableSeries series = _getSeriesService().getUnmodifiableSeries(seriesRef, propertyTypes);
+            	if (series.getValidFrom() != null && now.before(series.getValidFrom())) {
+            		seriesRef = null;
+            		volumeRef = null;
+            		caseRef = null;
+            	}
+            }
             if (inEditMode) {
                 String caseLabel = documentType ? (String) docProps.get(caseLabelEditableProp) : null;
                 if (caseRef != null) {

@@ -40,7 +40,7 @@ public class SkLdapServiceImpl implements SkLdapService {
         String filter = "(serialNumber=" + serialNumber + ")";
         return skLdapRequestByFilter(filter);
     }
-    
+
     @Override
     public List<SkLdapCertificate> getCertificatesByName(String cnName) {
         LOG.debug("Get certificates by cnName...");
@@ -88,14 +88,14 @@ public class SkLdapServiceImpl implements SkLdapService {
 
         @Override
         protected SkLdapCertificate doMapFromContext(DirContextOperations ctx) {
-        	String cn = ctx.getStringAttribute("cn");
-        	LOG.debug("doMapFromContext(ctx): CN:" + cn);
-        	String serialNumber = ctx.getStringAttribute("serialNumber");
+            String cn = ctx.getStringAttribute("cn");
+            LOG.debug("doMapFromContext(ctx): CN:" + cn);
+            String serialNumber = ctx.getStringAttribute("serialNumber");
             LOG.debug("doMapFromContext(ctx): serialNumber:" + serialNumber);
-        	if (StringUtils.isBlank(cn) || StringUtils.isBlank(serialNumber)) {
+            if (StringUtils.isBlank(cn) || StringUtils.isBlank(serialNumber)) {
                 LOG.warn("doMapFromContext(ctx): CN or SerialNumber is BLANK! Return NULL...");
-        		return null;
-        	} else {
+                return null;
+            } else {
                 List<byte[]> certList = new ArrayList<>();
                 Object[] c = ctx.getObjectAttributes("userCertificate;binary");
                 for (Object o : c){
@@ -109,17 +109,17 @@ public class SkLdapServiceImpl implements SkLdapService {
                     }
                 }
 
-        	    byte[] userEncryptionCertificate = null;
-        	    if(certList != null){
-        	        LOG.debug("cerList size(): " + certList.size());
-        	        userEncryptionCertificate = getCertificateForEncryption(certList);
+                byte[] userEncryptionCertificate = null;
+                if(certList != null){
+                    LOG.debug("cerList size(): " + certList.size());
+                    userEncryptionCertificate = getCertificateForEncryption(certList);
                 }
-        		return new SkLdapCertificate(
-                    ctx.getStringAttribute("cn"),
-                    ctx.getStringAttribute("serialNumber"),
-                    certList,
-                    userEncryptionCertificate);
-        	}
+                return new SkLdapCertificate(
+                        ctx.getStringAttribute("cn"),
+                        ctx.getStringAttribute("serialNumber"),
+                        certList,
+                        userEncryptionCertificate);
+            }
         }
 
         private static byte [] getCertificateForEncryption(List<byte[]> certList) {
