@@ -950,8 +950,31 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
                 }
             } else if (objectForStack instanceof DialogState &&
                         topOfStack instanceof DialogState &&
-                        "dialog:volumeListDialog".equals(topOfStack.toString()) &&
-                        "dialog:volumeListDialog".equals(objectForStack.toString())) {
+                        (("dialog:volumeListDialog".equals(topOfStack.toString()) &&
+                        "dialog:volumeListDialog".equals(objectForStack.toString()))
+                        ||
+                        ("dialog:moveVolumeToArchiveListDialog".equals(topOfStack.toString()) &&
+                        "dialog:moveVolumeToArchiveListDialog".equals(objectForStack.toString()))
+                        ||
+                        ("dialog:waitingForDestructionVolumeListDialog".equals(topOfStack.toString()) &&
+                                "dialog:waitingForDestructionVolumeListDialog".equals(objectForStack.toString()))
+                        ||
+                        ("dialog:waitingOverviewVolumeListDialog".equals(topOfStack.toString()) &&
+                                "dialog:waitingOverviewVolumeListDialog".equals(objectForStack.toString()))
+                        ||
+                        ("dialog:volumeArchivalValueListDialog".equals(topOfStack.toString()) &&
+                                "dialog:volumeArchivalValueListDialog".equals(objectForStack.toString()))
+                        ||
+                        ("dialog:moveVolumeToArchiveListDialog".equals(topOfStack.toString()) &&
+                                "dialog:moveVolumeToArchiveListDialog".equals(objectForStack.toString()))
+                        ||
+                        ("dialog:waitingForTransferVolumeListDialog".equals(topOfStack.toString()) &&
+                                "dialog:waitingForTransferVolumeListDialog".equals(objectForStack.toString()))
+                        ||
+                        ("dialog:transferringToUamVolumeListDialog".equals(topOfStack.toString()) &&
+                                "dialog:transferringToUamVolumeListDialog".equals(objectForStack.toString()))
+                        )
+            		) {
                     if (logger.isDebugEnabled()) {
                         logger.debug("volumeListDialog is already added to the view stack!");
                     }
