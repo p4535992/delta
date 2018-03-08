@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+    <bean id="teraProcess" class="ee.smit.tera.TeraProcess" />
+
+    <bean id="fileActiveUpdater" class="ee.webmedia.alfresco.postipoiss.FileActiveUpdater" parent="abstractNodeUpdater">
+        <property name="moduleId" value="simdhs" />
+        <property name="executeOnceOnly" value="true" />
+        <property name="enabled" value="false" /><!-- Executed from node-browser -->
+        <property name="dependsOn">
+            <list>
+                <ref bean="archivalsStoresBootstrap" />
+            </list>
+        </property>
+        <property name="fileService" ref="FileService" />
+    </bean>
+
+    <bean id="storageTypeUpdater" class="ee.webmedia.alfresco.postipoiss.StorageTypeUpdater" parent="abstractNodeUpdater">
+        <property name="moduleId" value="simdhs" />
+        <property name="executeOnceOnly" value="true" />
+        <property name="enabled" value="false" /><!-- Executed from node-browser -->
+        <property name="dependsOn">
+            <list>
+                <ref bean="archivalsStoresBootstrap" />
+            </list>
+        </property>
+        <property name="fileService" ref="FileService" />
+    </bean>
+
+</beans>

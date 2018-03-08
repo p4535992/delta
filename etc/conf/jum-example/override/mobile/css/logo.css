@@ -1,0 +1,10 @@
+#logo {
+    float: left;
+    height: 45px;
+    width: 70px;
+    margin-top: 4px;
+    text-align: left;
+    text-indent: -9rem;
+    overflow: hidden;
+    background: transparent url(../gfx/mDelta-rik-logo.svg) 50% 50% no-repeat;
+}
