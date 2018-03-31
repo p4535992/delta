@@ -14,13 +14,14 @@
          
          <show-property name="plan:nextEvent" display-label-id="eventplan_nextEvent" component-generator="EnumSelectorGenerator" enumClass="ee.webmedia.alfresco.eventplan.model.FirstEvent" disableSorting="true" />
          <show-property name="plan:nextEventDate" display-label-id="eventplan_nextEventDate" />
+         <show-property name="plan:assessmentDecisionNote" component-generator="TextAreaGenerator" styleClass="expand19-200" display-label-id="eventplan_assessmentDecisionNote" />
          <show-property name="plan:archivingNote" component-generator="TextAreaGenerator" styleClass="expand19-200" display-label-id="eventplan_archivingNote" />
          <show-property name="plan:markedForTransfer" display-label-id="eventplan_markedForTransfer" readOnlyIf="#{VolumeEventPlanDialog.underDocumentList}" />
          <show-property name="plan:exportedForUam" display-label-id="eventplan_exportedForUam" readOnlyIf="#{VolumeEventPlanDialog.underDocumentList}" />
          <show-property name="plan:exportedForUamDateTime" display-label-id="eventplan_exportedForUamDateTime" component-generator="TextFieldGenerator" outputText="true" converter="ee.webmedia.alfresco.common.propertysheet.converter.DateTimeConverter" />
          <show-property name="plan:transferConfirmed" display-label-id="eventplan_transferConfirmed" readOnlyIf="#{VolumeEventPlanDialog.underDocumentList}" />
          <show-property name="plan:transferedDateTime" display-label-id="eventplan_transferedDateTime" component-generator="DateTimePickerGenerator" styleClass="dummy1" timeStyleClass="margin-left-4" readOnlyIf="#{VolumeEventPlanDialog.underDocumentList}" />
-         <show-property name="plan:markedForDestruction" display-label-id="eventplan_markedForDestruction" readOnlyIf="#{VolumeEventPlanDialog.underDocumentList}" />
+         <show-property name="plan:markedForDestruction" display-label-id="eventplan_markedForDestruction" read-only="true" />
          <show-property name="plan:disposalActCreated" display-label-id="eventplan_disposalActCreated" readOnlyIf="#{VolumeEventPlanDialog.underDocumentList}" />
          <show-property name="plan:disposalDateTime" display-label-id="eventplan_disposalDateTime" component-generator="TextFieldGenerator" outputText="true" converter="ee.webmedia.alfresco.common.propertysheet.converter.DateTimeConverter" />
       </property-sheet>

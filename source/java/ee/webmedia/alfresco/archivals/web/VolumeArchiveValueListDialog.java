@@ -60,24 +60,24 @@ public class VolumeArchiveValueListDialog extends VolumeArchiveBaseDialog {
     @Override
     public List<DialogButtonConfig> getAdditionalButtons() {
         List<DialogButtonConfig> buttons = new ArrayList<DialogButtonConfig>(1);
-        addGenerateWordFileButton(buttons);
+        addGenerateExcelFileButton(buttons);
         return buttons;
     }
 
     @Override
     public void cancelAction(ActionEvent actionEvent) {
-        setConfirmGenerateWordFile(false);
+        setConfirmGeneration(false);
     }
 
     @Override
-    public String getGenerateWordFileConfirmationMessage() {
+    public String getGenerateExcelFileConfirmationMessage() {
         return MessageUtil.getMessage("archivals_volume_generate_word_file_evaluation_confirm");
     }
 
-    public void generateWordFile(ActionEvent event) {
-        setConfirmGenerateWordFile(false);
-        generateActivityAndWordFile(ActivityType.TO_APPRAISE_DOC, "archivals_volume_generate_word_file_evaluation_template", ActivityStatus.FINISHED,
-                "archivals_volume_generate_word_file_evaluation_success", true);
+    public void generateExcelFile(ActionEvent event) {
+        setConfirmGeneration(false);
+        generateActivityAndExcelFile(ActivityType.TO_APPRAISE_DOC, "archivals_volume_generate_word_file_evaluation_template", ActivityStatus.FINISHED,
+                "archivals_volume_generate_word_file_evaluation_success");
     }
 
 }

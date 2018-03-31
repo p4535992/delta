@@ -545,6 +545,13 @@ BlockBeanProviderProvider {
     private void openOrSwitchModeCommon(NodeRef caseFileRef, CaseFile caseFile, boolean inEditMode, List<NodeRef> documentsToCheck) {
         CaseFileDialogSnapshot currentSnapshot = getCurrentSnapshot();
         try {
+        	
+        	// logic if caseFile is marked for destruction and not yet already destroyed (disposal time is null)
+        	// then show the message.
+        	if (caseFile.isMarkedForDestruction() && caseFile.getDisposalDateTime() == null) {
+        		MessageUtil.addInfoMessage("volume_marked_for_destruction");
+        	}
+        	
             currentSnapshot.caseFile = caseFile;
             // Lock or unlock the node also
             getDocumentDialogHelperBean().reset(getDataProvider());

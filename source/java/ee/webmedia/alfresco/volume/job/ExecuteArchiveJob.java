@@ -30,9 +30,18 @@ public class ExecuteArchiveJob implements StatefulJob {
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
+    	setServices();
         LOG.debug("Starting ExecuteArchiveJob");
-        setServices();
+        
+        if(archivalsService.isDestructionJobInProgress()) {
+        	LOG.debug("Destruction job is in-progress, exiting from Archive job.");	
+        	return;
+        }
 
+        if(!archivalsService.setArchiveJobInProgress(true)) {
+        	return;
+        }
+        
         while (!archivalsService.isArchivingPaused() && archivalsService.isArchivingAllowed()) {
             List<NodeRef> jobList = archivalsService.getAllInQueueJobs();
             if (jobList.isEmpty()) {
@@ -63,6 +72,8 @@ public class ExecuteArchiveJob implements StatefulJob {
             archivalsService.markArchivingJobAsRunning(archivingJobRef);
             archivalsService.archiveVolumeOrCaseFile(archivingJobRef, resumingPaused);
         }
+        
+        archivalsService.setArchiveJobInProgress(false);
     }
 
     private Pair<NodeRef, ArchiveJobStatus> getNextArchivingJobWithStatus(List<NodeRef> jobList) {

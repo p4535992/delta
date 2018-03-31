@@ -724,6 +724,15 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
         return inactiveFiles;
     }
 
+    public List<SimpleFile> getInactiveSimpleFiles() {
+        List<SimpleFile> files = new ArrayList<>();
+        for (File file : getInactiveFiles()) {
+            String readOnlyUrl = DownloadContentServlet.generateDownloadURL(file.getNodeRef(), file.getDisplayName());
+            files.add(new SimpleFile(file.getDisplayName(), readOnlyUrl));
+        }
+        return files;
+    }
+
     @Override
     public int compareTo(Document other) {
         if (StringUtils.equals(getRegNumber(), other.getRegNumber())) {

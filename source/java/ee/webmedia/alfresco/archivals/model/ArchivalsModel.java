@@ -41,6 +41,7 @@ public interface ArchivalsModel {
         QName CREATOR_ID = QName.createQName(URI, "creatorId");
         QName CREATOR_NAME = QName.createQName(URI, "creatorName");
         QName STATUS = QName.createQName(URI, "status");
+        QName PREV_STATUS = QName.createQName(URI, "prev_status");
 
         QName FILTER_CREATED = QName.createQName(URI, "filterCreated");
         QName FILTER_CREATED_END_DATE = QName.createQName(URI, "filterCreated_EndDate");

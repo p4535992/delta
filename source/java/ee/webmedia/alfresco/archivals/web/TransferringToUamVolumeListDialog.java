@@ -1,10 +1,6 @@
 package ee.webmedia.alfresco.archivals.web;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import javax.faces.event.ActionEvent;
 
@@ -112,7 +108,7 @@ public class TransferringToUamVolumeListDialog extends VolumeArchiveBaseDialog {
     @Override
     public List<DialogButtonConfig> getAdditionalButtons() {
         List<DialogButtonConfig> buttons = new ArrayList<DialogButtonConfig>(1);
-        addGenerateWordFileButton(buttons);
+        addGenerateExcelFileButton(buttons);
         buttons.add(new DialogButtonConfig("volumeSetNextEventDestructionButton", null, "archivals_volume_set_next_event_destruction",
                 "#{DialogManager.bean.setNextEventDestruction}", "false", null));
         buttons.add(new DialogButtonConfig("volumeConfirmTransferButton", null, "archivals_volume_confirm_transfer",
@@ -120,14 +116,14 @@ public class TransferringToUamVolumeListDialog extends VolumeArchiveBaseDialog {
         return buttons;
     }
 
-    public void generateWordFile(ActionEvent event) {
-        setConfirmGenerateWordFile(false);
-        generateActivityAndWordFile(ActivityType.IN_TRANSFER_DOC, "archivals_volume_generate_word_file_in_transfer_template", ActivityStatus.FINISHED,
-                "archivals_volume_generate_word_file_in_transfer_success", true);
+    public void generateExcelFile(ActionEvent event) {
+        setConfirmGeneration(false);
+        generateActivityAndExcelFile(ActivityType.IN_TRANSFER_DOC, "archivals_volume_generate_word_file_in_transfer_template", ActivityStatus.FINISHED,
+                "archivals_volume_generate_word_file_in_transfer_success");
     }
 
     @Override
-    public String getGenerateWordFileConfirmationMessage() {
+    public String getGenerateExcelFileConfirmationMessage() {
         return MessageUtil.getMessage("archivals_volume_generate_word_file_in_transfer_confirm");
     }
 
@@ -139,8 +135,8 @@ public class TransferringToUamVolumeListDialog extends VolumeArchiveBaseDialog {
     }
 
     public void generateNextEventDestructionActivity(Date newDate) {
-        NodeRef activityRef = generateActivityAndWordFile(ActivityType.CHANGED_TRANSFER_NEXT_EVENT, "archivals_volume_next_event_destruction_template", ActivityStatus.IN_PROGRESS,
-                null, false);
+        NodeRef activityRef = generateActivityAndExcelFile(ActivityType.CHANGED_TRANSFER_NEXT_EVENT, "archivals_volume_next_event_destruction_template", ActivityStatus.IN_PROGRESS,
+                null);
         if (activityRef != null) {
             List<NodeRef> selectedVolumes = getSelectedVolumes();
             BeanHelper.getArchivalsService().setNextEventDestruction(selectedVolumes, newDate, activityRef);
@@ -163,8 +159,8 @@ public class TransferringToUamVolumeListDialog extends VolumeArchiveBaseDialog {
     public void transfer(ActionEvent event) {
         confirmTransfer = false;
         Date confirmationDate = new Date();
-        NodeRef activityRef = generateActivityAndWordFile(ActivityType.CONFIRM_TRANSFER, "archivals_volume_transfer_template", ActivityStatus.IN_PROGRESS,
-                null, false);
+        NodeRef activityRef = generateActivityAndExcelFile(ActivityType.CONFIRM_TRANSFER, "archivals_volume_transfer_template", ActivityStatus.IN_PROGRESS,
+                null);
         if (activityRef != null) {
             List<NodeRef> selectedVolumes = getSelectedVolumes();
             BeanHelper.getArchivalsService().confirmTransfer(selectedVolumes, confirmationDate, activityRef);
@@ -174,7 +170,7 @@ public class TransferringToUamVolumeListDialog extends VolumeArchiveBaseDialog {
 
     @Override
     public void cancelAction(ActionEvent actionEvent) {
-        setConfirmGenerateWordFile(false);
+        setConfirmGeneration(false);
         confirmTransfer = false;
     }
 }

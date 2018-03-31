@@ -141,6 +141,20 @@
 
 <f:verbatim><hr/></f:verbatim>
 
+<h:commandButton id="volume_destruction_stop_all" value="Peata kõik hävitamistööd" type="submit" 
+   actionListener="#{ArchivalsService.stopDestructing}" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="volume_destruction_pause_all" value="Peata kõik hävitamistööd kuni \"Jätka\" vajutamiseni" type="submit" 
+   actionListener="#{ArchivalsService.pauseDestruction}" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="volume_destruction_continue_all" value="Jätka kõiki hävitamistöid" type="submit" 
+   actionListener="#{ArchivalsService.continueDestructing}" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="volume_destruction_cancel_all" value="Tühjenda hävitamistööde nimekiri" type="submit" 
+   actionListener="#{ArchivalsService.cancelAllDestructingJobs}" />
+
+<f:verbatim><hr/></f:verbatim>
+
 <h:outputText value="Muuda arhiveeritud sarjade property 'volNumberPattern' (väli 'Asjatoimiku viida muster') tühjaks kui 'volType' (väli 'Sisaldab toimikuid') ei sisalda väärtust CASE_FILE (Asjatoimik)"/>
 <f:verbatim><br/></f:verbatim>
 <h:outputText value="Kui väljal 'Sisaldab toimikuid' ei ole ühtegi väärtust valitud, lisatakse uuendamise käigus kõik väärtused peale väärtuse 'Asjatoimik'"/>
@@ -620,6 +634,14 @@
 
 <h:outputText value="Dokumentide ja iseseisvate terviktöövoogude genereerimiseks paralleelsete lõimede arv: "/>
 <h:inputText value="#{TestDataService.documentAndWorkflowGeneratorThreads}" converter="javax.faces.Integer" size="4" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="Hävitamiseks valmis asjatoimikute arv: "/>
+<h:inputText value="#{TestDataService.destructionReadyDossiersCount}" converter="javax.faces.Integer" size="4" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="Dokumente igas hävitamiseks valmis asjatoimikus: "/>
+<h:inputText value="#{TestDataService.destructionReadyDossiersDocumentsCount}" converter="javax.faces.Integer" size="4" />
 <f:verbatim><br/><br/></f:verbatim>
 
    <h:commandButton id="startTestDataGenerator" value="Käivita andmete genereerimine" type="submit"

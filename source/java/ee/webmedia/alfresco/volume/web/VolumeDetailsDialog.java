@@ -117,6 +117,10 @@ public class VolumeDetailsDialog extends BaseDialogBean implements BlockBeanProv
         if (marked != null && marked) {
             MessageUtil.addInfoMessage("volume_marked_for_archiving");
         }
+        
+        if (vol.isMarkedForDestruction() && vol.getDisposalDateTime() == null) {
+        	MessageUtil.addInfoMessage("volume_marked_for_destruction");
+        }
     }
 
     public void showDetails(NodeRef volumeNodeRef) {

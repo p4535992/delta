@@ -28,6 +28,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getTransactionService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getVolumeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowConstantsBean;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getArchivalsService;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.FILE_CONTENTS;
 import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.getPrivsWithDependencies;
 import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.getRequiredPrivsForTask;
@@ -132,6 +133,8 @@ import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.eventplan.model.FirstEvent;
+import ee.webmedia.alfresco.eventplan.model.RetaintionStart;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.functions.model.UnmodifiableFunction;
@@ -314,6 +317,9 @@ public class TestDataService implements SaveListener {
     private boolean filesEnabled = true;
     private int documentAndWorkflowGeneratorThreads = 1;
 
+    private int destructionReadyDossiersCount = 0;
+    private int destructionReadyDossiersDocumentsCount = 0;
+    
     private void executeUpdater() throws Exception {
         usersFirstNames = loadCsv("users-firstnames.csv");
         usersLastNames = loadCsv("users-lastnames.csv");
@@ -349,6 +355,13 @@ public class TestDataService implements SaveListener {
         createCases(casesCount); // TODO et kõikide toimikute all oleks vähemalt üks asi
         createDocuments(documentsCount);
         createIndependentCompoundWorkflows(independentWorkflowsCount);
+        
+        for (int x = 0 ; x < destructionReadyDossiersCount; x++) {
+        	createCaseFileForDestruction(getRandom(volumesMarksAndTitles), 2, new Random(), 1.0, new Random());
+        }
+        
+        
+        
 
         // TODO arhiivi ka genereerida! fn-sari-toimik-asi võib identsed või samade arvude alusel genereerida vist, aga lihtsalt suletud
         // TODO: kas on vaja genereerida mustandite funktsioone (function.documentActivitiesAreLimited=true)?
@@ -2664,5 +2677,155 @@ public class TestDataService implements SaveListener {
     public void setCaseFileWorkflowsEnabled(boolean caseFileWorkflowsEnabled) {
         this.caseFileWorkflowsEnabled = caseFileWorkflowsEnabled;
     }
+
+    public int getDestructionReadyDossiersCount() {
+        return destructionReadyDossiersCount;
+    }
+
+    public void setDestructionReadyDossiersCount(int destructionReadyDossiersCount) {
+        this.destructionReadyDossiersCount = destructionReadyDossiersCount;
+    }
+
+    public int getDestructionReadyDossiersDocumentsCount() {
+        return destructionReadyDossiersDocumentsCount;
+    }
+
+    public void setDestructionReadyDossiersDocumentsCount(int destructionReadyDossiersDocumentsCount) {
+        this.destructionReadyDossiersDocumentsCount = destructionReadyDossiersDocumentsCount;
+    }
+    
+    private void createCaseFileForDestruction(Pair<String, String> entry, int count, Random seriesRandom, double closedCaseFilesLikelyhood, Random workflowRandom) {
+        String mark = entry.getFirst();
+        String title = entry.getSecond();
+
+        final SerieVO serie = getRandomGaussian2(seriesWithCaseFilesList, seriesRandom);
+        String typeId = getRandom(caseFileTypes).getId();
+        CaseFile caseFile = BeanHelper.getCaseFileService().createNewCaseFile(typeId, serie.getSeriesRef()).getFirst();
+
+        Map<String, Object> props = caseFile.getNode().getProperties();
+        String volumeType = getRandom(serie.getVolType());
+        props.put(VolumeModel.Props.VOLUME_MARK.toString(), mark);
+        props.put(VolumeModel.Props.TITLE.toString(), title);
+
+        Calendar cal = Calendar.getInstance();
+        // TODO: check how this calculation should be changed
+        
+        cal.add(Calendar.DATE, -10);
+        
+        props.put(DocumentDynamicModel.Props.VALID_FROM.toString(), cal.getTime());
+        cal.add(Calendar.DATE, 1);
+        
+        DocListUnitStatus status = DocListUnitStatus.OPEN;
+//        props.put(DocumentDynamicModel.Props.VALID_TO.toString(), cal.getTime());
+        
+/*        DocListUnitStatus status = DocListUnitStatus.OPEN;
+        if (Math.random() < closedCaseFilesLikelyhood) {
+            status = DocListUnitStatus.CLOSED;
+        }
+        props.put(DocumentDynamicModel.Props.STATUS.toString(), status.getValueName());
+*/
+        caseFile.setFunction(serie.getFunctionRef());
+        caseFile.setSeries(serie.getSeriesRef());
+        props.put(DocumentDynamicModel.Props.STATUS.toString(), DocListUnitStatus.OPEN.getValueName());
+
+        
+        Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs = getDocumentConfigService().getPropertyDefinitions(caseFile.getNode());
+        for (Pair<DynamicPropertyDefinition, Field> pair : propDefs.values()) {
+            DynamicPropertyDefinition propDef = pair.getFirst();
+            Field field = pair.getSecond();
+            if (field == null) {
+                continue;
+            }
+
+            Node propNode = caseFile.getNode();
+            QName[] hierarchy = propDef.getChildAssocTypeQNameHierarchy();
+            if (hierarchy != null) {
+                int i = 0;
+                while (i < hierarchy.length) {
+                    propNode = propNode.getAllChildAssociations(hierarchy[i]).get(0);
+                    i++;
+                }
+            }
+
+            QName propName = field.getQName();
+            Serializable value = (Serializable) propNode.getProperties().get(propName.toString());
+            String systematicGroupName = null;
+            if (field.getParent() instanceof FieldGroup && ((FieldGroup) field.getParent()).isSystematic()) {
+                systematicGroupName = ((FieldGroup) field.getParent()).getName();
+            }
+
+            if (SystematicFieldGroupNames.DOCUMENT_OWNER.equals(systematicGroupName)) {
+                continue;
+            } else if (SystematicFieldGroupNames.DOCUMENT_LOCATION.equals(systematicGroupName)) {
+                continue;
+            }
+
+            value = setPropValueIfNeeded(propDef, field, propNode, propName, value);
+
+        }
+        NodeRef caseFileRef = caseFile.getNodeRef();
+
+        getNodeService().addAspect(caseFileRef, DocumentCommonModel.Aspects.SEARCHABLE, null);
+        getCaseFileService().update(caseFile, Arrays.asList("TestDataService"));
+        
+        int allTaskCount = 0;
+        if (caseFileWorkflowsEnabled) {
+            int compoundWorkflowCount = getCompoundWorkflowCount(workflowRandom);
+            for (int i = 0; i < compoundWorkflowCount; i++) {
+                Pair<NodeRef, Integer> pair = createWorkflows(caseFileRef, status == DocListUnitStatus.OPEN, typeId, CompoundWorkflowType.CASE_FILE_WORKFLOW);
+                allTaskCount += pair.getSecond();
+            }
+        }
+
+        // FUTURE: õiguseid (nii dokumendi kui sarja omad) praegu ei tee
+
+        final NodeRef caseFileNref = caseFile.getNodeRef();  
+        
+        String userName = getRandomGaussian3(userNamesList, usersRandom);
+        AuthenticationUtil.setFullyAuthenticatedUser(userName); // also sets runAsUser
+        
+        for (int x = 0 ; x < destructionReadyDossiersDocumentsCount; x++) {        
+	        try {
+	            Pair<NodeRef, String> pair = getTransactionService().getRetryingTransactionHelper().doInTransaction(
+	                    new RetryingTransactionCallback<Pair<NodeRef, String>>() {
+	                        @Override
+	                        public Pair<NodeRef, String> execute() throws Throwable {
+	                            return	createDocument(new DocumentLocationVO(serie, caseFileNref), new Random());
+	                        }
+	                    }, false);
+	            
+	            log.info("Created document " + x + " of " + destructionReadyDossiersDocumentsCount + " - " + pair.getFirst() + " " + pair.getSecond());
+			} catch (Exception e) {
+				log.error("Documents generator thread error", e);
+				}
+        }
+
+        props = caseFile.getNode().getProperties();
+        // prepare CaseFile for destruction. if need
+        boolean readyForDestraction = true; 
+        if (readyForDestraction ) {
+        	
+        	cal.add(Calendar.DATE, 1);
+	        caseFile.setRetaintionStart(RetaintionStart.FIXED_DATE.name());
+	        caseFile.setRetainUntilDate(cal.getTime());
+        	
+        	caseFile.setNextEvent(FirstEvent.SIMPLE_DESTRUCTION.name());
+	        cal.add(Calendar.DATE, 1);
+	        caseFile.setNextEventDate(cal.getTime());
+	        caseFile.setDisposalActCreated(true);
+	        caseFile.setAppraised(true);
+	        
+	        props.put(DocumentDynamicModel.Props.STATUS.toString(), DocListUnitStatus.CLOSED.getValueName());
+        }
+        
+        getCaseFileService().update(caseFile, Arrays.asList("TestDataService"));
+        
+        getArchivalsService().addVolumeOrCaseToArchivingList(caseFileRef);
+
+        caseFiles.add(caseFileRef);
+        seriesByVolumeRef.put(caseFileRef, serie);
+        log.info("Created caseFile for destruction " + mark + " " + title + (caseFileWorkflowsEnabled ? ", " + allTaskCount + " tasks" : ""));
+    }
+
 
 }

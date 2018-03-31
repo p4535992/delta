@@ -161,6 +161,7 @@ public class EventPlanVolume extends EventPlanCommon {
         setNextEventDate(nextEventDate);
 
         setArchivingNote(plan.getArchivingNote());
+        setAssessmentDecisionNote(plan.getAssessmentDecisionNote());
     }
 
     public boolean validate() {

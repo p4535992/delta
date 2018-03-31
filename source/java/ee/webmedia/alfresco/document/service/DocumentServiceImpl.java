@@ -1498,7 +1498,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
         // DELTA-980, reset log_data objectId
         logService.updateLogEntryObjectId(nodeRef.toString(), archivedRef.toString());
         
-        if (updateMenu) {
+        if (updateMenu && (menuService != null) && (BeanHelper.getMenuBean() != null)) {
             menuService.process(BeanHelper.getMenuBean().getMenu(), false, true);
         }
         
@@ -2478,8 +2478,22 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
         List<NodeRef> compoundWorkflowRefs = new ArrayList<NodeRef>();
         for (Task task : tasks) {
             if (!task.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK, WorkflowSpecificModel.Types.LINKED_REVIEW_TASK)) {
-                NodeRef compoundWorkflowNodeRef = new NodeRef(task.getNodeRef().getStoreRef(), task.getCompoundWorkflowId());
-                compoundWorkflowRefs.add(compoundWorkflowNodeRef);
+            	
+            	NodeRef nrf = task.getNodeRef();
+            	String id = task.getCompoundWorkflowId();
+            	if (nrf != null && id != null) {
+	                NodeRef compoundWorkflowNodeRef = new NodeRef(task.getNodeRef().getStoreRef(), task.getCompoundWorkflowId());
+	                compoundWorkflowRefs.add(compoundWorkflowNodeRef);
+            	}
+            	else {
+            		if (nrf != null) {
+            			log.error("task ( "+ nrf +" ) have empy CompoundWorkFlow id skipping !" );
+            		}
+            		else {
+            			log.error("task have empty NodeRef and/or CompoundWorkflow id!, skipping!" );
+            		}
+            	}
+            		
             }
         }
 

@@ -1,11 +1,13 @@
 package ee.webmedia.alfresco.archivals.web;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.archivals.model.ActivityStatus;
 import ee.webmedia.alfresco.archivals.model.ActivityType;
 import ee.webmedia.alfresco.archivals.model.ArchivalsModel;
 import ee.webmedia.alfresco.common.model.NodeBaseVO;
@@ -41,6 +43,10 @@ public class ArchivalActivity extends NodeBaseVO implements Comparable<ArchivalA
         return getProp(ArchivalsModel.Props.CREATOR_NAME);
     }
 
+    public String getCreatorId() {
+    	return getProp(ArchivalsModel.Props.CREATOR_ID);
+    }
+    
     public String getStatus() {
         return getProp(ArchivalsModel.Props.STATUS);
     }
@@ -58,6 +64,12 @@ public class ArchivalActivity extends NodeBaseVO implements Comparable<ArchivalA
     }
 
     public List<File> getFiles() {
+    	if((ActivityType.DESTRUCTION.name().equals(getActivityNativeType()) ||
+    			ActivityType.SIMPLE_DESTRUCTION.name().equals(getActivityNativeType())) && 
+    				!ActivityStatus.FINISHED.getValue().equals(getStatus()) ) {
+    		return new ArrayList<File>();
+    	}
+    	
         return files;
     }
 
@@ -76,5 +88,9 @@ public class ArchivalActivity extends NodeBaseVO implements Comparable<ArchivalA
         }
         return date1.compareTo(date2);
     }
+
+	public String getActivityNativeType() {
+		return getProp(ArchivalsModel.Props.ACTIVITY_TYPE);
+	}
 
 }
