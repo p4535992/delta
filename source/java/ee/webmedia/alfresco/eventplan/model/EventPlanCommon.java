@@ -91,4 +91,12 @@ public class EventPlanCommon extends NodeBaseVO {
         setProp(Props.ARCHIVING_NOTE, archivingNote);
     }
 
+    public final String getAssessmentDecisionNote() {
+        return getProp(Props.ASSESSMENT_DECISION_NOTE);
+    }
+
+    public final void setAssessmentDecisionNote(String assessmentDecisionNote) {
+        setProp(Props.ASSESSMENT_DECISION_NOTE, assessmentDecisionNote);
+    }
+
 }

@@ -100,6 +100,7 @@ public class EventPlanServiceImpl implements EventPlanService {
                     .labelEnum(EventPlanModel.Props.RETAINTION_START, "eventplan_retaintionStart", RetaintionStart.class)
                     .label(EventPlanModel.Props.RETAINTION_PERIOD, "eventplan_retaintionPeriod")
                     .label(EventPlanModel.Props.RETAIN_UNTIL_DATE, "eventplan_retainUntilDate")
+                    .label(EventPlanModel.Props.ASSESSMENT_DECISION_NOTE, "eventplan_assessmentDecisionNote")
                     .label(EventPlanModel.Props.ARCHIVING_NOTE, "eventplan_archivingNote")
                     .diff(nodeService.getProperties(node.getNodeRef()), props);
 
@@ -137,6 +138,7 @@ public class EventPlanServiceImpl implements EventPlanService {
                     .label(EventPlanModel.Props.RETAIN_UNTIL_DATE, "eventplan_retainUntilDate")
                     .labelEnum(EventPlanModel.Props.NEXT_EVENT, "eventplan_nextEvent", FirstEvent.class)
                     .label(EventPlanModel.Props.NEXT_EVENT_DATE, "eventplan_nextEventDate")
+                    .label(EventPlanModel.Props.ASSESSMENT_DECISION_NOTE, "eventplan_assessmentDecisionNote")
                     .label(EventPlanModel.Props.ARCHIVING_NOTE, "eventplan_archivingNote")
                     .label(EventPlanModel.Props.MARKED_FOR_TRANSFER, "eventplan_markedForTransfer")
                     .label(EventPlanModel.Props.EXPORTED_FOR_UAM, "eventplan_exportedForUam")

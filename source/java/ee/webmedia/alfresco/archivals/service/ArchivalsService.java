@@ -17,15 +17,13 @@ import ee.webmedia.alfresco.functions.model.UnmodifiableFunction;
 public interface ArchivalsService {
     String BEAN_NAME = "ArchivalsService";
 
-    void disposeVolumes(List<NodeRef> selectedVolumes, Date destructionStartDate, String docDeletingComment, NodeRef activityRef, NodeRef templateRef, String logMessageKey);
+    boolean disposeVolumes(List<NodeRef> selectedVolumes, Date destructionStartDate, NodeRef activityRef, NodeRef templateRef, String logMessageKey);
 
     List<UnmodifiableFunction> getArchivedFunctions();
 
     boolean isSimpleDestructionEnabled();
 
-    NodeRef addArchivalActivity(ActivityType activityType, ActivityStatus activityStatus);
-
-    NodeRef addArchivalActivity(ActivityType activityType, ActivityStatus activityStatus, List<NodeRef> volumeRefs, NodeRef templateRef);
+    NodeRef addArchivalActivityExcel(ActivityType activityType, ActivityStatus activityStatus, List<NodeRef> volumeRefs, String fileName);
 
     void archiveVolumeOrCaseFile(NodeRef volumeNodeRef, boolean resumingPaused);
 
@@ -79,4 +77,32 @@ public interface ArchivalsService {
 
     boolean isArchivingAllowed();
 
+    boolean isDestructionPaused();
+    
+    void pauseDestruction(ActionEvent event);
+    void stopDestructing(ActionEvent event);
+    void cancelAllDestructingJobs(ActionEvent event);
+    void continueDestructing(ActionEvent event);
+    
+    boolean isDestructionAllowed();
+    List<NodeRef> getAllInQueueJobsForDesruction();
+    void removeJobNodeFromDestructingList(NodeRef destructingJobRef);
+    NodeRef addVolumeOrCaseToDestructingList(NodeRef volumeOrCaseRef, NodeRef activityRef);
+    
+    void markDestructionJobFinished(NodeRef destructingJobNodeRef);
+    void markDestructingJobAsRunning(NodeRef destructingJobNodeRef);
+    void markDestructingJobAsPaused(NodeRef destructingJobNodeRef);
+
+	boolean setArchiveJobInProgress(boolean b);
+	boolean setDestructionJobInProgress(boolean b);
+
+	boolean isArchiveJobInProgress();
+
+	boolean isDestructionJobInProgress();
+
+	void resetDestructionManualActions();
+
+	int getNonFinishedDestructionActivities();
+
+	NodeRef getDestructionJobArchivalActivity(NodeRef destructingJobRef);
 }

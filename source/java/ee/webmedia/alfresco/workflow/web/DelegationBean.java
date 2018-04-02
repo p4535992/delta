@@ -29,6 +29,7 @@ import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.lock.LockStatus;
@@ -120,6 +121,9 @@ public class DelegationBean implements Serializable {
             DelegatableTaskType.INFORMATION,
             DelegatableTaskType.OPINION)));
 
+    private ActionEvent forwardedAction;
+	private Workflow delegateWorkflow;
+	private Integer delegateTaskIndex;
     /**
      * @param event passed to MethodBinding
      */
@@ -382,9 +386,82 @@ public class DelegationBean implements Serializable {
      * @throws Exception
      */
     public void delegate(ActionEvent event) throws Exception {
-        delegate(event, null);
+    	boolean canAskAboutOwner = false;
+    	Integer taskIndex = null;
+    	// check is task have no owner and reponsible is true  
+        delegateAndFinishTask = taskIndex != null;
+        delegateTaskIndex = delegateAndFinishTask ? taskIndex : ActionUtil.getEventParamOrAttirbuteValue(event, ATTRIB_DELEGATABLE_TASK_INDEX, Integer.class);
+        //List<Pair<String, Object>> params = new ArrayList<>();
+        //params.add(new Pair<String, Object>(ATTRIB_DELEGATABLE_TASK_INDEX, delegatableTaskIndex));
+        // Save all changes to independent workflow before updating task.
+        //if (!workflowBlockBean.saveIfIndependentWorkflow(params, DELEGATE, event)) {
+        //    return;
+        //}
+    	
+        boolean temp = delegateAndFinishTask; // reloading workflow resets this value
+        initialTask = reloadWorkflow(delegateTaskIndex);
+        delegateAndFinishTask = temp;
+
+        //boolean validateDueDates = delegateAndFinishTask || initialTask.isType(WorkflowSpecificModel.Types.REVIEW_TASK, WorkflowSpecificModel.Types.OPINION_TASK);
+        /*
+        boolean searchResponsibleTask = WorkflowUtil.isActiveResponsible(initialTask);
+        boolean isAssignmentWorkflow = initialTask.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK);
+        Date initialTaskDueDate = validateDueDates ? initialTask.getDueDate() : null;
+        Task newMandatoryTask = null;
+        Date maxTaskDueDate = null;
+        QName maxDueDatetaskType = null;
+        */
+       //boolean hasAtLeastOneDelegationTask = false;
+        for (Workflow workflow : initialTask.getParent().getParent().getWorkflows()) {
+        	delegateTaskIndex = 0;
+            for (Task task : workflow.getTasks()) {
+                if (!WorkflowUtil.isEmptyTask(task) && WorkflowUtil.isGeneratedByDelegation(task)) {
+                    
+                    boolean noOwner = StringUtils.isBlank(task.getOwnerName());
+                    QName taskType = task.getType();
+                    if (taskType.equals(WorkflowSpecificModel.Types.INFORMATION_TASK)) {
+                    /*    if (noOwner) {
+                            feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, key));
+                        }
+                        if (initialDateDueDate != null && task.getDueDate() == null) {
+                            feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, key + "_dueDate"));
+                        }*/
+                    } else if (noOwner || task.getDueDate() == null) {
+                        if (taskType.equals(WorkflowSpecificModel.Types.OPINION_TASK)) {
+                        } else {
+                            if (noOwner && task.isResponsible()) {
+                            	delegateWorkflow = workflow;
+                            	canAskAboutOwner = true;
+                            	break;
+                            }
+                        }
+
+                    }
+                }
+                delegateTaskIndex++;
+            }
+            
+            if (canAskAboutOwner) {
+            	break;
+            }
+        }
+        
+        if (canAskAboutOwner) {
+        	forwardedAction = event; 
+        	BeanHelper.getUserConfirmHelper().setup("delegate_error_taskMandatory_sure_wont_change_ownership", null, "#{DelegationBean.finishConfirmed2}", null);
+        } else {
+        	delegate(event, null);
+        }
     }
 
+    public void finishConfirmed2(ActionEvent event) throws Exception {
+    	
+    	String username = AuthenticationUtil.getRunAsUser();
+    	setPersonPropsToTask(delegateWorkflow, delegateTaskIndex, username , null);
+    	
+        delegate(forwardedAction, null);    	
+    }
+    
     @SuppressWarnings("unchecked")
     void delegate(ActionEvent event, Integer taskIndex) {
         delegateAndFinishTask = taskIndex != null;

@@ -1,11 +1,6 @@
 package ee.webmedia.alfresco.archivals.web;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import javax.faces.event.ActionEvent;
 
@@ -109,21 +104,21 @@ public class WaitingForTransferVolumeListDialog extends VolumeArchiveBaseDialog 
     @Override
     public List<DialogButtonConfig> getAdditionalButtons() {
         List<DialogButtonConfig> buttons = new ArrayList<DialogButtonConfig>(2);
-        addGenerateWordFileButton(buttons);
+        addGenerateExcelFileButton(buttons);
         buttons.add(new DialogButtonConfig("volumeMarkForTransferButton", null, "archivals_volume_mark_for_transfer", "#{DialogManager.bean.markForTransferConfirm}", "false",
                 null));
         buttons.add(new DialogButtonConfig("volumeExportToUamButton", null, "archivals_volume_export_to_uam", "#{DialogManager.bean.exportToUamConfirm}", "false", null));
         return buttons;
     }
 
-    public void generateWordFile(ActionEvent event) {
-        setConfirmGenerateWordFile(false);
-        generateActivityAndWordFile(ActivityType.TO_TRANSFER_DOC, "archivals_volume_generate_word_file_to_transfer_template", ActivityStatus.FINISHED,
-                "archivals_volume_generate_word_file_to_transfer_success", true);
+    public void generateExcelFile(ActionEvent event) {
+        setConfirmGeneration(false);
+        generateActivityAndExcelFile(ActivityType.TO_TRANSFER_DOC, "archivals_volume_generate_word_file_to_transfer_template", ActivityStatus.FINISHED,
+                "archivals_volume_generate_word_file_to_transfer_success");
     }
 
     @Override
-    public String getGenerateWordFileConfirmationMessage() {
+    public String getGenerateExcelFileConfirmationMessage() {
         return MessageUtil.getMessage("archivals_volume_generate_word_file_to_transfer_confirm");
     }
 
@@ -140,8 +135,8 @@ public class WaitingForTransferVolumeListDialog extends VolumeArchiveBaseDialog 
 
     public void markForTransfer(ActionEvent event) {
         confirmMarkForTransfer = false;
-        NodeRef activityRef = generateActivityAndWordFile(ActivityType.MARKED_FOR_TRANSFER, "archivals_volume_mark_for_transfer_template", ActivityStatus.IN_PROGRESS,
-                null, false);
+        NodeRef activityRef = generateActivityAndExcelFile(ActivityType.MARKED_FOR_TRANSFER, "archivals_volume_mark_for_transfer_template", ActivityStatus.IN_PROGRESS,
+                null);
         if (activityRef != null) {
             List<NodeRef> selectedVolumes = getSelectedVolumes();
             BeanHelper.getArchivalsService().markForTransfer(selectedVolumes, activityRef);
@@ -151,7 +146,7 @@ public class WaitingForTransferVolumeListDialog extends VolumeArchiveBaseDialog 
 
     @Override
     public void cancelAction(ActionEvent actionEvent) {
-        setConfirmGenerateWordFile(false);
+        setConfirmGeneration(false);
         confirmMarkForTransfer = false;
         confirmExportToUam = false;
     }
@@ -165,8 +160,8 @@ public class WaitingForTransferVolumeListDialog extends VolumeArchiveBaseDialog 
     public void exportToUam(ActionEvent event) {
         confirmExportToUam = false;
         Date exportStartDate = new Date();
-        NodeRef activityRef = generateActivityAndWordFile(ActivityType.EXPORTED_FOR_UAM, "archivals_volume_export_to_uam_template", ActivityStatus.IN_PROGRESS,
-                null, true, "archivals_volume_export_to_uam_error_no_template");
+        NodeRef activityRef = generateActivityAndExcelFile(ActivityType.EXPORTED_FOR_UAM, "archivals_volume_export_to_uam_template", ActivityStatus.IN_PROGRESS,
+                null);
         if (activityRef != null) {
             List<NodeRef> selectedVolumes = getSelectedVolumes();
             BeanHelper.getArchivalsService().exportToUam(selectedVolumes, exportStartDate, activityRef);

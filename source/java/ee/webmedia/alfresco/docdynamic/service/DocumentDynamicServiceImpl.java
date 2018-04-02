@@ -1,17 +1,8 @@
 package ee.webmedia.alfresco.docdynamic.service;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getAdrService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentConfigService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDvkService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getMsoService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getOpenOfficeService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.*;
 import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.getDocTypeIdAndVersionNr;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.FILE_CONTENTS;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.FILE_NAMES;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_ID;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_NAME;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.PREVIOUS_OWNER_ID;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.REG_NUMBER;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.*;
 import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.getPrivsWithDependencies;
 import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.getRequiredPrivsForInprogressTask;
 import static ee.webmedia.alfresco.utils.CalendarUtil.duration;
@@ -20,36 +11,14 @@ import static ee.webmedia.alfresco.utils.DynamicTypeUtil.setTypeProps;
 import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
-import org.alfresco.service.cmr.dictionary.AspectDefinition;
-import org.alfresco.service.cmr.dictionary.AssociationDefinition;
-import org.alfresco.service.cmr.dictionary.ChildAssociationDefinition;
-import org.alfresco.service.cmr.dictionary.ClassDefinition;
-import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
-import org.alfresco.service.cmr.dictionary.DictionaryService;
-import org.alfresco.service.cmr.dictionary.PropertyDefinition;
-import org.alfresco.service.cmr.dictionary.TypeDefinition;
+import org.alfresco.service.cmr.dictionary.*;
 import org.alfresco.service.cmr.model.FileFolderService;
-import org.alfresco.service.cmr.repository.AssociationRef;
-import org.alfresco.service.cmr.repository.ChildAssociationRef;
-import org.alfresco.service.cmr.repository.ContentReader;
-import org.alfresco.service.cmr.repository.ContentService;
-import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.repository.*;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
@@ -79,13 +48,7 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
-import ee.webmedia.alfresco.docadmin.service.CaseFileType;
-import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
-import ee.webmedia.alfresco.docadmin.service.DocumentType;
-import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
-import ee.webmedia.alfresco.docadmin.service.DynamicType;
-import ee.webmedia.alfresco.docadmin.service.Field;
-import ee.webmedia.alfresco.docadmin.service.FieldGroup;
+import ee.webmedia.alfresco.docadmin.service.*;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicFieldGroupNames;
 import ee.webmedia.alfresco.docconfig.generator.SaveListener;
@@ -115,23 +78,10 @@ import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
-import ee.webmedia.alfresco.utils.FilenameUtil;
-import ee.webmedia.alfresco.utils.MessageData;
-import ee.webmedia.alfresco.utils.MessageDataImpl;
-import ee.webmedia.alfresco.utils.MessageDataWrapper;
-import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.utils.RepoUtil;
-import ee.webmedia.alfresco.utils.TextUtil;
-import ee.webmedia.alfresco.utils.TreeNode;
-import ee.webmedia.alfresco.utils.UnableToPerformException;
-import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
+import ee.webmedia.alfresco.utils.*;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
-import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
-import ee.webmedia.alfresco.workflow.service.Task;
-import ee.webmedia.alfresco.workflow.service.Workflow;
-import ee.webmedia.alfresco.workflow.service.WorkflowService;
-import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
+import ee.webmedia.alfresco.workflow.service.*;
 
 public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanFactoryAware {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentDynamicServiceImpl.class);
@@ -302,7 +252,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         DocumentDynamic doc = createNewDocumentInDrafts(documentTypeId).getFirst();
         FileFolderService fileFolderService = BeanHelper.getFileFolderService();
         for (File file : BeanHelper.getArchivalsService().getArchivalActivityFiles(archivalActivityNodeRef)) {
-            if (ActivityFileType.GENERATED_DOCX.name().equals(file.getNode().getProperties().get(FileModel.Props.ACTIVITY_FILE_TYPE))) {
+            if (ActivityFileType.GENERATED_XLSX.name().equals(file.getNode().getProperties().get(FileModel.Props.ACTIVITY_FILE_TYPE))) {
                 fileService.addFile(file.getName(), file.getDisplayName(), doc.getNodeRef(), fileFolderService.getReader(file.getNodeRef()));
             }
         }
