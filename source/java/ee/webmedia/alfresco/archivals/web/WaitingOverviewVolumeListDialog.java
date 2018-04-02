@@ -1,11 +1,6 @@
 package ee.webmedia.alfresco.archivals.web;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import javax.faces.event.ActionEvent;
 
@@ -99,7 +94,7 @@ public class WaitingOverviewVolumeListDialog extends VolumeArchiveBaseDialog {
     @Override
     public List<DialogButtonConfig> getAdditionalButtons() {
         List<DialogButtonConfig> buttons = new ArrayList<DialogButtonConfig>(2);
-        addGenerateWordFileButton(buttons);
+        addGenerateExcelFileButton(buttons);
         buttons.add(new DialogButtonConfig("volumeSetNEwReviewDateButton", null, "archivals_volume_set_new_review_date", "#{DialogManager.bean.setNewReviewDate}", "false",
                 null));
         return buttons;
@@ -107,17 +102,17 @@ public class WaitingOverviewVolumeListDialog extends VolumeArchiveBaseDialog {
 
     @Override
     public void cancelAction(ActionEvent actionEvent) {
-        setConfirmGenerateWordFile(false);
+        setConfirmGeneration(false);
     }
 
-    public void generateWordFile(ActionEvent event) {
-        setConfirmGenerateWordFile(false);
-        generateActivityAndWordFile(ActivityType.TO_REVIEW_DOC, "archivals_volume_generate_word_file_overview_template", ActivityStatus.FINISHED,
-                "archivals_volume_generate_word_file_overview_success", true);
+    public void generateExcelFile(ActionEvent event) {
+        setConfirmGeneration(false);
+        generateActivityAndExcelFile(ActivityType.TO_REVIEW_DOC, "archivals_volume_generate_word_file_overview_template", ActivityStatus.FINISHED,
+                "archivals_volume_generate_word_file_overview_success");
     }
 
     @Override
-    public String getGenerateWordFileConfirmationMessage() {
+    public String getGenerateExcelFileConfirmationMessage() {
         return MessageUtil.getMessage("archivals_volume_generate_word_file_overview_confirm");
     }
 
@@ -129,8 +124,8 @@ public class WaitingOverviewVolumeListDialog extends VolumeArchiveBaseDialog {
     }
 
     public void generateNewReviewDateActivity(Date newReviewDate) {
-        NodeRef activityRef = generateActivityAndWordFile(ActivityType.CHANGED_NEXT_REVIEW_DATE, "archivals_volume_new_review_date_template", ActivityStatus.IN_PROGRESS,
-                null, false);
+        NodeRef activityRef = generateActivityAndExcelFile(ActivityType.CHANGED_NEXT_REVIEW_DATE, "archivals_volume_new_review_date_template", ActivityStatus.IN_PROGRESS,
+                null);
         if (activityRef != null) {
             List<NodeRef> selectedVolumes = getSelectedVolumes();
             BeanHelper.getArchivalsService().setNewReviewDate(selectedVolumes, newReviewDate, activityRef);

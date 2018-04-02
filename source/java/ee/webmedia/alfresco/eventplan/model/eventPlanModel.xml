@@ -93,6 +93,9 @@
             <property name="plan:retainUntilDate">
                <type>d:date</type>
             </property>
+            <property name="plan:assessmentDecisionNote">
+               <type>d:text</type>
+            </property>
             <property name="plan:archivingNote">
                <type>d:text</type>
             </property>

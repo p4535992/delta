@@ -24,6 +24,9 @@
             <list>
                <value>teostamisel</value>
                <value>lõpetatud</value>
+               <value>ootel</value>
+               <value>peatatud restardini</value>
+               <value>peatatud (paus)</value>
             </list>
          </parameter>
       </constraint>      
@@ -69,6 +72,13 @@
                   <constraint ref="arch:activityStatus" />
                </constraints>               
             </property>
+			<property name="arch:prev_status">
+               <type>d:text</type>
+               <mandatory enforced="true">false</mandatory>
+               <constraints>
+                  <constraint ref="arch:activityStatus" />
+               </constraints>               
+            </property>
          </properties>
          <associations>
             <association name="arch:archivalActivityDocument">
@@ -81,7 +91,19 @@
                   <mandatory>false</mandatory>
                   <many>false</many>
                </target>
-            </association>         
+            </association>
+            
+			<association name="arch:ActivityLinkedJobs">
+               <source>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </source>
+               <target>
+                  <class>arch:destructingJob</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </association>
          </associations>
       </type>  
       
@@ -106,6 +128,19 @@
             <aspect>arch:archivalsResultContainer</aspect>
          </mandatory-aspects>
       </type>
+
+      <type name="arch:destructionsQueue">
+         <parent>sys:base</parent>
+		 <properties>
+			<property name="arch:destructionPaused">
+			   	<type>d:boolean</type>
+			</property>
+		 </properties>
+         <mandatory-aspects>
+            <aspect>arch:destructionsResultContainer</aspect>
+         </mandatory-aspects>
+      </type>
+
 
       <type name="arch:archivingJob">
          <parent>sys:base</parent>
@@ -147,6 +182,53 @@
             </property>
          </properties>
       </type>
+
+      <type name="arch:destructingJob">
+         <parent>sys:base</parent>
+         <properties>
+            <property name="arch:destruserName">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="arch:destructingStartTime">
+               <type>d:date</type>
+            </property>
+            <property name="arch:destructingEndTime">
+               <type>d:date</type>
+            </property>
+            <property name="arch:destructingvolumeRef">
+               <type>d:noderef</type>
+               <mandatory>true</mandatory>
+            </property>
+			<property name="arch:destructingActivityRef">
+               <type>d:noderef</type>
+               <mandatory>true</mandatory>
+            </property>
+            
+            <property name="arch:destructingJobStatus">
+               <type>d:text</type>
+            </property>
+            <property name="arch:destructionNote">
+               <type>d:text</type>
+            </property>
+            <property name="arch:destructionErrorMessage">
+               <type>d:text</type>
+            </property>
+            <property name="arch:destructionFailedNodeCount">
+               <type>d:int</type>
+            </property>
+            <property name="arch:destructionFailedDocumentsCount">
+               <type>d:int</type>
+            </property>
+            <property name="arch:totalDestructedDocumentsCount">
+               <type>d:int</type>
+            </property>
+            <property name="arch:destructedNodeCount">
+               <type>d:int</type>
+            </property>
+         </properties>
+      </type>
+
    
    </types>
    
@@ -183,6 +265,23 @@
             </child-association>
          </associations>
       </aspect>
+
+      <aspect name="arch:destructionsResultContainer">
+         <associations>
+            <child-association name="arch:destructingJob">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>arch:destructingJob</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </aspect>
+
       
    </aspects>
   

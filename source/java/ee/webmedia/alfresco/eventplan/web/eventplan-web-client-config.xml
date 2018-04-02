@@ -63,6 +63,8 @@
          <show-property name="plan:firstEventPeriod" display-label-id="eventplan_firstEventPeriod" styleClass="small" show="#{!DialogManager.bean.volumeEventPlanDialog}" />
          <show-property name="{temp}firstEventDetailedLabel" component-generator="TextAreaGenerator" styleClass="expand19-200" display-label-id="eventplan_firstEvent"
             show="#{DialogManager.bean.volumeEventPlanDialog}" read-only="true" ignore-if-missing="false" />
+         <show-property name="plan:assessmentDecisionNote" component-generator="TextAreaGenerator" styleClass="expand19-200" display-label-id="eventplan_assessmentDecisionNote"
+                        readOnlyIf="#{DialogManager.bean.volumeEventPlanDialog}" />
          <show-property name="plan:archivingNote" component-generator="TextAreaGenerator" styleClass="expand19-200" display-label-id="eventplan_archivingNote"
             readOnlyIf="#{DialogManager.bean.volumeEventPlanDialog}" />
       </property-sheet>

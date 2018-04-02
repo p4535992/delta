@@ -9,8 +9,26 @@
 
 
 <hr/>
+<f:verbatim><b><br/><br/><h:outputText styleClass="mainTitle" value="Skriptid"/></b><br/></f:verbatim>
+
+
+<f:verbatim><hr/></f:verbatim>
+<h:outputText value="ÜLETEMBELDAMINE TERA: " style="font-weight: bold;" />
 <f:verbatim>
-<b><br/><br/><h:outputText styleClass="mainTitle" value="Skriptid"/></b><br/></f:verbatim>
+    <br/>
+    <ul>
+        <li>Tembeldab üle kõik DDOC ja BDOC v1.0 failid.</li>
+    </ul>
+    <br/>
+</f:verbatim>
+<h:commandButton id="startTeraProcess" value="Käivita TERA ületembeldamise process" type="submit"
+                 actionListener="#{teraProcess.startInBackground}"
+                 rendered="#{true}" />
+
+
+<f:verbatim><hr/></f:verbatim>
+
+
 	<h:outputText value="Tööülesannete kustutamine repost. NB!!! Enne kasutamist veendu, et kõik updaterid, mis tööülesannete andmeid repost andmebaasi tabelitesse kirjutavad, on edukalt lõpuni jooksnud!!!! Vastasel korral ei saa tööülesannete andmeid enam taastada!!!"/>
 	<f:verbatim><br/></f:verbatim>
 	<h:outputText value="numberOfTasksInSingleTransaction: "/>
@@ -138,6 +156,20 @@
 <f:verbatim><br/></f:verbatim>
 <h:commandButton id="volume_archive_cancel_all" value="Tühjenda arhiveerimistööde nimekiri" type="submit" 
    actionListener="#{ArchivalsService.cancelAllArchivingJobs}" />
+
+<f:verbatim><hr/></f:verbatim>
+
+<h:commandButton id="volume_destruction_stop_all" value="Peata kõik hävitamistööd" type="submit" 
+   actionListener="#{ArchivalsService.stopDestructing}" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="volume_destruction_pause_all" value="Peata kõik hävitamistööd kuni \"Jätka\" vajutamiseni" type="submit" 
+   actionListener="#{ArchivalsService.pauseDestruction}" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="volume_destruction_continue_all" value="Jätka kõiki hävitamistöid" type="submit" 
+   actionListener="#{ArchivalsService.continueDestructing}" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="volume_destruction_cancel_all" value="Tühjenda hävitamistööde nimekiri" type="submit" 
+   actionListener="#{ArchivalsService.cancelAllDestructingJobs}" />
 
 <f:verbatim><hr/></f:verbatim>
 
@@ -620,6 +652,14 @@
 
 <h:outputText value="Dokumentide ja iseseisvate terviktöövoogude genereerimiseks paralleelsete lõimede arv: "/>
 <h:inputText value="#{TestDataService.documentAndWorkflowGeneratorThreads}" converter="javax.faces.Integer" size="4" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="Hävitamiseks valmis asjatoimikute arv: "/>
+<h:inputText value="#{TestDataService.destructionReadyDossiersCount}" converter="javax.faces.Integer" size="4" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="Dokumente igas hävitamiseks valmis asjatoimikus: "/>
+<h:inputText value="#{TestDataService.destructionReadyDossiersDocumentsCount}" converter="javax.faces.Integer" size="4" />
 <f:verbatim><br/><br/></f:verbatim>
 
    <h:commandButton id="startTestDataGenerator" value="Käivita andmete genereerimine" type="submit"
@@ -942,8 +982,9 @@
       disabled="#{postipoissImporter.importerStopping == true}" />
 
 <f:verbatim><br/><br/></f:verbatim>
-<f:verbatim><hr/></f:verbatim>
 
+
+<f:verbatim><hr/></f:verbatim>
 
 <f:verbatim><hr/></f:verbatim>
 

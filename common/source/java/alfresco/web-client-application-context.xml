@@ -276,6 +276,7 @@
       </property>
    </bean>
    
+   
    <bean id="SharepointAuthenticationHandler" class="org.alfresco.repo.management.subsystems.ChainingSubsystemProxyFactory">
       <property name="applicationContextManager">
          <ref bean="Authentication" />
@@ -321,5 +322,20 @@
       <property name="storeName" value="${system.webdav.storeName}" />
       <property name="rootPath" value="${system.webdav.rootPath}" />
    </bean>
+   
+   <!-- Import the openOfficeConnection from the third party subsystem -->
+	<bean id="openOfficeConnection" class="org.alfresco.repo.management.subsystems.SubsystemProxyFactory">
+		  <property name="sourceApplicationContextFactory">
+			 <ref bean="thirdparty" />
+		  </property>
+		  <property name="sourceBeanName">
+			 <value>openOfficeConnection</value>
+		  </property>
+		  <property name="interfaces">
+			 <list>
+				<value>net.sf.jooreports.openoffice.connection.OpenOfficeConnection</value>
+			 </list>
+		  </property>
+	</bean>
 
 </beans>

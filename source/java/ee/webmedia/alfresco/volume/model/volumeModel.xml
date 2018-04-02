@@ -90,7 +90,11 @@
             </property>
             <property name="docdyn:markedForArchiving">
                <type>d:boolean</type>
+            </property>            
+            <property name="docdyn:markedForDestructing">
+               <type>d:boolean</type>
             </property>
+            
          </properties>
          <associations>
             <association name="vol:volumeVolume">

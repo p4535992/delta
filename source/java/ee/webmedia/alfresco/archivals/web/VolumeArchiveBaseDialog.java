@@ -3,14 +3,7 @@ package ee.webmedia.alfresco.archivals.web;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getApplicationConstantsBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import javax.faces.component.UIInput;
 import javax.faces.context.FacesContext;
@@ -71,7 +64,7 @@ public abstract class VolumeArchiveBaseDialog extends BaseDialogBean {
     private List<SelectItem> nextEvents;
     public static final String EMPTY_LABEL = MessageUtil.getMessage("select_default_label");
     protected List<String> renderedFilterFields;
-    private boolean confirmGenerateWordFile;
+    private boolean confirmGeneration;
 
     protected static final ComparatorChain BASE_COMPARATOR;
 
@@ -229,26 +222,16 @@ public abstract class VolumeArchiveBaseDialog extends BaseDialogBean {
         }
     }
 
-    protected NodeRef generateActivityAndWordFile(ActivityType activityType, String templateNameMsgKey, ActivityStatus activityStatus, String successMsgKey, boolean fileRequired) {
-        return generateActivityAndWordFile(activityType, templateNameMsgKey, activityStatus, successMsgKey, fileRequired,
-                "archivals_volume_generate_word_file_error_missing_template");
-    }
-
-    protected NodeRef generateActivityAndWordFile(ActivityType activityType, String templateNameMsgKey, ActivityStatus activityStatus, String successMsgKey, boolean fileRequired,
-            String missingTemplateErrorMsgKey) {
-        String templateName = MessageUtil.getMessage(templateNameMsgKey);
-        NodeRef templateRef = BeanHelper.getDocumentTemplateService().getArchivalReportTemplateByName(templateName);
-        if (templateRef == null && fileRequired) {
-            MessageUtil.addErrorMessage(missingTemplateErrorMsgKey, templateName);
-            return null;
-        }
-        return generateActivityAndWordFile(activityType, activityStatus, successMsgKey, templateRef);
-    }
-
-    protected NodeRef generateActivityAndWordFile(ActivityType activityType, ActivityStatus activityStatus, String successMsgKey, NodeRef templateRef) {
+    protected NodeRef generateActivityAndExcelFile(ActivityType activityType, String templateCode, ActivityStatus activityStatus, String successMsgKey) {
         try {
-            NodeRef activityRef = BeanHelper.getArchivalsService().addArchivalActivity(activityType, activityStatus,
-                    getSelectedVolumes(), templateRef);
+        	NodeRef activityRef = null ;
+        	
+        	if(ActivityType.SIMPLE_DESTRUCTION.equals(activityType) || ActivityType.DESTRUCTION.equals(activityType)) {
+        		activityRef = BeanHelper.getArchivalsService().addArchivalActivityExcel(activityType, activityStatus, new ArrayList<NodeRef>(), templateCode);
+        	} else {
+        		activityRef = BeanHelper.getArchivalsService().addArchivalActivityExcel(activityType, activityStatus, getSelectedVolumes(), templateCode);
+        	}
+        	
             if (StringUtils.isNotBlank(successMsgKey)) {
                 MessageUtil.addInfoMessage(successMsgKey);
             }
@@ -418,7 +401,7 @@ public abstract class VolumeArchiveBaseDialog extends BaseDialogBean {
     // rendering conditions for dialog buttons' confirmation messages
 
     public boolean isShowConfirmationMessage() {
-        return isConfirmArchive() || isConfirmGenerateWordFile() || isConfirmMarkForTransfer() || isConfirmTransfer() || isConfirmExportToUam() || isConfirmComposeDisposalAct()
+        return isConfirmArchive() || isConfirmGeneration() || isConfirmMarkForTransfer() || isConfirmTransfer() || isConfirmExportToUam() || isConfirmComposeDisposalAct()
                 || isConfirmStartDestruction() || isConfirmStartSimpleDestruction();
     }
 
@@ -450,7 +433,7 @@ public abstract class VolumeArchiveBaseDialog extends BaseDialogBean {
         return false;
     }
 
-    public String getGenerateWordFileConfirmationMessage() {
+    public String getGenerateExcelFileConfirmationMessage() {
         return "";
     }
 
@@ -458,8 +441,8 @@ public abstract class VolumeArchiveBaseDialog extends BaseDialogBean {
         String message = "";
         if (isConfirmArchive()) {
             message = MessageUtil.getMessageAndEscapeJS("archivals_volume_archive_confirm");
-        } else if (isConfirmGenerateWordFile()) {
-            message = StringEscapeUtils.escapeJavaScript(getGenerateWordFileConfirmationMessage());
+        } else if (isConfirmGeneration()) {
+            message = StringEscapeUtils.escapeJavaScript(getGenerateExcelFileConfirmationMessage());
         } else if (isConfirmExportToUam()) {
             message = MessageUtil.getMessageAndEscapeJS("archivals_volume_export_to_uam_confirm");
         } else if (isConfirmMarkForTransfer()) {
@@ -479,7 +462,7 @@ public abstract class VolumeArchiveBaseDialog extends BaseDialogBean {
     public String getConfirmationLinkId() {
         if (isConfirmArchive()) {
             return "volume-archive-after-confirmation-accepted-link";
-        } else if (isConfirmGenerateWordFile()) {
+        } else if (isConfirmGeneration()) {
             return "volume-generate-word-file-after-confirmation-accepted-link";
         } else if (isConfirmMarkForTransfer()) {
             return "volume-mark-for-transfer-after-confirmation-accepted-link";
@@ -498,16 +481,16 @@ public abstract class VolumeArchiveBaseDialog extends BaseDialogBean {
     }
 
     public void cancelAction(ActionEvent actionEvent) {
-        setConfirmGenerateWordFile(false);
+        setConfirmGeneration(false);
     }
 
-    public boolean isConfirmGenerateWordFile() {
-        return confirmGenerateWordFile;
+    public boolean isConfirmGeneration() {
+        return confirmGeneration;
     }
 
-    public void generateWordFileConfirm() {
+    public void generateExcelFileConfirm() {
         if (checkVolumesSelected()) {
-            setConfirmGenerateWordFile(true);
+            setConfirmGeneration(true);
         }
     }
 
@@ -521,12 +504,12 @@ public abstract class VolumeArchiveBaseDialog extends BaseDialogBean {
         return volumesToArchive;
     }
 
-    protected void setConfirmGenerateWordFile(boolean confirmGenerateWordFile) {
-        this.confirmGenerateWordFile = confirmGenerateWordFile;
+    protected void setConfirmGeneration(boolean confirmGeneration) {
+        this.confirmGeneration = confirmGeneration;
     }
 
-    protected void addGenerateWordFileButton(List<DialogButtonConfig> buttons) {
-        buttons.add(new DialogButtonConfig("volumeGenerateWordFileButton", null, "archivals_volume_generate_word_file", "#{DialogManager.bean.generateWordFileConfirm}", "false",
+    protected void addGenerateExcelFileButton(List<DialogButtonConfig> buttons) {
+        buttons.add(new DialogButtonConfig("volumeGenerateWordFileButton", null, "archivals_volume_generate_file", "#{DialogManager.bean.generateExcelFileConfirm}", "false",
                 null));
     }
 

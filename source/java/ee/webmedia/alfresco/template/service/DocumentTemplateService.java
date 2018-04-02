@@ -133,8 +133,8 @@ public interface DocumentTemplateService {
 
     NodeRef getArchivalReportTemplateByName(String templateName);
 
-    void populateVolumeArchiveTemplate(NodeRef parentRef, List<NodeRef> volumeRefs, NodeRef templateRef, String executingUser);
-
+    void generateExcel(NodeRef parentRef, List<NodeRef> volumeRefs, String templateName);
+    void updateExcel(NodeRef parentRef, NodeRef volumeRef) throws Exception;
     List<UnmodifiableDocumentTemplate> getUnmodifiableTemplates();
 
     void removeTemplateFromCache(NodeRef templateRef);

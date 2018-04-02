@@ -4,21 +4,13 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getConstantNodeRefsBean
 import static org.apache.commons.io.FilenameUtils.getExtension;
 import static org.apache.commons.lang.StringUtils.equalsIgnoreCase;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -35,15 +27,11 @@ import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.model.FileNotFoundException;
-import org.alfresco.service.cmr.repository.ChildAssociationRef;
-import org.alfresco.service.cmr.repository.ContentReader;
-import org.alfresco.service.cmr.repository.ContentWriter;
-import org.alfresco.service.cmr.repository.MimetypeService;
-import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.repository.*;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.Pair;
+import org.alfresco.util.TempFileProvider;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
@@ -51,6 +39,7 @@ import org.apache.commons.lang.time.FastDateFormat;
 import org.springframework.util.Assert;
 import org.springframework.web.context.ServletContextAware;
 
+import ee.webmedia.alfresco.archivals.ArchivalReportGenerator;
 import ee.webmedia.alfresco.archivals.model.ActivityFileType;
 import ee.webmedia.alfresco.base.BaseObject;
 import ee.webmedia.alfresco.casefile.model.CaseFileModel;
@@ -92,14 +81,8 @@ import ee.webmedia.alfresco.template.model.ProcessedEmailTemplate;
 import ee.webmedia.alfresco.template.model.UnmodifiableDocumentTemplate;
 import ee.webmedia.alfresco.template.web.AddDocumentTemplateDialog;
 import ee.webmedia.alfresco.user.service.UserService;
-import ee.webmedia.alfresco.utils.FilenameUtil;
-import ee.webmedia.alfresco.utils.ISOLatin1Util;
-import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.utils.RepoUtil;
-import ee.webmedia.alfresco.utils.TextUtil;
-import ee.webmedia.alfresco.utils.UnableToPerformException;
+import ee.webmedia.alfresco.utils.*;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
-import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
 import ee.webmedia.alfresco.versions.service.VersionsService;
 import ee.webmedia.alfresco.volume.model.UnmodifiableVolume;
@@ -380,24 +363,9 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         return displayName;
     }
 
-    @Override
-    public void populateVolumeArchiveTemplate(NodeRef parentRef, List<NodeRef> volumeRefs, NodeRef templateRef, String executingUser) {
-        if (!msoService.isAvailable()) {
-            throw new UnableToPerformException("document_errorMsg_template_processsing_failed_service_missing");
-        }
-        // it is assumed that template name is fixed by application and thus it is not needed to check not allowed characters, length etc in filename
-        String templateFilename = (String) nodeService.getProperty(templateRef, ContentModel.PROP_NAME);
-        String filenameWithoutExtension = FilenameUtils.removeExtension(templateFilename);
-        templateFilename = filenameWithoutExtension + " " + FastDateFormat.getInstance("yyyyMMdd").format(new Date()) + ".docx";
-        NodeRef generatedFile = fileFolderService.create(parentRef, templateFilename, ContentModel.TYPE_CONTENT).getNodeRef();
-        replaceArchiveTemplateFormulas(volumeRefs, templateRef, generatedFile, templateFilename, executingUser);
-        nodeService.setProperty(generatedFile, FileModel.Props.ACTIVITY_FILE_TYPE, ActivityFileType.GENERATED_DOCX.name());
-    }
-
     private interface FormulasProvider {
         Map<String, String> getFormulas();
     }
-
     private void replaceDocumentFormulas(final NodeRef documentRef, NodeRef templateRef, NodeRef destinationFile, String templateFilename, boolean finalize,
             boolean dontSaveIfUnmodified) {
         FormulasProvider formulasCb = new FormulasProvider() {
@@ -409,14 +377,82 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         replaceFormulas(templateRef, destinationFile, templateFilename, finalize, dontSaveIfUnmodified, formulasCb);
     }
 
-    private void replaceArchiveTemplateFormulas(final List<NodeRef> volumeRefs, NodeRef templateRef, NodeRef destinationFile, String templateFilename, final String executingUser) {
-        FormulasProvider formulasCb = new FormulasProvider() {
-            @Override
-            public Map<String, String> getFormulas() {
-                return getArchiveFormulas(volumeRefs, executingUser);
+    public void updateExcel(NodeRef parentRef, NodeRef volumeRef) throws Exception{
+    	
+    	OutputStream outStream = null;
+    	try {
+    	List <NodeRef> volumes = new ArrayList<NodeRef>();
+    	volumes.add(volumeRef);
+    	
+        List<FileInfo> files = (List<FileInfo>)fileFolderService.listFiles(parentRef); 
+        String name = files.get(0).getName();
+        
+        ContentReader documentReader = fileFolderService.getReader(files.get(0).getNodeRef());
+        
+        InputStream initialStream = documentReader.getContentInputStream();
+        
+        File tempFile = TempFileProvider.createTempFile(name, "");
+        
+        byte[] buffer = new byte[initialStream.available()];
+        initialStream.read(buffer);
+        
+        outStream = new FileOutputStream(tempFile);
+        outStream.write(buffer);
+        
+    	ContentWriter documentWriter = fileFolderService.getWriter(files.get(0).getNodeRef(), true);
+        File newFile = ArchivalReportGenerator.update(tempFile, volumes);
+        documentWriter.setMimetype(MimetypeMap.MIMETYPE_EXCEL);
+        documentWriter.setEncoding("UTF-8");
+        documentWriter.putContent(newFile);
+        nodeService.setProperty(files.get(0).getNodeRef(), ContentModel.PROP_CONTENT, documentWriter.getContentData());
+        
+        if (tempFile.exists()) {
+        	tempFile.delete();
+        }
+
+        if (newFile.exists()) {
+        	newFile.delete();
+        }
+        
+        nodeService.setProperty(files.get(0).getNodeRef(), ContentModel.PROP_CONTENT, documentWriter.getContentData());
+        
+    	}catch(Exception e) {
+    		
+    		if(outStream != null)
+    			outStream.close();
+    		
+    		log.error("Exception : " + e.toString());
+    		throw new UnableToPerformException(MessageSeverity.ERROR, "templates_excel_file_renew_error", e);
+    	} finally {
+    		if (outStream != null)
+    			outStream.close();
+    	}
+    	
+    }
+    
+    @Override
+    public void generateExcel(NodeRef parentRef, List<NodeRef> volumeRefs, String templateName) {
+        String filenameWithoutExtension = FilenameUtils.removeExtension(templateName);
+        String fileName = filenameWithoutExtension + " " + FastDateFormat.getInstance("yyyyMMdd").format(new Date()) + ".xlsx";
+        NodeRef destinationFile = fileFolderService.create(parentRef, fileName, ContentModel.TYPE_CONTENT).getNodeRef();
+        generateExcel(volumeRefs, destinationFile, fileName);
+        nodeService.setProperty(destinationFile, FileModel.Props.ACTIVITY_FILE_TYPE, ActivityFileType.GENERATED_XLSX.name());
+    }
+
+    private void generateExcel(final List<NodeRef> volumeRefs, NodeRef destinationFile, String fileName) {
+        ContentWriter documentWriter = fileFolderService.getWriter(destinationFile, true);
+        try {
+            File excel = ArchivalReportGenerator.generate(fileName, volumeRefs);
+            documentWriter.setMimetype(MimetypeMap.MIMETYPE_EXCEL);
+            documentWriter.setEncoding("UTF-8");
+            documentWriter.putContent(excel);
+            nodeService.setProperty(destinationFile, ContentModel.PROP_CONTENT, documentWriter.getContentData());
+            if (excel.exists()) {
+                excel.delete();
             }
-        };
-        replaceFormulas(templateRef, destinationFile, templateFilename, true, false, formulasCb);
+        } catch (Exception e) {
+            throw new UnableToPerformException(MessageSeverity.ERROR, "template_replace_formulas_failed", e);
+        }
     }
 
     private void replaceFormulas(NodeRef sourceFile, NodeRef destinationFile, String sourceFileName, boolean finalize, boolean dontSaveIfUnmodified, FormulasProvider provider) {

@@ -48,6 +48,7 @@ public interface VolumeModel {
         QName COMMENT = QName.createQName(URI, "comment");
         QName ORIGINAL_VOLUME = QName.createQName(URI, "originalVolume");
         QName MARKED_FOR_ARCHIVING = QName.createQName(URI, "markedForArchiving");
+        QName MARKED_FOR_DESTRUCTING = QName.createQName(URI, "markedForDestructing");
         QName DELETION_TYPE = QName.createQName(URI, "deletionType");
 
         QName VOL_SHORT_REG_NUMBER = QName.createQName(URI, "volShortRegNumber");

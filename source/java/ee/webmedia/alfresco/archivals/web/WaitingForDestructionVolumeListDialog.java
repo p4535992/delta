@@ -1,12 +1,6 @@
 package ee.webmedia.alfresco.archivals.web;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import javax.faces.event.ActionEvent;
 
@@ -24,7 +18,8 @@ import ee.webmedia.alfresco.archivals.model.ActivityStatus;
 import ee.webmedia.alfresco.archivals.model.ActivityType;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.eventplan.model.FirstEvent;
-import ee.webmedia.alfresco.privilege.model.Privilege;
+import ee.webmedia.alfresco.parameters.model.Parameters;
+import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.utils.ComparableTransformer;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
@@ -56,6 +51,20 @@ public class WaitingForDestructionVolumeListDialog extends VolumeArchiveBaseDial
     protected void initFilterItems() {
         super.initFilterItems();
         getFilter().getAspects().add(VolumeSearchModel.Aspects.PLANNED_DESTRUCTION);
+        checkDestructionParametersEmpty();
+    }
+        
+    protected void checkDestructionParametersEmpty() {
+    	ParametersService parametersService = BeanHelper.getParametersService();
+    	
+	    String beginTimeStr = StringUtils.deleteWhitespace(parametersService.getStringParameter(Parameters.DESTRUCTION_BEGIN_TIME));
+	    String endTimeStr = StringUtils.deleteWhitespace(parametersService.getStringParameter(Parameters.DESTRUCTION_END_TIME));
+	    String overweekendTimeStr = StringUtils.deleteWhitespace(parametersService.getStringParameter(Parameters.CONTINUE_DESTRUCTION_OVER_WEEKEND));
+    	
+	    if (StringUtils.isBlank(beginTimeStr) || StringUtils.isBlank(endTimeStr) || StringUtils.isBlank(overweekendTimeStr)) {
+	    	MessageUtil.addErrorMessage("archivals_volume_start_destruction_error_destruction_parameters_are_empty");
+	    	return;
+	    }
     }
 
     @Override
@@ -149,8 +158,8 @@ public class WaitingForDestructionVolumeListDialog extends VolumeArchiveBaseDial
 
     public void composeDisposalAct(ActionEvent event) {
         confirmComposeDisposalAct = false;
-        NodeRef activityRef = generateActivityAndWordFile(ActivityType.DISPOSAL_ACT_DOC, "archivals_volume_compose_disposal_act_template", ActivityStatus.IN_PROGRESS,
-                null, true, "archivals_volume_compose_disposal_act_error_no_template");
+        NodeRef activityRef = generateActivityAndExcelFile(ActivityType.DISPOSAL_ACT_DOC,
+                "archivals_volume_compose_disposal_act_template", ActivityStatus.IN_PROGRESS, null);
         if (activityRef != null) {
             BeanHelper.getArchivalsService().setDisposalActCreated(getSelectedVolumes(), activityRef);
             MessageUtil.addInfoMessage("archivals_volume_compose_disposal_act_success");
@@ -170,33 +179,33 @@ public class WaitingForDestructionVolumeListDialog extends VolumeArchiveBaseDial
 
     public void startDestruction(ActionEvent event) {
         confirmStartDestruction = false;
-        disposeVolumes("archivals_volume_start_destruction_template", "archivals_volume_start_destruction_error_no_template", ActivityType.DESTRUCTION,
-                "archivals_volume_destruction_with_disposition_act", "archivals_volume_start_destruction_success", "applog_archivals_volume_disposed");
+        disposeVolumes("archivals_volume_start_destruction_template", ActivityType.DESTRUCTION,
+                "archivals_volume_start_destruction_success");
     }
 
-    private void disposeVolumes(final String template, final String missingTemplateErrorMsgKey, final ActivityType activityType, final String docCommentMsgKey,
-            final String successMsgKey, final String logMessageKey) {
+    private void disposeVolumes(final String template, final ActivityType activityType, final String successMsgKey) {
         BeanHelper.getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
 
             @Override
-            public Void execute() throws Throwable {
-                Date destructionStartDate = new Date();
-                String templateName = MessageUtil.getMessage(template);
-                NodeRef templateRef = BeanHelper.getDocumentTemplateService().getArchivalReportTemplateByName(templateName);
-                if (templateRef == null) {
-                    MessageUtil.addErrorMessage(missingTemplateErrorMsgKey, templateName);
-                    return null;
-                }
+            public Void execute() {
                 List<NodeRef> selectedVolumes = getSelectedVolumes();
                 if (!validateVolumesForDisposal(selectedVolumes, false)) {
                     return null;
                 }
-                NodeRef activityRef = generateActivityAndWordFile(activityType, ActivityStatus.IN_PROGRESS, null, null);
+                
+                NodeRef activityRef = generateActivityAndExcelFile(activityType, template, ActivityStatus.WAITING, null);
+                
                 if (activityRef != null) {
-                    BeanHelper.getArchivalsService().disposeVolumes(selectedVolumes, destructionStartDate, MessageUtil.getMessage(docCommentMsgKey),
-                            activityRef, templateRef, MessageUtil.getMessage(logMessageKey));
-                    MessageUtil.addInfoMessage(successMsgKey, selectedVolumes.size());
+	                for (NodeRef volumeRef : selectedVolumes) {
+	                	BeanHelper.getArchivalsService().addVolumeOrCaseToDestructingList(volumeRef, activityRef);
+	                }
+                } else {
+                	// warn user about failure!
+                	return null;
                 }
+                
+                MessageUtil.addInfoMessage(successMsgKey, selectedVolumes.size(), BeanHelper.getArchivalsService().getNonFinishedDestructionActivities());
+ 
                 return null;
             }
         });
@@ -207,6 +216,12 @@ public class WaitingForDestructionVolumeListDialog extends VolumeArchiveBaseDial
         Map<Long, QName> propertyTypes = new HashMap<Long, QName>();
         for (NodeRef volumeRef : selectedVolumes) {
             Volume volume = volumeService.getVolumeByNodeRef(volumeRef, propertyTypes);
+            
+            if(volume.isMarkedForDestruction()) {
+            	MessageUtil.addErrorMessage("archivals_volume_start_destruction_error_already_in_destruction_queue");
+            	return false;
+            }
+            
             if (!(volume.isAppraised() && StringUtils.isNotBlank(volume.getArchivingNote()))) {
                 MessageUtil.addErrorMessage("archivals_volume_start_destruction_error_no_appraise_or_arch_note");
                 return false;
@@ -215,14 +230,23 @@ public class WaitingForDestructionVolumeListDialog extends VolumeArchiveBaseDial
                 MessageUtil.addErrorMessage("archivals_volume_start_destruction_error_no_disposal_act");
                 return false;
             }
-            String nextEventStr = volume.getNextEvent();
-            FirstEvent nextEvent = StringUtils.isNotBlank(nextEventStr) ? FirstEvent.valueOf(nextEventStr) : null;
-            boolean notSimpleDestructionEvent = FirstEvent.SIMPLE_DESTRUCTION != nextEvent;
-            if ((FirstEvent.DESTRUCTION != nextEvent && notSimpleDestructionEvent)
-                    || (simpleDestruction && notSimpleDestructionEvent)) {
-                MessageUtil.addErrorMessage(simpleDestruction ? "archivals_volume_start_simple_destruction_error_wrong_next_event"
-                        : "archivals_volume_start_destruction_error_wrong_next_event");
-                return false;
+                        
+            if(volume.isRetainPermanent()==false && volume.isHasArchivalValue()==false) {
+            	
+            	Date retainUntil = volume.getRetainUntilDate();
+            	if( retainUntil != null && new Date().before(retainUntil)) {
+            		MessageUtil.addErrorMessage("archivals_volume_start_destruction_error_retention_not_expired_yet");
+            		return false;
+            	}
+            
+	            String nextEventStr = volume.getNextEvent();
+	            FirstEvent nextEvent = StringUtils.isNotBlank(nextEventStr) ? FirstEvent.valueOf(nextEventStr) : null;
+	            boolean notSimpleDestructionEvent = FirstEvent.SIMPLE_DESTRUCTION != nextEvent;
+	            if ((FirstEvent.DESTRUCTION != nextEvent && notSimpleDestructionEvent)
+	                    || (simpleDestruction && notSimpleDestructionEvent)) {
+	                MessageUtil.addErrorMessage("archivals_volume_start_destruction_error_wrong_next_event");
+	                return false;
+	            }
             }
         }
         return true;
@@ -241,8 +265,8 @@ public class WaitingForDestructionVolumeListDialog extends VolumeArchiveBaseDial
 
     public void startSimpleDestruction(ActionEvent event) {
         confirmStartSimpleDestruction = false;
-        disposeVolumes("archivals_volume_start_simple_destruction_template", "archivals_volume_start_simple_destruction_error_no_template", ActivityType.SIMPLE_DESTRUCTION,
-                "archivals_volume_destruction_without_disposition_act", "archivals_volume_start_simple_destruction_success", "applog_archivals_volume_simple_disposed");
+        disposeVolumes("archivals_volume_start_simple_destruction_template", ActivityType.SIMPLE_DESTRUCTION,
+                "archivals_volume_start_simple_destruction_success");
     }
 
     @Override

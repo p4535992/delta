@@ -131,9 +131,15 @@ public enum Parameters {
     MOVE_TO_ARCHIVE_LIST_DEFAULT_MONTHS("moveToArchiveListDefaultMonths"),
     ARCHIVAL_ACTIVITY_DOC_TYPE_ID("archivalActivityDocTypeId"),
     ACCESS_RESTRICTION_END_DATE_NOTIFICATION_MAX_DOCUMENTS("accessRestrictionEndDateNotificationMaxDocuments"),
+    
     ARCHIVING_BEGIN_TIME("archivingBeginTime"),
     ARCHIVING_END_TIME("archivingEndTime"),
     CONTINUE_ARCIVING_OVER_WEEKEND("continueArchivingOverWeekend"),
+    
+    DESTRUCTION_BEGIN_TIME("destructionBeginTime"),
+    DESTRUCTION_END_TIME("destructionEndTime"),
+    CONTINUE_DESTRUCTION_OVER_WEEKEND("continueDestructionOverWeekend"),
+    
     DIGIDOC_FILE_FORMAT("digidocFileFormat"),
 	ALLOW_CLOSE_FOR_ARCIVED_VOLUMES("allowCloseForArchivedVolumes"),
 	ONE_MULTISTEP_WORKFLOW_ALLOWED("oneMultistepWorkflowAllowed");

@@ -11,20 +11,12 @@ import java.security.MessageDigest;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.jlan.server.filesys.FileInfo;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
@@ -35,15 +27,10 @@ import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.model.FileFolderService;
-import org.alfresco.service.cmr.repository.AssociationRef;
-import org.alfresco.service.cmr.repository.ChildAssociationRef;
-import org.alfresco.service.cmr.repository.ContentService;
-import org.alfresco.service.cmr.repository.ContentWriter;
-import org.alfresco.service.cmr.repository.CopyService;
-import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.repository.*;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.service.namespace.QNamePattern;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.util.Pair;
@@ -61,11 +48,7 @@ import com.ociweb.xml.Version;
 import com.ociweb.xml.WAX;
 
 import ee.webmedia.alfresco.adr.service.AdrService;
-import ee.webmedia.alfresco.archivals.model.ActivityFileType;
-import ee.webmedia.alfresco.archivals.model.ActivityStatus;
-import ee.webmedia.alfresco.archivals.model.ActivityType;
-import ee.webmedia.alfresco.archivals.model.ArchivalsModel;
-import ee.webmedia.alfresco.archivals.model.ArchiveJobStatus;
+import ee.webmedia.alfresco.archivals.model.*;
 import ee.webmedia.alfresco.archivals.web.ArchivalActivity;
 import ee.webmedia.alfresco.base.BaseObject;
 import ee.webmedia.alfresco.base.BaseObject.ChildrenList;
@@ -78,6 +61,8 @@ import ee.webmedia.alfresco.common.service.BulkLoadNodeService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.destruction.model.DestructionJobStatus;
+import ee.webmedia.alfresco.destruction.model.DestructionModel;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicFieldGroupNames;
@@ -104,6 +89,7 @@ import ee.webmedia.alfresco.log.model.LogFilter;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
+import ee.webmedia.alfresco.parameters.model.ParametersModel.Repo;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.series.model.Series;
@@ -150,8 +136,16 @@ public class ArchivalsServiceImpl implements ArchivalsService {
     private ParametersService parametersService;
     private BulkLoadNodeService bulkLoadNodeService;
 
+    private final AtomicBoolean progressTrigger = new AtomicBoolean(false);
+    
+    private final AtomicBoolean archivingInProgress = new  AtomicBoolean(false);
     private final AtomicBoolean archivingPaused = new AtomicBoolean(false);
     private final AtomicBoolean archivingContinuedManually = new AtomicBoolean(false);
+
+    private final AtomicBoolean destructingInProgress = new  AtomicBoolean(false);
+    private final AtomicBoolean destructingPaused = new AtomicBoolean(false);
+    private final AtomicBoolean destructingContinuedManually = new AtomicBoolean(false);
+
     private boolean simpleDestructionEnabled;
 
     private static final FastDateFormat DATE_FORMAT = FastDateFormat.getInstance("yyyy-MM-dd");
@@ -160,6 +154,16 @@ public class ArchivalsServiceImpl implements ArchivalsService {
 
     private static final Set<QName> CWF_PROPS_TO_LOAD = new HashSet<>(Arrays.asList(WorkflowCommonModel.Props.TYPE, WorkflowCommonModel.Props.MAIN_DOCUMENT));
 
+    public void init() {
+    	Boolean paused = (Boolean) nodeService.getProperty(getDestructionsSpaceRef(), DestructionModel.Props.DESTRUCTION_PAUSED);	   
+    	if (paused != null && Boolean.TRUE.equals(paused)) {
+    		destructingPaused.set(true);
+    	}
+    	else {
+    		restorePausedStoppedActivitiesStatus();
+    	}
+    }
+    
     @Override
     public void exportToUam(final List<NodeRef> volumes, final Date exportStartDate, final NodeRef activityRef) {
         generalService.runOnBackground(new RunAsWork<Void>() {
@@ -741,6 +745,10 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         getVolumeService().saveOrUpdate(volume);
     }
 
+    private void setDestructingProperty(NodeRef volumeRef, Boolean value) {
+         nodeService.setProperty(volumeRef, EventPlanModel.Props.MARKED_FOR_DESTRUCTION, value); 
+    }
+    
     @Override
     public List<NodeRef> getAllInQueueJobs() {
         List<NodeRef> volumeRefs = new ArrayList<NodeRef>();
@@ -1352,30 +1360,45 @@ public class ArchivalsServiceImpl implements ArchivalsService {
     }
 
     @Override
-    public void disposeVolumes(final List<NodeRef> volumes, final Date destructionStartDate, final String docDeletingComment, final NodeRef activityRef, final NodeRef templateRef,
-            final String logMessage) {
-        final String executingUser = AuthenticationUtil.getFullyAuthenticatedUser();
-        BeanHelper.getGeneralService().runOnBackground(new RunAsWork<Void>() {
-            @Override
-            public Void doWork() throws Exception {
-                disposeVolumes(volumes, destructionStartDate, docDeletingComment, logMessage, executingUser);
-                BeanHelper.getDocumentTemplateService().populateVolumeArchiveTemplate(activityRef, volumes, templateRef, executingUser);
-                setActivityStatusFinished(activityRef);
-                return null;
-            }
-
-        }, "volumeDispose", true);
+    public boolean disposeVolumes(final List<NodeRef> volumes, final Date destructionStartDate, final NodeRef activityRef, final NodeRef templateRef, final String logMessage) {
+    	
+    	ArchivalActivity activity = getArchivalActivity(activityRef);
+        //final String executingUser = AuthenticationUtil.getFullyAuthenticatedUser();
+    	//final String executingUser = activity.getCreatorName();
+    	final String executingUser = activity.getCreatorId();	
+    	
+        if (!ActivityStatus.IN_PROGRESS.getValue().equals(nodeService.getProperty(activityRef, ArchivalsModel.Props.STATUS))) {
+        	nodeService.setProperty(activityRef, ArchivalsModel.Props.STATUS, ActivityStatus.IN_PROGRESS.getValue());
+        }
+        
+        String disposeSuccessMessage = null;
+        String docDeletingComment = null;
+        if (ActivityType.SIMPLE_DESTRUCTION.name().equals(nodeService.getProperty(activityRef, ArchivalsModel.Props.ACTIVITY_TYPE))) {
+        	disposeSuccessMessage = "applog_archivals_volume_simple_disposed";
+        	docDeletingComment = "archivals_volume_destruction_without_disposition_act";
+        }
+        else {
+        	disposeSuccessMessage = "applog_archivals_volume_disposed";
+        	docDeletingComment = "archivals_volume_destruction_with_disposition_act";
+        }
+        
+		return disposeVolumes(volumes, destructionStartDate, docDeletingComment, disposeSuccessMessage, executingUser);
     }
-
-    private void disposeVolumes(List<NodeRef> volumesToDestroy, final Date disposalDate, final String docDeletingComment, final String logMessage, String executingUser) {
+    
+    private boolean disposeVolumes(List<NodeRef> volumesToDestroy, final Date disposalDate, final String docDeletingComment, final String logMessage, String executingUser) {
         RetryingTransactionHelper retryingTransactionHelper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
         final Map<Long, QName> propertyTypes = new HashMap<Long, QName>();
         for (final NodeRef volumeNodeRef : volumesToDestroy) {
             // remove all childs
-            deleteDocuments(docDeletingComment, retryingTransactionHelper, volumeNodeRef, executingUser, true);
+            if (deleteDocuments(docDeletingComment, retryingTransactionHelper, volumeNodeRef, executingUser, true) == false) {
+            	return false;
+            }
 
             for (NodeRef casRef : BeanHelper.getCaseService().getCaseRefsByVolume(volumeNodeRef)) {
-                deleteDocuments(docDeletingComment, retryingTransactionHelper, casRef, executingUser, true);
+               if (deleteDocuments(docDeletingComment, retryingTransactionHelper, casRef, executingUser, true) == false) {
+            	   return false;
+               }
+            	   
             }
 
             retryingTransactionHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
@@ -1392,18 +1415,49 @@ public class ArchivalsServiceImpl implements ArchivalsService {
                     }
                     nodeService.addProperties(volumeNodeRef, props);
                     volumeService.removeFromCache(volumeNodeRef);
-                    logService.addLogEntry(LogEntry.create(isCaseFile(volumeNodeRef) ? LogObject.CASE_FILE : LogObject.VOLUME, userService, volumeNodeRef, logMessage));
+                    logDestructionRelatedEvent(volumeNodeRef, logMessage);
                     return null;
                 }
 
             }, false, true);
         }
-
+        
+        return true;
     }
 
-    private void deleteDocuments(final String docDeletingComment, RetryingTransactionHelper retryingTransactionHelper, final NodeRef volumeNodeRef, final String executingUser, final boolean isDisposeVolume) {
-        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(volumeNodeRef);
+    private boolean deleteDocuments(final String docDeletingComment, RetryingTransactionHelper retryingTransactionHelper, final NodeRef volumeNodeRef, final String executingUser, final boolean isDisposeVolume) {
+//        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(volumeNodeRef, Collections.singleton(DocumentCommonModel.Types.DOCUMENT));
+    	List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(volumeNodeRef, new QNamePattern() {
+            @Override
+            public boolean isMatch(QName qname) {
+            	if (VolumeModel.Associations.DELETED_DOCUMENT.equals(qname)) {            	
+            		return false;
+            	}
+            	else {
+            		return true;
+            	}
+          
+            }
+        }, new QNamePattern() {
+            @Override
+            public boolean isMatch(QName qname) {
+            	if (VolumeModel.Associations.DELETED_DOCUMENT.equals(qname)) {            	
+            		return false;
+            	}
+            	else {
+            		return true;
+            	}
+            }
+        }); //QNamePattern.MATCH_ALL.);
         for (ChildAssociationRef childAssoc : childAssocs) {
+        	
+        	// put a check what validates what we are able to continue .
+        	if (isDestructionPaused() || isDestructionAllowed() == false) {
+        		LOG.info("Document destruction is not allowed or paused.");
+        		return false;
+        	}
+        	
+        	
             final NodeRef nodeRef = childAssoc.getChildRef();
             retryingTransactionHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
 
@@ -1425,6 +1479,8 @@ public class ArchivalsServiceImpl implements ArchivalsService {
 
             }, false, true);
         }
+        
+        return true;
     }
 
     private boolean isInvalidNode(NodeRef nodeRef) {
@@ -1437,27 +1493,26 @@ public class ArchivalsServiceImpl implements ArchivalsService {
     }
 
     @Override
-    public NodeRef addArchivalActivity(ActivityType activityType, ActivityStatus activityStatus) {
-        return addArchivalActivity(activityType, activityStatus, null, null);
+    public NodeRef addArchivalActivityExcel(ActivityType activityType, ActivityStatus activityStatus, List<NodeRef> volumeRefs, String templateCode) {
+        NodeRef activityRef = createActivityReference(activityType, activityStatus);
+        String templateName = MessageUtil.getMessage(templateCode);
+        documentTemplateService.generateExcel(activityRef, volumeRefs, templateName);
+        BeanHelper.getPrivilegeService().setPermissions(activityRef, "GROUP_ARCHIVISTS", Privilege.VIEW_DOCUMENT_FILES);
+        return activityRef;
     }
 
-    @Override
-    public NodeRef addArchivalActivity(ActivityType activityType, ActivityStatus activityStatus, List<NodeRef> volumeRefs, NodeRef templateRef) {
-        Map<QName, Serializable> properties = new HashMap<QName, Serializable>();
+    public NodeRef createActivityReference(ActivityType activityType, ActivityStatus activityStatus) {
+        Map<QName, Serializable> properties = new HashMap<>();
         properties.put(ArchivalsModel.Props.ACTIVITY_TYPE, activityType.name());
         properties.put(ArchivalsModel.Props.STATUS, activityStatus.getValue());
         properties.put(ArchivalsModel.Props.CREATED, new Date());
         String username = AuthenticationUtil.getRunAsUser();
         properties.put(ArchivalsModel.Props.CREATOR_ID, username);
         properties.put(ArchivalsModel.Props.CREATOR_NAME, BeanHelper.getUserService().getUserFullName(username));
-        ChildAssociationRef childAssoc = nodeService.createNode(getArchivalActivitiesRoot(), ArchivalsModel.Assocs.ARCHIVAL_ACTIVITY, ArchivalsModel.Assocs.ARCHIVAL_ACTIVITY,
+        ChildAssociationRef childAssoc = nodeService.createNode(getArchivalActivitiesRoot(),
+                ArchivalsModel.Assocs.ARCHIVAL_ACTIVITY, ArchivalsModel.Assocs.ARCHIVAL_ACTIVITY,
                 ArchivalsModel.Types.ARCHIVAL_ACTIVITY, properties);
-        NodeRef activityRef = childAssoc.getChildRef();
-        if (templateRef != null) {
-            documentTemplateService.populateVolumeArchiveTemplate(activityRef, volumeRefs, templateRef, username);
-        }
-        BeanHelper.getPrivilegeService().setPermissions(activityRef, "GROUP_ARCHIVISTS", Privilege.VIEW_DOCUMENT_FILES);
-        return activityRef;
+        return childAssoc.getChildRef();
     }
 
     @Override
@@ -1714,4 +1769,448 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         }
     }
 
+    // Destruction functions. 
+    
+	@Override
+	public boolean isDestructionPaused() {
+		return destructingPaused.get();
+	}
+
+	@Override
+	public void pauseDestruction(ActionEvent event) {
+        LOG.info("Volume desructing was paused");
+		destructingPaused.set(true);
+		destructingContinuedManually.set(false);
+		
+		nodeService.setProperty(getDestructionsSpaceRef(), DestructionModel.Props.DESTRUCTION_PAUSED, Boolean.TRUE);
+		// pause all wait and in-progress activities until resume.
+		setAllIncompleteActivitiesStatus(ActivityStatus.PAUSED);
+	}
+
+	@Override
+	public boolean isDestructionAllowed() {
+		return isDestructingAllowed(new SimpleDateFormat("HH:mm"));
+	}
+	
+    private boolean isDestructingAllowed(SimpleDateFormat dateFormat) {
+	    boolean allowedNow = isDestructingAllowedAtThisTime(dateFormat);
+	
+	    if (allowedNow) {
+	        resetDestructionManualActions();
+	        return true;
+	    }
+	
+	    if (!allowedNow && isDestructingContinuedManually()) {
+	        return true;
+	    }
+	
+	    return allowedNow;
+	}
+
+	private boolean isDestructingContinuedManually() {
+		return destructingContinuedManually.get();
+	}
+
+	@Override
+	public void resetDestructionManualActions() {
+		destructingContinuedManually.set(false);
+	}
+
+	private boolean isDestructingAllowedAtThisTime(SimpleDateFormat dateFormat) {
+        DateTime now = new DateTime();
+        
+        if (Boolean.valueOf(parametersService.getStringParameter(Parameters.CONTINUE_DESTRUCTION_OVER_WEEKEND))) {
+            int weekDay = now.getDayOfWeek();
+            if (DateTimeConstants.SATURDAY == weekDay || DateTimeConstants.SUNDAY == weekDay) {
+                return true;
+            }
+        }
+        
+        String beginTimeStr = StringUtils.deleteWhitespace(parametersService.getStringParameter(Parameters.DESTRUCTION_BEGIN_TIME));
+        String endTimeStr = StringUtils.deleteWhitespace(parametersService.getStringParameter(Parameters.DESTRUCTION_END_TIME));
+        String overweekendTimeStr = StringUtils.deleteWhitespace(parametersService.getStringParameter(Parameters.CONTINUE_DESTRUCTION_OVER_WEEKEND));
+        
+        if (StringUtils.isBlank(beginTimeStr) || StringUtils.isBlank(endTimeStr) || StringUtils.isBlank(overweekendTimeStr)) {
+        	LOG.warn("DestructionBeginTime or DestructionEndTime or ContinueDestructionOverWeekend is empty , destruction is put on hold!");
+            return false;
+        }
+        
+        DateTime beginTime;
+        DateTime endTime;
+        try {
+            beginTime = getDateTime(now, beginTimeStr, dateFormat);
+            endTime = getDateTime(now, endTimeStr, dateFormat);
+            if (beginTime.isAfter(endTime)) {
+                endTime = endTime.plusDays(1);
+            }
+        } catch (ParseException e) {
+            LOG.warn("Unable to parse " + Parameters.DESTRUCTION_BEGIN_TIME.getParameterName() + " (value=" + beginTimeStr + ") or "
+                    + Parameters.DESTRUCTION_END_TIME.getParameterName() + " (value=" + endTimeStr + "), continuing destructing. " +
+                    "Required format is " + dateFormat.toPattern());
+            return true;
+        }
+        
+        if (beginTime.isBefore(now) && endTime.isAfter(now)) {
+            return true;
+        }
+        return false;
+	}
+
+	private List<ChildAssociationRef> getDestructionJobChildAssocs() {
+        return nodeService.getChildAssocs(getDestructionsSpaceRef(), Collections.singleton(DestructionModel.Types.DESTRUCTION_JOB));
+    }
+
+	@Override
+	public List<NodeRef> getAllInQueueJobsForDesruction() {
+        List<NodeRef> volumeRefs = new ArrayList<NodeRef>();
+        for (ChildAssociationRef ref : getDestructionJobChildAssocs()) {
+            volumeRefs.add(ref.getChildRef());
+        }
+        return volumeRefs;
+	}
+
+    @Override
+    public void removeJobNodeFromDestructingList(final NodeRef destructingJobRef) {
+        if (destructingJobRef != null) {
+        
+          final RetryingTransactionHelper transactionHelper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
+
+          List<AssociationRef> activitiesList = nodeService.getSourceAssocs(destructingJobRef, DestructionModel.Assocs.ACTIVITY_LINKED_JOBS);
+          AssociationRef activityAssociationRef = activitiesList.get(0);
+          
+          final NodeRef activityRef = activityAssociationRef.getSourceRef();
+                    
+  		transactionHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
+		    @Override
+		    public Void execute() throws Throwable {
+	          nodeService.deleteNode(destructingJobRef);
+	          
+	          final List<AssociationRef> jobs = nodeService.getTargetAssocs(activityRef, DestructionModel.Assocs.ACTIVITY_LINKED_JOBS);
+	          
+	          final int size = jobs.size();
+	          if (size == 0) {
+	        	  setActivityStatusFinished(activityRef);
+	          }
+		    	
+		        return null;
+		    }
+		    }, false, true);
+  		
+        }
+    }
+    
+    private NodeRef getDestructionsSpaceRef() {
+        return generalService.getNodeRef(DestructionModel.Repo.DESTRUCTIONS_SPACE);
+    }
+
+    @Override
+    public NodeRef addVolumeOrCaseToDestructingList(NodeRef volumeOrCaseRef, NodeRef activityRef) {
+        NodeRef destructingJobRef = nodeService.createNode(getDestructionsSpaceRef(), DestructionModel.Assocs.DESTRUCTING_JOB,
+        		DestructionModel.Assocs.DESTRUCTING_JOB, DestructionModel.Types.DESTRUCTION_JOB).getChildRef();
+        Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+        props.put(DestructionModel.Props.VOLUME_REF, volumeOrCaseRef); // this is property from Archive not from destruction how it's works? -rename
+        props.put(DestructionModel.Props.DESCTRUCTING_ACTIVITY_REF, activityRef); // Need is questionable !? - remove
+        props.put(DestructionModel.Props.DESTRUCING_JOB_STATUS, ArchiveJobStatus.IN_QUEUE);
+        nodeService.addProperties(destructingJobRef, props);
+        setDestructingProperty(volumeOrCaseRef, Boolean.TRUE);
+        
+        nodeService.createAssociation(activityRef, destructingJobRef, DestructionModel.Assocs.ACTIVITY_LINKED_JOBS);
+
+        String activityType = getArchivalActivity(activityRef).getActivityNativeType();
+        String logMessage = "";
+        if (ActivityType.SIMPLE_DESTRUCTION.name().equals(activityType)) {
+        	logMessage = "applog_archivals_volume_added_to_queue_to_be_simple_disposed";
+        }
+        else if (ActivityType.DESTRUCTION.name().equals(activityType)) {
+        	logMessage = "applog_archivals_volume_added_to_queue_to_be_disposed";
+        }        
+        
+        logDestructionRelatedEvent(volumeOrCaseRef, logMessage);
+        
+        return destructingJobRef;
+    }
+
+	@Override
+	public void markDestructionJobFinished(final NodeRef destructingJobNodeRef) {
+		final DestructionJobStatus status = DestructionJobStatus.FINISHED;
+        final RetryingTransactionHelper transactionHelper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
+
+        final Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+        props.put(DestructionModel.Props.DESTRUCING_JOB_STATUS, status);
+        props.put(DestructionModel.Props.DESTRUCTING_END_TIME, new Date());
+        
+        final NodeRef activity = getActivityForJob(destructingJobNodeRef);
+                
+        final Map<QName, Serializable> jobProps = nodeService.getProperties(destructingJobNodeRef);
+        final NodeRef volumeNodeRef = (NodeRef) jobProps.get(DestructionModel.Props.VOLUME_REF);
+        
+		transactionHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
+		    @Override
+		    public Void execute() throws Throwable {
+		    	nodeService.addProperties(destructingJobNodeRef, props);
+		    	documentTemplateService.updateExcel(activity, volumeNodeRef);
+		        return null;
+		    }
+		    }, false, true);
+	}
+
+    @Override
+    public void markDestructingJobAsRunning(NodeRef destructingJobNodeRef) {
+        Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+        props.put(DestructionModel.Props.DESTRUCING_JOB_STATUS, ArchiveJobStatus.IN_PROGRESS);
+        props.put(DestructionModel.Props.DESTRUCTING_START_TIME, new Date());
+        nodeService.addProperties(destructingJobNodeRef, props);
+    }
+
+    private boolean safeTrigger(AtomicBoolean target, boolean needValue) {
+    	if (needValue) {
+    		if (progressTrigger.compareAndSet(false, true)) {
+            	target.set(needValue);
+            	progressTrigger.set(false);
+            	return true;
+    		}
+    		else {
+    			return false;
+    		}
+    	}
+		else 
+		{
+			target.set(false);
+		}
+
+    	return true;
+    }
+    
+    @Override
+	public boolean setArchiveJobInProgress(boolean b) {
+    	return safeTrigger(archivingInProgress, b);
+    }
+    
+    @Override
+    public boolean setDestructionJobInProgress(boolean b) {
+    	return safeTrigger(destructingInProgress, b);
+    }
+
+	@Override
+	public boolean isArchiveJobInProgress() {
+		return archivingInProgress.get();
+	}
+
+	@Override
+	public boolean isDestructionJobInProgress() {
+		return destructingInProgress.get();
+	}
+
+	@Override
+	public void stopDestructing(ActionEvent event) {
+        LOG.info("Volume desructing was stopped until system restart");
+		destructingPaused.set(true);
+		destructingContinuedManually.set(false);
+		
+		// mark all activities which waiting or in progress as waiting till restart.
+		setAllIncompleteActivitiesStatus(ActivityStatus.STOPPED);
+	}
+
+	@Override
+	public void cancelAllDestructingJobs(ActionEvent event) {
+		LOG.info("Canceling all destruction jobs");
+		destructingPaused.set(true);
+		LOG.info("Volume desructing is stopped"); 
+		
+        StringBuilder sb = new StringBuilder();
+        
+        for (final NodeRef destructingJobNodeRef : getAllInQueueJobsForDesruction()) {
+            Map<QName, Serializable> props = nodeService.getProperties(destructingJobNodeRef);
+            final NodeRef volumeRef = (NodeRef) props.get(DestructionModel.Props.VOLUME_REF);
+            String status = (String) props.get(DestructionModel.Props.DESTRUCING_JOB_STATUS);
+            
+            if (!ArchiveJobStatus.IN_QUEUE.name().equals(status)) {
+            	continue;
+            }
+            
+            List<AssociationRef> activitiesList = nodeService.getSourceAssocs(destructingJobNodeRef, DestructionModel.Assocs.ACTIVITY_LINKED_JOBS);
+            
+            if(activitiesList.size() == 0) {	// this is kind of unusual situation when we getting here so just remove job ! 
+            	nodeService.deleteNode(destructingJobNodeRef);
+            	LOG.error("The job is missed activity , removing it!");
+            	continue;
+            }
+            
+            AssociationRef activityAssociationRef = activitiesList.get(0);
+            final NodeRef activityRef = activityAssociationRef.getSourceRef();
+            String activityStatus = (String)nodeService.getProperty(activityRef, ArchivalsModel.Props.STATUS);
+            
+            final RetryingTransactionHelper transactionHelper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
+            
+            if (!ActivityStatus.IN_PROGRESS.name().equals(activityStatus) && volumeRef != null && nodeService.exists(volumeRef)) {
+            	
+                transactionHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
+
+                    @Override
+                    public Void execute() throws Throwable {
+            	
+		            	setDestructingProperty(volumeRef, Boolean.FALSE); 
+		            	nodeService.deleteNode(destructingJobNodeRef);
+		            	
+		            	if(getActivityJobsCount(activityRef) == 0) {
+		            		nodeService.deleteNode(activityRef);
+		            	}		            	
+		                return null;
+                    }
+                    },false, true);
+                
+                sb.append(volumeRef + "\t(status: " + status + ")+\n");
+                logDestructionRelatedEvent(volumeRef, "applog_archivals_volume_deleted_from_destruction_queue");
+            }
+        }
+        LOG.info("The destructing of the following volumes was cancelled: " + sb.toString());
+        destructingPaused.set(true);
+	}
+
+	@Override
+	public void continueDestructing(ActionEvent event) {
+		restorePausedStoppedActivitiesStatus();
+		destructingPaused.set(false);
+		destructingContinuedManually.set(true);
+		nodeService.setProperty(getDestructionsSpaceRef(), DestructionModel.Props.DESTRUCTION_PAUSED, Boolean.FALSE);
+		LOG.info("Volume destructing was resumed");
+	}
+	
+	@Override
+	public int getNonFinishedDestructionActivities() {
+		int count = 0;
+		List<ChildAssociationRef> activities = nodeService.getChildAssocs(getArchivalActivitiesRoot(), Collections.singleton(ArchivalsModel.Assocs.ARCHIVAL_ACTIVITY));
+		
+		for (ChildAssociationRef a : activities) {
+			ArchivalActivity aa = getArchivalActivity(a.getChildRef());
+			
+			if ((ActivityType.DESTRUCTION.name().equals(aa.getActivityNativeType()) ||
+					ActivityType.SIMPLE_DESTRUCTION.name().equals(aa.getActivityNativeType())) && 
+						!ActivityStatus.FINISHED.getValue().equals(aa.getStatus())) {
+				count++;
+			}
+		}
+		
+		return count; 
+	}
+	
+	@Override
+	public NodeRef getDestructionJobArchivalActivity(NodeRef destructingJobRef) {
+        List<AssociationRef> activitiesList = nodeService.getSourceAssocs(destructingJobRef, DestructionModel.Assocs.ACTIVITY_LINKED_JOBS);
+        AssociationRef activityAssociationRef = activitiesList.get(0);
+        
+        NodeRef activityRef = activityAssociationRef.getSourceRef();
+        return activityRef;
+	}
+	
+	private int getActivityJobsCount(NodeRef activityRef) {
+        List<AssociationRef> jobs = nodeService.getTargetAssocs(activityRef, DestructionModel.Assocs.ACTIVITY_LINKED_JOBS);
+        return jobs.size();
+	}
+	
+	private void setAllIncompleteActivitiesStatus(final ActivityStatus activityStatus) {
+		List<ChildAssociationRef> activities = nodeService.getChildAssocs(getArchivalActivitiesRoot(), Collections.singleton(ArchivalsModel.Assocs.ARCHIVAL_ACTIVITY));
+        final RetryingTransactionHelper transactionHelper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
+		
+		for (ChildAssociationRef a : activities) {
+			final ArchivalActivity aa = getArchivalActivity(a.getChildRef());
+			
+			if ((ActivityType.DESTRUCTION.name().equals(aa.getActivityNativeType()) ||
+					ActivityType.SIMPLE_DESTRUCTION.name().equals(aa.getActivityNativeType())) && 
+						!ActivityStatus.FINISHED.getValue().equals(aa.getStatus()) && 
+						aa.getStatus() != activityStatus.getValue()) {
+				
+				// we are not allowing to stop previously paused activity or pause stopped you need to go
+				// over pause/resume/stop or stop/pause/resume
+				if (isActivityPausedOrStopped(aa.getStatus()) && isActivityPausedOrStopped(activityStatus.getValue())) {
+					continue;
+				}
+				
+                transactionHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
+                    @Override
+                    public Void execute() throws Throwable {
+        				nodeService.setProperty(aa.getNodeRef(), ArchivalsModel.Props.PREV_STATUS, aa.getStatus());
+        				nodeService.setProperty(aa.getNodeRef(), ArchivalsModel.Props.STATUS, activityStatus.getValue());			
+		                return null;
+                    }
+                    },false, true);
+			}
+		}
+	}
+	
+	private void restorePausedStoppedActivitiesStatus() {
+		
+		List<ChildAssociationRef> activities = nodeService.getChildAssocs(getArchivalActivitiesRoot(), Collections.singleton(ArchivalsModel.Assocs.ARCHIVAL_ACTIVITY));
+
+        final RetryingTransactionHelper transactionHelper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
+
+		for (final ChildAssociationRef activityRef : activities) {
+			String activtyNativeType = (String)nodeService.getProperty (activityRef.getChildRef(), ArchivalsModel.Props.ACTIVITY_TYPE);
+			String activtyStatus = (String)nodeService.getProperty (activityRef.getChildRef(), ArchivalsModel.Props.STATUS);
+			
+			if ((ActivityType.DESTRUCTION.name().equals(activtyNativeType) ||
+					ActivityType.SIMPLE_DESTRUCTION.name().equals(activtyNativeType)) && 
+						(ActivityStatus.PAUSED.getValue().equals(activtyStatus) || 
+								ActivityStatus.STOPPED.getValue().equals(activtyStatus))) {
+				
+				final String prevStatus = (String)nodeService.getProperty(activityRef.getChildRef(), ArchivalsModel.Props.PREV_STATUS);
+				if (prevStatus != null) {
+					
+	                transactionHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
+	                    @Override
+	                    public Void execute() throws Throwable {
+	            	
+	    					nodeService.setProperty(activityRef.getChildRef(), ArchivalsModel.Props.STATUS, prevStatus);
+	    					nodeService.removeProperty(activityRef.getChildRef(), ArchivalsModel.Props.PREV_STATUS);
+	    					
+			                return null;
+	                    }
+	                    },false, true);
+				}
+				else {
+					LOG.error("PREV_STATUS status for " + activtyStatus + " one of pause or stop doesn't exists ! , skipp restore prev status !" );
+				}
+			}
+		}
+	}
+
+	private boolean isActivityPausedOrStopped(String state) {
+		
+		if(ActivityStatus.PAUSED.getValue().equals(state) || 
+				ActivityStatus.STOPPED.getValue().equals(state)	) {
+			return true;
+		}
+		
+		return false;
+	}
+	
+	private void logDestructionRelatedEvent(NodeRef volumeOrCaseRef, String logMessage) {
+		
+		String volumeMark = (String) nodeService.getProperty(volumeOrCaseRef, VolumeModel.Props.VOLUME_MARK);
+		String title = (String) nodeService.getProperty(volumeOrCaseRef, VolumeModel.Props.TITLE);
+		
+		logService.addLogEntry(LogEntry.create(isCaseFile(volumeOrCaseRef) ? LogObject.CASE_FILE : LogObject.VOLUME, userService, volumeOrCaseRef, logMessage, volumeMark, title));
+	}
+
+	@Override
+	public void markDestructingJobAsPaused(NodeRef destructingJobNodeRef) {
+		final DestructionJobStatus status = DestructionJobStatus.PAUSED;
+		
+        Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+        props.put(DestructionModel.Props.DESTRUCING_JOB_STATUS, status);
+        nodeService.addProperties(destructingJobNodeRef, props);
+	}
+	
+	private NodeRef getActivityForJob(NodeRef destructingJobRef) {
+        List<AssociationRef> activitiesList = nodeService.getSourceAssocs(destructingJobRef, DestructionModel.Assocs.ACTIVITY_LINKED_JOBS);
+        
+        if(!activitiesList.isEmpty()) {
+	        AssociationRef activityAssociationRef = activitiesList.get(0);
+	        NodeRef activityRef = activityAssociationRef.getSourceRef();
+	        
+	        return activityRef;
+        }
+        
+        return null;
+	}
 }

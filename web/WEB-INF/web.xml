@@ -904,7 +904,13 @@
          <param-value>classpath:ee/webmedia/mobile/alfresco/config/mobile-servlet.xml</param-value>
       </init-param>
       <load-on-startup>8</load-on-startup>    
-   </servlet>   
+   </servlet>  
+
+   <servlet>
+      <servlet-name>statusServlet</servlet-name>
+      <servlet-class>ee.webmedia.alfresco.status.StatusServlet</servlet-class>
+   </servlet>
+   
 
    <!-- ========== Servlet mappings ========== -->
 
@@ -986,7 +992,13 @@
    <servlet-mapping>
       <servlet-name>mobile</servlet-name>
       <url-pattern>/m/*</url-pattern>
-   </servlet-mapping>   
+   </servlet-mapping>
+   
+   <servlet-mapping>
+	  <servlet-name>statusServlet</servlet-name>
+	  <url-pattern>/service/status.xml/*</url-pattern>
+   </servlet-mapping>
+
 
    <!-- ========== Other ========== -->
 
