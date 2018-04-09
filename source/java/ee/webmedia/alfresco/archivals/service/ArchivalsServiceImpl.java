@@ -155,6 +155,10 @@ public class ArchivalsServiceImpl implements ArchivalsService {
     private static final Set<QName> CWF_PROPS_TO_LOAD = new HashSet<>(Arrays.asList(WorkflowCommonModel.Props.TYPE, WorkflowCommonModel.Props.MAIN_DOCUMENT));
 
     public void init() {
+    	if (getDestructionsSpaceRef() == null) {
+    		return;
+    	}
+    	
     	Boolean paused = (Boolean) nodeService.getProperty(getDestructionsSpaceRef(), DestructionModel.Props.DESTRUCTION_PAUSED);	   
     	if (paused != null && Boolean.TRUE.equals(paused)) {
     		destructingPaused.set(true);
@@ -1451,6 +1455,8 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         }); //QNamePattern.MATCH_ALL.);
         for (ChildAssociationRef childAssoc : childAssocs) {
         	
+        	long start = System.currentTimeMillis();
+        	
         	// put a check what validates what we are able to continue .
         	if (isDestructionPaused() || isDestructionAllowed() == false) {
         		LOG.info("Document destruction is not allowed or paused.");
@@ -1478,6 +1484,8 @@ public class ArchivalsServiceImpl implements ArchivalsService {
                 }
 
             }, false, true);
+            
+            LOG.info("Delete single document time  is " + (System.currentTimeMillis() - start) + "ms");
         }
         
         return true;
