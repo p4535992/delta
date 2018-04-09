@@ -1528,9 +1528,9 @@ public class ComponentUtil {
             if (newLineCounter == 5) {
                 newLineCounter = 1;
                 HtmlOutputText linebreak = new HtmlOutputText();
-                linebreak.setValue("&lt;br/&gt;");
+                linebreak.setValue(StringEscapeUtils.unescapeXml("&lt;br/&gt;"));
                 linebreak.setEscape(false);
-//                components.add(linebreak);
+                components.add(linebreak);
             } else {
                 newLineCounter++;
             }

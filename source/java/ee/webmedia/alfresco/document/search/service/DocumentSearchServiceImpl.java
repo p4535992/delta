@@ -1503,6 +1503,18 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         String query = generateVolumeOrCaseFileSearchQuery(queryParts);
         try {
             Pair<List<Volume>, Boolean> results = searchVolumesAndCaseFilesImpl(query, -1, /* queryName */"volumesForArchiveList", storeRefs);
+            
+            // validate search result integrity. and repair if need
+            List<Volume> destroyed = new ArrayList<Volume>();
+            for (Volume v: results.getFirst()) {
+            	if (v.getStatus().equals(DocListUnitStatus.DESTROYED.getValueName())) {
+            		log.debug("already destroyed volume is returned! Will be removed from results");
+            		destroyed.add(v);
+            	}
+            }
+            
+            results.getFirst().removeAll(destroyed);
+            
             if (log.isDebugEnabled()) {
                 log.debug("Volumes archive list search total time " + (System.currentTimeMillis() - startTime) + " ms");
             }

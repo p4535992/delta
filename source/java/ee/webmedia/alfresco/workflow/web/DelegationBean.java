@@ -3,7 +3,6 @@ package ee.webmedia.alfresco.workflow.web;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocLockService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getParametersService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.TASK_INDEX;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.markAsGeneratedByDelegation;
 
@@ -120,10 +119,10 @@ public class DelegationBean implements Serializable {
             DelegatableTaskType.REVIEW,
             DelegatableTaskType.INFORMATION,
             DelegatableTaskType.OPINION)));
-
     private ActionEvent forwardedAction;
-	private Workflow delegateWorkflow;
-	private Integer delegateTaskIndex;
+    private Workflow delegateWorkflow;
+    private Integer delegateTaskIndex;
+
     /**
      * @param event passed to MethodBinding
      */
@@ -386,119 +385,66 @@ public class DelegationBean implements Serializable {
      * @throws Exception
      */
     public void delegate(ActionEvent event) throws Exception {
-    	boolean canAskAboutOwner = false;
-    	Integer taskIndex = null;
-    	// check is task have no owner and reponsible is true  
-        delegateAndFinishTask = taskIndex != null;
-        delegateTaskIndex = delegateAndFinishTask ? taskIndex : ActionUtil.getEventParamOrAttirbuteValue(event, ATTRIB_DELEGATABLE_TASK_INDEX, Integer.class);
-        //List<Pair<String, Object>> params = new ArrayList<>();
-        //params.add(new Pair<String, Object>(ATTRIB_DELEGATABLE_TASK_INDEX, delegatableTaskIndex));
-        // Save all changes to independent workflow before updating task.
-        //if (!workflowBlockBean.saveIfIndependentWorkflow(params, DELEGATE, event)) {
-        //    return;
-        //}
-    	
-        boolean temp = delegateAndFinishTask; // reloading workflow resets this value
-        initialTask = reloadWorkflow(delegateTaskIndex);
-        delegateAndFinishTask = temp;
+        Integer taskIndex = ActionUtil.getEventParamOrAttirbuteValue(event, ATTRIB_DELEGATABLE_TASK_INDEX, Integer.class);
+        initialTask = reloadWorkflow(taskIndex);
+        if (showConfirmation()) {
+            forwardedAction = event;
+            BeanHelper.getUserConfirmHelper().setup("delegate_error_taskMandatory_sure_wont_change_ownership", null, "#{DelegationBean.finishConfirmed}", null);
+        } else {
+            delegate(event, null);
+        }
+    }
 
-        //boolean validateDueDates = delegateAndFinishTask || initialTask.isType(WorkflowSpecificModel.Types.REVIEW_TASK, WorkflowSpecificModel.Types.OPINION_TASK);
-        /*
-        boolean searchResponsibleTask = WorkflowUtil.isActiveResponsible(initialTask);
-        boolean isAssignmentWorkflow = initialTask.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK);
-        Date initialTaskDueDate = validateDueDates ? initialTask.getDueDate() : null;
-        Task newMandatoryTask = null;
-        Date maxTaskDueDate = null;
-        QName maxDueDatetaskType = null;
-        */
-       //boolean hasAtLeastOneDelegationTask = false;
+    private boolean showConfirmation() {
         for (Workflow workflow : initialTask.getParent().getParent().getWorkflows()) {
-        	delegateTaskIndex = 0;
+            delegateTaskIndex = 0;
             for (Task task : workflow.getTasks()) {
-                if (!WorkflowUtil.isEmptyTask(task) && WorkflowUtil.isGeneratedByDelegation(task)) {
-                    
+                if (!WorkflowUtil.isEmptyTask(task) && WorkflowUtil.isGeneratedByDelegation(task) && task.isResponsible()) {
                     boolean noOwner = StringUtils.isBlank(task.getOwnerName());
+                    Date dueDate = task.getDueDate();
                     QName taskType = task.getType();
-                    if (taskType.equals(WorkflowSpecificModel.Types.INFORMATION_TASK)) {
-                    /*    if (noOwner) {
-                            feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, key));
-                        }
-                        if (initialDateDueDate != null && task.getDueDate() == null) {
-                            feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, key + "_dueDate"));
-                        }*/
-                    } else if (noOwner || task.getDueDate() == null) {
-                        if (taskType.equals(WorkflowSpecificModel.Types.OPINION_TASK)) {
-                        } else {
-                            if (noOwner && task.isResponsible()) {
-                            	delegateWorkflow = workflow;
-                            	canAskAboutOwner = true;
-                            	break;
-                            }
-                        }
-
+                    if (taskType.equals(WorkflowSpecificModel.Types.ASSIGNMENT_TASK) && noOwner && dueDate != null) {
+                        delegateWorkflow = workflow;
+                        return true;
                     }
                 }
                 delegateTaskIndex++;
             }
-            
-            if (canAskAboutOwner) {
-            	break;
-            }
         }
-        
-        if (canAskAboutOwner) {
-        	forwardedAction = event; 
-        	BeanHelper.getUserConfirmHelper().setup("delegate_error_taskMandatory_sure_wont_change_ownership", null, "#{DelegationBean.finishConfirmed2}", null);
-        } else {
-        	delegate(event, null);
-        }
+        return false;
     }
 
-    public void finishConfirmed2(ActionEvent event) throws Exception {
-    	
-    	String username = AuthenticationUtil.getRunAsUser();
-    	setPersonPropsToTask(delegateWorkflow, delegateTaskIndex, username , null);
-    	
-        delegate(forwardedAction, null);    	
-    }
-    
     @SuppressWarnings("unchecked")
     void delegate(ActionEvent event, Integer taskIndex) {
-        delegateAndFinishTask = taskIndex != null;
-        Integer delegatableTaskIndex = delegateAndFinishTask ? taskIndex : ActionUtil.getEventParamOrAttirbuteValue(event, ATTRIB_DELEGATABLE_TASK_INDEX, Integer.class);
+        boolean hasTaskIndex = taskIndex != null;
+        delegateAndFinishTask = hasTaskIndex;
+        Integer delegateTaskIndex = delegateAndFinishTask ? taskIndex : ActionUtil.getEventParamOrAttirbuteValue(event, ATTRIB_DELEGATABLE_TASK_INDEX, Integer.class);
         List<Pair<String, Object>> params = new ArrayList<>();
-        params.add(new Pair<String, Object>(ATTRIB_DELEGATABLE_TASK_INDEX, delegatableTaskIndex));
+        params.add(new Pair<String, Object>(ATTRIB_DELEGATABLE_TASK_INDEX, delegateTaskIndex));
         // Save all changes to independent workflow before updating task.
         if (!workflowBlockBean.saveIfIndependentWorkflow(params, DELEGATE, event)) {
             return;
         }
-        Pair<Boolean, Date> validationResult = prepareAndValidateDelegation(delegatableTaskIndex);
-        if (validationResult.getFirst() && initialTask != null) {
-            boolean isReviewOrOpinionTask = initialTask.isType(WorkflowSpecificModel.Types.REVIEW_TASK, WorkflowSpecificModel.Types.OPINION_TASK);
-            if (delegateAndFinishTask || isReviewOrOpinionTask) {
-                getAndPopulateConfirmationMessages(validationResult.getSecond(), isReviewOrOpinionTask);
-            } else {
-                populateConfirmationMessage();
+        initialTask = reloadWorkflow(delegateTaskIndex);
+        delegateAndFinishTask = hasTaskIndex;
+        if (initialTask != null) {
+            boolean validateDueDates = delegateAndFinishTask || initialTask.isType(WorkflowSpecificModel.Types.REVIEW_TASK, WorkflowSpecificModel.Types.OPINION_TASK);
+            Pair<Boolean, Date> validationResult = validate(initialTask.getParent().getParent(), validateDueDates);
+            if (validationResult.getFirst()) {
+                boolean isReviewOrOpinionTask = initialTask.isType(WorkflowSpecificModel.Types.REVIEW_TASK, WorkflowSpecificModel.Types.OPINION_TASK);
+                if (delegateAndFinishTask || isReviewOrOpinionTask) {
+                    getAndPopulateConfirmationMessages(validationResult.getSecond(), isReviewOrOpinionTask);
+                } else {
+                    populateConfirmationMessage();
+                }
+                if (CollectionUtils.isNotEmpty(confirmationMessages)) {
+                    FacesContext.getCurrentInstance().getExternalContext().getRequestMap().put(DELEGATION_CONFIRMATION_RENDERED, Boolean.TRUE);
+                    return;
+                }
+                setInitialTaskFinished();
+                delegateTaskConfirmed();
             }
-            if (CollectionUtils.isNotEmpty(confirmationMessages)) {
-                FacesContext.getCurrentInstance().getExternalContext().getRequestMap().put(DELEGATION_CONFIRMATION_RENDERED, Boolean.TRUE);
-                return;
-            }
-            setInitialTaskFinished();
-            delegateTaskConfirmed();
         }
-    }
-
-    private Pair<Boolean, Date> prepareAndValidateDelegation(Integer taskIndex) {
-        boolean temp = delegateAndFinishTask; // reloading workflow resets this value
-        initialTask = reloadWorkflow(taskIndex);
-        delegateAndFinishTask = temp;
-        if (initialTask == null) {
-            return Pair.newInstance(true, null);
-        }
-        boolean validateDueDates = delegateAndFinishTask || initialTask.isType(WorkflowSpecificModel.Types.REVIEW_TASK, WorkflowSpecificModel.Types.OPINION_TASK);
-        Pair<Boolean, Date> validationResult = validate(initialTask.getParent().getParent(), validateDueDates);
-        return validationResult;
     }
 
     private void getAndPopulateConfirmationMessages(Date maxTaskDueDate, boolean checkForPastDate) {
@@ -589,75 +535,75 @@ public class DelegationBean implements Serializable {
         FacesContext context = FacesContext.getCurrentInstance();
         NodeRef cWorkflowOriginalNodeRef = null;
         if (initialTask != null) {
-        	Workflow workflowOriginal = initialTask.getParent();
-        	if (workflowOriginal != null) {
-        		CompoundWorkflow cWorkflowOriginal = workflowOriginal.getParent();
-        		if (cWorkflowOriginal != null) {
-        			cWorkflowOriginalNodeRef = cWorkflowOriginal.getNodeRef();
-        		}
-        	}
+            Workflow workflowOriginal = initialTask.getParent();
+            if (workflowOriginal != null) {
+                CompoundWorkflow cWorkflowOriginal = workflowOriginal.getParent();
+                if (cWorkflowOriginal != null) {
+                    cWorkflowOriginalNodeRef = cWorkflowOriginal.getNodeRef();
+                }
+            }
         }
         boolean locked = (cWorkflowOriginalNodeRef != null)?setLock(context, cWorkflowOriginalNodeRef, "workflow_compond_locked_for_delegate"):false;
         if (cWorkflowOriginalNodeRef == null || locked) {
-	        try {
-	        	
-	            CompoundWorkflow newCWF = getWorkflowService().delegate(initialTask);
-	            QName type = initialTask.getType();
-	            String taskType = type.getLocalName();
-	            workflowBlockBean.refreshCompoundWorkflowAndRestore(newCWF, "delegate");
-	            workflowBlockBean.notifyDialogsIfNeeded();
-	            if (WorkflowSpecificModel.Types.INFORMATION_TASK.equals(type)) {
-	                MessageUtil.addInfoMessage("task_finish_success_defaultMsg");
-	            }
-	            MessageUtil.addInfoMessage("delegated_successfully_" + taskType);
-	        } catch (UnableToPerformMultiReasonException e) {
-	            MessageUtil.addStatusMessages(context, e.getMessageDataWrapper());
-	        } catch (UnableToPerformException e) {
-	            MessageUtil.addStatusMessage(context, e);
-	        } catch (NodeLockedException e) {
-	            LOG.debug("Compound workflow action failed: document locked!", e);
-	            MessageUtil.addErrorMessage(context, "workflow_compound_save_failed_docLocked");
-	        } catch (WorkflowChangedException e) {
-	            CompoundWorkflowDialog.handleException(e, null);
-	        } catch (Exception e) {
-	            LOG.error("Compound workflow action failed!", e);
-	            MessageUtil.addErrorMessage(context, "workflow_compound_save_failed_general");
-	        } finally {
-	    		if (cWorkflowOriginalNodeRef != null) {
-	    			getDocLockService().unlockIfOwner(cWorkflowOriginalNodeRef);
-	    		}
-	    	}
-	    }
+            try {
+
+                CompoundWorkflow newCWF = getWorkflowService().delegate(initialTask);
+                QName type = initialTask.getType();
+                String taskType = type.getLocalName();
+                workflowBlockBean.refreshCompoundWorkflowAndRestore(newCWF, "delegate");
+                workflowBlockBean.notifyDialogsIfNeeded();
+                if (WorkflowSpecificModel.Types.INFORMATION_TASK.equals(type)) {
+                    MessageUtil.addInfoMessage("task_finish_success_defaultMsg");
+                }
+                MessageUtil.addInfoMessage("delegated_successfully_" + taskType);
+            } catch (UnableToPerformMultiReasonException e) {
+                MessageUtil.addStatusMessages(context, e.getMessageDataWrapper());
+            } catch (UnableToPerformException e) {
+                MessageUtil.addStatusMessage(context, e);
+            } catch (NodeLockedException e) {
+                LOG.debug("Compound workflow action failed: document locked!", e);
+                MessageUtil.addErrorMessage(context, "workflow_compound_save_failed_docLocked");
+            } catch (WorkflowChangedException e) {
+                CompoundWorkflowDialog.handleException(e, null);
+            } catch (Exception e) {
+                LOG.error("Compound workflow action failed!", e);
+                MessageUtil.addErrorMessage(context, "workflow_compound_save_failed_general");
+            } finally {
+                if (cWorkflowOriginalNodeRef != null) {
+                    getDocLockService().unlockIfOwner(cWorkflowOriginalNodeRef);
+                }
+            }
+        }
     }
-    
+
     /**
      * Sets compound workflow lock
      * @return
      */
     private boolean setLock(final FacesContext context, final NodeRef compoundWfNodeRef, final String lockMsgKey) {
-    	RetryingTransactionHelper txnHelper = Repository.getRetryingTransactionHelper(context);
+        RetryingTransactionHelper txnHelper = Repository.getRetryingTransactionHelper(context);
         RetryingTransactionCallback<Boolean> callback = new RetryingTransactionCallback<Boolean>()
         {
-           public Boolean execute() throws Throwable
-           {
-        	   
-        	   LockStatus lockStatus = getDocLockService().setLockIfFree(compoundWfNodeRef);
-               boolean result;
-               
-	           	if (lockStatus == LockStatus.LOCK_OWNER) {
-	           		result = true;
-	            } else {
-	            	String lockOwner = StringUtils.substringBefore(getDocLockService().getLockOwnerIfLocked(compoundWfNodeRef), "_");
-	                String lockOwnerName = getUserService().getUserFullNameAndId(lockOwner);
-	               	MessageUtil.addErrorMessage(context, lockMsgKey, lockOwnerName);
-	               	result = false;
+            public Boolean execute() throws Throwable
+            {
+
+                LockStatus lockStatus = getDocLockService().setLockIfFree(compoundWfNodeRef);
+                boolean result;
+
+                if (lockStatus == LockStatus.LOCK_OWNER) {
+                    result = true;
+                } else {
+                    String lockOwner = StringUtils.substringBefore(getDocLockService().getLockOwnerIfLocked(compoundWfNodeRef), "_");
+                    String lockOwnerName = getUserService().getUserFullNameAndId(lockOwner);
+                    MessageUtil.addErrorMessage(context, lockMsgKey, lockOwnerName);
+                    result = false;
                 }
                 return result;
-           }
+            }
         };
-        
+
         return txnHelper.doInTransaction(callback, false, true);
-    	
+
     }
 
     public boolean delegate(Task task, boolean delegateAndFinish) {
@@ -726,7 +672,7 @@ public class DelegationBean implements Serializable {
             for (Task task : workflow.getTasks()) {
                 if (!WorkflowUtil.isEmptyTask(task) && WorkflowUtil.isGeneratedByDelegation(task)) {
                     hasAtLeastOneDelegationTask = true;
-                    delegationTaskMandatoryFieldsFilled(task, feedback, initialTaskDueDate);
+                    validateDelegationTaskMandatoryFields(task, feedback, initialTaskDueDate);
                     Date dueDate = task.getDueDate();
                     if (dueDate != null) {
                         dueDate.setHours(23);
@@ -774,6 +720,39 @@ public class DelegationBean implements Serializable {
         return Pair.newInstance(true, maxTaskDueDate);
     }
 
+    private void validateDelegationTaskMandatoryFields(Task task, MessageDataWrapper feedback, Date initialDateDueDate) {
+        boolean noOwner = StringUtils.isBlank(task.getOwnerName());
+        QName taskType = task.getType();
+        String key = "delegate_error_taskMandatory_" + taskType.getLocalName();
+        if (taskType.equals(WorkflowSpecificModel.Types.ASSIGNMENT_TASK)
+                && task.getDueDate() == null && (!noOwner || task.isResponsible())) {
+            feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, key + "_dueDate"));
+        } else if (taskType.equals(WorkflowSpecificModel.Types.INFORMATION_TASK)) {
+            if (noOwner) {
+                feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, key));
+            }
+            if (initialDateDueDate != null && task.getDueDate() == null) {
+                feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, key + "_dueDate"));
+            }
+        } else if (noOwner || task.getDueDate() == null) {
+            if (taskType.equals(WorkflowSpecificModel.Types.OPINION_TASK)) {
+                feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, key));
+            } else {
+                if (task.isResponsible()) {
+                    key += "_responsible";
+                }
+                feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, key));
+            }
+
+        }
+    }
+
+    public void finishConfirmed(ActionEvent event) throws Exception {
+        String username = AuthenticationUtil.getRunAsUser();
+        setPersonPropsToTask(delegateWorkflow, delegateTaskIndex, username , null);
+        delegate(forwardedAction, null);
+    }
+
     public static void addDueDateConfirmation(List<String> messages, Date maxTaskDueDate, List<NodeRef> docRefs, String workflowTypeName, boolean isIndependentWF) {
         Set<QName> propsToLoad = new HashSet<>(Arrays.asList(DocumentSpecificModel.Props.DUE_DATE, DocumentAdminModel.Props.OBJECT_TYPE_ID, DocumentCommonModel.Props.DOC_NAME));
         Collection<Node> documents = BeanHelper.getBulkLoadNodeService().loadNodes(docRefs, propsToLoad).values();
@@ -798,30 +777,6 @@ public class DelegationBean implements Serializable {
                     }
                 }
             }
-        }
-    }
-
-    private void delegationTaskMandatoryFieldsFilled(Task task, MessageDataWrapper feedback, Date initialDateDueDate) {
-        boolean noOwner = StringUtils.isBlank(task.getOwnerName());
-        QName taskType = task.getType();
-        String key = "delegate_error_taskMandatory_" + taskType.getLocalName();
-        if (taskType.equals(WorkflowSpecificModel.Types.INFORMATION_TASK)) {
-            if (noOwner) {
-                feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, key));
-            }
-            if (initialDateDueDate != null && task.getDueDate() == null) {
-                feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, key + "_dueDate"));
-            }
-        } else if (noOwner || task.getDueDate() == null) {
-            if (taskType.equals(WorkflowSpecificModel.Types.OPINION_TASK)) {
-                feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, key));
-            } else {
-                if (task.isResponsible()) {
-                    key += "_responsible";
-                }
-                feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, key));
-            }
-
         }
     }
 
@@ -1110,7 +1065,7 @@ public class DelegationBean implements Serializable {
     }
 
     private void setPropsToTask(Workflow workflow, int taskIndex, String name, Serializable id, Serializable email, Serializable orgName,
-            Serializable jobTitle, String ownerGroup) {
+                                Serializable jobTitle, String ownerGroup) {
         Task task = workflow.getTasks().get(taskIndex);
         task.setOwnerName(name);
         task.setOwnerId((String) id);
