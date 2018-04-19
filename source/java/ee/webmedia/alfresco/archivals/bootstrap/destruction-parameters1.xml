@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view 
+   xmlns:view="http://www.alfresco.org/view/repository/1.0" 
+   xmlns:param="http://alfresco.webmedia.ee/model/parameters/1.0">
+
+   <param:stringParameter view:childName="param:destructionBeginTime">
+      <view:properties>
+         <param:value></param:value>
+         <param:description></param:description>
+         <param:name>destructionBeginTime</param:name>
+      </view:properties>
+   </param:stringParameter>
+   
+   <param:stringParameter view:childName="param:destructionEndTime">
+      <view:properties>
+         <param:value></param:value>
+         <param:description></param:description>
+         <param:name>destructionEndTime</param:name>
+      </view:properties>
+   </param:stringParameter>
+   
+   <param:stringParameter view:childName="param:continueDestructionOverWeekend">
+      <view:properties>
+         <param:value>true</param:value>
+         <param:description></param:description>
+         <param:name>continueDestructionOverWeekend</param:name>
+      </view:properties>
+   </param:stringParameter>
+
+</view:view>

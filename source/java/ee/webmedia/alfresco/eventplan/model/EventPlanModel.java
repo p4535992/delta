@@ -35,6 +35,7 @@ public interface EventPlanModel {
         QName FIRST_EVENT_START = QName.createQName(URI, "firstEventStart");
         QName FIRST_EVENT_PERIOD = QName.createQName(URI, "firstEventPeriod");
         QName ARCHIVING_NOTE = QName.createQName(URI, "archivingNote");
+        QName ASSESSMENT_DECISION_NOTE = QName.createQName(URI, "assessmentDecisionNote");
 
         QName EVENT_PLAN = QName.createQName(URI, "eventPlan");
         QName NEXT_EVENT = QName.createQName(URI, "nextEvent");

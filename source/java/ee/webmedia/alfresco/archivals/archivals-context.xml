@@ -132,6 +132,26 @@
          </list>
       </property>
    </bean>
+
+   <bean id="destructionParametersBootstrap3" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="path">/param:parameters</prop>
+               <prop key="location">ee/webmedia/alfresco/archivals/bootstrap/destruction-parameters1.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+
    
    <bean id="archivalsParametersBootstrap4" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
@@ -166,6 +186,21 @@
          </list>
       </property>
    </bean>
+
+   <bean id="destructionsSpacesBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/</prop>
+               <prop key="location">ee/webmedia/alfresco/archivals/bootstrap/destructionsQueue.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
    
     <bean id="archivalsWebClientConfigBootstrap" class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
       <property name="configs">
@@ -185,7 +220,7 @@
       </property>
    </bean>
 
-    <bean id="archivalsService" class="ee.webmedia.alfresco.archivals.service.ArchivalsServiceImpl">
+    <bean id="archivalsService" class="ee.webmedia.alfresco.archivals.service.ArchivalsServiceImpl" init-method="init">
       <property name="copyService" ref="CopyService"/>
       <property name="generalService" ref="GeneralService" />
       <property name="nodeService" ref="NodeService" />

@@ -1,14 +1,11 @@
 package ee.webmedia.alfresco.template.web;
 
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.faces.context.FacesContext;
-import javax.faces.event.ActionEvent;
-import javax.faces.event.PhaseId;
-import javax.faces.event.ValueChangeEvent;
-
+import ee.webmedia.alfresco.classificator.enums.TemplateReportType;
+import ee.webmedia.alfresco.classificator.enums.TemplateType;
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
+import ee.webmedia.alfresco.template.service.DocumentTemplateServiceImpl;
+import ee.webmedia.alfresco.utils.*;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.node.integrity.IntegrityException;
 import org.alfresco.service.cmr.model.FileExistsException;
@@ -23,16 +20,13 @@ import org.apache.commons.collections.Closure;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 
-import ee.webmedia.alfresco.classificator.enums.TemplateReportType;
-import ee.webmedia.alfresco.classificator.enums.TemplateType;
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
-import ee.webmedia.alfresco.template.service.DocumentTemplateServiceImpl;
-import ee.webmedia.alfresco.utils.ActionUtil;
-import ee.webmedia.alfresco.utils.ComponentUtil;
-import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.utils.RepoUtil;
-import ee.webmedia.alfresco.utils.UnableToPerformException;
+import javax.faces.context.FacesContext;
+import javax.faces.event.ActionEvent;
+import javax.faces.event.PhaseId;
+import javax.faces.event.ValueChangeEvent;
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 public class AddDocumentTemplateDialog extends AddContentDialog {
 
@@ -91,9 +85,6 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
             docTemplateNode.getAspects().add(DocumentTemplateModel.Aspects.TEMPLATE_NOTIFICATION);
             docTemplateNode.getAspects().add(DocumentTemplateModel.Aspects.SUBJECT);
             defaultComment = "template_system_template";
-        } else if (TemplateType.ARCHIVAL_REPORT_TEMPLATE.name().equals(templateType)) {
-            docTemplateNode.getAspects().add(DocumentTemplateModel.Aspects.TEMPLATE_ARCHIVAL_REPORT);
-            defaultComment = "template_archival_report_template";
         } else {
             docTemplateNode.getAspects().add(DocumentTemplateModel.Aspects.TEMPLATE_REPORT);
             defaultComment = "template_report_template";
@@ -131,7 +122,6 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
         Map<String, Object> props = docTemplateNode.getProperties();
         String newNameWithoutExtension = StringUtils.strip((String) props.get(DocumentTemplateServiceImpl.TEMP_PROP_FILE_NAME_BASE.toString()));
         boolean documentTemplate = TemplateType.DOCUMENT_TEMPLATE.name().equals(templateType);
-        boolean archivalReportTemplate = TemplateType.ARCHIVAL_REPORT_TEMPLATE.name().equals(templateType);
         if (documentTemplate && USER_UPLOADED_FILE_NAME.equals(newNameWithoutExtension)) {
             throw new UnableToPerformException("template_wrong_file_name");
         }
@@ -153,12 +143,6 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
             getNodeService().addAspect(createdNode, DocumentTemplateModel.Aspects.TEMPLATE_EMAIL, properties);
         } else if (TemplateType.REPORT_TEMPLATE.name().equals(templateType)) {
             getNodeService().addAspect(createdNode, DocumentTemplateModel.Aspects.TEMPLATE_REPORT, properties);
-        } else if (documentTemplate || archivalReportTemplate) {
-            if (documentTemplate) {
-                getNodeService().addAspect(createdNode, DocumentTemplateModel.Aspects.TEMPLATE_DOCUMENT, properties);
-            } else if (archivalReportTemplate) {
-                getNodeService().addAspect(createdNode, DocumentTemplateModel.Aspects.TEMPLATE_ARCHIVAL_REPORT, properties);
-            }
         }
         return outcome;
     }
@@ -190,7 +174,7 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
 
     public boolean validateFileExtension() {
         String name = getFileName();
-        return (TemplateType.DOCUMENT_TEMPLATE.name().equals(templateType) || TemplateType.ARCHIVAL_REPORT_TEMPLATE.name().equals(templateType))
+        return TemplateType.DOCUMENT_TEMPLATE.name().equals(templateType)
                 && isFileNameHasValidExtension(name, "dotx", "dot", "ott")
                 || TemplateType.REPORT_TEMPLATE.name().equals(templateType) && isFileNameHasValidExtension(name, "xltx")
                 || (TemplateType.NOTIFICATION_TEMPLATE.name().equals(templateType) || TemplateType.EMAIL_TEMPLATE.name().equals(templateType))
@@ -208,7 +192,7 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
 
     public String getWrongFormatMsgKey() {
         String errorMsgKey;
-        if (TemplateType.DOCUMENT_TEMPLATE.name().equals(templateType) || TemplateType.ARCHIVAL_REPORT_TEMPLATE.name().equals(templateType)) {
+        if (TemplateType.DOCUMENT_TEMPLATE.name().equals(templateType)) {
             errorMsgKey = "template_wrong_file_format_doc";
         } else if (TemplateType.REPORT_TEMPLATE.name().equals(templateType)) {
             errorMsgKey = "template_wrong_file_format_report";

@@ -21,7 +21,7 @@
  		   </script>
  	</f:verbatim>
  	<a:actionLink id="volume-archive-after-confirmation-accepted-link" value="confirmationAcceptedLink" actionListener="#{DialogManager.bean.archive}" styleClass="hidden" />
- 	<a:actionLink id="volume-generate-word-file-after-confirmation-accepted-link" value="confirmationAcceptedLink" actionListener="#{DialogManager.bean.generateWordFile}" styleClass="hidden" />
+ 	<a:actionLink id="volume-generate-word-file-after-confirmation-accepted-link" value="confirmationAcceptedLink" actionListener="#{DialogManager.bean.generateExcelFile}" styleClass="hidden" />
  	<a:actionLink id="volume-mark-for-transfer-after-confirmation-accepted-link" value="confirmationAcceptedLink" actionListener="#{DialogManager.bean.markForTransfer}" styleClass="hidden" />
  	<a:actionLink id="volume-transfer-after-confirmation-accepted-link" value="confirmationAcceptedLink" actionListener="#{DialogManager.bean.transfer}" styleClass="hidden" />
  	<a:actionLink id="volume-export-to-uam-after-confirmation-accepted-link" value="confirmationAcceptedLink" actionListener="#{DialogManager.bean.exportToUam}" styleClass="hidden" />

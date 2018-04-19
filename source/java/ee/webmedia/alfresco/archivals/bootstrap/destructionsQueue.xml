@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view 
+   xmlns:view="http://www.alfresco.org/view/repository/1.0" 
+   xmlns:arch="http://alfresco.webmedia.ee/model/archivals/1.0" 
+>
+   <arch:destructionsQueue view:childName="arch:destructionsQueue" />
+   
+</view:view>

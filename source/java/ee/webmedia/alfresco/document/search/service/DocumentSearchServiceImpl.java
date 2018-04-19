@@ -105,6 +105,7 @@ import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.search.web.DocumentDynamicSearchDialog;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.eventplan.model.EventPlanModel;
+import ee.webmedia.alfresco.eventplan.model.FirstEvent;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
@@ -1502,6 +1503,18 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         String query = generateVolumeOrCaseFileSearchQuery(queryParts);
         try {
             Pair<List<Volume>, Boolean> results = searchVolumesAndCaseFilesImpl(query, -1, /* queryName */"volumesForArchiveList", storeRefs);
+            
+            // validate search result integrity. and repair if need
+            List<Volume> destroyed = new ArrayList<Volume>();
+            for (Volume v: results.getFirst()) {
+            	if (v.getStatus().equals(DocListUnitStatus.DESTROYED.getValueName())) {
+            		log.debug("already destroyed volume is returned! Will be removed from results");
+            		destroyed.add(v);
+            	}
+            }
+            
+            results.getFirst().removeAll(destroyed);
+            
             if (log.isDebugEnabled()) {
                 log.debug("Volumes archive list search total time " + (System.currentTimeMillis() - startTime) + " ms");
             }
@@ -1525,14 +1538,23 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     }
 
     private String generateVolumeWaitingForDestructionQuery() {
-        return joinQueryPartsOr(Arrays.asList(
+        return joinQueryPartsAnd( Arrays.asList( generatePropertyBooleanQuery(EventPlanModel.Props.IS_APPRAISED, Boolean.TRUE), joinQueryPartsOr(Arrays.asList(
                 joinQueryPartsAnd(generatePropertyBooleanQuery(EventPlanModel.Props.RETAIN_PERMANENT, Boolean.TRUE),
-                        generatePropertyBooleanQuery(EventPlanModel.Props.TRANSFER_CONFIRMED, Boolean.TRUE)),
+                        generatePropertyBooleanQuery(EventPlanModel.Props.TRANSFER_CONFIRMED, Boolean.TRUE), 
+                        		joinQueryPartsOr( Arrays.asList(generatePropertyExactQuery(EventPlanModel.Props.NEXT_EVENT, FirstEvent.TRANSFER.name()),
+                        										generatePropertyExactQuery(EventPlanModel.Props.NEXT_EVENT, FirstEvent.DESTRUCTION.name()),
+                        										generatePropertyExactQuery(EventPlanModel.Props.NEXT_EVENT, FirstEvent.SIMPLE_DESTRUCTION.name())))),
+                
                         joinQueryPartsAnd(generatePropertyBooleanQuery(EventPlanModel.Props.HAS_ARCHIVAL_VALUE, Boolean.TRUE),
-                                generatePropertyBooleanQuery(EventPlanModel.Props.TRANSFER_CONFIRMED, Boolean.TRUE)),
+                                generatePropertyBooleanQuery(EventPlanModel.Props.TRANSFER_CONFIRMED, Boolean.TRUE), 
+                                		joinQueryPartsOr( Arrays.asList(generatePropertyExactQuery(EventPlanModel.Props.NEXT_EVENT, FirstEvent.TRANSFER.name()),
+										generatePropertyExactQuery(EventPlanModel.Props.NEXT_EVENT, FirstEvent.DESTRUCTION.name()),
+										generatePropertyExactQuery(EventPlanModel.Props.NEXT_EVENT, FirstEvent.SIMPLE_DESTRUCTION.name())))),
+                        
                                 joinQueryPartsAnd(generatePropertyBooleanQuery(EventPlanModel.Props.RETAIN_PERMANENT, Boolean.FALSE),
-                                        generatePropertyBooleanQuery(EventPlanModel.Props.HAS_ARCHIVAL_VALUE, Boolean.FALSE),
-                                        generateDatePropertyRangeQuery(null, new Date(), EventPlanModel.Props.RETAIN_UNTIL_DATE))));
+                                        generatePropertyBooleanQuery(EventPlanModel.Props.HAS_ARCHIVAL_VALUE, Boolean.FALSE))
+                                
+        		))));
 
     }
 

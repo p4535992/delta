@@ -148,6 +148,14 @@
          </f:facet>
           <wm:customChildrenContainer id="compound-workflow-document-files" childGenerator="#{DocumentListDialog.documentRowFileGenerator}" parameterList="#{r}"/>
       </a:column>
+
+      <%-- Inactive files --%>
+      <a:column id="col11" styleClass="doc-list-actions" >
+         <f:facet name="header">
+            <h:outputText id="col11-header" value="#{msg.file_inactive_title}" styleClass="header" />
+         </f:facet>
+         <wm:customChildrenContainer id="compound-workflow-inactive-files" childGenerator="#{DocumentListDialog.inactiveDocumentRowFileGenerator}" parameterList="#{r}"/>
+      </a:column>
       
       <a:column id="col-assoc-actions" actions="true" styleClass="actions-column2 #{r.cssStyleClass}">
             <a:actionLink id="col-actions" value="#{r.docName}" actionListener="#{DeleteAssocDialog.setupWorkflowAssoc}" action="dialog:deleteAssoc" showLink="false"

@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -1465,55 +1464,92 @@ public class ComponentUtil {
     }
 
     public static CustomChildrenCreator getDocumentRowFileGenerator(final Application application, final int digiDocFilelimit) {
-        final Map<Long, QName> propertyTypes = new HashMap<>();
-        final boolean limited = digiDocFilelimit >= 0;
         return new CustomChildrenCreator() {
 
             @Override
             public List<UIComponent> createChildren(Object params, int rowCounter) {
-                List<UIComponent> components = new ArrayList<UIComponent>();
                 if (params != null) {
-                    int digiDocFileCounter = 0;
-                    int fileCounter = 0;
-                    Document document = null;
-                    if (params instanceof Document) {
-                        document = (Document) params;
-                    } else if (params instanceof AssocBlockObject) {
-                        document = ((AssocBlockObject) params).getDocument();
-                    }
-                    if (document == null) {
-                        return null;
-                    }
-                    boolean canViewFiles = document.hasPermission(Privilege.VIEW_DOCUMENT_FILES);
-                    for (SimpleFile file : document.getFiles(propertyTypes)) {
-                        String fileName = file.getDisplayName();
-                        if (FilenameUtil.isDigiDocFile(fileName)) {
-                        	if (limited && digiDocFileCounter >= digiDocFilelimit) {
-                                continue;
-                            }
-                        	digiDocFileCounter++;
-                        }
-                        
-                        
-                        String imageText = file.getImagePath();
-                        if (canViewFiles) {
-                            UIActionLink fileAllowLink = generateFileReadOnlyLink(application, rowCounter, fileCounter, file.getReadOnlyUrl(), fileName, imageText);
-                            components.add(fileAllowLink);
-                        } else {
-                            HtmlGraphicImage image = (HtmlGraphicImage) application.createComponent(HtmlGraphicImage.COMPONENT_TYPE);
-                            image.setValue(imageText);
-                            image.setId("doc-file-img-" + rowCounter + "-" + fileCounter);
-                            image.setTitle(fileName);
-                            image.setAlt(fileName);
-                            components.add(image);
-                        }
-                        fileCounter++;
-                    }
-                    rowCounter++;
+                    Document document = getDocument(params);
+                    if (document == null) return null;
+                    return getDocumentsUIComponents(document.getFiles(Collections.<Long, QName>emptyMap()), application,
+                            "doc-file-img-",  digiDocFilelimit, rowCounter, document.hasPermission(Privilege.VIEW_DOCUMENT_FILES));
                 }
-                return components;
+                return Collections.emptyList();
+
             }
         };
+    }
+
+    public static CustomChildrenCreator getInactiveDocumentRowFileGenerator(final Application application, final int digiDocFilelimit) {
+        return new CustomChildrenCreator() {
+
+            @Override
+            public List<UIComponent> createChildren(Object params, int rowCounter) {
+                if (params != null) {
+                    Document document = getDocument(params);
+                    if (document == null) return null;
+                    return getDocumentsUIComponents(document.getInactiveSimpleFiles(), application,
+                            "doc-file-inact-img-", digiDocFilelimit, rowCounter, document.hasPermission(Privilege.VIEW_DOCUMENT_FILES));
+                }
+                return Collections.emptyList();
+            }
+        };
+    }
+
+    private static List<UIComponent> getDocumentsUIComponents(List<SimpleFile> files, Application application, String imageId,
+                                                              int digiDocFilelimit, int rowCounter, boolean canViewFiles) {
+        List<UIComponent> components = new ArrayList<>();
+        final boolean limited = digiDocFilelimit >= 0;
+        int digiDocFileCounter = 0;
+        int fileCounter = 0;
+        int newLineCounter = 1;
+        for (SimpleFile file : files) {
+            String fileName = file.getDisplayName();
+            if (FilenameUtil.isDigiDocFile(fileName)) {
+                if (limited && digiDocFileCounter >= digiDocFilelimit) {
+                    continue;
+                }
+                digiDocFileCounter++;
+            }
+
+
+            String imageText = file.getImagePath();
+            if (canViewFiles) {
+                UIActionLink fileAllowLink = generateFileReadOnlyLink(application, rowCounter, fileCounter, file.getReadOnlyUrl(), fileName, imageText);
+                components.add(fileAllowLink);
+            } else {
+                HtmlGraphicImage image = (HtmlGraphicImage) application.createComponent(HtmlGraphicImage.COMPONENT_TYPE);
+                image.setValue(imageText);
+                image.setId(imageId + rowCounter + "-" + fileCounter);
+                image.setTitle(fileName);
+                image.setAlt(fileName);
+                components.add(image);
+            }
+            if (newLineCounter == 5) {
+                newLineCounter = 1;
+                HtmlOutputText linebreak = new HtmlOutputText();
+                linebreak.setValue(StringEscapeUtils.unescapeXml("&lt;br/&gt;"));
+                linebreak.setEscape(false);
+                components.add(linebreak);
+            } else {
+                newLineCounter++;
+            }
+            fileCounter++;
+        }
+        return components;
+    }
+
+    private static Document getDocument(Object params) {
+        Document document = null;
+        if (params instanceof Document) {
+            document = (Document) params;
+        } else if (params instanceof AssocBlockObject) {
+            document = ((AssocBlockObject) params).getDocument();
+        }
+        if (document == null) {
+            return null;
+        }
+        return document;
     }
 
     /** Generate read-only open links for all given files (no permission check is performed) */

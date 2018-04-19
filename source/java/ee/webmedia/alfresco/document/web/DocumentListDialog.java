@@ -149,6 +149,11 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
                 return;
             }
             parentVolume = getVolumeService().getVolumeByNodeRef(volumeRef, null);
+            
+	        if (parentVolume.isMarkedForDestruction() && parentVolume.getDisposalDateTime() == null) {
+	            MessageUtil.addInfoMessage("document_list_belongs_to_volume_set_for_destruction");
+	        }
+	        
             parentCase = null;
         } else {
             param = ActionUtil.getParam(event, CASE_NODE_REF);
@@ -424,7 +429,11 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
     }
 
     public CustomChildrenCreator getDocumentRowFileGenerator() {
-        return ComponentUtil.getDocumentRowFileGenerator(FacesContext.getCurrentInstance().getApplication(), 5);
+        return ComponentUtil.getDocumentRowFileGenerator(FacesContext.getCurrentInstance().getApplication(), -1);
+    }
+
+    public CustomChildrenCreator getInactiveDocumentRowFileGenerator() {
+        return ComponentUtil.getInactiveDocumentRowFileGenerator(FacesContext.getCurrentInstance().getApplication(), -1);
     }
 
     @Override

@@ -42,22 +42,11 @@
             </params>
          </action>
 
-         <action id="template_add_new_archival_report">
-            <label-id>template_add_new_archival_report_template</label-id>
-            <image>/images/icons/template_add.gif</image>
-            <action>dialog:addDocumentTemplate</action>
-            <action-listener>#{AddDocumentTemplateDialog.start}</action-listener>
-            <params>
-               <param name="templateType">ARCHIVAL_REPORT_TEMPLATE</param>
-            </params>
-         </action>
-
          <action-group id="template_list_actions">
             <action idref="template_add_new_doc" />
             <action idref="template_add_new_email" />
             <action idref="template_add_new_system" />
             <action idref="template_add_new_report" />
-            <action idref="template_add_new_archival_report" />
          </action-group>
       </actions>
 
