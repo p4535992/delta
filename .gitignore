@@ -1,11 +1,6 @@
-common/lib-server/
 build/
-WEB-INF/alfresco.tld
-WEB-INF/c.tld
-WEB-INF/mDelta.tld
-WEB-INF/wcm.tld
-WEB-INF/wm.tld
-jdigidoc.log
+common/lib-server/
 .idea/
-WEB-INF/repo.tld
-win-1.bat
+win-1-mv.bat
+win-1-jum.bat
+win-1-default.bat

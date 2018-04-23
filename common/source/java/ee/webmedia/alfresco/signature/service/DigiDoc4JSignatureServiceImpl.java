@@ -57,7 +57,6 @@ import org.digidoc4j.SignatureProfile;
 import org.digidoc4j.SignatureValidationResult;
 import org.digidoc4j.X509Cert;
 import org.digidoc4j.exceptions.DigiDoc4JException;
-import org.digidoc4j.impl.asic.asics.AsicSContainerBuilder;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 
@@ -272,7 +271,7 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
         try {
         	containerToSign = getContainer(nodeRef);
             DataToSign dataToSign = getDataToSign(containerToSign, certHex, false);
-            SignatureDigest signatureDigest = new SignatureDigest(DatatypeConverter.printHexBinary(dataToSign.getDataToSign()), certHex, new Date(), dataToSign);
+            SignatureDigest signatureDigest = new SignatureDigest(DatatypeConverter.printHexBinary(dataToSign.getDigestToSign()), certHex, new Date(), dataToSign);
             return signatureDigest;
         } catch (Exception e) {
             throw new SignatureException("Failed to calculate signed info digest of bdoc file, nodeRef = " + nodeRef + ", certHex = " + certHex, e);
@@ -285,7 +284,7 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
         try {
         	containerToSign = createContainer(contents);
             DataToSign dataToSign = getDataToSign(containerToSign, certHex, false);
-            SignatureDigest signatureDigest = new SignatureDigest(DatatypeConverter.printHexBinary(dataToSign.getDataToSign()), certHex, new Date(), dataToSign);
+            SignatureDigest signatureDigest = new SignatureDigest(DatatypeConverter.printHexBinary(dataToSign.getDigestToSign()), certHex, new Date(), dataToSign);
             return signatureDigest;
         } catch (Exception e) {
             throw new SignatureException("Failed to calculate signed info digest from contents = " + contents + ", certHex = " + certHex, e);
@@ -393,7 +392,7 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
             throw new SignatureException("Failed to parse ddoc file, nodeRef = " + nodeRef, e);
         }
     }
-
+    
     /**
      *
      * @param contentInputStream
@@ -404,16 +403,15 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
     private Container getContainerFromStream(InputStream contentInputStream, String ext) throws SignatureException {
         log.debug("getContainerFromStream...");
         try {
-
             if (contentInputStream != null) {
                 log.debug("content input stream is not null. Creating conteiner...");
                 Container container = null;
                 if(ext == null){
                     container = ContainerBuilder.
-                            aContainer().
-                            fromStream(contentInputStream).
-                            withConfiguration(configuration).
-                            build();
+                        aContainer().
+                        fromStream(contentInputStream).
+                        withConfiguration(configuration).
+                        build();
                 } else {
                     container = ContainerBuilder.
                             aContainer(ext).
@@ -432,7 +430,7 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
             throw new SignatureException("Failed to parse digidoc file", e);
         }
     }
-
+    
     private Container getContainerFromStream(InputStream contentInputStream) throws SignatureException {
         return getContainerFromStream(contentInputStream, null);
     }
@@ -484,14 +482,7 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
         addDataFiles(container, nodeRefs);
         return container;
     }
-
-    private Container createAsicSContainer(NodeRef nodeRef) throws DigiDoc4JException, IOException {
-        Container container =  AsicSContainerBuilder.aContainer().withConfiguration(configuration).withTimeStampToken(eu.europa.esig.dss.DigestAlgorithm.SHA256).build();
-        //Container container = ContainerBuilder.aContainer("ASICS").withConfiguration(configuration).build();
-        addDataFile(nodeRef, container);
-        return container;
-    }
-
+    
     private void addDataFiles(Container container, List<NodeRef> nodeRefs) throws DigiDoc4JException, IOException {
         for (NodeRef ref : nodeRefs) {
             addDataFile(ref, container);
@@ -556,7 +547,7 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
     	phoneNo = StringUtils.stripToEmpty(phoneNo);
         idCode = StringUtils.stripToEmpty(idCode);
         
-        String hash = DatatypeConverter.printHexBinary(dataToSign.getDataToSign());
+        String hash = DatatypeConverter.printHexBinary(dataToSign.getDigestToSign());
         
         long startTime = System.nanoTime();
         Pair<String, String> testIdCodeAndCountry = getTestPhoneNumberAndCountry(phoneNo);
@@ -711,11 +702,11 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
                     + ", includeData = " + includeData, e);
         }
     }
-
+    
     @Override
     public SignatureItemsAndDataItems getDataItemsAndSignatureItems(InputStream inputStream, boolean includeData, String filext) throws SignatureException {
         log.debug("getDataItemsAndSignatureItems... InputStream");
-        Container signedContainer = null;
+    	Container signedContainer = null;
         try {
             log.debug("Get digidoc conteiner from inputStream...");
             signedContainer = getContainerFromStream(inputStream, filext);
@@ -731,7 +722,7 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
                     + ObjectUtils.identityToString(inputStream) + ", includeData = " + includeData, e);
         }
     }
-
+    
     @Override
     public SignatureItemsAndDataItems getDataItemsAndSignatureItems(InputStream inputStream, boolean includeData) throws SignatureException {
         return getDataItemsAndSignatureItems(inputStream, includeData, null);
@@ -786,7 +777,7 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
             String legalCode = certValue.getSubjectName(X509Cert.SubjectName.SERIALNUMBER);
             log.debug("X509Cert subject serialnumber: " + legalCode);
             String name = UserUtil.getPersonFullName(subjectFirstName, subjectLastName);
-
+            
             
 //            X509Certificate cert = certValue.getX509Certificate();
 //            String subjectFirstName = SignedDoc.getSubjectFirstName(cert);
@@ -800,11 +791,11 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
 
             boolean isCertValid = false;
             try{
-                SignatureValidationResult validationResult = signature.validateSignature();
+            SignatureValidationResult validationResult = signature.validateSignature();
                 isCertValid = validationResult.isValid();
-                if (!validationResult.isValid() && log.isDebugEnabled()) {
-                    log.debug("Signature (id = " + signature.getId() + ") verification returned errors" + (nodeRef != null ? ", nodeRef = " + nodeRef : "") + " : \n" + validationResult.getErrors());
-                }
+            if (!validationResult.isValid() && log.isDebugEnabled()) {
+                log.debug("Signature (id = " + signature.getId() + ") verification returned errors" + (nodeRef != null ? ", nodeRef = " + nodeRef : "") + " : \n" + validationResult.getErrors());
+            }
 
             } catch (Exception e){
                 log.error("Can't validate certificate! " + e.getMessage(), e);
