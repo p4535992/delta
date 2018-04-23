@@ -305,6 +305,7 @@
 			<src path="${common.dir.src}" />
 			<src path="${project.dir.src}" />
 			<exclude name="ee/webmedia/**" />
+			<exclude name="ee/smit/**" />
 		</javac>
 		<javac destdir="${project.dir.exploded.classes}" classpathref="classpath" source="1.7" target="1.7" debug="on" fork="yes" encoding="UTF-8">
 			<compilerarg value="-Xlint" />
@@ -314,6 +315,7 @@
 			<src path="${common.dir.src}" />
 			<src path="${project.dir.src}" />
 			<include name="ee/webmedia/**" />
+			<include name="ee/smit/**" />
 		</javac>
 
 		<available file="${conf.basedir}/${conf.name}/override" property="exists.dir.override" />
