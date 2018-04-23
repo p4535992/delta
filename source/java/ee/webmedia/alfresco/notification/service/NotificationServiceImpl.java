@@ -20,6 +20,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.faces.event.ActionEvent;
 
@@ -67,6 +69,7 @@ import ee.webmedia.alfresco.email.service.EmailService;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
+import ee.webmedia.alfresco.log.web.LogEntryDataProvider;
 import ee.webmedia.alfresco.notification.exception.EmailAttachmentSizeLimitException;
 import ee.webmedia.alfresco.notification.model.GeneralNotification;
 import ee.webmedia.alfresco.notification.model.Notification;
@@ -79,6 +82,7 @@ import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.substitute.model.Substitute;
 import ee.webmedia.alfresco.substitute.model.UnmodifiableSubstitute;
 import ee.webmedia.alfresco.substitute.service.SubstituteService;
+import ee.webmedia.alfresco.template.model.DocumentTemplate;
 import ee.webmedia.alfresco.template.model.ProcessedEmailTemplate;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.user.model.Authority;
@@ -1525,7 +1529,39 @@ public class NotificationServiceImpl implements NotificationService {
 
         return 0;
     }
-
+    @Override
+    public int sendMyFileModifiedNotifications(LogEntry logEntry){
+    	Pattern p = Pattern.compile("Dokumendiga seotud faili .* on muudetud");  
+        Matcher m = p.matcher(logEntry.getEventDescription());
+        if(m.matches()){
+        	Notification notification = new Notification();
+        	notification.setSubject(logEntry.getEventDescription());
+        	notification.setSenderEmail(parametersService.getStringParameter(Parameters.DOC_SENDER_EMAIL));
+        	List<String> toEmails =  new ArrayList<String>();
+        	toEmails.add(userService.getUserEmail(logEntry.getCreatorName()));
+        	notification.setToEmails(toEmails);
+        	notification.setTemplateName("Minu koostatud dokumenti on muudetud.html");
+        	
+        	NodeRef notificationTemplateByName = templateService.getNotificationTemplateByName(notification.getTemplateName());
+        	
+        	if (notificationTemplateByName == null) {
+                if (log.isDebugEnabled()) {
+                    log.debug("My file modified date notification email template '" + notification.getTemplateName()
+                            + "' not found, no notification email is sent");
+                }
+                return 0; // if the admins are lazy and we don't have a template, we don't have to send out notifications... :)
+            }
+        	String content = templateService.getProcessedMyFileModified(notificationTemplateByName);
+        	try {
+				sendEmail(notification, content, null);
+				return notification.getToEmails().size();
+			} catch (EmailException e) {
+				e.printStackTrace();
+			}
+        }
+    	return 0;
+    }
+    
     private int sendVolumesDispositionDateNotifications(List<Volume> volumesDispositionedAfterDate) {
         Notification notification = setupNotification(new Notification(), NotificationModel.NotificationType.VOLUME_DISPOSITION_DATE);
         if (StringUtils.isBlank(dispositionNotificationUsergroup) || !dispositionNotificationUsergroup.startsWith("GROUP_")) {

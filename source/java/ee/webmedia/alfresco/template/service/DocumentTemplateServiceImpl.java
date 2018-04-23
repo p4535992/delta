@@ -526,6 +526,11 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         } while (retry > 0);
     }
 
+    public String getProcessedMyFileModified(NodeRef template){
+    	String templateText = fileFolderService.getReader(template).getContentString();
+		return templateText;
+    }
+    
     @Override
     public String getProcessedVolumeDispositionTemplate(List<Volume> volumes, NodeRef template) {
         String templateText = fileFolderService.getReader(template).getContentString();
