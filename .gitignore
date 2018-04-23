@@ -9,3 +9,6 @@ jdigidoc.log
 .idea/
 WEB-INF/repo.tld
 win-1.bat
+win-1-mv.bat
+win-1-jum.bat
+win-1-default.bat
