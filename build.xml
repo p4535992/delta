@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="simdhs" default="compile" basedir=".">
 
+  <presetdef name="javac">
+    <javac includeantruntime="false" />
+  </presetdef>
    <dirname property="project.basedir" file="${ant.file.simdhs}" />
 
    <property name="project.name" value="${ant.project.name}" />
