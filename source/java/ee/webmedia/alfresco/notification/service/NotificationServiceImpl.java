@@ -57,6 +57,7 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.document.file.model.File;
+import ee.webmedia.alfresco.document.file.model.SimpleFile;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
@@ -1531,17 +1532,23 @@ public class NotificationServiceImpl implements NotificationService {
     }
     @Override
     public int sendMyFileModifiedNotifications(LogEntry logEntry){
-    	Pattern p = Pattern.compile("Dokumendiga seotud faili .* on muudetud");  
+    	Pattern p = Pattern.compile("Dokumendiga seotud fail .* on kustutatud");
+    	//Pattern p = Pattern.compile("Dokumendiga seotud faili .* on muudetud");  
         Matcher m = p.matcher(logEntry.getEventDescription());
         if(m.matches()){
         	Notification notification = new Notification();
         	notification.setSubject(logEntry.getEventDescription());
         	notification.setSenderEmail(parametersService.getStringParameter(Parameters.DOC_SENDER_EMAIL));
         	List<String> toEmails =  new ArrayList<String>();
-        	toEmails.add(userService.getUserEmail(logEntry.getCreatorName()));
+        	toEmails.add(userService.getUserEmail(logEntry.getCreatorId()));
         	notification.setToEmails(toEmails);
         	notification.setTemplateName("Minu koostatud dokumenti on muudetud.html");
-        	
+        	/*if(userService.getCurrentUserName().equals(logEntry.getCreatorId()) 
+        			|| isSubscribed(userService.getCurrentUserName(), NotificationModel.NotificationType.MY_FILE_MODIFIED)){
+        		return 0;
+        	}*/
+        	Document document = BeanHelper.getDocumentService().getDocumentByNodeRef(new NodeRef(logEntry.getObjectId()));
+        	document.getFiles();
         	NodeRef notificationTemplateByName = templateService.getNotificationTemplateByName(notification.getTemplateName());
         	
         	if (notificationTemplateByName == null) {
