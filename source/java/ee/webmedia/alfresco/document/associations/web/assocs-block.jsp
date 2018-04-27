@@ -22,7 +22,7 @@
 
    <a:richList id="assocsList" viewMode="details" value="#{AssocsBlockBean.docAssocInfos}" var="r" rowStyleClass="recordSetRow"
       altRowStyleClass="recordSetRowAlt" width="100%" refreshOnBind="true" pageSize="#{BrowseBean.pageSizeContent}" 
-      initialSortColumn="regDateTime" initialSortDescending="false">
+      initialSortColumn="regDateTime" initialSortDescending="true">
 
       <a:column id="col1" >
          <f:facet name="header">
