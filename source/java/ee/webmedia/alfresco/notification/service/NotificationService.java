@@ -99,7 +99,7 @@ public interface NotificationService {
     public List<String> getUserSpecificNotification(String userKey);
 
     public void deleteUserSpecificNotification(String userKey);
-    
-    public int sendMyFileModifiedNotifications(LogEntry logEntry);
+
+	public int sendMyFileModifiedNotifications(NodeRef node, String versionNr);
 
 }

@@ -526,8 +526,11 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         } while (retry > 0);
     }
 
-    public String getProcessedMyFileModified(NodeRef template){
+    public String getProcessedMyFileModified(NodeRef template, String fileName, String versionNr, String modifier){
     	String templateText = fileFolderService.getReader(template).getContentString();
+    	templateText = templateText.replace("document.name", fileName);
+    	templateText = templateText.replace("document.version.number", versionNr);
+    	templateText = templateText.replace("modifier.name", modifier);
 		return templateText;
     }
     

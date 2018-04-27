@@ -1531,9 +1531,42 @@ public class NotificationServiceImpl implements NotificationService {
         return 0;
     }
     @Override
-    public int sendMyFileModifiedNotifications(LogEntry logEntry){
-    	Pattern p = Pattern.compile("Dokumendiga seotud fail .* on kustutatud");
-    	//Pattern p = Pattern.compile("Dokumendiga seotud faili .* on muudetud");  
+    public int sendMyFileModifiedNotifications(NodeRef node, String versionNr){
+    	Document document = BeanHelper.getDocumentService().getDocumentByNodeRef(node);
+    	String creator = (String) document.getProperties().get(ContentModel.PROP_CREATOR);
+    	String fileName = (String) document.getProperties().get(ContentModel.PROP_NAME);
+    	String modifier = userService.getUserFullName(userService.getCurrentUserName());
+    	
+    	Notification notification = new Notification();
+    	notification.setSubject(String.format("Minu koostatud dokument %s on muudetud.html", fileName));
+    	notification.setSenderEmail(parametersService.getStringParameter(Parameters.DOC_SENDER_EMAIL));
+    	notification.setTemplateName("Minu koostatud dokumenti on muudetud.html");
+    	
+    	List<String> toEmails =  new ArrayList<String>();
+    	toEmails.add(userService.getUserEmail(creator));
+    	notification.setToEmails(toEmails);
+
+    	NodeRef notificationTemplateByName = templateService.getNotificationTemplateByName(notification.getTemplateName());
+    	if(userService.getCurrentUserName().equals(creator) 
+    			|| !isSubscribed(userService.getCurrentUserName(), NotificationModel.NotificationType.MY_FILE_MODIFIED)){
+    		return 0;
+    	}
+    	if (notificationTemplateByName == null) {
+            if (log.isDebugEnabled()) {
+                log.debug("My file modified date notification email template '" + notification.getTemplateName()
+                        + "' not found, no notification email is sent");
+            }
+            return 0; // if the admins are lazy and we don't have a template, we don't have to send out notifications... :)
+        }
+    	String content = templateService.getProcessedMyFileModified(notificationTemplateByName, fileName, versionNr, modifier);
+    	try {
+			sendEmail(notification, content, null);
+			return notification.getToEmails().size();
+		} catch (EmailException e) {
+			e.printStackTrace();
+		}
+    	/*Pattern p = Pattern.compile("Dokumendiga seotud fail .* on kustutatud");
+    	Pattern p = Pattern.compile("Dokumendiga seotud faili .* on muudetud");  
         Matcher m = p.matcher(logEntry.getEventDescription());
         if(m.matches()){
         	Notification notification = new Notification();
@@ -1546,9 +1579,10 @@ public class NotificationServiceImpl implements NotificationService {
         	/*if(userService.getCurrentUserName().equals(logEntry.getCreatorId()) 
         			|| isSubscribed(userService.getCurrentUserName(), NotificationModel.NotificationType.MY_FILE_MODIFIED)){
         		return 0;
-        	}*/
+        	}*//*
         	Document document = BeanHelper.getDocumentService().getDocumentByNodeRef(new NodeRef(logEntry.getObjectId()));
-        	document.getFiles();
+        	List<File> files = BeanHelper.getFileService().getAllFiles(new NodeRef(logEntry.getObjectId()));
+        	files.size();
         	NodeRef notificationTemplateByName = templateService.getNotificationTemplateByName(notification.getTemplateName());
         	
         	if (notificationTemplateByName == null) {
@@ -1565,7 +1599,7 @@ public class NotificationServiceImpl implements NotificationService {
 			} catch (EmailException e) {
 				e.printStackTrace();
 			}
-        }
+        }*/
     	return 0;
     }
     

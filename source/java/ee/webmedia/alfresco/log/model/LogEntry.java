@@ -216,7 +216,6 @@ public class LogEntry implements Serializable, LogListItem {
         result.objectId = nodeRef != null ? nodeRef.toString() : null;
         result.description = desc + result.getSubstitutionLog();
         LogHelper.update(result);
-        BeanHelper.getNotificationService().sendMyFileModifiedNotifications(result);
         return result;
     }
 
