@@ -193,6 +193,7 @@
       <property name="addressbookService" ref="AddressbookService" />
       <property name="applicationService" ref="ApplicationService" />
       <property name="institutionCode" value="${x-tee.institution}" />
+      <property name="subSystemCode" value="${x-tee.subsystem}" />
    </bean>
 
    <!-- Overridden in concrete projects(i.e SIM and TK) -->

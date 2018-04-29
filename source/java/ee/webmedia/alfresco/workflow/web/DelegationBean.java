@@ -725,7 +725,7 @@ public class DelegationBean implements Serializable {
         QName taskType = task.getType();
         String key = "delegate_error_taskMandatory_" + taskType.getLocalName();
         if (taskType.equals(WorkflowSpecificModel.Types.ASSIGNMENT_TASK)
-                && task.getDueDate() == null && (!noOwner || task.isResponsible())) {
+                && task.getDueDate() == null && task.isResponsible()) {
             feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, key + "_dueDate"));
         } else if (taskType.equals(WorkflowSpecificModel.Types.INFORMATION_TASK)) {
             if (noOwner) {

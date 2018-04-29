@@ -158,6 +158,7 @@ public abstract class DvkServiceImpl implements DvkService {
     protected ApplicationService applicationService;
     private DocumentAdminService documentAdminService;
     private String institutionCode;
+    private String subSystemCode;
 
 
     private String noTitleSpacePrefix;
@@ -1082,7 +1083,11 @@ public abstract class DvkServiceImpl implements DvkService {
 
     protected DecSender getSenderAddress() {
         DecSender sender = DecSender.Factory.newInstance();
-        sender.setOrganisationCode(institutionCode);
+        if (StringUtils.isNotBlank(subSystemCode)) {
+        	sender.setOrganisationCode(subSystemCode);
+        } else {
+        	sender.setOrganisationCode(institutionCode);
+        }
         return sender;
     }
 
@@ -1568,6 +1573,15 @@ public abstract class DvkServiceImpl implements DvkService {
     public void setInstitutionCode(String institutionCode) {
         this.institutionCode = institutionCode;
     }
+    @Override
+    public String getSubSystemCode() {
+        return subSystemCode;
+    }
+
+    public void setSubSystemCode(String SubSystemCode) {
+        this.subSystemCode = subSystemCode;
+    }
+
 
     // END: getters / setters
 

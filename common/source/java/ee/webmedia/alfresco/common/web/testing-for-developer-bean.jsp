@@ -1221,6 +1221,12 @@
                  actionListener="#{TestingForDeveloperBean.generateDispositionReport}" />
 <f:verbatim><hr/></f:verbatim>
 
+<h:outputText value="\"Märgitud hävitamiseks\" = \"Jah\" (markedForDestruction = true) checkboxi eemaldamine toimikutel, mis ei ole lisatud hävitamise järjekorda"/>
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="startResetMarkedForDestruction" value="Käivita" type="submit"
+                 actionListener="#{TestingForDeveloperBean.resetMarkedForDestruction}" />
+<f:verbatim><hr/></f:verbatim>
+
 <h:outputText styleClass="mainTitle" value="Arendajale testimiseks"/>
 <f:verbatim><br/></f:verbatim>
 

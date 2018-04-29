@@ -36,6 +36,8 @@ import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.archivals.model.ActivityFileType;
+import ee.webmedia.alfresco.archivals.model.ActivityStatus;
+import ee.webmedia.alfresco.archivals.model.ArchivalsModel;
 import ee.webmedia.alfresco.base.BaseObject;
 import ee.webmedia.alfresco.casefile.log.service.CaseFileLogService;
 import ee.webmedia.alfresco.casefile.model.CaseFileModel;
@@ -252,13 +254,26 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         DocumentDynamic doc = createNewDocumentInDrafts(documentTypeId).getFirst();
         FileFolderService fileFolderService = BeanHelper.getFileFolderService();
         for (File file : BeanHelper.getArchivalsService().getArchivalActivityFiles(archivalActivityNodeRef)) {
-            if (ActivityFileType.GENERATED_XLSX.name().equals(file.getNode().getProperties().get(FileModel.Props.ACTIVITY_FILE_TYPE))) {
+            boolean isExcelFile = ActivityFileType.GENERATED_XLSX.name().equals(file.getNode().getProperties().get(FileModel.Props.ACTIVITY_FILE_TYPE));
+            if (isExcelFile && ActivityStatus.FINISHED.getValue().equals(getActivityProperty(file.getNodeRef(), ArchivalsModel.Props.STATUS))) {
                 fileService.addFile(file.getName(), file.getDisplayName(), doc.getNodeRef(), fileFolderService.getReader(file.getNodeRef()));
             }
         }
         doc.setProp(DocumentDynamicDialog.TEMP_ARCHIVAL_ACTIVITY_NODE_REF, archivalActivityNodeRef);
         return doc;
     }
+
+    private String getActivityProperty(NodeRef nodeRef, QName property) {
+        ChildAssociationRef primaryParent = getNodeService().getPrimaryParent(nodeRef);
+        if (primaryParent != null) {
+            NodeRef parentRef = primaryParent.getParentRef();
+            if (parentRef != null) {
+                return (String) getNodeService().getProperty(parentRef, property);
+            }
+        }
+        return null;
+    }
+
 
     @Override
     public void createChildNodesHierarchyAndSetDefaultPropertyValues(Node parentNode, QName[] hierarchy, DocumentTypeVersion docVer) {
