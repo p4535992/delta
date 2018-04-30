@@ -64,12 +64,12 @@ public class ArchivalActivity extends NodeBaseVO implements Comparable<ArchivalA
     }
 
     public List<File> getFiles() {
-    	if((ActivityType.DESTRUCTION.name().equals(getActivityNativeType()) ||
-    			ActivityType.SIMPLE_DESTRUCTION.name().equals(getActivityNativeType())) && 
-    				!ActivityStatus.FINISHED.getValue().equals(getStatus()) ) {
-    		return new ArrayList<File>();
-    	}
-    	
+        if ((ActivityType.DESTRUCTION.name().equals(getActivityNativeType()) ||
+                ActivityType.SIMPLE_DESTRUCTION.name().equals(getActivityNativeType())) &&
+                !ActivityStatus.FINISHED.getValue().equals(getStatus())) {
+            return new ArrayList<File>();
+        }
+
         return files;
     }
 
