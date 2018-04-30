@@ -365,7 +365,7 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
 
     @Override
     public void saveAttachmentsToSubfolder(NodeRef document, MimeMessage originalMessage, boolean saveBody) throws IOException, MessagingException, TransformationException,
-    FolderException {
+            FolderException {
         NodeRef parentNodeRef = findOrCreateFolder(document, AttachmentsFolderAppendBehaviour.BEHAVIOUR_NAME);
         saveAttachments(parentNodeRef, originalMessage, saveBody);
     }
@@ -377,11 +377,11 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
     }
 
     private void saveAttachments(NodeRef document, MimeMessage originalMessage, boolean saveBody, Map<NodeRef, Integer> invoiceRefToAttachment) throws IOException,
-    MessagingException {
+            MessagingException {
 
         Object content = originalMessage.getContent();
         //if (content instanceof String) {
-    	//	content = fixPlainTextContentEncoding((String)content);
+        //	content = fixPlainTextContentEncoding((String)content);
         //}
         Part tnefPart = getTnefPart(content);
         Message tnefMessage = null;
@@ -412,12 +412,12 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
             }
         }
     }
-    
+
     private String fixPlainTextContentEncoding(String content) {
-    	byte[] tempBytes =  Charset.forName("ISO-8859-1").encode(content).array();
-		String tempContent = new String(tempBytes);
-		content = new String(Charset.forName("UTF-8").encode(tempContent).array());
-		return content;
+        byte[] tempBytes =  Charset.forName("ISO-8859-1").encode(content).array();
+        String tempContent = new String(tempBytes);
+        content = new String(Charset.forName("UTF-8").encode(tempContent).array());
+        return content;
     }
 
     private boolean saveTnefBodyAndAttachments(NodeRef document, Message tnefMessage, boolean saveBody) throws IOException, UnsupportedEncodingException {
@@ -469,9 +469,9 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
                             if (StringUtils.isNotEmpty(text)) {
                                 InputStream inputStream = new ByteArrayInputStream(text.getBytes("UTF-8"));
                                 try {
-                                	createBody(document, MimetypeMap.MIMETYPE_HTML, "UTF-8", inputStream, bodyFilename);
+                                    createBody(document, MimetypeMap.MIMETYPE_HTML, "UTF-8", inputStream, bodyFilename);
                                 } finally {
-                                	inputStream.close();
+                                    inputStream.close();
                                 }
                                 saveBody = false;
                             }
@@ -594,7 +594,7 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
     }
 
     private void saveAttachments(NodeRef document, Object content, List<Part> attachments, Map<NodeRef, Integer> invoiceRefToAttachment, Part tnefPart) throws MessagingException,
-    IOException {
+            IOException {
         if (content instanceof Multipart) {
             Multipart multipart = (Multipart) content;
 
@@ -728,11 +728,11 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
         // We assume that content-type header also contains charset; so far there haven't been different cases
         // If content-type header doesn't contain charset, we use UTF-8 as default
         String encoding = getEncoding(p);
-        
+
         log.info("Found body part from message, parsed mimeType=" + mimeType + " and encoding=" + encoding + " from contentType=" + p.getContentType());
 
         createBody(document, mimeType, encoding, p.getInputStream(), filename);
-        
+
         return p;
     }
 
@@ -740,9 +740,9 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
         ContentWriter tempWriter = contentService.getTempWriter();
         tempWriter.setMimetype(mimeType);
         tempWriter.setEncoding(encoding);
-        
+
         tempWriter.putContent(inputStream);
-        
+
 
         String safeFileName = FilenameUtil.makeSafeFilename(filename);
         FileInfo createdFile = fileService.transformToPdf(document, null, tempWriter.getReader(), safeFileName, filename, null);

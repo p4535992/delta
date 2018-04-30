@@ -1525,11 +1525,15 @@ public class ArchivalsServiceImpl implements ArchivalsService {
 
     @Override
     public ArchivalActivity getArchivalActivity(NodeRef archivalActivityRef) {
-        WmNode wmNode = new WmNode(archivalActivityRef, ArchivalsModel.Types.ARCHIVAL_ACTIVITY);
-        NodeRef docRef = getArchivalActivityDocument(archivalActivityRef);
-        String docName = (String) (docRef != null ? nodeService.getProperty(docRef, DocumentCommonModel.Props.DOC_NAME) : null);
-        List<File> files = getArchivalActivityFiles(archivalActivityRef);
-        return new ArchivalActivity(wmNode, docName, docRef, files);
+        try {
+            WmNode wmNode = new WmNode(archivalActivityRef, ArchivalsModel.Types.ARCHIVAL_ACTIVITY);
+            NodeRef docRef = getArchivalActivityDocument(archivalActivityRef);
+            String docName = (String) (docRef != null ? nodeService.getProperty(docRef, DocumentCommonModel.Props.DOC_NAME) : null);
+            List<File> files = getArchivalActivityFiles(archivalActivityRef);
+            return new ArchivalActivity(wmNode, docName, docRef, files);
+        } catch (InvalidNodeRefException e) {
+            return null;
+        }
     }
 
     @Override
@@ -1920,6 +1924,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         props.put(DestructionModel.Props.DESCTRUCTING_ACTIVITY_REF, activityRef); // Need is questionable !? - remove
         props.put(DestructionModel.Props.DESTRUCING_JOB_STATUS, ArchiveJobStatus.IN_QUEUE);
         nodeService.addProperties(destructingJobRef, props);
+
         setDestructingProperty(volumeOrCaseRef, Boolean.TRUE);
         
         nodeService.createAssociation(activityRef, destructingJobRef, DestructionModel.Assocs.ACTIVITY_LINKED_JOBS);
