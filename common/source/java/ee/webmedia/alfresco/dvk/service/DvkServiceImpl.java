@@ -1578,7 +1578,7 @@ public abstract class DvkServiceImpl implements DvkService {
         return subSystemCode;
     }
 
-    public void setSubSystemCode(String SubSystemCode) {
+    public void setSubSystemCode(String subSystemCode) {
         this.subSystemCode = subSystemCode;
     }
 
