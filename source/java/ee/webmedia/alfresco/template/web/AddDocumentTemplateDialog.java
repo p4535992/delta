@@ -143,6 +143,8 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
             getNodeService().addAspect(createdNode, DocumentTemplateModel.Aspects.TEMPLATE_EMAIL, properties);
         } else if (TemplateType.REPORT_TEMPLATE.name().equals(templateType)) {
             getNodeService().addAspect(createdNode, DocumentTemplateModel.Aspects.TEMPLATE_REPORT, properties);
+        } else if (documentTemplate) {
+            getNodeService().addAspect(createdNode, DocumentTemplateModel.Aspects.TEMPLATE_DOCUMENT, properties);
         }
         return outcome;
     }

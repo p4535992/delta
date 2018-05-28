@@ -63,6 +63,8 @@ public interface DvkService {
     void sendDvkTask(Task task);
 
     String getInstitutionCode();
+    
+    String getSubSystemCode();
 
     boolean isXmlMimetype(String dataFileName);
 
