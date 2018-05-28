@@ -219,7 +219,7 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
     /**
      * Defers to the typed service
      * 
-     * @see StoreDaoService#createWorkspace(String)
+     *
      */
     @Override
     public StoreRef createStore(String protocol, String identifier)
@@ -1071,7 +1071,6 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
      * Remove properties that should not be persisted as general properties. Where necessary, the
      * properties are set on the node.
      *
-     * @param node the node to set properties on
      * @param properties properties to change
      */
     private void extractIntrinsicProperties(Map<QName, Serializable> properties)
@@ -1089,8 +1088,6 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
      * <p>
      * This method also ensures that the {@link ContentModel#PROP_NAME name property} is always present as a property on a node.
      *
-     * @param node the node with the values
-     * @param nodeRef the node reference containing the values required
      * @param properties the node properties
      */
     private void addIntrinsicProperties(Pair<Long, NodeRef> nodePair, Map<QName, Serializable> properties)
@@ -1267,7 +1264,6 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
      * Gets the properties map, sets the value (null is allowed) and checks that the new set
      * of properties is valid.
      *
-     * @see DbNodeServiceImpl.NullPropertyValue
      */
     @Override
     public void setProperty(NodeRef nodeRef, QName qname, Serializable value) throws InvalidNodeRefException
@@ -1563,8 +1559,21 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
                 public boolean handle(Pair<Long, ChildAssociationRef> childAssocPair, Pair<Long, NodeRef> parentNodePair, Pair<Long, NodeRef> childNodePair)
                 {
                     ChildAssociationRef assocRef = childAssocPair.getSecond();
+                    if(assocRef != null){
+                        logger.debug("ChildAssociationRef QName: " + assocRef.getQName().toString());
+                    }
                     QName assocTypeQName = assocRef.getTypeQName();
+                    if(assocTypeQName == null){
+                        logger.error("assocTypeQName is NULL!");
+                        return false;
+                    }
+
                     QName assocQName = assocRef.getQName();
+                    if(assocQName == null){
+                        logger.error("assocQName is NULL!");
+                        logger.debug("assocTypeQName: " + assocTypeQName.toString());
+                        return false;
+                    }
                     if (!qnamePattern.isMatch(assocQName) || !typeQNamePattern.isMatch(assocTypeQName))
                     {
                         // No match
@@ -1837,10 +1846,8 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
      * Whilst walking up the hierarchy to the root, some nodes may have a <b>root</b> aspect. Everytime one of these is encountered, a new path is farmed off, but the method
      * continues to walk up the hierarchy.
      *
-     * @param currentNode the node to start from, i.e. the child node to work upwards from
      * @param currentPath the path from the current node to the descendent that we started from
      * @param completedPaths paths that have reached the root are added to this collection
-     * @param assocStack the parent-child relationships traversed whilst building the path.
      *            Used to detected cyclic relationships.
      * @param primaryOnly true if only the primary parent association must be traversed.
      *            If this is true, then the only root is the top level node having no parents.
@@ -1972,7 +1979,6 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
 
     /**
      * @see #getPaths(NodeRef, boolean)
-     * @see #prependPaths(Node, Path, Collection, Stack, boolean)
      */
     @Override
     public Path getPath(NodeRef nodeRef) throws InvalidNodeRefException
@@ -1989,7 +1995,6 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
      * When searching for <code>primaryOnly == true</code>, checks that there is exactly
      * one path.
      * 
-     * @see #prependPaths(Node, Path, Collection, Stack, boolean)
      */
     @Override
     public List<Path> getPaths(NodeRef nodeRef, boolean primaryOnly) throws InvalidNodeRefException
