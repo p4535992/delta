@@ -1565,41 +1565,6 @@ public class NotificationServiceImpl implements NotificationService {
 		} catch (EmailException e) {
 			e.printStackTrace();
 		}
-    	/*Pattern p = Pattern.compile("Dokumendiga seotud fail .* on kustutatud");
-    	Pattern p = Pattern.compile("Dokumendiga seotud faili .* on muudetud");  
-        Matcher m = p.matcher(logEntry.getEventDescription());
-        if(m.matches()){
-        	Notification notification = new Notification();
-        	notification.setSubject(logEntry.getEventDescription());
-        	notification.setSenderEmail(parametersService.getStringParameter(Parameters.DOC_SENDER_EMAIL));
-        	List<String> toEmails =  new ArrayList<String>();
-        	toEmails.add(userService.getUserEmail(logEntry.getCreatorId()));
-        	notification.setToEmails(toEmails);
-        	notification.setTemplateName("Minu koostatud dokumenti on muudetud.html");
-        	/*if(userService.getCurrentUserName().equals(logEntry.getCreatorId()) 
-        			|| isSubscribed(userService.getCurrentUserName(), NotificationModel.NotificationType.MY_FILE_MODIFIED)){
-        		return 0;
-        	}*//*
-        	Document document = BeanHelper.getDocumentService().getDocumentByNodeRef(new NodeRef(logEntry.getObjectId()));
-        	List<File> files = BeanHelper.getFileService().getAllFiles(new NodeRef(logEntry.getObjectId()));
-        	files.size();
-        	NodeRef notificationTemplateByName = templateService.getNotificationTemplateByName(notification.getTemplateName());
-        	
-        	if (notificationTemplateByName == null) {
-                if (log.isDebugEnabled()) {
-                    log.debug("My file modified date notification email template '" + notification.getTemplateName()
-                            + "' not found, no notification email is sent");
-                }
-                return 0; // if the admins are lazy and we don't have a template, we don't have to send out notifications... :)
-            }
-        	String content = templateService.getProcessedMyFileModified(notificationTemplateByName);
-        	try {
-				sendEmail(notification, content, null);
-				return notification.getToEmails().size();
-			} catch (EmailException e) {
-				e.printStackTrace();
-			}
-        }*/
     	return 0;
     }
     
