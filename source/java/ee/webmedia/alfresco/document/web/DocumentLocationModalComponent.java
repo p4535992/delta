@@ -53,8 +53,8 @@ public class DocumentLocationModalComponent extends UICommand {
             return;
         }
         ResponseWriter out = context.getResponseWriter();
-        String onClose = ComponentUtil.generateFieldSetter(context, this, getActionId(context, this), "")
-                + Utils.generateFormSubmit(context, this, getClientId(context), FIELD_VALUE_CANCEL);
+        String onClose = ComponentUtil.generateFieldSetterByName(context, this, getActionId(context, this), "")
+                + Utils.generateFormSubmitByName(context, this, getClientId(context), FIELD_VALUE_CANCEL);
         ComponentUtil.writeModalHeader(out, MODAL_ID, MessageUtil.getMessage("document_move"), onClose);
         out.write("<table><tbody><tr><td>");
 
@@ -79,7 +79,7 @@ public class DocumentLocationModalComponent extends UICommand {
         ResponseWriter out = context.getResponseWriter();
         out.write(
                 "</td></tr><tr><td><input id=\"" + getClientId(context) + "_doc_loc_btn\" type=\"submit\" value=\"" + MessageUtil.getMessage("save") + "\" onclick=\""
-                        + Utils.generateFormSubmit(context, this, getClientId(context), FIELD_VALUE_SAVE) + "\" />");
+                        + Utils.generateFormSubmitByName(context, this, getClientId(context), FIELD_VALUE_SAVE) + "\" />");
         out.write("</td></tr></tbody></table>");
         ComponentUtil.writeModalFooter(out);
         super.encodeEnd(context);

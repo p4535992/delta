@@ -723,6 +723,27 @@ public class ComponentUtil {
         return buf.toString();
     }
 
+    public static String generateFieldSetterByName(FacesContext context, UIComponent component, String fieldId, String value) {
+        UIForm form = Utils.getParentForm(context, component);
+        if (form == null) {
+            throw new IllegalStateException("Must nest components inside UIForm to generate form submit!");
+        }
+        return generateFieldSetterByName(context, form, fieldId, value);
+    }
+
+    public static String generateFieldSetterByName(FacesContext context, UIForm form, String fieldId, String value) {
+        HtmlFormRendererBase.addHiddenCommandParameter(context, form, fieldId);
+        StringBuilder buf = new StringBuilder(200);
+        buf.append("document.getElementsByName('");
+        buf.append(StringEscapeUtils.escapeJavaScript(fieldId));
+        buf.append("')[0].value='");
+        String escapeJavaScript = StringEscapeUtils.escapeJavaScript(value);
+        // Take back forward slash modifications for JMeter tests
+        buf.append(escapeJavaScript.replaceAll("\\\\/", "/"));
+        buf.append("';");
+        return buf.toString();
+    }
+
     public static String generateAjaxFormSubmit(FacesContext context, UIComponent component) {
         return generateAjaxFormSubmit(context, component, null, null);
     }

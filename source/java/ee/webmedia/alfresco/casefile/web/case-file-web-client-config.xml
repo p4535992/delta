@@ -2,6 +2,11 @@
 <alfresco-config>
    <config>
       <actions>
+          <action id="case_file_moveMass">
+              <label-id>document_move</label-id>
+              <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsOpenDocListUnitEvaluator</evaluator>
+              <action-listener>#{CaseFileDialog.updateLocationSelect}</action-listener>
+          </action>
 
          <action id="case_file_favorites_add">
             <evaluator>ee.webmedia.alfresco.casefile.web.evaluator.AddFavoritesCaseFileEvaluator</evaluator>
@@ -98,6 +103,7 @@
          </action>          
 
          <action-group id="case_file_actions" shared-resource="ee.webmedia.alfresco.common.evaluator.CaseFileActionsGroupResource">
+            <action idref="case_file_moveMass" />
             <action idref="case_file_favorites_add" />
          	<action idref="case_file_favorites_remove" />
          	<action idref="case_file_permissions" />

@@ -64,7 +64,7 @@
       width="100%" value="<%=((BaseDocumentListDialog)Application.getDialogManager().getBean()).getDocumentListValueBinding()%>" var="r" binding="#{DialogManager.bean.richList}" refreshOnBind="true" >
       
       <%-- checkbox --%>
-      <a:column id="col-checkbox" primary="true" styleClass="#{r.cssStyleClass}" rendered="#{UserService.documentManager && DialogManager.bean.showCheckboxes}" >
+      <a:column id="col-checkbox" primary="true" styleClass="#{r.cssStyleClass}" rendered="#{(UserService.archivist || UserService.documentManager) && DialogManager.bean.showCheckboxes}" >
          <f:facet name="header">
             <h:selectBooleanCheckbox id="col0-header" value="false" styleClass="selectAllHeader"/>
          </f:facet>

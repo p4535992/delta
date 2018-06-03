@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.series.service;
 
+import static ee.webmedia.alfresco.classificator.enums.DocListUnitStatus.getStatusNames;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getBulkLoadNodeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
 import static ee.webmedia.alfresco.log.PropDiffHelper.value;
@@ -132,11 +133,12 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     }
 
     @Override
-    public List<UnmodifiableSeries> getAllSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status, Set<String> docTypeIds) {
+    public List<UnmodifiableSeries> getAllSeriesByFunction(NodeRef functionNodeRef, Set<String> docTypeIds, DocListUnitStatus... statuses) {
         List<UnmodifiableSeries> series = getAllSeriesByFunction(functionNodeRef, false);
+        List<String> statusNames = getStatusNames(statuses);
         for (Iterator<UnmodifiableSeries> i = series.iterator(); i.hasNext();) {
             UnmodifiableSeries s = i.next();
-            if (!status.getValueName().equals(s.getStatus()) || !s.getDocTypes().containsAll(docTypeIds)) {
+            if (!statusNames.contains(s.getStatus()) || !s.getDocTypes().containsAll(docTypeIds)) {
                 i.remove();
             }
         }
@@ -509,24 +511,30 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
             return getBulkLoadNodeService().countChildNodes(functionRef, SeriesModel.Types.SERIES) > 0;
         } else if (getGeneralService().getStore().equals(functionRef.getStoreRef())) {
             if (forDocumentType) {
-                return hasOpenSeriesForDocTypes(functionRef, DocListUnitStatus.OPEN, idList);
+                return hasSeriesForDocTypes(functionRef, idList, DocListUnitStatus.OPEN);
             }
             return hasCaseFileSeriesWithStatus(functionRef, DocListUnitStatus.OPEN);
         }
         return false;
     }
 
-    private boolean hasOpenSeriesForDocTypes(NodeRef functionNodeRef, DocListUnitStatus status, Set<String> docTypeIds) {
+    @Override
+    public boolean hasSelectableSeriesForModal(NodeRef functionRef, Set<String> idList) {
+        return hasSeriesForDocTypes(functionRef, idList, DocListUnitStatus.OPEN, DocListUnitStatus.CLOSED);
+    }
+
+    private boolean hasSeriesForDocTypes(NodeRef functionNodeRef, Set<String> docTypeIds, DocListUnitStatus... statuses) {
         Map<NodeRef, Map<NodeRef, Map<QName, Serializable>>> allSeries = BeanHelper.getBulkLoadNodeService().loadChildNodes(Collections.singleton(functionNodeRef),
                 SERIES_DOCUMENT_TYPE_PROPS);
         Map<NodeRef, Map<QName, Serializable>> seriesProps = allSeries.get(functionNodeRef);
         if (seriesProps == null) {
             return false;
         }
+        List<String> statusNames = getStatusNames(statuses);
         for (Entry<NodeRef, Map<QName, Serializable>> s : seriesProps.entrySet()) {
             Map<QName, Serializable> props = s.getValue();
             List<String> docTypes = (List<String>) props.get(SeriesModel.Props.DOC_TYPE);
-            if (docTypes != null && docTypes.containsAll(docTypeIds) && status.getValueName().equals(props.get(SeriesModel.Props.STATUS))) {
+            if (docTypes != null && docTypes.containsAll(docTypeIds) && statusNames.contains(props.get(SeriesModel.Props.STATUS))) {
                 return true;
             }
         }

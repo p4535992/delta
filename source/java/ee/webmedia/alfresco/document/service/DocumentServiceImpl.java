@@ -2697,6 +2697,13 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
         long step7 = System.currentTimeMillis();
         if (finishTask) {
             getWorkflowService().finishInProgressTask(task, 1);
+            boolean isDocumentWorkflow = compoundWorkflowRef != null
+                    && getWorkflowService().getCompoundWorkflow(compoundWorkflowRef).isDocumentWorkflow();
+            String documentStatus = document != null ? (String) getDocument(document).getProperties().get(DocumentCommonModel.Props.DOC_STATUS) : null;
+            boolean isFinished = DocumentStatus.FINISHED.getValueName().equals(documentStatus);
+            if (isDocumentWorkflow && !isFinished) {
+                endDocument(document);
+            }
         }
         final String currentUser = AuthenticationUtil.getFullyAuthenticatedUser();
         AuthenticationUtil.runAs(new RunAsWork<Void>() {

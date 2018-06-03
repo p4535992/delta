@@ -554,8 +554,8 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
         private Series getSeries(ImportDocument doc, final NodeRef functionRef, boolean forceRefresh) {
             Map<String, Series> seriesMap = seriesCache.get(functionRef);
             if (seriesMap == null || forceRefresh) {
-                final List<UnmodifiableSeries> allOpenedSeries = seriesService.getAllSeriesByFunction(functionRef, DocListUnitStatus.OPEN, null);
-                seriesMap = new HashMap<String, Series>(allOpenedSeries.size());
+                final List<UnmodifiableSeries> allOpenedSeries = seriesService.getAllSeriesByFunction(functionRef, null, DocListUnitStatus.OPEN);
+                seriesMap = new HashMap<>(allOpenedSeries.size());
                 for (UnmodifiableSeries series : allOpenedSeries) {
                     seriesMap.put(StringUtils.trim(series.getSeriesIdentifier()), seriesService.getSeriesByNodeRef(series.getSeriesRef()));
                 }

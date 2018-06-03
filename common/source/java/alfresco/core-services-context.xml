@@ -433,6 +433,9 @@
         <property name="port">
             <value>${mail.port}</value>
         </property>
+        <property name='protocol'>
+        	<value>${mail.protocol}</value>
+    	</property>
         <property name="username">
             <value>${mail.username}</value>
         </property>
@@ -446,6 +449,7 @@
 			<props>
 				<prop key="mail.smtp.auth">${mail.smtp.auth}</prop>
 				<prop key="mail.smtp.timeout">${mail.smtp.timeout}</prop>
+				<prop key='mail.smtps.starttls.enable'>${mail.smtps.starttls.enable}</prop>
 			</props>
 		</property>
     </bean>
