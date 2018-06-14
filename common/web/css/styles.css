@@ -1561,12 +1561,13 @@ DIV.modalpopup-header {
 }
 DIV.modalpopup-header H1 {
 	float: left;
-	width: 300px;
+	width: 75%;
 	margin: 10px 0 0;
 	border: none;
 	color: #fff;
 	font-size: 16px;
 	font-weight: bold;
+	white-space: nowrap;
 }
 DIV.modalpopup-header P.close {
 	float: right;
