@@ -699,7 +699,9 @@ public class NotificationServiceImpl implements NotificationService {
         // Try to retrieve the subject from repository.
         if (StringUtils.isNotBlank(processedTemplate.getSubject())) {
             notification.setSubject(HtmlUtils.htmlUnescape(processedTemplate.getSubject()));
-        }
+        }    
+        String cleanContent = HtmlUtils.htmlUnescape(processedTemplate.getContent().replaceAll("&apos;", "'"));     
+        processedTemplate.setContent(cleanContent);
         if (saveContent) {
             notification.addAdditionalFomula(CONTENT, processedTemplate.getContent());
         }
