@@ -31,7 +31,19 @@
          reopenBtn.remove();
          reopenBtn2.remove();
       }
+      
+      function fixStatusDefaultValue() {
+   	   var status = document.getElementById("dialog:dialog-body:fn-metadata:prop_fnx003a_status:fnx003a_status");
+   	   var statusValue = status.options[status.selectedIndex].value;
+   	   if(statusValue == ""){
+   		   statusValue = "avatud";
+   		   status.options[0].removeAttribute("selected");
+   		   status.options[1].setAttribute("selected","selected");
+   	   }
+      }
+      window.onload = fixStatusDefaultValue;
    }
+   
 </script>
 </f:verbatim>
 <%
