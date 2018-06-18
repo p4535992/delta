@@ -1540,7 +1540,7 @@ public class NotificationServiceImpl implements NotificationService {
     	String modifier = userService.getUserFullName(userService.getCurrentUserName());
     	
     	Notification notification = new Notification();
-    	notification.setSubject(String.format("Minu koostatud dokument %s on muudetud.html", fileName));
+    	notification.setSubject(String.format("Minu koostatud dokument %s on muudetud", fileName));
     	notification.setSenderEmail(parametersService.getStringParameter(Parameters.DOC_SENDER_EMAIL));
     	notification.setTemplateName("Minu koostatud dokumenti on muudetud.html");
     	
