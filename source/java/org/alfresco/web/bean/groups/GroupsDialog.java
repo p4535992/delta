@@ -35,6 +35,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
@@ -747,12 +748,43 @@ public class GroupsDialog extends BaseDialogBean
         }
 
         public GroupDataProvider(Set<String> authorities) {
-            objectKeys = new ArrayList<String>(authorities);
-            Collections.sort(objectKeys, new Comparator<String>() {
-        	    public int compare(String s1, String s2){
-        	        return s1.compareToIgnoreCase(s2);
-        	    }
-    		});
+
+        	//Estonian Alphabet for correct sorting order with Estonian letters
+        	final String ORDER= "0123456789AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsŠšZzŽžTtUuVvWwÕõÄäÖöÜüXxYy";
+         
+            Map<String, String> treeMap = new TreeMap<String, String>(new Comparator<String>() {
+            	
+        	public int compare(String s1, String s2){
+        	
+                int pos1 = 0;
+                int pos2 = 0;
+                for (int i = 0; i < Math.min(s1.length(), s2.length()) && pos1 == pos2; i++) {          		      		
+                	pos1 = ORDER.indexOf(s1.charAt(i));
+                	pos1 = toUpperCase(pos1);
+                	pos2 = ORDER.indexOf(s2.charAt(i));
+                	pos2 = toUpperCase(pos2);
+                }
+
+                if (pos1 == pos2 && s1.length() != s2.length()) {
+                	return s1.length() - s2.length();
+                }
+
+                return pos1 - pos2;
+            }});
+            
+            for(String authority : authorities){
+            	treeMap.put(getAuthorityService().getAuthorityDisplayName(authority), authority);
+            }
+            
+            objectKeys = new ArrayList<String>(treeMap.values());
+            
+        }
+        
+        private int toUpperCase(int pos){
+        	if (pos % 2 != 0 && pos > 9) {
+        		pos--;
+    		}
+        	return pos;
         }
 
         @Override

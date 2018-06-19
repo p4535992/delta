@@ -152,12 +152,18 @@ public class TaskListContainer extends HtmlPanelGroup implements IDataContainer 
 
     public static void addWorkflowTaskListPageInfo(UIComponent eventSource, int addedWorkflowIndex) {
         List<Map<String, PageInfo>> pageAttribute = getCurrentPageAttribute(getCompoundWorkflowDialog(eventSource));
-        pageAttribute.add(addedWorkflowIndex, new HashMap<String, PageInfo>());
+        try{
+        	pageAttribute.add(addedWorkflowIndex, new HashMap<String, PageInfo>());
+        }catch(IndexOutOfBoundsException e){
+        	pageAttribute.add(new HashMap<String, PageInfo>());
+        }
     }
 
     public static void removeWorkflowTaskListPageInfo(UIComponent eventSource, int removedWorkflowIndex) {
         List<Map<String, PageInfo>> pageAttribute = getCurrentPageAttribute(getCompoundWorkflowDialog(eventSource));
-        pageAttribute.remove(removedWorkflowIndex);
+        try{
+        	pageAttribute.remove(removedWorkflowIndex);
+        }catch(IndexOutOfBoundsException e){}
     }
 
     private static void setTaskListCurrentPageInfo(UIComponent persistentParentComponent, int workflowIndex, String currentPageAttributeKey, PageInfo currentPageInfo) {

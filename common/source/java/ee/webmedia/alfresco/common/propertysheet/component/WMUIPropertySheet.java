@@ -13,6 +13,7 @@ import javax.faces.el.ValueBinding;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.generator.BaseComponentGenerator;
 import org.alfresco.web.bean.repository.Node;
+import org.alfresco.web.config.PropertySheetConfigElement.PropertyConfig;
 import org.alfresco.web.config.PropertySheetConfigElement.ItemConfig;
 import org.alfresco.web.ui.repo.RepoConstants;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
@@ -142,7 +143,13 @@ public class WMUIPropertySheet extends UIPropertySheet {
                 return null; // subclass might have a solution for this item type
             }
             propSheetItemAndId = new Pair<PropertySheetItem, String>(propSheetItem, id);
-        } else {
+        } else if(item instanceof PropertyConfig){
+            String id = PROP_ID_PREFIX + item.getName();
+        	PropertySheetItem propSheetItem = (PropertySheetItem) context.getApplication().
+                    createComponent(RepoConstants.ALFRESCO_FACES_PROPERTY);
+            propSheetItemAndId = new Pair<PropertySheetItem, String>(propSheetItem, id);
+        }
+        else {
             propSheetItemAndId = null;
         }
         return propSheetItemAndId;

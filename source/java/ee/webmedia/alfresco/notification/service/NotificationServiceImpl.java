@@ -20,8 +20,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.StringTokenizer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.faces.event.ActionEvent;
 
@@ -57,20 +55,20 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.document.file.model.File;
-import ee.webmedia.alfresco.document.file.model.SimpleFile;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
+import ee.webmedia.alfresco.dvk.model.DvkSendDocuments;
+import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.email.model.EmailAttachment;
 import ee.webmedia.alfresco.email.service.EmailException;
 import ee.webmedia.alfresco.email.service.EmailService;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
-import ee.webmedia.alfresco.log.web.LogEntryDataProvider;
 import ee.webmedia.alfresco.notification.exception.EmailAttachmentSizeLimitException;
 import ee.webmedia.alfresco.notification.model.GeneralNotification;
 import ee.webmedia.alfresco.notification.model.Notification;
@@ -83,7 +81,6 @@ import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.substitute.model.Substitute;
 import ee.webmedia.alfresco.substitute.model.UnmodifiableSubstitute;
 import ee.webmedia.alfresco.substitute.service.SubstituteService;
-import ee.webmedia.alfresco.template.model.DocumentTemplate;
 import ee.webmedia.alfresco.template.model.ProcessedEmailTemplate;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.user.model.Authority;
@@ -137,7 +134,8 @@ public class NotificationServiceImpl implements NotificationService {
     private String dispositionNotificationUsergroup;
     private BulkLoadNodeService bulkLoadNodeService;
     private ApplicationConstantsBean applicationConstantsBean;
-
+    private DvkService _dvkService;
+    
     private static BeanPropertyMapper<GeneralNotification> generalNotificationBeanPropertyMapper;
     private static Map<String, List<String>> userSpecificNotifications;
 
@@ -699,7 +697,9 @@ public class NotificationServiceImpl implements NotificationService {
         // Try to retrieve the subject from repository.
         if (StringUtils.isNotBlank(processedTemplate.getSubject())) {
             notification.setSubject(HtmlUtils.htmlUnescape(processedTemplate.getSubject()));
-        }
+        }    
+        String cleanContent = HtmlUtils.htmlUnescape(processedTemplate.getContent().replaceAll("&apos;", "'"));     
+        processedTemplate.setContent(cleanContent);
         if (saveContent) {
             notification.addAdditionalFomula(CONTENT, processedTemplate.getContent());
         }
@@ -1475,6 +1475,22 @@ public class NotificationServiceImpl implements NotificationService {
 
         return approaching + exceeded;
     }
+    
+    @Override
+    public int processDocSendFailViaDvkNotifications(Date firingDate) {
+        return processDocSendFailViaDvkNotifications();
+    }
+    
+    private int processDocSendFailViaDvkNotifications() {
+        String DocSendFailViaDvkNotificationsEmails = parametersService.getStringParameter(Parameters.DOC_SEND_FAIL_VIA_DVK_NOTIFICATION_EMAILS);
+
+
+        NotificationCache cache = new NotificationCache();
+        
+        int approaching = sendDvkSendFailNotifications(DocSendFailViaDvkNotificationsEmails,  cache);
+
+        return approaching;
+    }
 
     /**
      * @param tasks
@@ -1530,6 +1546,38 @@ public class NotificationServiceImpl implements NotificationService {
 
         return 0;
     }
+    
+    private int sendDvkSendFailNotifications(String emails, NotificationCache notificationCache) {
+    	String[] emailParts = emails.split(";");
+    	List<String> emailsList = Arrays.asList(emailParts);  
+    	int sentMails = 0;
+
+            Notification notification = new Notification();
+            notification.setSubject("Dokumendi välja saatmine üle DVK on katkestatud");
+            notification.setSenderEmail(parametersService.getStringParameter(Parameters.DOC_SENDER_EMAIL));
+            notification.setToEmails(emailsList);
+            notification.setTemplateName("Dokumendi välja saatmine üle DVK on katkestatud.html");
+            List<DvkSendDocuments> lastHourFailedDocuments = getDvkService().getDvkSendFailedDocuments();
+
+            for(DvkSendDocuments document : lastHourFailedDocuments){
+	            NodeRef notificationTemplateByName = templateService.getNotificationTemplateByName(notification.getTemplateName());
+	            
+	            String context = templateService.getDvkSendTemplate(notificationTemplateByName, document);
+	            
+	            try {
+	            	emailService.sendEmail(notification.getToEmails(), notification.getToNames(), 
+	            			notification.getSenderEmail(), notification.getSubject(), 
+	            			context, true, null, null);
+	                sentMails++;
+	            } catch (EmailException e) {
+	                log.error("Dvk send fail notification e-mail sending failed, ignoring and continuing", e);
+	            }
+            }
+            lastHourFailedDocuments.clear();
+        
+        return sentMails;
+    }
+    
     @Override
     public int sendMyFileModifiedNotifications(NodeRef node, String versionNr){
     	Document document = BeanHelper.getDocumentService().getDocumentByNodeRef(node);
@@ -1538,7 +1586,7 @@ public class NotificationServiceImpl implements NotificationService {
     	String modifier = userService.getUserFullName(userService.getCurrentUserName());
     	
     	Notification notification = new Notification();
-    	notification.setSubject(String.format("Minu koostatud dokument %s on muudetud.html", fileName));
+    	notification.setSubject(String.format("Minu koostatud dokument %s on muudetud", fileName));
     	notification.setSenderEmail(parametersService.getStringParameter(Parameters.DOC_SENDER_EMAIL));
     	notification.setTemplateName("Minu koostatud dokumenti on muudetud.html");
     	
@@ -2179,6 +2227,13 @@ public class NotificationServiceImpl implements NotificationService {
 
     public void setBulkLoadNodeService(BulkLoadNodeService bulkLoadNodeService) {
         this.bulkLoadNodeService = bulkLoadNodeService;
+    }
+    
+    private DvkService getDvkService() {
+        if (_dvkService == null) {
+            _dvkService = BeanHelper.getDvkService();
+        }
+        return _dvkService;
     }
 
 }

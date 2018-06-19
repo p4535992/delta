@@ -12,7 +12,6 @@ import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
-import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.notification.model.GeneralNotification;
 import ee.webmedia.alfresco.notification.model.NotificationCache;
 import ee.webmedia.alfresco.notification.model.NotificationResult;
@@ -45,6 +44,8 @@ public interface NotificationService {
     public int processTaskDueDateNotificationsIfWorkingDay(Date firingDate);
 
     public int processVolumeDispositionDateNotifications();
+    
+    public int processDocSendFailViaDvkNotifications(Date firingDate);
 
     public int processAccessRestrictionEndDateNotifications();
 

@@ -83,5 +83,7 @@ public interface DvkService {
     Pair<Integer, Integer> resendFailedSends();
 
     void deleteForwardedDecDocuments();
+    
+    List<DvkSendDocuments> getDvkSendFailedDocuments();
 
 }

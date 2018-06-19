@@ -130,6 +130,7 @@ public enum Parameters {
     DVK_FAILED_SENDS_RESEND_TIME("dvkFailedSendsResendTime"),
     MOVE_TO_ARCHIVE_LIST_DEFAULT_MONTHS("moveToArchiveListDefaultMonths"),
     ARCHIVAL_ACTIVITY_DOC_TYPE_ID("archivalActivityDocTypeId"),
+	DOC_SEND_FAIL_VIA_DVK_NOTIFICATION_EMAILS("docSendFailViaDvkNotificationEmails"),
     ACCESS_RESTRICTION_END_DATE_NOTIFICATION_MAX_DOCUMENTS("accessRestrictionEndDateNotificationMaxDocuments"),
     
     ARCHIVING_BEGIN_TIME("archivingBeginTime"),
