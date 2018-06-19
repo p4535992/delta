@@ -21,6 +21,7 @@ import ee.webmedia.alfresco.template.model.ProcessedEmailTemplate;
 import ee.webmedia.alfresco.template.model.UnmodifiableDocumentTemplate;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.workflow.service.Task;
+import ee.webmedia.alfresco.dvk.model.DvkSendDocuments;
 
 public interface DocumentTemplateService {
 
@@ -140,4 +141,7 @@ public interface DocumentTemplateService {
     void removeTemplateFromCache(NodeRef templateRef);
 
 	String getProcessedMyFileModified(NodeRef notificationTemplateByName, String fileName, String versionNr, String modifier);
+	
+	String getDvkSendTemplate(NodeRef template, DvkSendDocuments lastHourFailedDocuments);
+
 }
