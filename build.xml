@@ -9,7 +9,8 @@
    <property name="project.name" value="${ant.project.name}" />
 
    <import file="common/build-common.xml" />
-   <import file="common/build-${appserver}.xml" />
+    <property name="appserver" value="tomcat"/>
+    <import file="common/build-${appserver}.xml" />
    <import file="common/build-postgresql.xml" />
    <import file="hgdk-build.xml" />
 
