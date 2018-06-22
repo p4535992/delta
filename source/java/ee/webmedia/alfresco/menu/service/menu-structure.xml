@@ -110,6 +110,7 @@
                <item id="dvkCorrupt" title-id="menu_dvk_error_messages" document-manager="true">
                   <outcome>dialog:dvkCorruptListDialog</outcome>
                   <action-listener>#{DvkCorruptListDialog.init}</action-listener>
+                  <hidden>#{MenuBean.isMenuItemHidden}</hidden>
                </item>
                <item id="scannedDocuments" title-id="menu_scanned_documents" document-manager="true">
                   <outcome>dialog:scannedDocsListDialog</outcome>
@@ -122,6 +123,7 @@
                <item id="sendFailureNotification" title-id="menu_send_failure_notifications" document-manager="true">
                   <outcome>dialog:sendFailureNotificationsListDialog</outcome>
                   <action-listener>#{SendFailureNotificationsListDialog.init}</action-listener>
+                  <hidden>#{MenuBean.isMenuItemHidden}</hidden>
                </item>
                <item id="dvkDocuments" title-id="menu_dvk_documents" document-manager="true">
                   <outcome>dialog:dvkDocumentListDialog</outcome>

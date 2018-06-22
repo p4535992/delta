@@ -21,7 +21,8 @@
    expanded="#{DialogManager.bean.assocsBlockExpanded}" facetsId="dialog:dialog-body:assocs-panel-facets">
 
    <a:richList id="assocsList" viewMode="details" value="#{AssocsBlockBean.docAssocInfos}" var="r" rowStyleClass="recordSetRow"
-      altRowStyleClass="recordSetRowAlt" width="100%" refreshOnBind="true" pageSize="#{BrowseBean.pageSizeContent}" >
+      altRowStyleClass="recordSetRowAlt" width="100%" refreshOnBind="true" pageSize="#{BrowseBean.pageSizeContent}" 
+      initialSortColumn="regDateTime" initialSortDescending="true">
 
       <a:column id="col1" >
          <f:facet name="header">
@@ -35,10 +36,17 @@
             <a:sortLink id="col2-header" label="#{msg.document_assocsBlockBean_regDateTime}" value="regDateTime" styleClass="header" />
          </f:facet>
          <h:outputText id="col2-txt" value="#{r.regDateTime}" >
-            <a:convertXMLDate type="both" pattern="dd.MM.yyyy" />
+            <a:convertXMLDate type="both" pattern="dd.MM.yyyy HH:mm" />
          </h:outputText>
       </a:column>
-
+      
+	  <a:column id="col7" >
+         <f:facet name="header">
+            <a:sortLink id="col7-header" label="#{msg.document_assocsBlockBean_workflowOwnerName}" value="workflowOwnerName" styleClass="header" />
+         </f:facet>
+         <h:outputText id="col7-txt" value="#{r.workflowOwnerName}" />
+      </a:column>
+      
       <a:column id="col4">
          <f:facet name="header">
             <a:sortLink id="col4-header" label="#{msg.document_assocsBlockBean_title}" value="title" styleClass="header" />

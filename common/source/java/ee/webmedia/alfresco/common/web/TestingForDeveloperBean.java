@@ -1,20 +1,25 @@
 package ee.webmedia.alfresco.common.web;
 
 import ee.webmedia.alfresco.app.AppConstants;
+import ee.webmedia.alfresco.archivals.model.ArchivalsStoreVO;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.classificator.enums.TemplateType;
 import ee.webmedia.alfresco.common.job.NightlyDataFixJob;
 import ee.webmedia.alfresco.common.service.CustomReindexComponent;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.destruction.model.DestructionModel;
 import ee.webmedia.alfresco.docdynamic.bootstrap.DocumentUpdater;
 import ee.webmedia.alfresco.document.bootstrap.SearchableSendInfoUpdater;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.dvk.service.DvkService;
+import ee.webmedia.alfresco.eventplan.model.EventPlanModel;
 import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.volume.VolumeDispositionReportGenerator;
+import ee.webmedia.alfresco.volume.model.Volume;
+import ee.webmedia.alfresco.volume.search.model.VolumeSearchModel;
 import ee.webmedia.alfresco.workflow.bootstrap.CompoundWorkflowOwnerPropsUpdater;
 import ee.webmedia.alfresco.workflow.bootstrap.TaskUpdater;
 import ee.webmedia.xtee.client.dhl.DhlFSStubXTeeServiceImpl;
@@ -37,6 +42,8 @@ import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.transaction.TransactionService;
+import org.alfresco.web.bean.repository.Node;
+import org.alfresco.web.bean.repository.TransientNode;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.apache.myfaces.application.jsp.JspStateManagerImpl;
@@ -45,6 +52,7 @@ import org.quartz.JobExecutionException;
 
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
+import javax.faces.model.SelectItem;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
@@ -53,8 +61,10 @@ import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getSpringBean;
 import static ee.webmedia.alfresco.utils.SearchUtil.*;
 
@@ -208,6 +218,33 @@ public class TestingForDeveloperBean implements Serializable {
         writeDispositionReportToResponse(workbook);
         // hack for incorrect view id in the next request
         JspStateManagerImpl.ignoreCurrentViewSequenceHack();
+    }
+
+    public void resetMarkedForDestruction(@SuppressWarnings("unused") ActionEvent event) {
+        LOG.info("resetMarkedForDestruction ");
+        List<NodeRef> storeNodeRefs = getArchivalStores();
+        List<Volume> volumes = BeanHelper.getDocumentSearchService().searchVolumesForArchiveList(
+                new TransientNode(VolumeSearchModel.Types.ARCHIVE_LIST_FILTER, null, null), false, false, storeNodeRefs);
+        resetMarkedForDestruction(volumes);
+        // hack for incorrect view id in the next request
+        JspStateManagerImpl.ignoreCurrentViewSequenceHack();
+    }
+
+    private List<NodeRef> getArchivalStores() {
+        List<NodeRef> storeNodeRefs = new ArrayList<>();
+        for (ArchivalsStoreVO archivalsStoreVO : getGeneralService().getArchivalsStoreVOs()) {
+            storeNodeRefs.add(archivalsStoreVO.getNodeRef());
+        }
+        return storeNodeRefs;
+    }
+
+    private void resetMarkedForDestruction(List<Volume> volumes) {
+        List<NodeRef> jobList = BeanHelper.getArchivalsService().getAllInQueueJobsForDesruction();
+        for (Volume volume : volumes) {
+            if (!jobList.contains(volume.getNodeRef())) {
+                nodeService.setProperty(volume.getNodeRef(), EventPlanModel.Props.MARKED_FOR_DESTRUCTION, Boolean.FALSE);
+            }
+        }
     }
 
     private void writeDispositionReportToResponse(HSSFWorkbook workbook) {

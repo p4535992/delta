@@ -4,3 +4,8 @@ common/lib-server/
 win-1-mv.bat
 win-1-jum.bat
 win-1-default.bat
+jdigidoc.log
+digidocserviceskee.crt
+lib-sonar/
+WEB-INF/
+.sonar/.sonar_lock

@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.volume.service;
 
+import static ee.webmedia.alfresco.classificator.enums.DocListUnitStatus.getStatusNames;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getEventPlanService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFunctionsService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
@@ -121,11 +122,12 @@ public class VolumeServiceImpl implements VolumeService {
     }
 
     @Override
-    public List<UnmodifiableVolume> getAllValidVolumesBySeries(NodeRef seriesNodeRef, DocListUnitStatus status) {
+    public List<UnmodifiableVolume> getAllValidVolumesBySeries(NodeRef seriesNodeRef, DocListUnitStatus... statuses) {
         List<UnmodifiableVolume> volumes = getAllValidVolumesBySeries(seriesNodeRef);
-        for (Iterator<UnmodifiableVolume> i = volumes.iterator(); i.hasNext();) {
+        List<String> statusNames = getStatusNames(statuses);
+        for (Iterator<UnmodifiableVolume> i = volumes.iterator(); i.hasNext(); ) {
             UnmodifiableVolume volume = i.next();
-            if (!status.getValueName().equals(volume.getStatus())) {
+            if (!statusNames.contains(volume.getStatus())) {
                 i.remove();
             }
         }
@@ -134,19 +136,10 @@ public class VolumeServiceImpl implements VolumeService {
 
     @Override
     public List<UnmodifiableVolume> getAllValidVolumesBySeries(NodeRef seriesNodeRef) {
-        List<UnmodifiableVolume> volumes = getAllVolumesBySeries(seriesNodeRef);
+        List<UnmodifiableVolume> volumes = getAllStartedVolumesBySeries(seriesNodeRef);
         final Calendar cal = Calendar.getInstance();
         for (Iterator<UnmodifiableVolume> i = volumes.iterator(); i.hasNext();) {
             UnmodifiableVolume volume = i.next();
-
-            Date validFrom = volume.getValidFrom();
-            if (validFrom != null && cal.getTime().before(validFrom)) {
-                log.debug("Skipping volume '" + volume.getTitle() + "', current date "
-                        + cal.getTime() + " is earlier than volume valid from date " + validFrom);
-                i.remove();
-                continue;
-            }
-
             if (volume.getValidTo() != null) {
                 Calendar validTo = Calendar.getInstance();
                 validTo.setTime(volume.getValidTo());
@@ -157,8 +150,22 @@ public class VolumeServiceImpl implements VolumeService {
                     log.debug("Skipping volume '" + volume.getTitle() + "', current date " + cal.getTime() + " is later than volume valid to date "
                             + validTo.getTime());
                     i.remove();
-                    continue;
                 }
+            }
+        }
+        return volumes;
+    }
+
+    public List<UnmodifiableVolume> getAllStartedVolumesBySeries(NodeRef seriesNodeRef) {
+        List<UnmodifiableVolume> volumes = getAllVolumesBySeries(seriesNodeRef);
+        final Calendar cal = Calendar.getInstance();
+        for (Iterator<UnmodifiableVolume> i = volumes.iterator(); i.hasNext();) {
+            UnmodifiableVolume volume = i.next();
+            Date validFrom = volume.getValidFrom();
+            if (validFrom != null && cal.getTime().before(validFrom)) {
+                log.debug("Skipping volume '" + volume.getTitle() + "', current date "
+                        + cal.getTime() + " is earlier than volume valid from date " + validFrom);
+                i.remove();
             }
         }
         return volumes;
@@ -312,6 +319,19 @@ public class VolumeServiceImpl implements VolumeService {
     @Override
     public void removeFromCache(NodeRef volRef) {
         volumeCache.remove(volRef);
+    }
+
+    @Override
+    public List<UnmodifiableVolume> getAllStartedVolumesBySeries(NodeRef seriesRef, DocListUnitStatus... statuses) {
+        List<UnmodifiableVolume> volumes = getAllStartedVolumesBySeries(seriesRef);
+        List<String> statusNames = getStatusNames(statuses);
+        for (Iterator<UnmodifiableVolume> i = volumes.iterator(); i.hasNext(); ) {
+            UnmodifiableVolume volume = i.next();
+            if (!statusNames.contains(volume.getStatus())) {
+                i.remove();
+            }
+        }
+        return volumes;
     }
 
     private boolean isInClosedSeries(Volume volume) {

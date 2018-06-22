@@ -74,6 +74,10 @@ public class UnmodifiableFunction implements Serializable, Comparable<Unmodifiab
         return functionLabel;
     }
 
+    public String getFunctionLabelForModal() {
+        return functionLabel + " (" + status + ")";
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

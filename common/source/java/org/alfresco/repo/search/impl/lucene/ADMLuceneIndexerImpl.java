@@ -33,16 +33,7 @@ import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
@@ -83,7 +74,9 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.util.CachingDateFormat;
 import org.alfresco.util.EqualsHelper;
 import org.alfresco.util.ISO9075;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.DateUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -824,9 +817,11 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
 
             // Index some information about access restrictions when document is in a series that requires access restrictions to be applied on contained documents.
             // Document field "DOC_VISIBLE_TO" is added with authority names with "viewDocumentMetaData" privilege (including inherited authorities with same privilege).
+            List<Date> sentDates = (List<Date>) properties.get(DocumentCommonModel.Props.SEARCHABLE_SEND_INFO_SEND_DATE_TIME);
+            Date registerDate = (Date) properties.get(DocumentCommonModel.Props.REG_DATE_TIME);
             if (DocumentCommonModel.Types.DOCUMENT.equals(typeQName)) {
                 boolean isUnsentDocument = DocumentStatus.FINISHED.getValueName().equals(properties.get(DocumentCommonModel.Props.DOC_STATUS))
-                        && RepoUtil.isEmptyListOrString(properties.get(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE))
+                        && !isSentAfterRegistration(registerDate, sentDates)
                         && (Boolean.FALSE.equals(properties.get(DocumentCommonModel.Props.DOCUMENT_IS_IMPORTED))
                         || properties.get(DocumentCommonModel.Props.DOCUMENT_IS_IMPORTED) == null)
                         && !(RepoUtil.isEmptyListOrString(properties.get(DocumentCommonModel.Props.RECIPIENT_NAME))
@@ -884,7 +879,19 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
 
         return docs;
     }
-    
+
+    private boolean isSentAfterRegistration(Date registerDate, List<Date> sentDates) {
+        if (registerDate == null || CollectionUtils.isEmpty(sentDates)) {
+            return false;
+        }
+        for (Date sentDate : sentDates) {
+            if (sentDate != null && sentDate.compareTo(registerDate) >= 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private Serializable convertForMT(QName propertyName, Serializable inboundValue)
     {
         if (! tenantService.isEnabled())
@@ -923,7 +930,6 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
      * 
      * @param value A node property value to be stored in index.
      * @param values List where String values will be stored.
-     * @param dateValues List where Date values will be stored as Strings.
      */
     private static void addValues(Serializable value, List<String> values) {
         if (value instanceof String) {

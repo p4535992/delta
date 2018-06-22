@@ -8,12 +8,14 @@ import java.util.List;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.lang.time.FastDateFormat;
 
 import ee.webmedia.alfresco.app.AppConstants;
 
 public class UnmodifiableSeries implements Serializable, Comparable<UnmodifiableSeries> {
 
     private static final long serialVersionUID = 1L;
+    private static final FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
 
     private final int order;
     private final String seriesIdentifier;
@@ -21,6 +23,7 @@ public class UnmodifiableSeries implements Serializable, Comparable<Unmodifiable
     private final String seriesLabel;
     private final String status;
     private final Date validFrom;
+    private final Date validTo;
     private final List<String> volType;
     private final List<String> docTypes;
     private final List<String> structUnits;
@@ -38,6 +41,7 @@ public class UnmodifiableSeries implements Serializable, Comparable<Unmodifiable
         title = getProp(SeriesModel.Props.TITLE, node);
         status = getProp(SeriesModel.Props.STATUS, node);
         validFrom = getProp(SeriesModel.Props.VALID_FROM_DATE, node);
+        validTo = getProp(SeriesModel.Props.VALID_TO_DATE, node);
         volType = getProp(SeriesModel.Props.VOL_TYPE, node);
         docTypes = getProp(SeriesModel.Props.DOC_TYPE, node);
         structUnits = getProp(SeriesModel.Props.STRUCT_UNIT, node);
@@ -119,8 +123,25 @@ public class UnmodifiableSeries implements Serializable, Comparable<Unmodifiable
         return order - other.getOrder();
     }
 
+    public String getSeriesLabelForModal() {
+        StringBuilder sb = new StringBuilder(seriesLabel);
+        sb.append(" (");
+        if (getValidFrom() != null) {
+            sb.append(dateFormat.format(getValidFrom()));
+        }
+        sb.append(" - ");
+        if (getValidTo() != null) {
+            sb.append(dateFormat.format(getValidTo()));
+        }
+        sb.append(")");
+        return sb.toString();
+    }
+
     public boolean isRestrictedSeries() {
         return restrictedSeries;
     }
 
+    public Date getValidTo() {
+        return validTo;
+    }
 }

@@ -24,6 +24,7 @@ import org.alfresco.web.bean.repository.MapNode;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
@@ -103,6 +104,7 @@ public class VersionsServiceImpl implements VersionsService {
                 if (result) { 
 	                // create a new version
 	                org.alfresco.service.cmr.version.Version version = versionServiceExt.createVersion(nodeRef, sourceFileProp);
+	                BeanHelper.getNotificationService().sendMyFileModifiedNotifications(nodeRef, version.getVersionLabel());
 	                logger.info("Created new version (" + version.getVersionLabel() + ") from " + nodeRef + " ( " + filename + "). VersionedNodeRef: " + version.getVersionedNodeRef()
 	                        + " FrozenStateNodeRef: " + version.getFrozenStateNodeRef());
 	                // check the flag as true to prevent creation of new versions until the node is unlocked in UnlockMethod

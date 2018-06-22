@@ -6,27 +6,7 @@ import static ee.webmedia.alfresco.common.search.DbSearchUtil.generateTaskFieldE
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
 import static ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType.INCOMING_LETTER;
-import static ee.webmedia.alfresco.utils.SearchUtil.generateAndNotQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.generateAspectQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.generateDatePropertyRangeQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.generateLuceneSearchParams;
-import static ee.webmedia.alfresco.utils.SearchUtil.generateMultiNodeRefQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.generateMultiStringExactQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.generateNodeRefQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.generateNumberPropertyRangeQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.generateParentPathQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyBooleanQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyDateQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyExactQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyNotNullQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyNullQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyWildcardQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.generateStringExactQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.generateStringNotEmptyQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.generateStringNullQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.generateTypeQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
-import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsOr;
+import static ee.webmedia.alfresco.utils.SearchUtil.*;
 import static ee.webmedia.alfresco.utils.TextUtil.isBlank;
 
 import java.io.Serializable;
@@ -1550,9 +1530,13 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                                 		joinQueryPartsOr( Arrays.asList(generatePropertyExactQuery(EventPlanModel.Props.NEXT_EVENT, FirstEvent.TRANSFER.name()),
 										generatePropertyExactQuery(EventPlanModel.Props.NEXT_EVENT, FirstEvent.DESTRUCTION.name()),
 										generatePropertyExactQuery(EventPlanModel.Props.NEXT_EVENT, FirstEvent.SIMPLE_DESTRUCTION.name())))),
-                        
+
                                 joinQueryPartsAnd(generatePropertyBooleanQuery(EventPlanModel.Props.RETAIN_PERMANENT, Boolean.FALSE),
-                                        generatePropertyBooleanQuery(EventPlanModel.Props.HAS_ARCHIVAL_VALUE, Boolean.FALSE))
+                                        generatePropertyBooleanQuery(EventPlanModel.Props.HAS_ARCHIVAL_VALUE, Boolean.FALSE),
+                                        joinQueryPartsOr(Arrays.asList(generatePropertyExactQuery(EventPlanModel.Props.NEXT_EVENT, FirstEvent.TRANSFER.name()),
+                                                generatePropertyExactQuery(EventPlanModel.Props.NEXT_EVENT, FirstEvent.DESTRUCTION.name()),
+                                                generatePropertyExactQuery(EventPlanModel.Props.NEXT_EVENT, FirstEvent.SIMPLE_DESTRUCTION.name()),
+                                                generatePropertyNullQuery(EventPlanModel.Props.NEXT_EVENT))))
                                 
         		))));
 

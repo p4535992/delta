@@ -35,12 +35,14 @@
 	<property name="conf.basedir" location="${project.dir.etc}/conf" />
 	<property name="conf.organization.basedir" location="${project.dir.etc}/conf-organization" />
 	<property name="conf.name.file" location="${project.basedir}/conf-name.properties" />
+	<property file="${project.basedir}/project.properties" />
 	<!-- Provides ${conf.name} and ${conf.organization.name} and ${appserver} -->
 	<property file="${conf.name.file}" />
 	<!-- Provide default value -->
 	<property name="conf.organization.name" value="default" />
 	<property name="appserver" value="glassfish" />
-	<property name="project.build.result.war" location="${project.dir.build}/dhs-${conf.organization.name}-${appserver}.war" />
+
+	<property name="project.build.result.war" location="${project.dir.build}/delta-${currentVersion}-${conf.organization.name}-${appserver}.war" />
 	<property name="project.build.result.zip" location="${project.dir.build}/delta-${currentVersion}.zip" />
 
 	<path id="classpath">

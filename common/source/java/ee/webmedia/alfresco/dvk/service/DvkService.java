@@ -63,6 +63,8 @@ public interface DvkService {
     void sendDvkTask(Task task);
 
     String getInstitutionCode();
+    
+    String getSubSystemCode();
 
     boolean isXmlMimetype(String dataFileName);
 
@@ -81,5 +83,7 @@ public interface DvkService {
     Pair<Integer, Integer> resendFailedSends();
 
     void deleteForwardedDecDocuments();
+    
+    List<DvkSendDocuments> getDvkSendFailedDocuments();
 
 }

@@ -1,8 +1,6 @@
 package ee.webmedia.alfresco.workflow.web;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -87,6 +85,13 @@ public class CompoundWorkflowAssocListDialog extends BaseDocumentListDialog {
         } else {
             documents = new ArrayList<Document>();
         }
+        Collections.sort(documents, new Comparator<Document>() {
+            @Override
+            public int compare(Document o1, Document o2) {
+                return o1 == null || o2 == null || o2.getRegDateTime() == null || o1.getRegDateTime() == null
+                        ? -1 : o2.getRegDateTime().compareTo(o1.getRegDateTime());
+            }
+        });
     }
 
     public List<Document> getDocumentList() {

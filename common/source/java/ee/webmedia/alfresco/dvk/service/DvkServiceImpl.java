@@ -158,8 +158,10 @@ public abstract class DvkServiceImpl implements DvkService {
     protected ApplicationService applicationService;
     private DocumentAdminService documentAdminService;
     private String institutionCode;
+    private String subSystemCode;
 
-
+    
+    private List<DvkSendDocuments> dvkSendFailedDocuments = new ArrayList<DvkSendDocuments>();
     private String noTitleSpacePrefix;
 
     @Override
@@ -890,6 +892,7 @@ public abstract class DvkServiceImpl implements DvkService {
             MonitoringUtil.logSuccess(MonitoredService.OUT_XTEE_DVK);
             return next;
         } catch (RuntimeException e) {
+        	dvkSendFailedDocuments.add(sd);
             MonitoringUtil.logError(MonitoredService.OUT_XTEE_DVK, e);
             throw e;
         }
@@ -1102,7 +1105,11 @@ public abstract class DvkServiceImpl implements DvkService {
 
     protected DecSender getSenderAddress() {
         DecSender sender = DecSender.Factory.newInstance();
-        sender.setOrganisationCode(institutionCode);
+        if (StringUtils.isNotBlank(subSystemCode)) {
+        	sender.setOrganisationCode(subSystemCode);
+        } else {
+        	sender.setOrganisationCode(institutionCode);
+        }
         return sender;
     }
 
@@ -1588,6 +1595,29 @@ public abstract class DvkServiceImpl implements DvkService {
     public void setInstitutionCode(String institutionCode) {
         this.institutionCode = institutionCode;
     }
+    @Override
+    public String getSubSystemCode() {
+        return subSystemCode;
+    }
+
+    public void setSubSystemCode(String subSystemCode) {
+        this.subSystemCode = subSystemCode;
+    }
+    
+	/**
+	 * @return the dvkSendFailedDocuments
+	 */
+	public List<DvkSendDocuments> getDvkSendFailedDocuments() {
+		return dvkSendFailedDocuments;
+	}
+
+	/**
+	 * @param dvkSendFailedDocuments the dvkSendFailedDocuments to set
+	 */
+	public void setDvkSendFailedDocuments(List<DvkSendDocuments> dvkSendFailedDocuments) {
+		this.dvkSendFailedDocuments = dvkSendFailedDocuments;
+	}
+
 
     // END: getters / setters
 

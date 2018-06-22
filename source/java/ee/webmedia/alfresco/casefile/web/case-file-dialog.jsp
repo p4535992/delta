@@ -9,6 +9,8 @@
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
+<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/select-all-header-function.jsp" />
+
 <h:panelGroup rendered="#{DocumentDialogHelperBean.inWorkspace and CaseFileDialog.modalRendered}">
    <h:panelGroup id="dialog-modal-container" binding="#{CaseFileDialog.modalContainer}" />
    <f:verbatim>
@@ -31,7 +33,14 @@
    <%-- Main List --%>
    <a:richList id="documentList" styleClass="duplicate-header" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
       width="100%" value="#{CaseFileDialog.documents}" binding="#{CaseFileDialog.documentRichList}" var="r" refreshOnBind="true" >
-      
+
+      <%-- checkbox --%>
+      <a:column id="col-checkbox" primary="true" styleClass="#{r.cssStyleClass}" rendered="#{(UserService.archivist || UserService.documentManager) && CaseFileDialog.showCheckboxes}" >
+         <f:facet name="header">
+            <h:selectBooleanCheckbox id="col0-header" value="false" styleClass="selectAllHeader"/>
+         </f:facet>
+         <h:selectBooleanCheckbox id="col0-checkbox" styleClass="headerSelectable" value="#{CaseFileDialog.listCheckboxes[r.nodeRef]}"/>
+      </a:column>
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog-columns.jsp" >
          <jsp:param name="showOrgStructColumn" value="false" />
       </jsp:include>

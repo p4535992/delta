@@ -1,26 +1,9 @@
 package ee.webmedia.alfresco.imap.service;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -56,7 +39,9 @@ import org.alfresco.util.Pair;
 import org.alfresco.util.TempFileProvider;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Predicate;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.poi.poifs.filesystem.DirectoryNode;
@@ -65,6 +50,8 @@ import org.apache.poi.poifs.filesystem.DocumentNode;
 import org.apache.poi.poifs.filesystem.Entry;
 import org.apache.poi.poifs.filesystem.NPOIFSFileSystem;
 import org.apache.xml.security.transforms.TransformationException;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.FileCopyUtils;
 
@@ -101,6 +88,8 @@ import ee.webmedia.alfresco.imap.model.ImapModel;
 import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
+import ee.webmedia.alfresco.utils.MessageUtil;
+
 import net.freeutils.tnef.Attachment;
 import net.freeutils.tnef.CompressedRTFInputStream;
 import net.freeutils.tnef.MAPIProp;
@@ -115,6 +104,7 @@ import net.freeutils.tnef.TNEFUtils;
  */
 public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
     private static final Log log = LogFactory.getLog(ImapServiceExtImpl.class);
+    private static final FastDateFormat dateTimeFormat = FastDateFormat.getInstance("dd.MM.yyyy HH:mm");
 
     private ImapService imapService;
     private FileFolderService fileFolderService;
@@ -167,7 +157,7 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
 
     private void saveFailureNotice(NodeRef parentNodeRef, MimeMessage mimeMessage) throws FolderException {
         try {
-            createBody(parentNodeRef, mimeMessage, mimeMessage.getSubject());
+            createBody(parentNodeRef, mimeMessage, mimeMessage.getSubject(), null);
         } catch (Exception e) {
             log.warn("Cannot save email, folderNodeRef=" + parentNodeRef, e);
             throw new FolderException("Cannot save email: " + e.getMessage());
@@ -365,41 +355,41 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
 
     @Override
     public void saveAttachmentsToSubfolder(NodeRef document, MimeMessage originalMessage, boolean saveBody) throws IOException, MessagingException, TransformationException,
-    FolderException {
+            FolderException {
         NodeRef parentNodeRef = findOrCreateFolder(document, AttachmentsFolderAppendBehaviour.BEHAVIOUR_NAME);
         saveAttachments(parentNodeRef, originalMessage, saveBody);
     }
 
     @Override
     public void saveAttachments(NodeRef document, MimeMessage originalMessage, boolean saveBody)
-            throws IOException, MessagingException, TransformationException {
+            throws IOException, MessagingException {
         saveAttachments(document, originalMessage, saveBody, null);
     }
 
     private void saveAttachments(NodeRef document, MimeMessage originalMessage, boolean saveBody, Map<NodeRef, Integer> invoiceRefToAttachment) throws IOException,
-    MessagingException {
+            MessagingException {
 
         Object content = originalMessage.getContent();
         //if (content instanceof String) {
-    	//	content = fixPlainTextContentEncoding((String)content);
+        //	content = fixPlainTextContentEncoding((String)content);
         //}
         Part tnefPart = getTnefPart(content);
         Message tnefMessage = null;
         InputStream tnefInputStream = null;
         try {
+            List<Part> attachments = new ArrayList<>();
+            saveAttachments(document, content, attachments, invoiceRefToAttachment, tnefPart);
+            String metadata = generateEmailMetadata(originalMessage, attachments);
             if (tnefPart != null) {
                 tnefInputStream = tnefPart.getInputStream();
                 tnefMessage = new Message(new TNEFInputStream(tnefInputStream));
-                saveBody = saveTnefBodyAndAttachments(document, tnefMessage, saveBody);
+                saveBody = saveTnefBodyAndAttachments(document, tnefMessage, metadata, saveBody);
             }
 
             Part bodyPart = null;
             if (saveBody) {
-                bodyPart = createBody(document, originalMessage);
+                bodyPart = createBody(document, originalMessage, metadata);
             }
-
-            List<Part> attachments = new ArrayList<Part>();
-            saveAttachments(document, content, attachments, invoiceRefToAttachment, tnefPart);
 
             log.info("MimeMessage:" + getPartDebugInfo(originalMessage, bodyPart, tnefPart, attachments, tnefMessage));
 
@@ -412,15 +402,127 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
             }
         }
     }
-    
-    private String fixPlainTextContentEncoding(String content) {
-    	byte[] tempBytes =  Charset.forName("ISO-8859-1").encode(content).array();
-		String tempContent = new String(tempBytes);
-		content = new String(Charset.forName("UTF-8").encode(tempContent).array());
-		return content;
+
+    public List<String> getAttachmentNames(List<Part> attachments) throws MessagingException {
+        List<String> attachmentNames = new ArrayList<>();
+        for (Part attachment : attachments) {
+            if (StringUtils.isNotBlank(attachment.getFileName())) {
+                attachmentNames.add(attachment.getFileName());
+            }
+        }
+        return attachmentNames;
     }
 
-    private boolean saveTnefBodyAndAttachments(NodeRef document, Message tnefMessage, boolean saveBody) throws IOException, UnsupportedEncodingException {
+    private String generateEmailMetadata(MimeMessage message, List<Part> attachments) throws MessagingException {
+        StringBuilder metadata = new StringBuilder();
+        boolean isText = isPlainText(message);
+        String lineBreak = isText ? "\n" : "<br />";
+        if (message.getFrom() != null && message.getFrom().length > 0) {
+            InternetAddress sender = (InternetAddress) message.getFrom()[0];
+            metadata.append(getFieldName("email_from_field")).append(getNameEmailString(sender, isText)).append(lineBreak);
+        }
+        if (message.getSentDate() != null) {
+            metadata.append(getFieldName("email_date_field")).append(dateTimeFormat.format(message.getSentDate())).append(lineBreak);
+        }
+        List<String> recipientsTo = getNameEmailList((InternetAddress[]) message.getRecipients(javax.mail.Message.RecipientType.TO), isText);
+        if (CollectionUtils.isNotEmpty(recipientsTo)) {
+            metadata.append(getFieldName("email_to_field")).append(StringUtils.join(recipientsTo, "; ")).append(lineBreak);
+        }
+        List<String> recipientsCc = getNameEmailList((InternetAddress[]) message.getRecipients(javax.mail.Message.RecipientType.CC), isText);
+        if (CollectionUtils.isNotEmpty(recipientsCc)) {
+            metadata.append(getFieldName("email_cc_field")).append(StringUtils.join(recipientsCc, "; ")).append(lineBreak);
+        }
+        if (StringUtils.isNotBlank(message.getSubject())) {
+            metadata.append(getFieldName("email_subject_field")).append(message.getSubject()).append(lineBreak);
+        }
+        String priority = getPriorotyValue(message);
+        if (StringUtils.isNotBlank(priority)) {
+            metadata.append(getFieldName("email_priority_field")).append(priority).append(lineBreak);
+        }
+        List<String> attachmentNames = getAttachmentNames(attachments);
+        if (CollectionUtils.isNotEmpty(attachmentNames)) {
+            metadata.append(getFieldName("email_attachment_field")).append(StringUtils.join(attachmentNames, "; ")).append(lineBreak);
+        }
+        if (metadata.length() > 0) {
+            metadata.append(lineBreak);
+            metadata.append(lineBreak);
+        }
+        return metadata.toString();
+    }
+
+    private boolean isPlainText(MimeMessage message) {
+        try {
+            Part p = getText(message);
+            if (p.isMimeType(MimetypeMap.MIMETYPE_HTML)) {
+                return false;
+            }
+        } catch (Exception e) {
+            return true;
+        }
+        return true;
+    }
+
+    private String getFieldName(String code){
+        return MessageUtil.getMessage(code) + ": ";
+    }
+
+    private String getPriorotyValue(MimeMessage message) throws MessagingException {
+        String priority = message.getHeader("X-Priority", "(");
+        String code = null;
+        if (StringUtils.isNotBlank(priority)) {
+            Integer priorityValue = Integer.valueOf(priority.substring(0, 1));
+            if (priorityValue == 1) {
+                code = "email_priority_highest";
+            } else if (priorityValue == 2) {
+                code = "email_priority_high";
+            } else if (priorityValue == 3) {
+                code = "email_priority_normal";
+            } else if (priorityValue == 4) {
+                code = "email_priority_low";
+            } else if (priorityValue == 5) {
+                code = "email_priority_lowest";
+            }
+        }
+        return StringUtils.isNotBlank(code) ? MessageUtil.getMessage(code) : null;
+    }
+
+    private List<String> getNameEmailList(InternetAddress[] addresses, boolean isText) {
+        List<String> result = new ArrayList<>();
+        if (addresses != null && addresses.length > 0) {
+            for (InternetAddress address : addresses) {
+                String nameEmailString = getNameEmailString(address, isText);
+                if (StringUtils.isNotBlank(nameEmailString)) {
+                    result.add(nameEmailString);
+                }
+            }
+        }
+        return result;
+    }
+
+    private String getNameEmailString(InternetAddress address, boolean isText) {
+        if (address != null) {
+            String result = StringUtils.EMPTY;
+            if (StringUtils.isNotBlank(address.getPersonal())) {
+                result += address.getPersonal() + " ";
+            }
+            if (StringUtils.isNotBlank(address.getAddress())) {
+                result += isText ? "<" : "&lt;";
+                result += address.getAddress();
+                result += isText ? ">" : "&gt;";
+            }
+            return result;
+        }
+        return null;
+    }
+
+    private String fixPlainTextContentEncoding(String content) {
+        byte[] tempBytes =  Charset.forName("ISO-8859-1").encode(content).array();
+        String tempContent = new String(tempBytes);
+        content = new String(Charset.forName("UTF-8").encode(tempContent).array());
+        return content;
+    }
+
+    private boolean saveTnefBodyAndAttachments(NodeRef document, Message tnefMessage, String metadata, boolean saveBody) throws IOException, UnsupportedEncodingException {
         if (saveBody) {
             String bodyFilename = I18NUtil.getMessage("imap.letter_body_filename");
             MAPIProps props = tnefMessage.getMAPIProps();
@@ -428,11 +530,11 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
                 // compressed RTF body
                 RawInputStream ris = (RawInputStream) props.getPropValue(MAPIProp.PR_RTF_COMPRESSED);
                 if (ris != null) {
-                    InputStream inputStream = new CompressedRTFInputStream(ris);
+                    InputStream bodyStream = new CompressedRTFInputStream(ris);
                     try {
-                        createBody(document, "application/rtf", "UTF-8", inputStream, bodyFilename);
+                        createBody(document, "application/rtf", StandardCharsets.UTF_8.name(), metadata, bodyStream, bodyFilename);
                     } finally {
-                        inputStream.close();
+                        bodyStream.close();
                     }
                     saveBody = false;
                 }
@@ -456,7 +558,7 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
                                 }
                                 in = new BufferedInputStream(new FileInputStream(file));
                                 try {
-                                    createBody(document, mimetypeAndEncoding.getFirst(), mimetypeAndEncoding.getSecond(), ris, bodyFilename);
+                                    createBody(document, mimetypeAndEncoding.getFirst(), mimetypeAndEncoding.getSecond(), metadata, ris, bodyFilename);
                                 } finally {
                                     in.close();
                                 }
@@ -467,11 +569,11 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
                         } else {
                             String text = (String) html;
                             if (StringUtils.isNotEmpty(text)) {
-                                InputStream inputStream = new ByteArrayInputStream(text.getBytes("UTF-8"));
+                                InputStream bodyStream = new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8));
                                 try {
-                                	createBody(document, MimetypeMap.MIMETYPE_HTML, "UTF-8", inputStream, bodyFilename);
+                                    createBody(document, MimetypeMap.MIMETYPE_HTML, StandardCharsets.UTF_8.name(), metadata, bodyStream, bodyFilename);
                                 } finally {
-                                	inputStream.close();
+                                    bodyStream.close();
                                 }
                                 saveBody = false;
                             }
@@ -487,7 +589,7 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
         List<Attachment> attachments = tnefMessage.getAttachments();
         for (Attachment attachment : attachments) {
             if (attachment.getNestedMessage() != null) { // nested message
-                saveBody = saveTnefBodyAndAttachments(document, attachment.getNestedMessage(), saveBody);
+                saveBody = saveTnefBodyAndAttachments(document, attachment.getNestedMessage(), metadata, saveBody);
             } else { // regular attachment
 
                 // XXX attachment.getRawData() returns always the same InputStream, so we cannot use it multiple times (because we usually close it, not reset it to beginning);
@@ -594,7 +696,7 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
     }
 
     private void saveAttachments(NodeRef document, Object content, List<Part> attachments, Map<NodeRef, Integer> invoiceRefToAttachment, Part tnefPart) throws MessagingException,
-    IOException {
+            IOException {
         if (content instanceof Multipart) {
             Multipart multipart = (Multipart) content;
 
@@ -704,12 +806,12 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
         return mimeType;
     }
 
-    private Part createBody(NodeRef document, MimeMessage originalMessage) throws MessagingException, IOException {
+    private Part createBody(NodeRef document, MimeMessage originalMessage, String metadata) throws MessagingException, IOException {
         String filename = I18NUtil.getMessage("imap.letter_body_filename");
-        return createBody(document, originalMessage, filename);
+        return createBody(document, originalMessage, filename, metadata);
     }
 
-    private Part createBody(NodeRef document, MimeMessage originalMessage, String filename) throws MessagingException, IOException {
+    private Part createBody(NodeRef document, MimeMessage originalMessage, String filename, String metadata) throws MessagingException, IOException {
         Part p = getText(originalMessage);
         if (p == null) {
             log.debug("No body part found from message, skipping body PDF creation");
@@ -728,22 +830,19 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
         // We assume that content-type header also contains charset; so far there haven't been different cases
         // If content-type header doesn't contain charset, we use UTF-8 as default
         String encoding = getEncoding(p);
-        
+
         log.info("Found body part from message, parsed mimeType=" + mimeType + " and encoding=" + encoding + " from contentType=" + p.getContentType());
 
-        createBody(document, mimeType, encoding, p.getInputStream(), filename);
-        
+        createBody(document, mimeType, encoding, metadata, p.getInputStream(), filename);
+
         return p;
     }
 
-    private void createBody(NodeRef document, String mimeType, String encoding, InputStream inputStream, String filename) throws IOException {
+    private void createBody(NodeRef document, String mimeType, String encoding, String metadata, InputStream contentStream, String filename) throws IOException {
         ContentWriter tempWriter = contentService.getTempWriter();
         tempWriter.setMimetype(mimeType);
         tempWriter.setEncoding(encoding);
-        
-        tempWriter.putContent(inputStream);
-        
-
+        tempWriter.putContent(createContentString(metadata, contentStream, mimeType, encoding));
         String safeFileName = FilenameUtil.makeSafeFilename(filename);
         FileInfo createdFile = fileService.transformToPdf(document, null, tempWriter.getReader(), safeFileName, filename, null);
         if (createdFile == null) {
@@ -757,10 +856,26 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
         }
     }
 
+    private String createContentString(String metadata, InputStream contentStream, String mimeType, String encoding) throws IOException {
+        String resultString = StringUtils.EMPTY;
+        if (StringUtils.isNotBlank(metadata)) {
+            String content = IOUtils.toString(contentStream, encoding);
+            if (MimetypeMap.MIMETYPE_HTML.equals(mimeType)) {
+                Document html = Jsoup.parse(content);
+                html.body().before(metadata);
+                resultString = html.toString();
+            } else {
+                resultString += metadata;
+                resultString += content;
+            }
+        }
+        return resultString;
+    }
+
     // Workaround for getting encoding from content type
     // contentType=text/plain; charset="iso-8859-1"
     private static String getEncoding(Part p) throws MessagingException {
-        String encoding = "UTF-8"; // default encoding is UTF-8
+        String encoding = StandardCharsets.UTF_8.name(); // default encoding is UTF-8
         String regExp = "(.*charset=\"([^\"]+)\".*)";
 
         Matcher matcher = Pattern.compile(regExp).matcher(p.getContentType().replace('\n', ' ').replace('\r', ' '));
@@ -770,6 +885,9 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
             }
         }
 
+        if ("windows-1257".equals(encoding)) {
+            return StandardCharsets.UTF_8.name();
+        }
         return encoding;
     }
 

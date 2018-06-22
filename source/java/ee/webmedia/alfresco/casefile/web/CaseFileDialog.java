@@ -1,27 +1,13 @@
 package ee.webmedia.alfresco.casefile.web;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getApplicationService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getArchivalsService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getCaseFileLogService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getCaseFileService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentLockHelperBean;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getMenuBean;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getNotificationService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getPropertySheetStateBean;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getSendOutService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.*;
 import static ee.webmedia.alfresco.docdynamic.web.ChangeReasonModalComponent.DELETE_DOCUMENT_REASON_MODAL_ID;
 import static ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog.validateExists;
 import static ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog.validatePermissionWithErrorMessage;
 import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.isAdminOrDocmanagerWithPermission;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import javax.faces.application.Application;
 import javax.faces.component.UIComponent;
@@ -54,19 +40,18 @@ import ee.webmedia.alfresco.casefile.service.CaseFile;
 import ee.webmedia.alfresco.casefile.service.DocumentToCompoundWorkflow;
 import ee.webmedia.alfresco.casefile.web.CaseFileDialog.CaseFileDialogSnapshot;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
+import ee.webmedia.alfresco.common.propertysheet.component.SimUIPropertySheet;
+import ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
 import ee.webmedia.alfresco.docconfig.generator.PropertySheetStateHolder;
+import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfig;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
-import ee.webmedia.alfresco.docdynamic.web.BaseSnapshotCapableDialog;
-import ee.webmedia.alfresco.docdynamic.web.BaseSnapshotCapableWithBlocksDialog;
-import ee.webmedia.alfresco.docdynamic.web.ChangeReasonModalComponent;
+import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
+import ee.webmedia.alfresco.docdynamic.web.*;
 import ee.webmedia.alfresco.docdynamic.web.ChangeReasonModalComponent.ChangeReasonEvent;
-import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicBlock;
-import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog;
-import ee.webmedia.alfresco.docdynamic.web.DocumentLockHelperBean;
 import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
 import ee.webmedia.alfresco.document.associations.web.AssocsBlockBean;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
@@ -75,20 +60,16 @@ import ee.webmedia.alfresco.document.search.web.BlockBeanProviderProvider;
 import ee.webmedia.alfresco.document.search.web.DocumentListDataProvider;
 import ee.webmedia.alfresco.document.search.web.SearchBlockBean;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
+import ee.webmedia.alfresco.document.service.DocumentServiceImpl;
 import ee.webmedia.alfresco.document.web.DocumentListDialog;
+import ee.webmedia.alfresco.document.web.DocumentLocationModalComponent;
 import ee.webmedia.alfresco.document.web.FavoritesModalComponent;
 import ee.webmedia.alfresco.document.web.FavoritesModalComponent.AddToFavoritesEvent;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
 import ee.webmedia.alfresco.user.model.UserModel;
-import ee.webmedia.alfresco.utils.ActionUtil;
-import ee.webmedia.alfresco.utils.ComponentUtil;
-import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.utils.RepoUtil;
-import ee.webmedia.alfresco.utils.UnableToPerformException;
-import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
-import ee.webmedia.alfresco.utils.WebUtil;
+import ee.webmedia.alfresco.utils.*;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
 
@@ -98,6 +79,11 @@ BlockBeanProviderProvider {
     public static final String BEAN_NAME = "CaseFileDialog";
     public static final String DIALOG_NAME = AlfrescoNavigationHandler.DIALOG_PREFIX + "caseFileDialog";
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(CaseFileDialog.class);
+    private Map<NodeRef, Boolean> listCheckboxes = new HashMap<>();
+    private boolean showDocumentsLocationPopup;
+    private List<NodeRef> selectedDocs;
+    private Node locationNode;
+    private DocumentConfig config;
 
     private DocumentListDataProvider documents;
     private List<DocumentToCompoundWorkflow> documentWorkflows;
@@ -108,6 +94,86 @@ BlockBeanProviderProvider {
         String typeId = ActionUtil.getParam(event, "typeId");
         documentWorkflows = null;
         createCaseFile(typeId, null, false, false, null, false);
+    }
+
+    public void updateLocationSelect(@SuppressWarnings("unused") ActionEvent event) {
+        renderedModal = DocumentLocationModalComponent.MODAL_ID;
+        Set<String> documentTypeIds = new HashSet<>();
+        DocumentDynamicService documentDynamicService = BeanHelper.getDocumentDynamicService();
+        for (Map.Entry<NodeRef, Boolean> entry : getListCheckboxes().entrySet()) {
+            if (entry.getValue()) {
+                documentTypeIds.add(documentDynamicService.getDocumentType(entry.getKey()));
+            }
+        }
+        if (documentTypeIds.size() == 0) {
+            MessageUtil.addErrorMessage("document_move_none_selected");
+            showDocumentsLocationPopup = false;
+            renderedModal = null;
+            return;
+        }
+        getNode().getProperties().put(DocumentLocationGenerator.DOCUMENT_TYPE_IDS.toString(), documentTypeIds);
+        showDocumentsLocationPopup = true;
+        getPropertySheetStateBean().reset(getConfig().getStateHolders(), this);
+    }
+
+    public void massChangeDocLocation(ActionEvent event) {
+        ModalLayerComponent.ModalLayerSubmitEvent changeEvent = (ModalLayerComponent.ModalLayerSubmitEvent) event;
+        int actionIndex = changeEvent.getActionIndex();
+        if (actionIndex == ModalLayerComponent.ACTION_CLEAR) {
+            resetLocationChange();
+            return;
+        }
+        if (selectedDocs == null) {
+            selectedDocs = new ArrayList<>();
+            for (Map.Entry<NodeRef, Boolean> item : getListCheckboxes().entrySet()) {
+                if (Boolean.TRUE.equals(item.getValue())) {
+                    selectedDocs.add(item.getKey());
+                }
+            }
+        }
+
+        if (CollectionUtils.isNotEmpty(selectedDocs)) {
+            Map<String, Object> locationProps = getLocationNode().getProperties();
+            NodeRef function = (NodeRef) locationProps.get(DocumentCommonModel.Props.FUNCTION.toString());
+            NodeRef series = (NodeRef) locationProps.get(DocumentCommonModel.Props.SERIES.toString());
+            NodeRef volume = (NodeRef) locationProps.get(DocumentCommonModel.Props.VOLUME.toString());
+            // caseRef is not checked here, because admins and docmanagers always have the suggest component for case property
+            String caseLabel = (String) locationProps.get(DocumentLocationGenerator.CASE_LABEL_EDITABLE);
+            if (!isValidLocation(function, series, volume)) {
+                return;
+            }
+            // assume that current document list contains documents from one location, check location for first document only
+            if (!getListCheckboxes().isEmpty()) {
+                DocumentDynamic document = getDocumentDynamicService().getDocument(getListCheckboxes().keySet().iterator().next());
+                if (DocumentServiceImpl.PropertyChangesMonitorHelper.hasSameLocation(document, function, series, volume, caseLabel)) {
+                    return;
+                }
+            }
+            DocumentListDialog documentListDialog = BeanHelper.getDocumentListDialog();
+            documentListDialog.setLocationNode(getLocationNode());
+            documentListDialog.setSelectedDocs(selectedDocs);
+            BeanHelper.getDocumentListDialog().massChangeDocLocationSave(false);
+            BeanHelper.getVisitedDocumentsBean().clearVisitedDocuments();
+            resetLocationChange();
+        }
+    }
+
+    private void resetLocationChange() {
+        resetOrInit(getDataProvider());
+        showDocumentsLocationPopup = false;
+        renderedModal = null;
+        locationNode = null;
+        selectedDocs = null;
+        setListCheckboxes(new HashMap<NodeRef, Boolean>());
+        getPropertySheetStateBean().reset(getConfig().getStateHolders(), this);
+    }
+
+    private boolean isValidLocation(NodeRef functionRef, NodeRef seriesRef, NodeRef volumeRef) {
+        if (functionRef == null || seriesRef == null || volumeRef == null) {
+            MessageUtil.addErrorMessage("document_validationMsg_mandatory_functionSeriesVolume");
+            return false;
+        }
+        return true;
     }
 
     public void createCaseFile(String typeId, DocumentDynamic documentToAdd, boolean registerDoc, boolean sendDocNotifications, List<String> docSaveListeners,
@@ -342,12 +408,38 @@ BlockBeanProviderProvider {
     @Override
     public void clean() {
         clearState();
+        showDocumentsLocationPopup = false;
+        listCheckboxes = new HashMap<>();
+        selectedDocs = null;
         documents = null;
         documentWorkflows = null;
         renderedModal = null;
         for (DocumentDynamicBlock block : getBlocks().values()) {
             block.clean();
         }
+    }
+
+    public Map<NodeRef, Boolean> getListCheckboxes() {
+        return listCheckboxes;
+    }
+
+    public void setListCheckboxes(Map<NodeRef, Boolean> listCheckboxes) {
+        this.listCheckboxes = listCheckboxes;
+    }
+
+    public boolean isShowDocumentsLocationPopup() {
+        return showDocumentsLocationPopup;
+    }
+
+    public void setSelectedDocs(List<NodeRef> selectedDocs) {
+        this.selectedDocs = selectedDocs;
+    }
+
+    public boolean isShowCheckboxes() {
+        if (!BeanHelper.getUserService().isDocumentManager() && !BeanHelper.getUserService().isArchivist()) {
+            return false;
+        }
+        return true;
     }
 
     // =========================================================================
@@ -844,11 +936,69 @@ BlockBeanProviderProvider {
         CaseFileLinkGeneratorModalComponent linkModal = new CaseFileLinkGeneratorModalComponent();
         linkModal.setId("caseFile-link-modal-" + context.getViewRoot().createUniqueId());
 
+        // Access restriction change reason
+        DocumentLocationModalComponent locationModal = new DocumentLocationModalComponent();
+        locationModal.setActionListener(application.createMethodBinding("#{CaseFileDialog.massChangeDocLocation}", UIActions.ACTION_CLASS_ARGS));
+        locationModal.setId("caseFile-location-modal-" + context.getViewRoot().createUniqueId());
+        List<UIComponent> modalChildren = ComponentUtil.getChildren(locationModal);
+        UIPropertySheet propertySheetComponent = generatePropSheet();
+        getJsfBindingHelper().addBinding(getPropertySheetBindingName(), propertySheetComponent);
+        modalChildren.clear();
+        modalChildren.add(propertySheetComponent);
+
         List<UIComponent> children = ComponentUtil.getChildren(getModalContainer());
         children.clear();
         children.add(favoritesModal);
         children.add(deleteReasonModal);
         children.add(linkModal);
+        children.add(locationModal);
+    }
+
+    private UIPropertySheet generatePropSheet() {
+        FacesContext context = FacesContext.getCurrentInstance();
+        Application application = context.getApplication();
+        SimUIPropertySheet sheet = new SimUIPropertySheet();
+        sheet.setId("doc-metadata");
+        sheet.setValidationEnabled(false);
+        sheet.setMode("edit");
+        Map<String, Object> sheetAttributes = ComponentUtil.getAttributes(sheet);
+        sheetAttributes.put("externalConfig", Boolean.TRUE);
+        sheetAttributes.put("labelStyleClass", "propertiesLabel wrap");
+        sheetAttributes.put("columns", 1);
+        sheet.setValueBinding("binding", application.createValueBinding("#{CaseFileDialog.propSheet}")); // this is friggin important!!
+        sheet.setValueBinding("config", application.createValueBinding("#{CaseFileDialog.locationNodeConfig}"));
+        sheet.setValueBinding("value", application.createValueBinding("#{CaseFileDialog.locationNode}"));
+        return sheet;
+    }
+
+    public void setPropSheet(UIPropertySheet propSheet) {
+        getJsfBindingHelper().addBinding(getPropertySheetBindingName(), propSheet);
+    }
+
+    public UIPropertySheet getPropSheet() {
+        return (UIPropertySheet) getJsfBindingHelper().getComponentBinding(getPropertySheetBindingName());
+    }
+
+    public PropertySheetConfigElement getLocationNodeConfig() {
+        return getLocConfig().getPropertySheetConfigElement();
+    }
+
+    public Node getLocationNode() {
+        if (locationNode == null) {
+            locationNode = new WmNode(null, DocumentCommonModel.Types.DOCUMENT);
+        }
+        return locationNode;
+    }
+
+    public void setLocationNode(Node locationNode) {
+        this.locationNode = locationNode;
+    }
+
+    public DocumentConfig getLocConfig() {
+        if (config == null) {
+            config = getDocumentConfigService().getDocLocationConfig();
+        }
+        return config;
     }
 
     public boolean isVolumeMarkValidationDisabled() {

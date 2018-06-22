@@ -9,7 +9,7 @@
 
 <%@page import="ee.webmedia.alfresco.common.web.BeanHelper" %>
 <%@page import="ee.webmedia.alfresco.workflow.web.DelegationBean" %>
-   
+
 <h:panelGroup id="workflow-data-table-group" binding="#{WorkflowBlockBean.dataTableGroup}"/>
 
 <h:panelGroup rendered="#{DelegationBean.confirmationRendered}">
@@ -19,3 +19,24 @@
 </h:panelGroup>
    
 <a:actionLink id="due-date-confirmation-confirmation-accepted-link" value="confirmationAcceptedLink" actionListener="#{DelegationBean.delegateConfirmed}" styleClass="workflow-after-delegation-confirmation-link" style="display: none;" />
+
+<f:verbatim>
+	<script type="text/javascript">
+	window.onload = getDropdownValue();
+	
+	function getDropdownValue() {
+		var select = document.getElementsByTagName("select");
+		if(typeof select[1] !== "undefined"){
+			var options = select[1].options;
+			select[1].selectedIndex = localStorage.getItem(select[1].id);
+			select[1].setAttribute("onchange", "saveDropdownValue()");
+			var textarea = document.getElementsByTagName("textarea");
+		}
+	}
+	
+	function saveDropdownValue() {
+		var select = document.getElementsByTagName("select");
+		localStorage.setItem(select[1].id, select[1].selectedIndex);
+	}
+	</script>
+</f:verbatim>

@@ -48,7 +48,8 @@ public interface NotificationModel {
         QName TASK_REVIEW_TASK_COMPLETED_NOT_ACCEPTED_ORDERED = QName.createQName(URI, "reviewTaskCompletedNotAcceptedOrdered");
         QName TASK_REVIEW_TASK_COMPLETED_WITH_REMARKS = QName.createQName(URI, "reviewTaskCompletedWithRemarks");
         QName TASK_REVIEW_TASK_COMPLETED_WITH_REMARKS_ORDERED = QName.createQName(URI, "reviewTaskCompletedWithRemarksOrdered");
-        QName WORKFLOW_WORKFLOW_COMPLETED = QName.createQName(URI, "workflowCompleted");
+        QName PARRALEL_WORKFLOW_COMPLETED = QName.createQName(URI, "parralelWorkflowCompleted");
+        QName WORKFLOW_WORKFLOW_COMPLETED = QName.createQName(URI, "workflowCompleted"); 
         QName WORKFLOW_NEW_WORKFLOW_STARTED = QName.createQName(URI, "newWorkflowStarted");
         QName TASK_ORDER_ASSIGNMENT_WORKFLOW_COMPLETED = QName.createQName(URI, "orderAssignmentWorkflowCompleted");
         QName TASK_ORDER_ASSIGNMENT_TASK_COMPLETED = QName.createQName(URI, "orderAssignmentTaskCompleted");
@@ -84,12 +85,15 @@ public interface NotificationModel {
 
         QName DELEGATED_TASK_COMPLETED = QName.createQName(URI, "delegatedTaskCompleted");
         QName REVIEW_DOCUMENT_SIGNED = QName.createQName(URI, "reviewDocumentSigned");
+        QName REVIEW_DOCUMENT_NOT_SIGNED = QName.createQName(URI, "reviewDocumentNotSigned");
         QName TASK_CANCELLED = QName.createQName(URI, "taskCancelled");
         QName TASK_CANCELLED_ORDERED = QName.createQName(URI, "taskCancelledOrdered");
         QName GROUP_ASSIGNMENT_TASK_COMPLETED_BY_OTHERS = QName.createQName(URI, "groupAssignmentTaskCompletedByOthers");
         QName GROUP_ASSIGNMENT_TASK_COMPLETED_ORDERED = QName.createQName(URI, "groupAssignmentTaskCompletedOrdered");
         QName DOCUMENT_SEND_FOR_INFORMATION = QName.createQName(URI, "documentSendForInformation");
         QName EMAIL_ATTACHMENT_SIZE_LIMIT_EXCEEDED = QName.createQName(URI, "emailAttachmentSizeLimitExceeded");
+        
+        QName MY_FILE_MODIFIED = QName.createQName(URI, "myFileModified");
     }
 
 }
