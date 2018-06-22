@@ -9,3 +9,4 @@ digidocserviceskee.crt
 lib-sonar/
 WEB-INF/
 .sonar/.sonar_lock
+lib-dev/

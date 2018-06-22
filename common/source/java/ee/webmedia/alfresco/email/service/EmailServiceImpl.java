@@ -1,24 +1,15 @@
 package ee.webmedia.alfresco.email.service;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.zip.DeflaterOutputStream;
-
-import javax.mail.Address;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
-
+import ee.webmedia.alfresco.app.AppConstants;
+import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.email.model.EmailAttachment;
+import ee.webmedia.alfresco.monitoring.MonitoredService;
+import ee.webmedia.alfresco.monitoring.MonitoringUtil;
+import ee.webmedia.alfresco.signature.service.DigiDoc4JSignatureService;
+import ee.webmedia.alfresco.signature.service.SignatureService;
+import ee.webmedia.alfresco.utils.FilenameUtil;
+import ee.webmedia.alfresco.utils.MimeUtil;
 import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
 import org.alfresco.repo.transaction.TransactionListenerAdapter;
@@ -39,16 +30,13 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.util.CollectionUtils;
 
-import ee.webmedia.alfresco.app.AppConstants;
-import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.email.model.EmailAttachment;
-import ee.webmedia.alfresco.monitoring.MonitoredService;
-import ee.webmedia.alfresco.monitoring.MonitoringUtil;
-import ee.webmedia.alfresco.signature.service.DigiDoc4JSignatureService;
-import ee.webmedia.alfresco.signature.service.SignatureService;
-import ee.webmedia.alfresco.utils.FilenameUtil;
-import ee.webmedia.alfresco.utils.MimeUtil;
+import javax.mail.Address;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
+import java.io.*;
+import java.security.cert.X509Certificate;
+import java.util.*;
+import java.util.zip.DeflaterOutputStream;
 
 public class EmailServiceImpl implements EmailService {
 
@@ -192,7 +180,7 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
-    public List<EmailAttachment> getAttachments(List<NodeRef> fileRefs, boolean zipIt, List<X509Certificate> encryptionCertificates, String zipAndEncryptFileTitle) {
+    public List<EmailAttachment> getAttachments(List<NodeRef> fileRefs, boolean zipIt, List<X509Certificate> encryptionCertificates, String zipAndEncryptFileTitle) throws Exception {
         List<EmailAttachment> attachments = new ArrayList<EmailAttachment>();
         if (fileRefs != null && !fileRefs.isEmpty()) {
             String containerExtension = null;
@@ -214,7 +202,16 @@ public class EmailServiceImpl implements EmailService {
                 try {
                     OutputStream tmpOutput = new BufferedOutputStream(new FileOutputStream(tmpFile));
                     if (encryptionCertificates != null && !encryptionCertificates.isEmpty()) {
-                        getSignatureService().writeEncryptedContainer(tmpOutput, fileRefs, encryptionCertificates, fileName);
+                        if(BeanHelper.getDigiSignService().getDigiSignServiceActive()) {
+                            log.info("Using DigiSign-service to make CDOC container...");
+                            BeanHelper.getDigiSignSearches().makeCdoc(encryptionCertificates, fileRefs, tmpOutput);
+                        } else {
+                            log.info("Using DELTA to make CDOC container...");
+                            getSignatureService().writeEncryptedContainer(tmpOutput, fileRefs, encryptionCertificates, fileName);
+                        }
+
+
+
                     } else {
                         generalService.writeZipFileFromFiles(tmpOutput, fileRefs);
                     }

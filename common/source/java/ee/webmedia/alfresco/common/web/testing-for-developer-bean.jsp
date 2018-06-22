@@ -17,13 +17,44 @@
 <f:verbatim>
     <br/>
     <ul>
-        <li>Tembeldab üle kõik DDOC ja BDOC v1.0 failid.</li>
+        <li>Tembeldab üle kõik DDOC ja BDOC v1.0 failid (SHA-1 turvanõrkusega). Tembeldamiseks vajalik DigiSign teenuse liidestus.</li>
     </ul>
     <br/>
 </f:verbatim>
-<h:commandButton id="startTeraProcess" value="Käivita TERA ületembeldamise process" type="submit"
-                 actionListener="#{teraProcess.startInBackground}"
-                 rendered="#{true}" />
+
+<f:verbatim><br/></f:verbatim>
+<f:verbatim>STEP 1 - DDOC, BDOC failide otsija... </f:verbatim>
+<f:verbatim><br/><br/></f:verbatim>
+<h:commandButton value="Käivita failide otsija..." type="submit"
+                 actionListener="#{teraProcess.startFileImporterInBackground}"
+                 rendered="#{!teraProcess.fileFinderRunning}" />
+<h:commandButton value="Failide otsimise protsess käib... peata!" type="submit"
+                 actionListener="#{teraProcess.stopFileFinder}"
+                 rendered="#{teraProcess.fileFinderRunning}"
+                 disabled="#{teraProcess.fileFinderStopping}" />
+
+<f:verbatim><br/><br/></f:verbatim>
+<f:verbatim>STEP 2 - failide ületembeldamise protsess (ASIC-S failide looja)... </f:verbatim>
+<f:verbatim><br/><br/></f:verbatim>
+<h:commandButton value="Käivita ületembeldamise protsess..." type="submit"
+                 actionListener="#{teraProcess.startTeraImporterInBackground}"
+                 rendered="#{!teraProcess.overStampingRunning}" />
+<h:commandButton value="Ületembeldamise protsess käib... peata!" type="submit"
+                 actionListener="#{teraProcess.stopOverStamping}"
+                 rendered="#{teraProcess.overStampingRunning}"
+                 disabled="#{teraProcess.overStampingStopping}" />
+
+<f:verbatim><br/><br/></f:verbatim>
+<f:verbatim>STEP 3 - (Optional) - Faili muutja nime (unknown) asendamine (DELTA) nimega. Lisaks parandab failide nimesid. </f:verbatim>
+<f:verbatim><br/><br/></f:verbatim>
+<h:commandButton value="Käivita muutaja kontrollimine..." type="submit"
+                 actionListener="#{teraProcess.startDataFixImporterInBackground}"
+                 rendered="#{!teraProcess.dataFixRunning}" />
+<h:commandButton value="Muutja kontrollimise protsse käib... peata!" type="submit"
+                 actionListener="#{teraProcess.stopDataFix}"
+                 rendered="#{teraProcess.dataFixRunning}"
+                 disabled="#{teraProcess.dataFixStopping}" />
+
 
 
 <f:verbatim><hr/></f:verbatim>

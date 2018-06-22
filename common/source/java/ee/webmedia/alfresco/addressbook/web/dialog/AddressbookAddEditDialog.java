@@ -1,19 +1,15 @@
 package ee.webmedia.alfresco.addressbook.web.dialog;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getAddressbookService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getSignatureService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getSkLdapService;
-
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-
-import javax.faces.context.FacesContext;
-import javax.faces.event.ActionEvent;
-
+import ee.smit.digisign.DigiSignSearches;
+import ee.smit.digisign.SignCertificate;
+import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
+import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
+import ee.webmedia.alfresco.addressbook.service.AddressbookEntry;
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.signature.model.SkLdapCertificate;
+import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.WebUtil;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
@@ -25,19 +21,19 @@ import org.alfresco.web.bean.repository.TransientNode;
 import org.alfresco.web.ui.common.Utils;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
-import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
-import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
-import ee.webmedia.alfresco.addressbook.service.AddressbookEntry;
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.signature.model.SkLdapCertificate;
-import ee.webmedia.alfresco.utils.ActionUtil;
-import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.utils.WebUtil;
+import javax.faces.context.FacesContext;
+import javax.faces.event.ActionEvent;
+import java.security.cert.X509Certificate;
+import java.util.*;
+
+import static ee.webmedia.alfresco.common.web.BeanHelper.*;
 
 public class AddressbookAddEditDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
-    private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(AddressbookAddEditDialog.class);
+    private static Log log = LogFactory.getLog(AddressbookAddEditDialog.class);
 
     public static final String BEAN_NAME = "AddressbookAddEditDialog";
     public static final String PERSON_CODE_EXISTS_ERROR = "addressbook_save_person_error_codeExists";
@@ -51,18 +47,19 @@ public class AddressbookAddEditDialog extends BaseDialogBean {
     private List<AddressbookEntry> orgCertificates = Collections.emptyList();
     private List<AddressbookEntry> orgCertificatesToRemove = Collections.emptyList();
 
+    private DigiSignSearches digiSignSearches;
     // ------------------------------------------------------------------------------
     // Wizard implementation
 
     public void setOrgCertificates(List<AddressbookEntry> orgCertificates) {
-		this.orgCertificates = orgCertificates;
-	}
-    
-    public List<AddressbookEntry> getOrgCertificates() {
-		return orgCertificates;
-	}
+        this.orgCertificates = orgCertificates;
+    }
 
-	public void setupAdd(ActionEvent event) {
+    public List<AddressbookEntry> getOrgCertificates() {
+        return orgCertificates;
+    }
+
+    public void setupAdd(ActionEvent event) {
         QName type = QName.createQName(ActionUtil.getParam(event, "type"), getNamespaceService());
         entry = getAddressbookService().getEmptyNode(type);
         if (ActionUtil.hasParam(event, "parentOrg")) {
@@ -78,11 +75,11 @@ public class AddressbookAddEditDialog extends BaseDialogBean {
         NodeRef nodeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
         entry = getAddressbookService().getNode(nodeRef);
         if (isOrganizationType()) {
-        	loadOrgCertificates();
+            loadOrgCertificates();
         }
         orgCertificatesToRemove = new ArrayList<AddressbookEntry>();
     }
-    
+
     private void loadOrgCertificates() {
         BeanHelper.getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionHelper.RetryingTransactionCallback<Void>() {
 
@@ -95,90 +92,126 @@ public class AddressbookAddEditDialog extends BaseDialogBean {
             }
         });
     }
-    
-    public void updateOrgCertificates(ActionEvent event) {
-    	if (entry == null) {
-    		return;
-    	}
-    	
-    	String orgCode = (String)entry.getProperties().get(AddressbookModel.Props.ORGANIZATION_CODE.toString());
-    	String orgName = (String)entry.getProperties().get(AddressbookModel.Props.ORGANIZATION_NAME.toString());
-    	List<SkLdapCertificate> skLdapCerts = null;
 
-    	if (StringUtils.isNotBlank(orgCode)) {
+    private List<SkLdapCertificate> getCertificatesFromSkLdap(String orgCode, String orgName) {
+        List<SkLdapCertificate> skLdapCerts = null;
+        if (StringUtils.isNotBlank(orgCode)) {
             log.debug("Using orgCode to get org certificates...");
-    		try {
-    			skLdapCerts = getSkLdapService().getCertificates(orgCode);
-    		} catch (Exception e) {
+            try {
+                skLdapCerts = getSkLdapService().getCertificates(orgCode);
+            } catch (Exception e) {
                 log.debug("Get Org certificates by orgCode... Got a ERROR! Using orgName");
-    			// if SKLDAP by serialNumber returns error try to search by cn
-    			if (StringUtils.isNotBlank(orgName)) {
-    	    		skLdapCerts = getSkLdapService().getCertificatesByName(orgName);
-    			} else {
-    				throw e;
-    			}
-    		}
-    	} else if (StringUtils.isNotBlank(orgName)) {
+                // if SKLDAP by serialNumber returns error try to search by cn
+                if (StringUtils.isNotBlank(orgName)) {
+                    skLdapCerts = getSkLdapService().getCertificatesByName(orgName);
+                } else {
+                    throw e;
+                }
+            }
+        } else if (StringUtils.isNotBlank(orgName)) {
             log.debug("OrgCode is missing! Using orgName to get org certificates...");
-    		skLdapCerts = getSkLdapService().getCertificatesByName(orgName);
-    	} else {
-    	    log.error("orgCode and orgName is missing! Can't get org certificates...");
+            skLdapCerts = getSkLdapService().getCertificatesByName(orgName);
+        } else {
+            log.error("orgCode and orgName is missing! Can't get org certificates...");
         }
-    	
-    	if (skLdapCerts != null && !skLdapCerts.isEmpty()) {
-    		// update orgCertificates
+
+        return skLdapCerts;
+    }
+
+
+    public void updateOrgCertificates(ActionEvent event) {
+        if (entry == null) {
+            return;
+        }
+
+        String orgCode = (String) entry.getProperties().get(AddressbookModel.Props.ORGANIZATION_CODE.toString());
+        String orgName = (String) entry.getProperties().get(AddressbookModel.Props.ORGANIZATION_NAME.toString());
+
+        if (BeanHelper.getDigiSignService().getDigiSignServiceActive()) {
+            log.info("Using DigiSign-service to get certificates...");
+            List<SignCertificate> signCertificateList = BeanHelper.getDigiSignSearches().getCertificatesFromDigiSignService(orgCode, orgName);
+            if (signCertificateList == null || signCertificateList.isEmpty()) {
+                log.debug("Certificates not found!");
+                MessageUtil.addInfoMessage("addressbook_org_certs_empty_error");
+                return;
+            }
+
+            int i = 0;
+            for (SignCertificate cert : signCertificateList) {
+                i++;
+                log.debug("Certificate CN: " + cert.getCn());
+                addCertificateToAddressbook(i, cert.getData(), cert.getCn());
+            }
+
+
+        } else {
+            log.info("Using SK LDAP search to get certificates...");
+
+            List<SkLdapCertificate> skLdapCerts = getCertificatesFromSkLdap(orgCode, orgName);
+
+
+            if (skLdapCerts == null || skLdapCerts.isEmpty()) {
+                log.debug("Certificates not found!");
+                MessageUtil.addInfoMessage("addressbook_org_certs_empty_error");
+                return;
+            }
+
+            // update orgCertificates
             log.debug("Found org certificates: " + skLdapCerts.size());
             int i = 0;
-    		for (SkLdapCertificate skLdapCert: skLdapCerts) {
-    			i++;
+            for (SkLdapCertificate skLdapCert : skLdapCerts) {
+                i++;
                 String cnName = skLdapCert.getCn();
                 log.debug(i + ") X509Certificate: CN name: [" + cnName + "]");
                 byte[] encryptionCertificate = skLdapCert.getUserEncryptionCertificate();
-                if(encryptionCertificate == null){
+                if (encryptionCertificate == null) {
                     log.warn("User don't have encryption capable certificate. Check next...");
                     continue;
                 }
 
-                X509Certificate certInfo = getSignatureService().getCertificateForEncryption(encryptionCertificate, cnName);
-                String base64Cert = Base64.encodeBase64String(encryptionCertificate);
+                addCertificateToAddressbook(i, encryptionCertificate, cnName);
 
-                if (certInfo != null) {
-                    Date validTo = certInfo.getNotAfter();
-                    log.debug(i + ") X509Certificate: CN name: [" + cnName + "] -- validTo: " + validTo + "; CERT: [" + base64Cert + "]");
-
-                    if(!validTo.after(new Date())){
-                        log.warn("Certificate is expired!: [" + cnName + "] -- validTo: " + validTo);
-                        continue;
-                    }
-
-                    if (!isAlreadyAddedCert(cnName, validTo)) {
-                        Node orgCertNode = getAddressbookService().getEmptyNode(AddressbookModel.Types.ORGCERTIFICATE);
-                        Map<String, Object> properties = orgCertNode.getProperties();
-                        properties.put(AddressbookModel.Props.ORG_CERT_NAME.toString(), cnName);
-                        properties.put(AddressbookModel.Props.ORG_CERT_VALID_TO.toString(), validTo);
-                        properties.put(AddressbookModel.Props.ORG_CERT_CONTENT.toString(), base64Cert);
-                        orgCertificates.add(new AddressbookEntry(orgCertNode, entry.getNodeRef()));
-                    }
-                } else {
-                    log.debug(i + ") ERROR: Can't parse X509Certificate Cert for Signing: [" + base64Cert + "]");
-                }
-    		}
-    	} else {
-    		MessageUtil.addInfoMessage("addressbook_org_certs_empty_error");
-    	}
+            }
+        }
     }
-    
+
+    private void addCertificateToAddressbook(int i, byte[] encryptionCertificate, String cnName) {
+        X509Certificate certInfo = getSignatureService().getCertificateForEncryption(encryptionCertificate, cnName);
+        String base64Cert = Base64.encodeBase64String(encryptionCertificate);
+
+        if (certInfo != null) {
+            Date validTo = certInfo.getNotAfter();
+            log.debug(i + ") X509Certificate: CN name: [" + cnName + "] -- validTo: " + validTo + "; CERT: [" + base64Cert + "]");
+
+            if (!validTo.after(new Date())) {
+                log.warn("Certificate is expired!: [" + cnName + "] -- validTo: " + validTo);
+                return;
+            }
+
+            if (!isAlreadyAddedCert(cnName, validTo)) {
+                Node orgCertNode = getAddressbookService().getEmptyNode(AddressbookModel.Types.ORGCERTIFICATE);
+                Map<String, Object> properties = orgCertNode.getProperties();
+                properties.put(AddressbookModel.Props.ORG_CERT_NAME.toString(), cnName);
+                properties.put(AddressbookModel.Props.ORG_CERT_VALID_TO.toString(), validTo);
+                properties.put(AddressbookModel.Props.ORG_CERT_CONTENT.toString(), base64Cert);
+                orgCertificates.add(new AddressbookEntry(orgCertNode, entry.getNodeRef()));
+            }
+        } else {
+            log.debug(i + ") ERROR: Can't parse X509Certificate Cert for Signing: [" + base64Cert + "]");
+        }
+    }
+
     private boolean isAlreadyAddedCert(String cnName, Date validTo) {
         log.debug("IS IN ADDRESSBOOK? CN cert name: [" + cnName + "]; ValidTo: [" + validTo + "]");
-    	for (AddressbookEntry orgCert: orgCertificates) {
-    	    log.debug("Check addressbook: CN cert name: [" + orgCert.getCertName() + "]; ValidTo: [" + orgCert.getCertValidTo() + "]... ");
-    		if (cnName.equals(orgCert.getCertName()) && validTo.equals(orgCert.getCertValidTo())) {
+        for (AddressbookEntry orgCert : orgCertificates) {
+            log.debug("Check addressbook: CN cert name: [" + orgCert.getCertName() + "]; ValidTo: [" + orgCert.getCertValidTo() + "]... ");
+            if (cnName.equals(orgCert.getCertName()) && validTo.equals(orgCert.getCertValidTo())) {
                 log.debug("Check addressbook: CN cert name: [" + orgCert.getCertName() + "]; ValidTo: [" + orgCert.getCertValidTo() + "]... FOUND!");
-    			return true;
-    		}
-		}
+                return true;
+            }
+        }
         log.debug("IS IN ADDRESSBOOK? CN cert name: [" + cnName + "]; ValidTo: [" + validTo + "]... NOT FOUND");
-    	return false;
+        return false;
     }
 
     @Override
@@ -277,10 +310,10 @@ public class AddressbookAddEditDialog extends BaseDialogBean {
             skipReset = true;
             outcome = "dialog:confirmAddDuplicate";
         } else {
-        	NodeRef entryNodeRef = persistEntry();
-        	persistOrgCertificates(entryNodeRef);
+            NodeRef entryNodeRef = persistEntry();
+            persistOrgCertificates(entryNodeRef);
             MessageUtil.addInfoMessage("save_success");
-            
+
         }
         return outcome;
     }
@@ -290,32 +323,32 @@ public class AddressbookAddEditDialog extends BaseDialogBean {
         skipReset = false;
         return entryNodeRef;
     }
-    
+
     public void persistOrgCertificates(NodeRef orgNodeRef) {
-    	for (AddressbookEntry orgCert: orgCertificates) {
-    		getAddressbookService().addOrUpdateNode(orgCert.getNode(), orgNodeRef);
-    	}
-    	for (AddressbookEntry orgCert: orgCertificatesToRemove) {
-    		getAddressbookService().deleteNode(orgCert.getNodeRef());
-    	}
+        for (AddressbookEntry orgCert : orgCertificates) {
+            getAddressbookService().addOrUpdateNode(orgCert.getNode(), orgNodeRef);
+        }
+        for (AddressbookEntry orgCert : orgCertificatesToRemove) {
+            getAddressbookService().deleteNode(orgCert.getNodeRef());
+        }
     }
-    
+
     public String getConfirmMessage() {
         return "addressbook_save_organization_error_nameExists";
     }
-    
+
     public void removeOrgCert(ActionEvent event) {
-      
+
         String orgCertRef = ActionUtil.getParam(event, "nodeRef");
         int indexToRemove = -1;
         for (int i = 0; i < orgCertificates.size(); i++) {
-        	AddressbookEntry orgCertEntry = orgCertificates.get(i);
-        	if (orgCertEntry.getNodeRef().toString().equals(orgCertRef)) {
-        		indexToRemove = i;
-        		if (getNodeService().exists(orgCertEntry.getNodeRef())) {
-        			orgCertificatesToRemove.add(orgCertEntry);
-        		}
-        	}
+            AddressbookEntry orgCertEntry = orgCertificates.get(i);
+            if (orgCertEntry.getNodeRef().toString().equals(orgCertRef)) {
+                indexToRemove = i;
+                if (getNodeService().exists(orgCertEntry.getNodeRef())) {
+                    orgCertificatesToRemove.add(orgCertEntry);
+                }
+            }
         }
         orgCertificates.remove(indexToRemove);
     }
@@ -353,14 +386,14 @@ public class AddressbookAddEditDialog extends BaseDialogBean {
         }
         return !Boolean.TRUE.equals(getNodeService().getProperty(nodeRef, AddressbookModel.Props.DVK_CAPABLE));
     }
-    
+
     public boolean isAllowUpdateCertificates() {
-        
+
         return isOrganizationType();
     }
-    
+
     public boolean isOrganizationType() {
-    	return entry != null?Types.ORGANIZATION.equals(entry.getType()):false;
+        return entry != null ? Types.ORGANIZATION.equals(entry.getType()) : false;
     }
 
     // ------------------------------------------------------------------------------
@@ -369,6 +402,6 @@ public class AddressbookAddEditDialog extends BaseDialogBean {
     public Node getEntry() {
         return entry;
     }
-    
+
 
 }

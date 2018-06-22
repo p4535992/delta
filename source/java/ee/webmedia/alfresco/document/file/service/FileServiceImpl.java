@@ -293,6 +293,7 @@ public class FileServiceImpl implements FileService {
     private List<File> getAllFiles(List<FileInfo> fileInfos, boolean includeDigidocSubitems, boolean onlyActive, boolean excludeDecContainers) {
         List<File> files = new ArrayList<File>();
         for (FileInfo fi : fileInfos) {
+            log.debug("Filename: " + fi.getName());
             final File item = createFile(fi);
 
             // Exclude DEC containers
@@ -739,7 +740,11 @@ public class FileServiceImpl implements FileService {
     private File createFile(FileInfo fi) {
         File item = new File(fi);
         item.setCreator(userService.getUserFullName((String) fi.getProperties().get(ContentModel.PROP_CREATOR)));
-        item.setModifier(userService.getUserFullName((String) fi.getProperties().get(ContentModel.PROP_MODIFIER)));
+        String fileModifier = (String) fi.getProperties().get(ContentModel.PROP_MODIFIER);
+        log.debug("FILE modifier username: " + fileModifier);
+        String fileModifierUserFullName = userService.getUserFullName(fileModifier);
+        log.debug("FILE modifier userFullName: " + fileModifierUserFullName);
+        item.setModifier(fileModifierUserFullName);
         NodeRef nodeRef = item.getNodeRef();
         item.setDownloadUrl(generateURL(nodeRef));
         item.setReadOnlyUrl(DownloadContentServlet.generateDownloadURL(nodeRef, item.getDisplayName()));

@@ -1,18 +1,18 @@
 package ee.webmedia.alfresco.document.file.web;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getFileService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
-import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.isAdminOrDocmanagerWithViewDocPermission;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.faces.context.FacesContext;
-import javax.faces.event.ActionEvent;
-
+import ee.webmedia.alfresco.common.listener.RefreshEventListener;
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
+import ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean;
+import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicBlock;
+import ee.webmedia.alfresco.document.file.model.File;
+import ee.webmedia.alfresco.document.file.model.FileModel;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.privilege.model.Privilege;
+import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.MessageDataImpl;
+import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.lock.NodeLockedException;
@@ -31,19 +31,16 @@ import org.alfresco.web.bean.repository.Repository;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
-import ee.webmedia.alfresco.common.listener.RefreshEventListener;
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
-import ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean;
-import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicBlock;
-import ee.webmedia.alfresco.document.file.model.File;
-import ee.webmedia.alfresco.document.file.model.FileModel;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.privilege.model.Privilege;
-import ee.webmedia.alfresco.utils.ActionUtil;
-import ee.webmedia.alfresco.utils.MessageDataImpl;
-import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.utils.UnableToPerformException;
+import javax.faces.context.FacesContext;
+import javax.faces.event.ActionEvent;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getFileService;
+import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.isAdminOrDocmanagerWithViewDocPermission;
 
 public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener {
     private static final long serialVersionUID = 1L;
@@ -95,6 +92,7 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
                 NodeService nodeService = BeanHelper.getNodeService();
                 for (File file : files) {
                     NodeRef fileRef = file.getNodeRef();
+
                     if (file != null && fileRef != null) {
                         Boolean convertToPdfRepoValue = (Boolean) nodeService.getProperty(fileRef, FileModel.Props.CONVERT_TO_PDF_IF_SIGNED);
                         boolean convertToPdfNewValue = file.isConvertToPdfIfSigned();
@@ -306,28 +304,28 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
     }
 
     public boolean isInWorkspace() {
-        if(docRef == null){
+        if (docRef == null) {
             LOG.error("isInWorkspace(): docRef is NULL!");
             return false;
         }
         LOG.debug("docRef: " + docRef.toString());
-        if(docRef.getStoreRef() == null){
+        if (docRef.getStoreRef() == null) {
             LOG.error("isInWorkspace(): docRef.getStoreRef() is NULL!");
             return false;
         }
-        if(docRef.getStoreRef().getProtocol() == null){
+        if (docRef.getStoreRef().getProtocol() == null) {
             LOG.error("isInWorkspace(): docRef.getStoreRef() is NULL!");
             return false;
         }
-        if(StoreRef.PROTOCOL_WORKSPACE == null){
+        if (StoreRef.PROTOCOL_WORKSPACE == null) {
             LOG.error("isInWorkspace(): StoreRef.PROTOCOL_WORKSPACE is NULL!");
             return false;
         }
         return docRef.getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE);
     }
-    
+
     public boolean isGuest() {
-    	return BeanHelper.getUserService().isGuest();
+        return BeanHelper.getUserService().isGuest();
     }
 
     // START: getters / setters

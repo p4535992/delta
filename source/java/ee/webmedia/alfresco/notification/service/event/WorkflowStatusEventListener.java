@@ -324,7 +324,11 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
         NotificationResult result = null;
         if (event.getType().equals(WorkflowEventType.STATUS_CHANGED)) {
             if (!task.isStatus(Status.UNFINISHED)) {
-                result = BeanHelper.getDvkService().sendTaskNotificationDocument(task, notificationCache);
+                try {
+                    result = BeanHelper.getDvkService().sendTaskNotificationDocument(task, notificationCache);
+                } catch (Exception e) {
+                    LOG.error(e.getMessage(), e);
+                }
                 boolean sentOverDvk = result.isNotificationSent();
                 if (!sentOverDvk) {
                     boolean isGroupAssignmentTaskFinishedAutomatically = groupAssignmentTasksFinishedAutomatically != null

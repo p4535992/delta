@@ -117,10 +117,14 @@ public class ForwardDecDocumentDialog extends BaseDialogBean {
             String fromEmail = BeanHelper.getParametersService().getStringParameter(Parameters.DOC_SENDER_EMAIL);
 
             List<Pair<String, String>> forwarded = BeanHelper.getSendOutService().forward(docRef, filteredRecipients, filteredEmails, modes, fromEmail, "", getFileRefs());
-            BeanHelper.getDocumentDynamicService().moveNodeToForwardedDecDocuments(docNode, forwarded);
+            if(forwarded == null){
+                LOG.error("Forwarding failed!");
+            } else {
+                BeanHelper.getDocumentDynamicService().moveNodeToForwardedDecDocuments(docNode, forwarded);
 
-            MessageUtil.addInfoMessage("document_forward_dec_document_success");
-            return outcome;
+                MessageUtil.addInfoMessage("document_forward_dec_document_success");
+                return outcome;
+            }
 
         } catch (Exception e) {
             MessageUtil.addErrorMessage("document_send_failed");

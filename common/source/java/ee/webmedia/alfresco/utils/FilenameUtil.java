@@ -97,6 +97,9 @@ public class FilenameUtil {
         return filename.replaceAll(" & ", FILE_AMPERSAND_REPLACEMENT).replaceAll("&", FILE_AMPERSAND_REPLACEMENT);
     }
 
+    public static String replaceApostropheMark(String filename){
+        return filename.replaceAll("'", FILE_NON_ASCII_REPLACEMENT).replaceAll("\"", FILE_NON_ASCII_REPLACEMENT);
+    }
     public static String generateUniqueFileDisplayName(String displayName, List<String> existingDisplayNames) {
         String baseName = FilenameUtils.removeExtension(displayName);
         String extension = FilenameUtils.getExtension(displayName);
@@ -204,12 +207,12 @@ public class FilenameUtil {
     }
 
     public static boolean isBdocFile(String fileName) {
-        return fileName.toLowerCase().endsWith(BDOC_EXTENSION) || fileName.toLowerCase().endsWith(ASICE_EXTENSION) || fileName.toLowerCase().endsWith(SCE_EXTENSION) || fileName.toLowerCase().endsWith(ASICS_EXTENSION) || fileName.toLowerCase().endsWith(PADES_EXTENSION);
+        return fileName.toLowerCase().endsWith(BDOC_EXTENSION) || fileName.toLowerCase().endsWith(ASICE_EXTENSION) || fileName.toLowerCase().endsWith(SCE_EXTENSION);
     }
 
     public static boolean isDigiDocFile(String fileName) {
         String lowerCase = fileName.toLowerCase();
-        return lowerCase.endsWith(DDOC_EXTENSION) || lowerCase.endsWith(BDOC_EXTENSION) || lowerCase.endsWith(ASICE_EXTENSION) || lowerCase.endsWith(SCE_EXTENSION) || lowerCase.endsWith(ASICS_EXTENSION) || lowerCase.endsWith(PADES_EXTENSION);
+        return lowerCase.endsWith(DDOC_EXTENSION) || lowerCase.endsWith(BDOC_EXTENSION) || lowerCase.endsWith(ASICE_EXTENSION) || lowerCase.endsWith(SCE_EXTENSION);
     }
 
 

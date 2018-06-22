@@ -963,7 +963,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
      * compoundWorkflowRef - if not null only this compound workflow recipients get updates;
      * if null all compound workflows are checked for recipients
      */
-    public void sendDvkTasksWithDocument(NodeRef documentNodeRef, NodeRef compoundWorkflowRef, Map<NodeRef, List<String>> additionalRecipients, String recipientMessage) {
+    public void sendDvkTasksWithDocument(NodeRef documentNodeRef, NodeRef compoundWorkflowRef, Map<NodeRef, List<String>> additionalRecipients, String recipientMessage) throws Exception {
 
         List<CompoundWorkflow> compoundWorkflows = workflowService.getCompoundWorkflows(documentNodeRef);
         List<String> recipients = getAllRecipients(documentNodeRef, compoundWorkflowRef, compoundWorkflows, additionalRecipients);

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+    <bean id="DigiSignService" class="ee.smit.digisign.DigiSignServiceImpl">
+        <property name="defaultUri" value="${digisign.service.url}" />
+        <property name="appname" value="${digisign.service.appname}" />
+        <property name="apppass" value="${digisign.service.apppass}" />
+        <property name="digiSignServiceActive" value="${digisign.service.active}" />
+        <property name="maxThreads" value="${digisign.service.threadCount}" />
+        <property name="batchSize" value="${digisign.service.batchSize}" />
+    </bean>
+
+    <bean id="DigiSignSearches" class="ee.smit.digisign.DigiSignSearchesImpl">
+        <property name="digiSignService" ref="DigiSignService"/>
+        <property name="defaultRootDir">
+            <value>${dir.contentstore}</value>
+        </property>
+    </bean>
+</beans>

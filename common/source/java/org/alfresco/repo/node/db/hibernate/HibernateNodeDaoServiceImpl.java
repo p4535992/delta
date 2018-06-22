@@ -121,6 +121,8 @@ import org.springframework.orm.hibernate3.support.HibernateDaoSupport;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 
+import static org.alfresco.model.ContentModel.PROP_MODIFIER;
+
 /**
  * Hibernate-specific implementation of the persistence-independent <b>node</b> DAO interface
  *
@@ -835,16 +837,27 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
     private String getCurrentUser()
     {
         String user = AuthenticationUtil.getFullyAuthenticatedUser();
+        if(user == null){
+            logger.trace("getCurrentUser(): GET CURRENT USER: NULL! Return username: " + UNKNOWN_USER);
+        } else {
+            logger.trace("getCurrentUser(): GET CURRENT USER: " + user);
+        }
+
         return (user == null) ? UNKNOWN_USER : user;
     }
 
-    private void recordNodeCreate(Node node)
+    private void recordNodeCreate(Node node){
+        recordNodeCreate(node, null);
+    }
+    private void recordNodeCreate(Node node, String CURRENT_USER)
     {
+        logger.trace("recordNodeCreate()...CURRENT_USER: " + CURRENT_USER);
         updateNodeStatus(node, false);
         // Handle cm:auditable
         if (hasNodeAspect(node, ContentModel.ASPECT_AUDITABLE))
         {
-            String currentUser = getCurrentUser();
+            String currentUser = (CURRENT_USER != null && !CURRENT_USER.isEmpty()) ? CURRENT_USER : getCurrentUser();
+            logger.trace("recordNodeCreate(): GET CURRENT USER: " + currentUser);
             Date currentDate = new Date();
             AuditableProperties auditableProperties = new AuditableProperties();
             node.setAuditableProperties(auditableProperties);
@@ -856,11 +869,16 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
      * Record the node update, setting the node's <b>cm:auditable</b> properties.
      * The <b>cm:auditable</b> properties set implicity if the automatic behaviour {@link BehaviourFilter#isEnabled(NodeRef, QName) behaviour} is enabled.
      *
-     * @see #recordNodeUpdate(Node, Map)
+     * @see #recordNodeUpdate(Node, Map, String)
      */
     private void recordNodeUpdate(Node node)
     {
-        recordNodeUpdate(node, null);
+        recordNodeUpdate(node, null, null);
+    }
+
+    private void recordNodeUpdate(Node node, String CURRENT_USER)
+    {
+        recordNodeUpdate(node, null, CURRENT_USER);
     }
 
     /**
@@ -872,8 +890,10 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
      * @param properties the node properties from which <b>cm:auditable</b> properties
      *            may be extracted
      */
-    private void recordNodeUpdate(Node node, Map<QName, Serializable> properties)
+    private void recordNodeUpdate(Node node, Map<QName, Serializable> properties, String CURRENT_USER)
     {
+        logger.trace("recordNodeUpdate()... CURRENT_USER: " + CURRENT_USER);
+
         updateNodeStatus(node, false);
         // Handle cm:auditable
         if (hasNodeAspect(node, ContentModel.ASPECT_AUDITABLE))
@@ -885,8 +905,11 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                 auditableProperties = new AuditableProperties();
                 node.setAuditableProperties(auditableProperties);
             }
-            String currentUser = getCurrentUser();
+
+            String currentUser = ((CURRENT_USER != null && !CURRENT_USER.isEmpty()) ? CURRENT_USER : getCurrentUser());
+            logger.trace("recordNodeUpdate(): CURRENT USER: " + currentUser);
             Date currentDate = new Date();
+            logger.trace("recordNodeUpdate(): CURRENT DATE: " + currentDate);
             // Check if the cm:auditable aspect behaviour is enabled
             if (behaviourFilter.isEnabled(nodeRef, ContentModel.ASPECT_AUDITABLE))
             {
@@ -988,18 +1011,21 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         public Integer execute() throws Throwable
         {
             long now = System.currentTimeMillis();
-            return executeImpl(now, true);
+            return executeImpl(now, true, null);
         }
 
-        private Integer executeImpl(long now, boolean isPostTransaction) throws Throwable
+        private Integer executeImpl(long now, boolean isPostTransaction, String CURRENT_USER) throws Throwable
         {
             if (logger.isDebugEnabled())
             {
-                logger.debug("Updating timestamps for nodes: " + nodeIds);
+                logger.debug("executeImpl(): Updating timestamps for nodes: " + nodeIds);
             }
             Session session = getSession();
             final Date modifiedDate = new Date(now);
-            final String modifier = getCurrentUser();
+
+            final String modifier = ((CURRENT_USER != null && !CURRENT_USER.isEmpty()) ? CURRENT_USER : getCurrentUser());
+            logger.trace("executeImpl(): GET CURRENT USER: " + modifier);
+
             int count = 0;
             for (final Long nodeId : nodeIds)
             {
@@ -1023,6 +1049,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                 }
                 // Lock it
                 session.lock(node, LockMode.UPGRADE_NOWAIT); // Might fail immediately, but that is better than waiting
+                logger.trace("executeImpl(): auditableProperties.setAuditValues(): 'modifier': " + modifier);
                 auditableProperties.setAuditValues(modifier, modifiedDate, false);
                 count++;
                 if (count % 1000 == 0)
@@ -1087,7 +1114,11 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         return new Pair<Long, NodeRef>(nodeId, nodeRef);
     }
 
-    private Node newNode(Store store, String uuid, QName nodeTypeQName) throws InvalidTypeException
+    private Node newNode(Store store, String uuid, QName nodeTypeQName) throws InvalidTypeException{
+        return newNode(store, uuid, nodeTypeQName, null);
+    }
+
+    private Node newNode(Store store, String uuid, QName nodeTypeQName, String CURRENT_USER) throws InvalidTypeException
     {
         Node node = null;
         if (uuid != null)
@@ -1122,7 +1153,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             node.setTypeQName(qnameDAO, nodeTypeQName);
             node.setDeleted(false);
             // Record node change
-            recordNodeCreate(node);
+            recordNodeCreate(node, CURRENT_USER);
             // Persist it
             getHibernateTemplate().save(node);
 
@@ -1394,11 +1425,22 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         return getNodeProperties(nodeId, null, null);
     }
 
+
     @Override
-    public Map<QName, Serializable> getNodeProperties(Long nodeId, Set<QName> propsToload, Map<Long, QName> propertyTypes)
+    public Map<QName, Serializable> getNodeProperties(Long nodeId, Set<QName> propsToload, Map<Long, QName> propertyTypes){
+        return getNodeProperties(nodeId,propsToload, propertyTypes, "");
+    }
+    @Override
+    public Map<QName, Serializable> getNodeProperties(Long nodeId, Set<QName> propsToload, Map<Long, QName> propertyTypes, String CURRENT_USER)
     {
         Node node = getNodeNotNull(nodeId);
         Map<PropertyMapKey, NodePropertyValue> nodeProperties = node.getProperties();
+
+        for (Map.Entry<PropertyMapKey, NodePropertyValue> entry : nodeProperties.entrySet()) {
+            PropertyMapKey propertyMapKey = entry.getKey();
+            NodePropertyValue nodePropertyValue = entry.getValue();
+
+        }
 
         // Convert the QName IDs
         Map<QName, Serializable> converted = HibernateNodeDaoServiceImpl.convertToPublicProperties(
@@ -1410,22 +1452,38 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                 propsToload,
                 propertyTypes);
 
+
         // Handle cm:auditable
         if (hasNodeAspect(node, ContentModel.ASPECT_AUDITABLE))
         {
             AuditableProperties auditableProperties = node.getAuditableProperties();
+
             if (auditableProperties == null)
             {
                 auditableProperties = new AuditableProperties();
             }
             converted.putAll(auditableProperties.getAuditableProperties());
+
+            if(CURRENT_USER != null && !CURRENT_USER.isEmpty()){
+                logger.trace("getNodeProperties(): CURRENT_USER is SET! [" + CURRENT_USER + "] - remove auditable property: " + PROP_MODIFIER);
+                converted.remove(PROP_MODIFIER);
+            }
+
         }
 
         // Done
         return converted;
     }
 
-    private void addNodePropertyImpl(Node node, QName qname, Serializable value, Long localeId)
+    @Override
+    public Map<QName, Serializable> getNodePropertiesBySystem(Long nodeId, Set<QName> propsToload, Map<Long, QName> propertyTypes, String CURRENT_USER) {
+        return getNodeProperties(nodeId, propsToload, propertyTypes, CURRENT_USER);
+    }
+
+    private void addNodePropertyImpl(Node node, QName qname, Serializable value, Long localeId){
+        addNodePropertyImpl(node, qname, value, localeId, null);
+    }
+    private void addNodePropertyImpl(Node node, QName qname, Serializable value, Long localeId, String CURRENT_USER)
     {
         // Handle cm:auditable
         if (AuditableProperties.isAuditableProperty(qname))
@@ -1508,20 +1566,33 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
     @Override
     public void addNodeProperty(Long nodeId, QName qname, Serializable propertyValue)
     {
+        addNodeProperty(nodeId, qname, propertyValue, null);
+    }
+
+    @Override
+    public void addNodeProperty(Long nodeId, QName qname, Serializable propertyValue, String CURRENT_USER)
+    {
         Node node = getNodeNotNull(nodeId);
         Long localeId = localeDAO.getOrCreateDefaultLocalePair().getFirst();
-        addNodePropertyImpl(node, qname, propertyValue, localeId);
+        addNodePropertyImpl(node, qname, propertyValue, localeId, CURRENT_USER);
 
         // Record change ID
         recordNodeUpdate(
                 node,
-                Collections.singletonMap(qname, propertyValue));
+                Collections.singletonMap(qname, propertyValue),
+                CURRENT_USER
+        );
     }
 
     @Override
+    public void addNodeProperties(Long nodeId, Map<QName, Serializable> properties){
+        addNodeProperties(nodeId, properties, null);
+    }
+
     @SuppressWarnings("unchecked")
-    public void addNodeProperties(Long nodeId, Map<QName, Serializable> properties)
+    public void addNodeProperties(Long nodeId, Map<QName, Serializable> properties, String CURRENT_USER)
     {
+        logger.trace("addNodeProperties()... CURRENT_USER: " + CURRENT_USER);
         Node node = getNodeNotNull(nodeId);
 
         Long localeId = localeDAO.getOrCreateDefaultLocalePair().getFirst();
@@ -1533,15 +1604,20 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                 continue;
             }
             Serializable value = entry.getValue();
-            addNodePropertyImpl(node, qname, value, localeId);
+            addNodePropertyImpl(node, qname, value, localeId, CURRENT_USER);
         }
 
         // Record change ID
-        recordNodeUpdate(node, properties);
+        recordNodeUpdate(node, properties, CURRENT_USER);
     }
 
     @Override
-    public void setNodeProperties(Long nodeId, Map<QName, Serializable> propertiesIncl)
+    public void setNodeProperties(Long nodeId, Map<QName, Serializable> propertiesIncl){
+        setNodeProperties(nodeId, propertiesIncl, null);
+    }
+
+    @Override
+    public void setNodeProperties(Long nodeId, Map<QName, Serializable> propertiesIncl, String CURRENT_USER)
     {
         /*
          * TODO: Put into interceptor
@@ -1549,6 +1625,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
          * New ContentData entities will be created. Re-using content data will mean comparing old
          * with new - it is faster to just create a new row.
          */
+        logger.trace("setNodeProperties()... CURRENT_USER: " + CURRENT_USER);
         Set<QName> contentQNames = new HashSet<QName>(dictionaryService.getAllProperties(DataTypeDefinition.CONTENT));
         Set<Long> contentQNameIds = qnameDAO.convertQNamesToIds(contentQNames, false);
         contentDataDAO.deleteContentDataForNode(nodeId, contentQNameIds);
@@ -1561,12 +1638,27 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         {
             QName propertyQName = entry.getKey();
             Serializable value = entry.getValue();
+
             if (AuditableProperties.isAuditableProperty(propertyQName))
             {
-                continue;
+                if(propertyQName.equals(ContentModel.PROP_MODIFIER)){
+                    if(CURRENT_USER != null && !CURRENT_USER.isEmpty()){
+                        properties.put(propertyQName, (Serializable) CURRENT_USER);
+                    } else {
+                        continue;
+                    }
+
+                } else {
+                    continue;
+
+                }
             }
             // The value was NOT an auditable value
             properties.put(propertyQName, value);
+        }
+
+        if(CURRENT_USER != null && !CURRENT_USER.isEmpty()){
+            properties.put(PROP_MODIFIER, CURRENT_USER);
         }
 
         // Convert
@@ -1600,7 +1692,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
 
         // Record change ID
-        recordNodeUpdate(node, propertiesIncl);
+        recordNodeUpdate(node, propertiesIncl, CURRENT_USER);
     }
 
     @Override
@@ -1676,6 +1768,12 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
     @Override
     public void addNodeAspects(Long nodeId, Set<QName> aspectQNames)
     {
+        addNodeAspects(nodeId, aspectQNames, null);
+    }
+
+    @Override
+    public void addNodeAspects(Long nodeId, Set<QName> aspectQNames, String CURRENT_USER)
+    {
         Node node = getNodeNotNull(nodeId);
 
         aspectQNames = new HashSet<QName>(aspectQNames);
@@ -1690,7 +1788,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         nodeAspects.addAll(aspectQNameIds);
 
         // Record change ID
-        recordNodeUpdate(node);
+        recordNodeUpdate(node, CURRENT_USER);
     }
 
     @Override
@@ -2038,10 +2136,16 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
     @Override
     public void setChildNameUnique(final Long childAssocId, final String childName)
     {
+        setChildNameUnique(childAssocId, childName, null);
+    }
+
+    @Override
+    public void setChildNameUnique(final Long childAssocId, final String childName, final String CURRENT_USER)
+    {
         /*
          * Work out if there has been any change in the name
          */
-
+        logger.trace("setChildNameUnique(): CURRENT_USER: " + CURRENT_USER);
         final ChildAssoc childAssoc = getChildAssocNotNull(childAssocId);
         final Node parentNode = childAssoc.getParent();
 
@@ -3041,7 +3145,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
     }
 
     /**
-     * @param childNode the child node
+     * @param childNodeId the child node
      * @return Returns the parent associations without any interpretation
      */
     @SuppressWarnings("unchecked")
@@ -4211,12 +4315,14 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             ContentDataDAO contentDataDAO,
             DictionaryService dictionaryService)
     {
+
         Map<PropertyMapKey, NodePropertyValue> propertyMap = new HashMap<PropertyMapKey, NodePropertyValue>(in.size() + 5);
         for (Map.Entry<QName, Serializable> entry : in.entrySet())
         {
             Serializable value = entry.getValue();
             // Get the qname ID
             QName propertyQName = entry.getKey();
+
             Long propertyQNameId = qnameDAO.getOrCreateQName(propertyQName).getFirst();
             // Get the locale ID
             Long propertylocaleId = localeDAO.getOrCreateDefaultLocalePair().getFirst();

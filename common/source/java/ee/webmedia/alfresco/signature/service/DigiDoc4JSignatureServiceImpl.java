@@ -357,7 +357,7 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
         return FilenameUtil.isDigiDocContainerFile(fileInfo);
     }
     
-    private NodeRef createContentNode(NodeRef parentRef, String filename) {
+    public NodeRef createContentNode(NodeRef parentRef, String filename) {
         // assign the file name
         Map<QName, Serializable> contentProps = new HashMap<QName, Serializable>();
         contentProps.put(ContentModel.PROP_NAME, filename);

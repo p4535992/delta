@@ -75,7 +75,7 @@ public interface SendOutService {
      */
     NodeRef addSendinfo(NodeRef document, Map<QName, Serializable> props, boolean updateSearchableSendInfo);
 
-    List<ContentToSend> prepareContents(NodeRef document, List<NodeRef> fileRefs, boolean zipIt);
+    List<ContentToSend> prepareContents(NodeRef document, List<NodeRef> fileRefs, boolean zipIt) throws Exception;
     
     List<ContentToSend> prepareContents(List<EmailAttachment> attachments);
 

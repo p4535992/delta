@@ -16,6 +16,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import ee.sk.digidoc.SignedDoc;
+import ee.smit.digisign.SignCertificate;
+import ee.webmedia.alfresco.document.sendout.web.DocumentSendOutDialog;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
@@ -116,40 +119,171 @@ public class SendOutServiceImpl implements SendOutService {
     @Override
     public List<Pair<String, String>> forward(NodeRef document, List<String> names, List<String> emails, List<String> modes, String fromEmail, String content,
             List<NodeRef> fileRefs) {
-        return sendOut(document, names, emails, modes, null, null, null, fromEmail, null, content, fileRefs, false, true);
+        try {
+            return sendOut(document, names, emails, modes, null, null, null, fromEmail, null, content, fileRefs, false, true);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
+        return null;
     }
 
     @Override
     public boolean sendOut(NodeRef document, List<String> names, List<String> emails, List<String> modes, List<String> idCodes, List<String> encryptionIdCodes, List<X509Certificate> allCertificates, 
     		String fromEmail, String subject, String content, List<NodeRef> fileRefs, boolean zipIt) {
-        return sendOut(document, names, emails, modes, idCodes, encryptionIdCodes, allCertificates, fromEmail, subject, content, fileRefs, zipIt, false) != null;
+        try {
+            return sendOut(document, names, emails, modes, idCodes, encryptionIdCodes, allCertificates, fromEmail, subject, content, fileRefs, zipIt, false) != null;
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
+        return false;
     }
 
     private List<Pair<String, String>> sendOut(NodeRef document, List<String> names, List<String> emails, List<String> modes, List<String> idCodes, List<String> encryptionIdCodes,
-    		List<X509Certificate> allCertificates, String fromEmail, String subject, String content, List<NodeRef> fileRefs, boolean zipIt, boolean forward) {
-    	if (allCertificates == null) {
+    		List<X509Certificate> allCertificates, String fromEmail, String subject, String content, List<NodeRef> fileRefs, boolean zipIt, boolean forward) throws Exception {
+        log.info("SEND E-MAIL OUT....");
+        if(log.isDebugEnabled()){
+            if(names != null){
+                log.debug("Names list size: " + names.size());
+                for(String name: names){
+                    log.debug("NAME: " + name);
+                }
+            } else {
+                log.warn("Names list size: NULL!");
+            }
+
+            if(emails != null){
+                log.debug("Emails list size: " + emails.size());
+                for(String email : emails){
+                    log.debug("EMAIL: " + email);
+                }
+            } else {
+                log.warn("Emails list size: NULL!");
+            }
+
+            if(modes != null){
+                log.debug("Modes list size: " + modes.size());
+                for(String mode : modes){
+                    log.debug("MODE: " + mode);
+                }
+            } else {
+                log.warn("Modes list size: NULL!");
+            }
+
+            if(idCodes != null){
+                log.debug("idCodes list size: " + idCodes.size());
+                for(String idCode : idCodes){
+                    log.debug("ID CODE: " + idCode);
+                }
+
+            } else {
+                log.warn("idCodes list size: NULL!");
+            }
+
+            if(encryptionIdCodes != null){
+                log.debug("encryptionIdCodes list size: " + encryptionIdCodes.size());
+                for(String encIdCode : encryptionIdCodes){
+                    log.debug("ENCRYPTION ID CODE: " + encIdCode);
+                }
+            } else {
+                log.warn("encryptionIdCodes list size: NULL!");
+            }
+
+            if(allCertificates != null){
+                log.debug("ALL CERTIFICATES list size: " + allCertificates.size());
+                for(X509Certificate cert : allCertificates){
+                    log.debug("X509Certificate: serialNumber: " + cert.getSerialNumber() + ", SubjectDN: " + cert.getSubjectDN());
+                }
+            } else {
+                log.debug("ALL CERTIFICATES list is NULL!");
+            }
+
+            if(subject != null || !subject.isEmpty()){
+                log.debug("SUBJECT length: " + subject.length());
+            } else {
+                log.debug("SUBJECT is NULL!");
+            }
+
+            if(content != null || !content.isEmpty()){
+                log.debug("CONTENT length: " + content.length());
+            } else {
+                log.debug("CONTENT is NULL!");
+            }
+
+            if(fileRefs != null){
+                log.debug("FILE REF size: " + fileRefs.size());
+                for(NodeRef nodeRef : fileRefs){
+                    log.debug("FILE NODEREF: " + nodeRef);
+                }
+            } else {
+                log.warn("FILE REF size: NULL!");
+            }
+
+            if(zipIt){
+                log.debug("ZIPIT is TRUE!");
+            } else {
+                log.debug("ZIPIT is FALSE!");
+            }
+
+            if(forward){
+                log.debug("FORWARD is TRUE!");
+            } else {
+                log.debug("FORWARD is FALSE!");
+            }
+        }
+
+        if (allCertificates == null) {
         	allCertificates = new ArrayList<X509Certificate>();
     	}
         if (encryptionIdCodes != null) {
             Set<String> encryptionIdCodesSet = new HashSet<String>();
             for (int i = 0; i < names.size(); i++) {
-                String encryptionIdCode = encryptionIdCodes.get(i);
+
+                String encryptionIdCode = encryptionIdCodes.get(i) != null ? encryptionIdCodes.get(i).trim(): null;
+                log.debug(i + ") ENCRYPTION ID CODE: " + encryptionIdCode);
                 if (StringUtils.isBlank(encryptionIdCode) || encryptionIdCodesSet.contains(encryptionIdCode)) {
+                    log.debug("Encryption id code is null or already containst set.");
                     continue;
                 }
-                List<SkLdapCertificate> skLdapCertificates = skLdapService.getCertificates(encryptionIdCode);
-                List<X509Certificate> certificates = null;
-                if(skLdapCertificates != null){
-                    log.debug("SK LDAP certificates list size: " + skLdapCertificates.size());
-                    certificates = getSignatureService().getCertificatesForEncryption(skLdapCertificates);
+
+                List<X509Certificate> certificates = new ArrayList<>();
+
+                if(BeanHelper.getDigiSignService().getDigiSignServiceActive()) {
+                    log.info("Using DigiSign-service to get certificates... ID-CODE: " + encryptionIdCode);
+                    List<SignCertificate> signCertificateList = BeanHelper.getDigiSignSearches().getCertificatesFromDigiSignService(encryptionIdCode, "");
+                    if(signCertificateList == null || signCertificateList.isEmpty()){
+                        log.debug("CERTIFICATE list size: NULL! continue to next");
+                    }
+
+                    log.debug("CERTIFICATE list size: " + signCertificateList);
+                    for(SignCertificate cert : signCertificateList){
+                        try{
+                            X509Certificate certX509 = SignedDoc.readCertificate(cert.getData());
+                            log.debug("Add certificate to certificates list...");
+                            certificates.add(certX509);
+                        }catch (Exception e){
+                            log.error(e.getMessage(), e);
+                        }
+                    }
+
                 } else {
-                    log.warn("SK LDAP certificates list size: NULL!");
+                    log.info("Using SK LDAP to get certificates...");
+                    List<SkLdapCertificate> skLdapCertificates = skLdapService.getCertificates(encryptionIdCode);
+
+                    if(skLdapCertificates != null){
+                        log.debug("SK LDAP certificates list size: " + skLdapCertificates.size());
+                        certificates = getSignatureService().getCertificatesForEncryption(skLdapCertificates);
+                    } else {
+                        log.warn("SK LDAP certificates list size: NULL!");
+                    }
                 }
+
                 if (certificates.isEmpty()) {
                     throw new UnableToPerformException("document_send_out_encryptionRecipient_notFound", names.get(i), encryptionIdCode);
                 }
+                log.info("Add certificates to ALL CERTIFICATES LIST: " + certificates.size());
                 allCertificates.addAll(certificates);
                 encryptionIdCodesSet.add(encryptionIdCode);
+
             }
         }
 
@@ -383,7 +517,7 @@ public class SendOutServiceImpl implements SendOutService {
     }
 
     @Override
-    public List<ContentToSend> prepareContents(NodeRef document, List<NodeRef> fileRefs, boolean zipIt) {
+    public List<ContentToSend> prepareContents(NodeRef document, List<NodeRef> fileRefs, boolean zipIt) throws Exception {
         String zipAndEncryptFileName = null;
         if (fileRefs != null && fileRefs.size() > 0 && zipIt) {
             Map<QName, Serializable> docProperties = nodeService.getProperties(document);
