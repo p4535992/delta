@@ -79,11 +79,12 @@ public class FunctionsServiceImpl implements FunctionsService {
     }
 
     @Override
-    public List<UnmodifiableFunction> getAllFunctions(DocListUnitStatus status) {
+    public List<UnmodifiableFunction> getAllFunctions(DocListUnitStatus... statuses) {
         List<UnmodifiableFunction> functions = getAllFunctions();
+        List<String> statusNames = DocListUnitStatus.getStatusNames(statuses);
         for (Iterator<UnmodifiableFunction> i = functions.iterator(); i.hasNext();) {
             UnmodifiableFunction function = i.next();
-            if (!status.getValueName().equals(function.getStatus())) {
+            if (!statusNames.contains(function.getStatus())) {
                 i.remove();
             }
         }

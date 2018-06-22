@@ -43,7 +43,7 @@ public interface VolumeService {
 
     List<UnmodifiableVolume> getAllValidVolumesBySeries(NodeRef seriesNodeRef);
 
-    List<UnmodifiableVolume> getAllValidVolumesBySeries(NodeRef seriesNodeRef, DocListUnitStatus status);
+    List<UnmodifiableVolume> getAllValidVolumesBySeries(NodeRef seriesNodeRef, DocListUnitStatus... status);
 
     List<UnmodifiableVolume> getAllOpenExpiredVolumesBySeries(NodeRef seriesNodeRef);
 
@@ -90,4 +90,5 @@ public interface VolumeService {
 
     void removeFromCache(NodeRef volRef);
 
+    List<UnmodifiableVolume> getAllStartedVolumesBySeries(NodeRef seriesRef, DocListUnitStatus... statuses);
 }

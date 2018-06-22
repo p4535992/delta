@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -732,6 +733,9 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
         try {
             Charset charset = mimetypeService.getContentCharsetFinder().getCharset(is, mimetype);
             encoding = charset.name();
+            if ("windows-1257".equals(encoding)) {
+                encoding = StandardCharsets.UTF_8.name();
+            }
         } finally {
             try {
                 is.close();
@@ -1158,7 +1162,7 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
         explainAnalyzeQuery(sqlQuery, traceLog, false, args);
     }
 
-    @Override
+
     public void explainAnalyzeQuery(String sqlQuery, Log traceLog, boolean analyze, Object... args) {
         if (traceLog.isTraceEnabled()) {
             jdbcTemplate.getJdbcOperations().execute("SET enable_seqscan TO off");

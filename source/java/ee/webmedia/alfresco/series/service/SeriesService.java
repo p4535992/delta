@@ -30,7 +30,7 @@ public interface SeriesService {
 
     List<UnmodifiableSeries> getAllCaseFileSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status);
 
-    List<UnmodifiableSeries> getAllSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status, Set<String> docTypeIds);
+    List<UnmodifiableSeries> getAllSeriesByFunction(NodeRef functionNodeRef, Set<String> docTypeIds, DocListUnitStatus... statuses);
 
     List<UnmodifiableSeries> getAllSeriesByFunctionForStructUnit(NodeRef functionNodeRef, String structUnitId);
     
@@ -66,6 +66,8 @@ public interface SeriesService {
     void delete(Series series);
 
     boolean hasSelectableSeries(NodeRef functionRef, boolean isSearchFilter, Set<String> idList, boolean forDocumentType);
+
+    boolean hasSelectableSeriesForModal(NodeRef functionRef, Set<String> idList);
 
     UnmodifiableSeries getUnmodifiableSeries(NodeRef nodeRef, Map<Long, QName> propertyTypes);
 

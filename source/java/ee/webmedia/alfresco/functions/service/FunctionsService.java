@@ -29,7 +29,7 @@ public interface FunctionsService {
 
     List<UnmodifiableFunction> getFunctions(NodeRef functionsRoot);
 
-    List<UnmodifiableFunction> getAllFunctions(DocListUnitStatus status);
+    List<UnmodifiableFunction> getAllFunctions(DocListUnitStatus... status);
 
     Function getFunction(NodeRef functionRef, Map<Long, QName> propertyTypes);
 
@@ -71,7 +71,7 @@ public interface FunctionsService {
 
     Location getDocumentListLocation();
 
-    public List<ChildAssociationRef> getFunctionAssocs(NodeRef functionsRoot);
+    List<ChildAssociationRef> getFunctionAssocs(NodeRef functionsRoot);
 
     boolean isDraftsFunction(NodeRef functionRef);
 

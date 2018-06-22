@@ -291,6 +291,75 @@ public final class Utils extends StringUtils
         return buf.toString();
     }
 
+    public static String generateFormSubmitByName(FacesContext context, UIComponent component, String fieldId, String fieldValue)
+    {
+        return generateFormSubmitByName(context, component, fieldId, fieldValue, false, null);
+    }
+
+    public static String generateFormSubmitByName(FacesContext context, UIComponent component, String fieldId,
+                                            String fieldValue, boolean valueIsParam, Map<String, String> params)
+    {
+        UIForm form = Utils.getParentForm(context, component);
+        if (form == null)
+        {
+            throw new IllegalStateException("Must nest components inside UIForm to generate form submit!");
+        }
+
+        String formClientId = form.getClientId(context);
+
+        StringBuilder buf = new StringBuilder(200);
+        buf.append("document.getElementsByName('");
+        buf.append(StringEscapeUtils.escapeJavaScript(fieldId));
+        buf.append("')[0].value=");
+        if (valueIsParam == false)
+        {
+            buf.append("'");
+        }
+        buf.append(fieldValue);
+        if (valueIsParam == false)
+        {
+            buf.append("'");
+        }
+        buf.append(";");
+
+        if (params != null)
+        {
+            for (String name : params.keySet())
+            {
+                buf.append("document.getElementsByName('");
+                buf.append(StringEscapeUtils.escapeJavaScript(name));
+                buf.append("')[0].value='");
+                String val = params.get(name);
+                String escapeJavaScript = StringEscapeUtils.escapeJavaScript(val);
+                if (escapeJavaScript != null) {
+                    // Take back forward slash modifications for JMeter tests
+                    buf.append(escapeJavaScript.replaceAll("\\\\/", "/"));
+                }
+                buf.append("';");
+
+                // weak, but this seems to be the way Sun RI do it...
+                // FormRenderer.addNeededHiddenField(context, name);
+                HtmlFormRendererBase.addHiddenCommandParameter(context, form, name);
+            }
+        }
+
+        buf.append("setPageScrollY();");
+        buf.append("document.forms['");
+        buf.append(formClientId);
+        buf.append("'].submit();");
+
+        if (valueIsParam == false)
+        {
+            buf.append("return false;");
+        }
+
+        // weak, but this seems to be the way Sun RI do it...
+        // FormRenderer.addNeededHiddenField(context, fieldId);
+        HtmlFormRendererBase.addHiddenCommandParameter(context, form, fieldId);
+
+        return buf.toString();
+    }
+
     /**
      * Generate the JavaScript to submit the parent Form.
      * 
