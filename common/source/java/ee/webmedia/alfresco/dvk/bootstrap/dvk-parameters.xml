@@ -19,14 +19,14 @@
 
    <param:intParameter view:childName="param:dvkReceiveDocumentsInterval">
       <view:properties>
-         <param:value>1</param:value>
+         <param:value>7200</param:value>
          <param:name>dvkReceiveDocumentsInterval</param:name>
       </view:properties>
    </param:intParameter>
 
    <param:intParameter view:childName="param:dvkReceiveDocSendStatusesInterval">
       <view:properties>
-         <param:value>1</param:value>
+         <param:value>10</param:value>
          <param:name>dvkReceiveDocSendStatusesInterval</param:name>
       </view:properties>
    </param:intParameter>

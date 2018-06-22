@@ -1,5 +1,8 @@
 package ee.webmedia.alfresco.classificator.enums;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Enum for "docListUnitStatus" classificator values
  */
@@ -30,5 +33,13 @@ public enum DocListUnitStatus {
 
     public boolean equals(String valueName) {
         return this.valueName.equalsIgnoreCase(valueName);
+    }
+
+    public static List<String> getStatusNames(DocListUnitStatus[] statuses) {
+        List<String> statusNames = new ArrayList<>();
+        for (DocListUnitStatus status : statuses) {
+            statusNames.add(status.getValueName());
+        }
+        return statusNames;
     }
 }

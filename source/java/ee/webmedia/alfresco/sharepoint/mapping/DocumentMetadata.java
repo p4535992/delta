@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.sharepoint.mapping;
 
+import static ee.smit.common.Utils.castToAnything;
 import static org.apache.commons.lang.StringUtils.trimToNull;
 
 import java.io.File;
@@ -194,7 +195,7 @@ public abstract class DocumentMetadata {
     private static class AmphoraMetadata extends DocumentMetadata {
 
         public AmphoraMetadata(Element docRoot, File dirFiles) {
-            List<Element> children = docRoot.elements();
+            List<Element> children = castToAnything(docRoot.elements());
             Element form = children.get(0).element("Form");
 
             String tmpSubtype = null;
@@ -232,7 +233,7 @@ public abstract class DocumentMetadata {
             List<DocumentHistory> tmpHistory = new ArrayList<DocumentHistory>();
 
             if (form.element("HistoryList") != null) {
-                List<Element> historyEntries = form.element("HistoryList").elements("History");
+                List<Element> historyEntries = castToAnything(form.element("HistoryList").elements("History"));
                 for (Element entry : historyEntries) {
                     tmpHistory.add(new DocumentHistory(
                             ImportUtil.getDateTimeShort(entry.elementTextTrim("Create_time")),
@@ -246,7 +247,7 @@ public abstract class DocumentMetadata {
             if (relationList != null) {
                 Set<String> tmpAssocs = new LinkedHashSet<String>();
 
-                List<Element> relations = relationList.elements("Relation");
+                List<Element> relations = castToAnything(relationList.elements("Relation"));
                 for (Element relation : relations) {
                     tmpAssocs.add(relation.elementTextTrim("RelatedObject_ID"));
                 }
@@ -260,7 +261,8 @@ public abstract class DocumentMetadata {
             history = tmpHistory;
 
             for (String elementName : Arrays.asList("Original_file", "File", "Answer_file", "Related_file1", "Related_file2")) {
-                for (Element fileElem : (List<Element>) form.elements(elementName)) {
+                List<Element> elementList = castToAnything(form.elements(elementName));
+                for (Element fileElem : elementList) {
                     String filename = fileElem.attributeValue("guid_name");
                     String title = fileElem.attributeValue("filename");
                     addFile(dirFiles, title, filename);
@@ -271,7 +273,8 @@ public abstract class DocumentMetadata {
         }
 
         private void addFiles(File dirFiles, Element form, String xpath, String titleElementName) {
-            for (Element fileGuidElem : (List<Element>) form.selectNodes(xpath)) {
+            List<Element> elementList = castToAnything(form.selectNodes(xpath));
+            for (Element fileGuidElem : elementList) {
                 String filename = fileGuidElem.getTextTrim();
                 String title = fileGuidElem.getParent().elementTextTrim(titleElementName);
                 addFile(dirFiles, title, filename);
@@ -340,9 +343,9 @@ public abstract class DocumentMetadata {
             series = trimToNull(docRoot.elementTextTrim("sari"));
             volume = trimToNull(docRoot.elementTextTrim("toimik"));
 
-            List<Element> failid = docRoot.elements("failid");
+            List<Element> failid = castToAnything(docRoot.elements("failid"));
             if (!failid.isEmpty()) {
-                failid = failid.get(0).elements("failid_ROW");
+                failid = castToAnything(failid.get(0).elements("failid_ROW"));
                 for (Element fail : failid) {
                     files.add(new ImportFile(fail.elementTextTrim("pealkiri"), new File(dirFiles, fail.elementTextTrim("abipealkiri"))));
                 }
@@ -352,7 +355,7 @@ public abstract class DocumentMetadata {
             if (relationList != null) {
                 Set<String> tmpAssocs = new LinkedHashSet<String>();
 
-                List<Element> relations = relationList.elements("seotud_dok_nr");
+                List<Element> relations = castToAnything(relationList.elements("seotud_dok_nr"));
                 for (Element relation : relations) {
                     tmpAssocs.add(relation.getTextTrim());
                 }

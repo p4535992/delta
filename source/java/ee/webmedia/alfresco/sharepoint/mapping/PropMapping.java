@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.sharepoint.mapping;
 
+import static ee.smit.common.Utils.castToAnything;
 import static org.apache.commons.lang.StringUtils.strip;
 import static org.apache.commons.lang.StringUtils.trimToNull;
 
@@ -119,7 +120,7 @@ public class PropMapping {
         } else if (expression.equals("xpathContractParty")) {
             List<List<String>> values = new ArrayList<List<String>>();
             for (String fromXpath : from.split(",")) {
-                List<Node> nodes = root.selectNodes(fromXpath);
+                List<Node> nodes = castToAnything(root.selectNodes(fromXpath));
                 if (nodes != null) {
                     int i = 1;
                     for (Node node : nodes) {

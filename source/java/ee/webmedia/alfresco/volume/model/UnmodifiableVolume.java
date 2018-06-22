@@ -10,6 +10,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.collections.comparators.NullComparator;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.FastDateFormat;
 
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -20,6 +21,7 @@ import ee.webmedia.alfresco.eventplan.model.EventPlanModel;
 public class UnmodifiableVolume implements Serializable, Comparable<UnmodifiableVolume> {
 
     private static final long serialVersionUID = 1L;
+    private static final FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
 
     private final String volumeMark;
     private final String title;
@@ -30,6 +32,8 @@ public class UnmodifiableVolume implements Serializable, Comparable<Unmodifiable
     private final String volumeLabel;
     private final boolean isDynamic;
     private final boolean containsCases;
+    private final boolean markedForDestruction;
+    private final boolean transferConfirmed;
     private final String volumeType;
     private final Date retainUntilDate;
     private final boolean casesCreatebleByUser;
@@ -50,6 +54,8 @@ public class UnmodifiableVolume implements Serializable, Comparable<Unmodifiable
             volumeType = getProp(VolumeModel.Props.VOLUME_TYPE, node);
         }
         containsCases = Boolean.TRUE.equals(getProp(VolumeModel.Props.CONTAINS_CASES, node));
+        markedForDestruction = Boolean.TRUE.equals(getProp(VolumeModel.Props.MARKED_FOR_DESTRUCTING, node));
+        transferConfirmed = Boolean.TRUE.equals(getProp(EventPlanModel.Props.TRANSFER_CONFIRMED, node));
         retainUntilDate = getProp(EventPlanModel.Props.RETAIN_UNTIL_DATE, node);
         casesCreatebleByUser = Boolean.TRUE.equals(getProp(VolumeModel.Props.CASES_CREATABLE_BY_USER, node));
         shortRegNumber = getProp(VolumeModel.Props.VOL_SHORT_REG_NUMBER, node);
@@ -150,4 +156,25 @@ public class UnmodifiableVolume implements Serializable, Comparable<Unmodifiable
         return comparator.compare(this, other);
     }
 
+    public String getVolumeLabelForModal() {
+        StringBuilder sb = new StringBuilder(volumeLabel);
+        sb.append(" (");
+        if (getValidFrom() != null) {
+            sb.append(dateFormat.format(getValidFrom()));
+        }
+        sb.append(" - ");
+        if (getValidTo() != null) {
+            sb.append(dateFormat.format(getValidTo()));
+        }
+        sb.append(")");
+        return sb.toString();
+    }
+
+    public boolean isMarkedForDestruction() {
+        return markedForDestruction;
+    }
+
+    public boolean isTransferConfirmed() {
+        return transferConfirmed;
+    }
 }

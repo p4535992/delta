@@ -56,6 +56,8 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TreeNode;
 
+import static ee.smit.common.Utils.castToAnything;
+
 public class AddDocumentServiceImpl implements AddDocumentService {
 
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(AddDocumentServiceImpl.class);
@@ -104,6 +106,8 @@ public class AddDocumentServiceImpl implements AddDocumentService {
     private String webServiceDocumentsMenuItemTitle;
     private String webServiceDocumentsListTitle;
 
+
+
     @Override
     public AddDocumentResponse importDocument(AddDocumentRequest request) throws IOException {
         AddDocumentResponse result = new AddDocumentResponse();
@@ -139,7 +143,7 @@ public class AddDocumentServiceImpl implements AddDocumentService {
             if (!isSubnode(childQNameHierarchy)) {
                 continue;
             }
-            List<Object> valueList = (List<Object>) docProps.get(fieldId);
+            List<Object> valueList = castToAnything(docProps.get(fieldId));
             if (valueList == null || valueList.isEmpty()) {
                 continue;
             }

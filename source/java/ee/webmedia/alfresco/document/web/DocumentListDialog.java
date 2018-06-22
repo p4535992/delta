@@ -438,7 +438,7 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
 
     @Override
     public boolean isShowCheckboxes() {
-        if (!BeanHelper.getUserService().isDocumentManager()) {
+        if (!BeanHelper.getUserService().isDocumentManager() && !BeanHelper.getUserService().isArchivist()) {
             return false;
         }
         GeneralService generalService = BeanHelper.getGeneralService();
@@ -448,10 +448,9 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
             }
             return DocListUnitStatus.OPEN.getValueName().equals(parentCase.getStatus());
         } else if (parentVolume != null) {
-            if (generalService.isArchivalsStoreRef(parentVolume.getNode().getNodeRef().getStoreRef())) {
-                return true;
-            }
-            return DocListUnitStatus.OPEN.getValueName().equals(parentVolume.getStatus());
+            return DocListUnitStatus.OPEN.getValueName().equals(parentVolume.getStatus())
+                    || DocListUnitStatus.CLOSED.getValueName().equals(parentVolume.getStatus())
+                    && !parentVolume.isTransferConfirmed() && !parentVolume.isMarkedForDestruction();
         }
         return false;
     }

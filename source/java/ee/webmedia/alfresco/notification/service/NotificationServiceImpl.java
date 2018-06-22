@@ -135,7 +135,7 @@ public class NotificationServiceImpl implements NotificationService {
     private BulkLoadNodeService bulkLoadNodeService;
     private ApplicationConstantsBean applicationConstantsBean;
     private DvkService _dvkService;
-    
+
     private static BeanPropertyMapper<GeneralNotification> generalNotificationBeanPropertyMapper;
     private static Map<String, List<String>> userSpecificNotifications;
 
@@ -697,7 +697,7 @@ public class NotificationServiceImpl implements NotificationService {
         // Try to retrieve the subject from repository.
         if (StringUtils.isNotBlank(processedTemplate.getSubject())) {
             notification.setSubject(HtmlUtils.htmlUnescape(processedTemplate.getSubject()));
-        }    
+        }
         String cleanContent = HtmlUtils.htmlUnescape(processedTemplate.getContent().replaceAll("&apos;", "'"));     
         processedTemplate.setContent(cleanContent);
         if (saveContent) {
@@ -777,11 +777,39 @@ public class NotificationServiceImpl implements NotificationService {
         }
         return notification;
     }
-
+    
     private List<Notification> processFinishedWorkflow(Workflow workflow) {
         final CompoundWorkflow compoundWorkflow = workflow.getParent();
 
         List<Notification> notifications = new ArrayList<>();
+        
+        List<Workflow> workflows = compoundWorkflow.getWorkflows();
+        boolean needNotifyOwner = false;
+        for (Workflow nestedWorkflow : workflows) {
+        	if (nestedWorkflow.isType(WorkflowSpecificModel.Types.REVIEW_WORKFLOW)) {
+        		if (nestedWorkflow.isParallelTasks()) {
+        			List<Task> tasks = nestedWorkflow.getTasks();
+         			int count = tasks.size();
+        			
+        			if (count <= 1)
+        				continue;
+
+        			for (Task reviewTask : tasks) {
+        				if(WorkflowSpecificModel.ReviewTaskOutcome.CONFIRMED_WITH_REMARKS.equals(reviewTask.getOutcomeIndex())) {
+        					needNotifyOwner = true;
+        				}
+        			}
+        		
+		    	if (needNotifyOwner) {
+		    		Notification notification = setupNotification(new Notification(), NotificationModel.NotificationType.PARRALEL_WORKFLOW_COMPLETED, getWorkflowType(workflow));
+		            addCompoundWorkflowOwnerRecipient(compoundWorkflow, notification);
+		            notifications.add(notification);
+		            break;
+		        	}
+        		}
+        	}
+        }
+        
         if (isSubscribed(compoundWorkflow.getOwnerId(), NotificationModel.NotificationType.WORKFLOW_WORKFLOW_COMPLETED)) {
             Notification notification = setupNotification(new Notification(), NotificationModel.NotificationType.WORKFLOW_WORKFLOW_COMPLETED, getWorkflowType(workflow));
             addCompoundWorkflowOwnerRecipient(compoundWorkflow, notification);
@@ -796,6 +824,7 @@ public class NotificationServiceImpl implements NotificationService {
                 notifications.add(notification);
             }
         }
+        
         return notifications;
 
     }
@@ -1017,8 +1046,9 @@ public class NotificationServiceImpl implements NotificationService {
      * //else : reviewTask -> reviewTaskCompletedWithRemarks -> workflow block[parallelTasks == false] -> every task[status == finished] ownerId
      */
     private List<Notification> processReviewTask(Task task, List<Notification> notifications) {
-        final Workflow workflow = task.getParent();
+        final Workflow workflow = task.getParent();                                              
         final CompoundWorkflow compoundWorkflow = workflow.getParent();
+                
         if (WorkflowSpecificModel.ReviewTaskOutcome.CONFIRMED.equals(task.getOutcomeIndex())) {
             String ownerIdToCheck = null;
             if (StringUtils.isNotEmpty(compoundWorkflow.getOwnerId())
@@ -1089,8 +1119,21 @@ public class NotificationServiceImpl implements NotificationService {
                     NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_NOT_ACCEPTED_ORDERED);
             notifications.add(notification);
         }
+       
+      
+        
+ /*       if (WorkflowSpecificModel.ReviewTaskOutcome.CONFIRMED.equals(task.getOutcomeIndex())) 
+        	&& (WorkflowSpecificModel.ReviewTaskOutcome.CONFIRMED_WITH_REMARKS.equals(task.getOutcomeIndex()))  
+        	&& (WorkflowSpecificModel.ReviewTaskOutcome.NOT_CONFIRMED.equals(task.getOutcomeIndex())) {
+        	
+        }
+         
+   */     
+        
+      
 
         return notifications;
+        
     }
 
     private List<Notification> processExternalReviewTask(Task task, List<Notification> notifications) {
@@ -1319,6 +1362,46 @@ public class NotificationServiceImpl implements NotificationService {
             addCompoundWorkflowOwnerRecipient(compoundWorkflow, notification);
             addTaskIndependentCompoundWorkflowNotification(compoundWorkflow, notifications, Arrays.asList(compoundWorkflow.getOwnerId()),
                     NotificationModel.NotificationType.TASK_SIGNATURE_TASK_COMPLETED_ORDERED, 1);
+            
+            // notify reviewers 
+            
+            Predicate<Task> taskPredicate = new Predicate<Task>() {
+                @Override
+                public boolean eval(Task docTask) {
+                    // subscribed, review task, finished and outcome is positive
+                    return WorkflowSpecificModel.Types.REVIEW_TASK.equals(docTask.getType())
+                            && docTask.isStatus(Status.FINISHED)
+                            && !WorkflowSpecificModel.ReviewTaskOutcome.NOT_CONFIRMED.equals(docTask.getOutcomeIndex())
+                            && isSubscribed(docTask.getOwnerId(), NotificationModel.NotificationType.REVIEW_DOCUMENT_NOT_SIGNED);
+                    
+                }
+            };
+            Set<Task> reviewTasks;
+            if (compoundWorkflow.isIndependentWorkflow()) {
+                reviewTasks = WorkflowUtil.getTasks(new HashSet<Task>(), Arrays.asList(compoundWorkflow), taskPredicate);
+            } else {
+                reviewTasks = workflowService.getTasks(compoundWorkflow.getParent(), taskPredicate);
+            }
+            
+            if (!reviewTasks.isEmpty()) {
+            	
+                notification = setupNotification(NotificationModel.NotificationType.REVIEW_DOCUMENT_NOT_SIGNED, taskWorkflowType);
+                Set<String> usersToNotify = new HashSet<>();
+                List<String> usernamesToCheck = new ArrayList<>();
+                for (Task reviewTask : reviewTasks) {
+                    // Add only distinct e-mails
+                    String ownerId = reviewTask.getOwnerId();
+                    if (usersToNotify.contains(ownerId)) {
+                        continue;
+                    }
+                    notification.addRecipient(reviewTask.getOwnerName(), reviewTask.getOwnerEmail());
+                    usernamesToCheck.add(ownerId);
+                    usersToNotify.add(ownerId);
+                }
+                notifications.add(notification);
+            }
+            
+            //
         }
         return notifications;
     }
@@ -1362,7 +1445,11 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     /**
-     * @param notification
+     *
+     * @param notificationType
+     * @param version
+     * @param compoundWorkflowType
+     * @return
      */
     private Notification setupNotification(QName notificationType, int version, CompoundWorkflowType compoundWorkflowType) {
         return setupNotification(new Notification(), notificationType, version, compoundWorkflowType);
@@ -1387,7 +1474,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     private Notification setupNotification(QName notificationType, CompoundWorkflowType compoundWorkflowType) {
-        return setupNotification(new Notification(), notificationType, compoundWorkflowType);
+        return setupNotification(new Notification(), notificationType, compoundWorkflowType); // new compoundworkflow created
     }
 
     private Notification setupNotificationWithoutWorkflowSuffix(QName notificationType) {
@@ -1428,6 +1515,7 @@ public class NotificationServiceImpl implements NotificationService {
                 NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED,
                 NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_NOT_ACCEPTED,
                 NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_WITH_REMARKS,
+                NotificationModel.NotificationType.PARRALEL_WORKFLOW_COMPLETED,
                 NotificationModel.NotificationType.TASK_SIGNATURE_TASK_COMPLETED,
                 NotificationModel.NotificationType.TASK_ORDER_ASSIGNMENT_WORKFLOW_COMPLETED,
                 NotificationModel.NotificationType.TASK_ORDER_ASSIGNMENT_TASK_COMPLETED,
@@ -1441,9 +1529,11 @@ public class NotificationServiceImpl implements NotificationService {
                 NotificationModel.NotificationType.WORKFLOW_SIGNATURE_STOPPED_NO_DOCUMENTS,
                 NotificationModel.NotificationType.DELEGATED_TASK_COMPLETED,
                 NotificationModel.NotificationType.REVIEW_DOCUMENT_SIGNED,
+                NotificationModel.NotificationType.REVIEW_DOCUMENT_NOT_SIGNED,
                 NotificationModel.NotificationType.TASK_CANCELLED,
                 NotificationModel.NotificationType.GROUP_ASSIGNMENT_TASK_COMPLETED_BY_OTHERS,
                 NotificationModel.NotificationType.COMPOUND_WORKFLOW_STOPPED);
+                
     }
 
     @Override
@@ -1475,7 +1565,7 @@ public class NotificationServiceImpl implements NotificationService {
 
         return approaching + exceeded;
     }
-    
+
     @Override
     public int processDocSendFailViaDvkNotifications(Date firingDate) {
         return processDocSendFailViaDvkNotifications();
@@ -1546,7 +1636,7 @@ public class NotificationServiceImpl implements NotificationService {
 
         return 0;
     }
-    
+
     private int sendDvkSendFailNotifications(String emails, NotificationCache notificationCache) {
     	String[] emailParts = emails.split(";");
     	List<String> emailsList = Arrays.asList(emailParts);  
