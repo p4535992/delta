@@ -35,6 +35,7 @@ import javax.servlet.http.HttpSession;
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.tagext.TagSupport;
 
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.coci.CCProperties;
@@ -148,7 +149,8 @@ public class PageTag extends TagSupport
       "/scripts/jquery/jquery.ui.menu.min.css",
       "/scripts/jquery/jquery.ui.autocomplete.min.css",
       "/scripts/jquery/jquery.ui.theme.min.css",
-      "/css/styles.css"
+      "/css/styles.css",
+           "/css/pink.css"
    };
 
    private final static String[] IE6COND_CSS = 
@@ -305,10 +307,31 @@ public class PageTag extends TagSupport
             // (http://forum.skype.com/index.php?showtopic=78380)
             out.write("<meta name=\"SKYPE_TOOLBAR\" content=\"SKYPE_TOOLBAR_PARSER_COMPATIBLE\" />\n");
          }
-         
+
+         if(BeanHelper.getPlumbrService().isPlumbrActive()){
+            out.write("<script src=\"" + BeanHelper.getPlumbrService().getPlumbrScriptSrc() + "?r=" + getUrlsuffix() + "\" \n" +
+                    "  data-plumbr='{\"accountId\":\"" + BeanHelper.getPlumbrService().getPlumbrAccountId() + "\",\n" +
+                    "                \"appName\":\"" + BeanHelper.getPlumbrService().getPlumbrAppName() + "\",\n" +
+                    "                \"serverUrl\":\"" + BeanHelper.getPlumbrService().getPlumbrServerUrl() + "\"}'>\n" +
+                    "</script>");
+
+         }
+
          // CSS style includes
          for (final String css : PageTag.CSS)
          {
+            log.debug("CSS: " + css);
+
+            if(css.equals("/css/pink.css")){
+               if(BeanHelper.getVisualService().isVisualUserName()) {
+                  log.debug("USER Is PINK! :)");
+               } else {
+                  log.debug("USER Is NOT PINK! Not Loading pink file... Continue...");
+                  continue;
+               }
+            }
+
+
             out.write(STYLES_START);
             out.write(reqPath);
             out.write(css);
@@ -378,6 +401,8 @@ public class PageTag extends TagSupport
          generateWindowOnloadCode(out);
 
          out.write("</script>\n"); // end - generate naked javascript code
+
+
 
          if (!Application.inPortalServer())
          {

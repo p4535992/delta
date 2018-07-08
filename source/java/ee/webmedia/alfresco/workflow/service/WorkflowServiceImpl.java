@@ -1995,9 +1995,13 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     @Override
     public void deleteCompoundWorkflow(NodeRef nodeRef, boolean validateStatuses) {
+        log.debug("deleteCompoundWorkflow(): get compoundworkflow by nodeRef.");
         CompoundWorkflow compoundWorkflow = getCompoundWorkflow(nodeRef);
         if (validateStatuses) {
+            log.debug("deleteCompoundWorkflow(): Validate statuses: TRUE");
             checkCompoundWorkflow(compoundWorkflow, Status.NEW, Status.FINISHED);
+        } else {
+            log.debug("deleteCompoundWorkflow(): Validate statuses: FALSE");
         }
         if (log.isDebugEnabled()) {
             log.debug("Deleting " + compoundWorkflow);
@@ -2194,10 +2198,17 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         // Assume that after task statuses are set and compound workflow/workflow statuses are recalculated,
         // the status state of given objects in this process is final, so it is safe to check compound workflows for NEW status and delete corresponding
         // compound workflows, even if other objects' data is saved later in this process.
-        for (CompoundWorkflow compoundWorkflow : compoundWorkflows) {
+        for(Iterator<CompoundWorkflow> it = compoundWorkflows.iterator(); it.hasNext();){
+            log.debug("compoundWorkflows hasNext item()...");
+            CompoundWorkflow compoundWorkflow = it.next();
+            log.debug("compoundWorkflow node ref: " + compoundWorkflow.getNodeRef().toString());
             if (compoundWorkflow.isStatus(Status.NEW)) {
+                log.debug("compoundWorkflow status is NEW... deleteCompoundWorkflow");
                 deleteCompoundWorkflow(compoundWorkflow.getNodeRef(), true);
                 thisCompoundWorkflow.getOtherCompoundWorkflows().remove(compoundWorkflow);
+                it.remove();
+            } else {
+
             }
         }
     }
@@ -3974,7 +3985,10 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     public void changeInitiatingTaskDueDate(Task task, WorkflowEventQueue queue) {
         Task initiatingTask = getInitiatingTask(task);
         addDueDateHistoryRecord(initiatingTask, task);
-        initiatingTask.setDueDate(task.getConfirmedDueDate());
+        Date confirmedDueDate = task.getConfirmedDueDate();
+        confirmedDueDate.setHours(23);
+        confirmedDueDate.setMinutes(59);
+        initiatingTask.setDueDate(confirmedDueDate);
         saveTask(initiatingTask);
         NodeRef initiatingCompoundWorkflowNodeRef = generalService.getAncestorNodeRefWithType(initiatingTask.getWorkflowNodeRef(), WorkflowCommonModel.Types.COMPOUND_WORKFLOW);
         logDueDateExtension(initiatingTask, task.getParent().getParent(), initiatingCompoundWorkflowNodeRef, "applog_compoundWorkflow_due_date_extension_accepted");

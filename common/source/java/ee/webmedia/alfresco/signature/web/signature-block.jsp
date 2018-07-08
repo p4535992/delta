@@ -78,5 +78,12 @@
             <h:outputText id="itemNotValid" value="#{msg.ddoc_signature_invalid}" style="color: red;" rendered="#{item.notValid}" />
       </a:column>
 
+      <a:column id="encrytionType" width="120" style="text-align:left">
+         <f:facet name="header">
+            <a:sortLink label="#{msg.ddoc_signature_encryption_type}" value="encrytionType" styleClass="header" />
+         </f:facet>
+         <h:outputText id="itemEncrytionType" value="#{item.encrytionType}" />
+      </a:column>
+
    </a:richList>
 </a:panel>

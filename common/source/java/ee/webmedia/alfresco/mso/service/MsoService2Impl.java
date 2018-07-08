@@ -112,13 +112,19 @@ public class MsoService2Impl implements MsoService, InitializingBean {
                 duration = CalendarUtil.duration(startTime);
 
                 if (output.getFormulas() == null || output.getFormulas().getValue() == null) {
+                    log.info("MSO getModifiedFormulas is NULL!");
                     return null;
                 }
                 for (Formula formula : output.getFormulas().getValue().getFormula()) {
                     if (formula.getKey() == null || StringUtils.isBlank(formula.getKey().getValue())) {
+                        log.debug("Formula key or value is null or blanck...");
                         continue;
                     }
-                    formulas.put(formula.getKey().getValue(), formula.getValue() == null ? null : formula.getValue().getValue());
+
+                    String formulaValue = formula.getValue() == null ? null : formula.getValue().getValue();
+                    log.debug("formula key: " + formula.getKey().getValue() + " ==> value: ["+formulaValue+"]");
+
+                    formulas.put(formula.getKey().getValue(), formulaValue);
                 }
                 return formulas;
 

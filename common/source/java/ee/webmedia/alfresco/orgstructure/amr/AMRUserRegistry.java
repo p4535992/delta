@@ -1,15 +1,11 @@
 package ee.webmedia.alfresco.orgstructure.amr;
 
-import java.io.Serializable;
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
+import ee.webmedia.alfresco.common.service.ApplicationService;
+import ee.webmedia.alfresco.orgstructure.amr.service.AMRService;
+import ee.webmedia.alfresco.orgstructure.amr.service.RSService;
+import ee.webmedia.alfresco.orgstructure.model.OrganizationStructureModel;
+import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.UserUtil;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.management.subsystems.ActivateableBean;
 import org.alfresco.repo.security.sync.NodeDescription;
@@ -17,16 +13,13 @@ import org.alfresco.repo.security.sync.UserRegistry;
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import smit.ametnik.services.Aadress;
 import smit.ametnik.services.AmetnikExt;
 import smit.ametnik.services.YksusExt;
-import ee.webmedia.alfresco.common.service.ApplicationService;
-import ee.webmedia.alfresco.orgstructure.amr.service.AMRService;
-import ee.webmedia.alfresco.orgstructure.amr.service.RSService;
-import ee.webmedia.alfresco.orgstructure.model.OrganizationStructureModel;
-import ee.webmedia.alfresco.user.service.UserService;
-import ee.webmedia.alfresco.utils.UserUtil;
+
+import java.io.Serializable;
+import java.math.BigInteger;
+import java.util.*;
 
 /**
  * A {@link UserRegistry} implementation with the ability to query Alfresco-like descriptions of users and groups from a SIM "Ametnikeregister".
@@ -45,9 +38,16 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
 
     @Override
     public Iterator<NodeDescription> getPersons(Date modifiedSince) {
+        log.info("Get Persons...");
         AmetnikExt[] ametnikArray = amrService.getAmetnikByAsutusId();
+        if(ametnikArray != null){
+            log.info("Found AMR persons: " + ametnikArray.length);
+        }
         ArrayList<NodeDescription> persons = new ArrayList<NodeDescription>(ametnikArray.length);
         boolean isRestrictedDelta = rsService.isRestrictedDelta();
+
+        log.info("Is Restricted DELTA?: " + isRestrictedDelta);
+
         List<String> restrictedDeltaUsers = new ArrayList<String>();
         if (isRestrictedDelta) {
             // avoid retrieving restricted delta users if not in restricted delta
@@ -153,9 +153,14 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
 
     @Override
     public Iterator<NodeDescription> getOrganizationStructures() {
+        log.info("Get organization structures...");
         YksusExt[] yksusArray = amrService.getYksusByAsutusId();
+        if(yksusArray != null){
+            log.info("Found organization structure units: " + yksusArray.length);
+        }
         List<NodeDescription> orgStructures = new ArrayList<NodeDescription>(yksusArray.length);
         for (YksusExt yksus : yksusArray) {
+            log.info("UNIT id: [" + yksus.getId()+ "] fullpath: [" + yksus.getYksusRada() + "]");
             orgStructures.add(yksusToOrganizationStructure(yksus));
         }
         return orgStructures.iterator();
@@ -170,9 +175,26 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
             org.getProperties().put(OrganizationStructureModel.Props.SUPER_UNIT_ID, ylemYksusId.toString());
         }
         String email = yksus.getEmail();
-        if (email != null) {
-            org.getProperties().put(OrganizationStructureModel.Props.GROUP_EMAIL, email);
+
+        // -----------------------------------------------------------------------------
+        if (amrService.getRemoveGroupsEmail()){
+            log.debug("RemoveGroupsEmail is TRUE! Set email to NULL: value war: " + email);
+            email = null;
         }
+        // -----------------------------------------------------------------------------
+
+        if (email != null) {
+            log.debug("Units name: [" + yksus.getNimetus() + "]; e-mail: [" + yksus.getEmail() + "]");
+            org.getProperties().put(OrganizationStructureModel.Props.GROUP_EMAIL, email);
+        } else {
+            log.debug("Units name: [" + yksus.getNimetus() + "]; e-mail: NULL!! Remove GROUP_EMAIL");
+            try {
+                org.getProperties().remove(OrganizationStructureModel.Props.GROUP_EMAIL);
+            } catch (Exception ex){
+                log.error("Remove GROUP_EMAIL failed! ERROR: " + ex.getMessage(), ex);
+            }
+        }
+
         Serializable organizationPath = (Serializable) UserUtil.formatYksusRadaToOrganizationPath(yksus.getYksusRada());
         org.getProperties().put(OrganizationStructureModel.Props.ORGANIZATION_PATH, organizationPath);
         return org;

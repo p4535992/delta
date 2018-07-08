@@ -9,8 +9,26 @@
 
 
 <hr/>
+<f:verbatim><b><br/><br/><h:outputText styleClass="mainTitle" value="Skriptid"/></b><br/></f:verbatim>
+
+
+<f:verbatim><hr/></f:verbatim>
+<h:outputText value="ÜLETEMBELDAMINE TERA: " style="font-weight: bold;" />
 <f:verbatim>
-<b><br/><br/><h:outputText styleClass="mainTitle" value="Skriptid"/></b><br/></f:verbatim>
+    <br/>
+    <ul>
+        <li>Tembeldab üle kõik DDOC ja BDOC v1.0 failid.</li>
+    </ul>
+    <br/>
+</f:verbatim>
+<h:commandButton id="startTeraProcess" value="Käivita TERA ületembeldamise process" type="submit"
+                 actionListener="#{teraProcess.startInBackground}"
+                 rendered="#{true}" />
+
+
+<f:verbatim><hr/></f:verbatim>
+
+
 	<h:outputText value="Tööülesannete kustutamine repost. NB!!! Enne kasutamist veendu, et kõik updaterid, mis tööülesannete andmeid repost andmebaasi tabelitesse kirjutavad, on edukalt lõpuni jooksnud!!!! Vastasel korral ei saa tööülesannete andmeid enam taastada!!!"/>
 	<f:verbatim><br/></f:verbatim>
 	<h:outputText value="numberOfTasksInSingleTransaction: "/>
@@ -964,8 +982,9 @@
       disabled="#{postipoissImporter.importerStopping == true}" />
 
 <f:verbatim><br/><br/></f:verbatim>
-<f:verbatim><hr/></f:verbatim>
 
+
+<f:verbatim><hr/></f:verbatim>
 
 <f:verbatim><hr/></f:verbatim>
 

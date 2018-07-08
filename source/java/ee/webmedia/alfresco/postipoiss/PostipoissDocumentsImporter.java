@@ -279,8 +279,8 @@ public class PostipoissDocumentsImporter {
      * Runs documents import process
      */
     public void runImport(File dataFolder, File workFolder, NodeRef archivalsRoot, File mappingsFile, int batchSize, String defaultOwnerId,
-            Date publishToAdrWithFilesStartingFromDate, boolean publicFilesToBackgroundFiles)
-                    throws Exception {
+                          Date publishToAdrWithFilesStartingFromDate, boolean publicFilesToBackgroundFiles)
+            throws Exception {
         this.dataFolder = dataFolder;
         this.workFolder = workFolder;
         this.archivalsRoot = archivalsRoot;
@@ -1280,7 +1280,7 @@ public class PostipoissDocumentsImporter {
         String documentTypeId;
 
         public ImportedDocument(Integer documentId, NodeRef nodeRef, String toimik, String registreerimisNr, String dokLiik, String suund, String documentTypeId,
-                Map<QName, Serializable> props) {
+                                Map<QName, Serializable> props) {
             this.documentId = documentId;
             this.nodeRef = nodeRef;
             this.toimik = toimik;
@@ -1328,8 +1328,20 @@ public class PostipoissDocumentsImporter {
             }
             File file = entry.getValue();
             try {
+                log.trace("Create document by xml file: " + file.getName());
                 ImportedDocument doc = createDocument(documentId, file);
+                log.trace("Put created document to batchCompletedDocumentsMap..");
                 batchCompletedDocumentsMap.put(documentId, doc);
+                if(doc != null){
+                    if(doc.nodeRef != null){
+                        log.trace("Add documet to completedDocumentsMap..: docNodeRef: " + doc.nodeRef.toString());
+                    } else {
+                        log.trace("Add documet to completedDocumentsMap..: docNodeRef is NULL!");
+                    }
+                } else {
+                    log.trace("Add documet to completedDocumentsMap..: doc is NULL!");
+                }
+
                 completedDocumentsMap.put(documentId, doc.nodeRef); // Add immediately to completedDocumentsMap, because other code wants to access it
             } catch (Exception e) {
                 CsvWriter writer = new CsvWriter(new FileWriter(failedDocumentsFile, true), CSV_SEPARATOR);
@@ -1370,18 +1382,18 @@ public class PostipoissDocumentsImporter {
                     writer.writeRecord(new String[] {
                             doc.documentId.toString(),
                             doc.nodeRef == null ? "" : doc.nodeRef.toString(),
-                                    doc.toimik == null ? "" : doc.toimik,
-                                            doc.registreerimisNr == null ? "" : doc.registreerimisNr,
-                                                    doc.regNumber == null ? "" : doc.regNumber,
-                                                            doc.regDateTime == null ? "" : doc.regDateTime,
-                                                                    doc.docName == null ? "" : doc.docName,
-                                                                            doc.ownerId == null ? "" : doc.ownerId,
-                                                                                    doc.ownerName == null ? "" : doc.ownerName,
-                                                                                            doc.accessRestriction == null ? "" : doc.accessRestriction,
-                                                                                                    doc.accessRestrictionReason == null ? "" : doc.accessRestrictionReason,
-                                                                                                            doc.dokLiik == null ? "" : doc.dokLiik,
-                                                                                                                    doc.suund == null ? "" : doc.suund,
-                                                                                                                            doc.documentTypeId == null ? "" : doc.documentTypeId
+                            doc.toimik == null ? "" : doc.toimik,
+                            doc.registreerimisNr == null ? "" : doc.registreerimisNr,
+                            doc.regNumber == null ? "" : doc.regNumber,
+                            doc.regDateTime == null ? "" : doc.regDateTime,
+                            doc.docName == null ? "" : doc.docName,
+                            doc.ownerId == null ? "" : doc.ownerId,
+                            doc.ownerName == null ? "" : doc.ownerName,
+                            doc.accessRestriction == null ? "" : doc.accessRestriction,
+                            doc.accessRestrictionReason == null ? "" : doc.accessRestrictionReason,
+                            doc.dokLiik == null ? "" : doc.dokLiik,
+                            doc.suund == null ? "" : doc.suund,
+                            doc.documentTypeId == null ? "" : doc.documentTypeId
                     });
                 }
             }
@@ -1561,18 +1573,26 @@ public class PostipoissDocumentsImporter {
     // @formatter:on
 
     private ImportedDocument importDoc(File xml, Map<String, Mapping> mappings, Integer documentId) throws DocumentException,
-    ParseException {
-
+            ParseException {
+        log.debug("Reading xml file with xmlReader...");
         Element root = xmlReader.read(xml).getRootElement();
 
+        log.debug("Get mappings...");
         Mapping generalMapping = mappings.get("general");
+
         String ppDocumentTypeFrom = generalMapping.requirePropMappingTo(MAPPINGS_PROP_TO_DOCUMENT_TYPE_FROM).from;
+        log.debug("ppDocumentTypeFrom: " + ppDocumentTypeFrom);
         String ppRegNumberWithoutIndividual = generalMapping.requirePropMappingTo(MAPPINGS_PROP_TO_REG_NUMBER_WITHOUT_INDIVIDUAL).from;
+        log.debug("ppRegNumberWithoutIndividual: " + ppRegNumberWithoutIndividual);
         String ppShortRegNumber = generalMapping.requirePropMappingTo(MAPPINGS_PROP_TO_SHORT_REG_NUMBER).from;
+        log.debug("ppShortRegNumber: " + ppShortRegNumber);
 
         String type = root.elementText(ppDocumentTypeFrom);
+        log.debug("type: " + type);
         String suund = root.elementText(PP_ELEMENT_SUUND);
+        log.debug("suund: " + suund);
         String toimikSari = root.elementText(ppRegNumberWithoutIndividual);
+        log.debug("toimikSari: " + toimikSari);
         Mapping mapping = null;
         if (StringUtils.isNotBlank(suund)) {
             mapping = mappings.get(type + "-" + suund);
@@ -1587,20 +1607,26 @@ public class PostipoissDocumentsImporter {
         if (mapping == null) {
             mapping = mappings.get(type);
         }
+
         if (mapping == null) {
+            log.debug("DOCUMENT MAPPINGS IS NULL!");
             // Skip document for which mapping doesn't exist
             return new ImportedDocument(documentId, null, root.elementText(ppRegNumberWithoutIndividual),
                     root.elementText(ppShortRegNumber),
                     root.elementText(ppDocumentTypeFrom),
                     root.elementText(PP_ELEMENT_SUUND), "documentType mapping not found", null);
         }
+
+        log.debug("Get volumenIndex...");
         VolumeIndex volumeIndex = inferVolumeIndex(root, mapping);
         if (volumeIndex == null) {
+            log.error("Volume index is NULL!");
             throw new RuntimeException("Could not parse volume for document, volume='"
                     + root.elementText(ppRegNumberWithoutIndividual) + "'");
         }
-        String volumeIndexMarkOrig = volumeIndex.mark;
 
+        String volumeIndexMarkOrig = volumeIndex.mark;
+        log.debug("volumeIndexMarkOrig: " + volumeIndexMarkOrig);
         Toimik t = getToimik(volumeIndex.year, volumeIndex.mark, false);
         if (t == null) {
             log.debug("Could not load toimik by mark for " + volumeIndex);
@@ -1621,10 +1647,16 @@ public class PostipoissDocumentsImporter {
         }
 
         Map<QName, Serializable> propsMap = setProps(root, mapping, volumeIndex, t);
-
+        log.debug("Get toimik nodeRef...");
         NodeRef parentRef = t.nodeRef;
+        log.debug("Get toimik nodeRef..." + parentRef.toString());
+        log.debug("Create New Document....");
         DocumentDynamic doc = getDocumentDynamicService().createNewDocument(mapping.typeInfo.docVer, parentRef, false).getFirst();
+        log.debug("Get Document nodeRef...");
         NodeRef documentRef = doc.getNodeRef();
+        log.debug("Get Document nodeRef..." + documentRef.toString());
+
+        log.debug("Add aspect to document: SEARCHABLE");
         nodeService.addAspect(documentRef, DocumentCommonModel.Aspects.SEARCHABLE, null);
 
         Map<NodeRef, Map<QName, NodeRef>> parentRefsByVolumeRef = new HashMap<NodeRef, Map<QName, NodeRef>>();
@@ -1677,8 +1709,10 @@ public class PostipoissDocumentsImporter {
             sendOutService.addSendinfo(documentRef, sendInfoProps);
         }
 
+        log.debug("Add document associantions...");
         addAssociations(documentRef, documentId, root);
 
+        log.debug("Add document import to logEntry...");
         LogEntry logEntry = new LogEntry();
         logEntry.setComputerIp("127.0.0.1");
         logEntry.setComputerName("localhost");
@@ -1690,6 +1724,7 @@ public class PostipoissDocumentsImporter {
         logEntry.setObjectId(documentRef.toString());
         BeanHelper.getLogService().addLogEntry(logEntry);
 
+        log.debug("Return imported document...");
         return new ImportedDocument(documentId, documentRef, root.elementText(ppRegNumberWithoutIndividual),
                 root.elementText(ppShortRegNumber), root.elementText(ppDocumentTypeFrom),
                 root.elementText(PP_ELEMENT_SUUND), mapping.typeInfo.docVer.getParent().getId(), nodeService.getProperties(documentRef));
@@ -1774,7 +1809,7 @@ public class PostipoissDocumentsImporter {
     }
 
     private void mapChildren(Element root, Mapping mapping, Node node, QName[] parentHierarchy,
-            Map<String, org.alfresco.util.Pair<DynamicPropertyDefinition, Field>> propDefs) {
+                             Map<String, org.alfresco.util.Pair<DynamicPropertyDefinition, Field>> propDefs) {
         Map<QName, Integer> childNodesProcessed = new HashMap<QName, Integer>();
         for (Mapping subMapping : mapping.subMappings) {
             QName childAssocType = subMapping.to;
@@ -1915,45 +1950,205 @@ public class PostipoissDocumentsImporter {
 
     // private Map<Integer, ImportedDocument> batchCompletedDocumentsMap;
 
+    private Date documentTaskDate(Element tegevus, Map<QName, Serializable> docProps, String kuupaev, String docNr){
+        Date kpv = null;
+        log.debug("docNr [" + docNr + "] - kuupaev: " + kuupaev);
+        if (StringUtils.isBlank(kuupaev)) {
+            kpv = (Date) docProps.get(DocumentCommonModel.Props.REG_DATE_TIME);
+            Assert.notNull(kpv, "tegevus kuupaev is null and document regDateTime is also null");
+            log.debug("docNr [" + docNr + "] - tegevus kuupaev is null and document regDateTime is also null");
+        } else {
+            String kellaaeg = tegevus.elementText("kellaaeg");
+            log.debug("docNr [" + docNr + "] - kellaaeg: " + kellaaeg);
+            String dateString = String.format("%s %s", kuupaev, kellaaeg);
+            try {
+                kpv = dateTimeFormat.parse(dateString);
+            } catch (ParseException e) {
+                throw new RuntimeException("Unable to parse kuupaev kellaaeg: " + e.getMessage(), e);
+            }
+        }
+        return kpv;
+    }
+
+    /**
+     * Find if document has a active task. Contain to types: answerTask, activeTask
+     * 1) Map<String 'ansverTask', String 'userIdCode', Date 'TegevusKuupaev'> - [present]
+     * 2) Map<String 'activeTask', String 'userIdCode', Date 'TegevusKuupaev'> - [null|present]
+     * @param root
+     * @param docProps
+     * @param docNr
+     * @return
+     */
+    protected Map<String, Map<String, Date>> getKelleleTask(Element root, Map<QName, Serializable> docProps, String docNr){
+        Map<String, Map<String, Date>> taskInfo = new HashMap<>();
+
+        //List<List> edastamineTaitmiseksList = new ArrayList<>();
+        //List<String> edastamineTaitmiseksKes = new ArrayList<>();
+        Map<String, Date> edastamineTaitmiseksKellele = new HashMap<>();
+        //List<String> edastamineTaitmiseksUsers = new ArrayList<>();
+
+        Map<String, Date> vastamineMap = new HashMap<>();
+        for (Object o : root.element("tegevused").elements()) {
+            Element tegevus = (Element) o;
+            String nimetus = tegevus.elementText("nimetus");
+            String kuupaev = tegevus.elementText("kuupaev");
+            final Date edastamineTaitmiseksDate = documentTaskDate(tegevus, docProps, kuupaev, docNr);
+            log.debug("docNr [" + docNr + "] - Tegevuse nimetus: " + nimetus);
+
+            // Ku vastamine blokk on leitud, siis rohkem pole aktiivseid taske!!
+            if(nimetus.equals("vastamine")){
+                log.debug("docNr [" + docNr + "] - Found tegevus 'vastamine'! Break.");
+                vastamineMap.put("true", edastamineTaitmiseksDate);
+                edastamineTaitmiseksKellele.clear();
+                break;
+            }
+            // Active task
+            if(nimetus.equals("edastamine täitmiseks")){
+
+                // If previous Task was set to 'kellelt' person, than this task is for forwarding task to 'kellele'
+                // we should remove active task from kellelt;
+                //Element kellelt = tegevus.element("kellelt");
+                if(tegevus.element("kellelt") != null){
+                    for (Element kellelt : (List<Element>) tegevus.elements("kellelt")) {
+                        String kelleltIkood = kellelt.elementText("ikood");
+                        log.debug("Check if kellelt have a task? - ikood: " + kelleltIkood);
+                        for (String key : edastamineTaitmiseksKellele.keySet()) {
+                            log.debug("edastamineTaitmiseksKellele map check . idCode: " + key + " - " + kelleltIkood);
+                        }
+                        if (edastamineTaitmiseksKellele.containsKey(kelleltIkood)) {
+                            log.debug("docNr [" + docNr + "] - remove task from user: " + kelleltIkood);
+                            edastamineTaitmiseksKellele.remove(kelleltIkood);
+                        } else {
+                            log.debug("Kellelt idCode not found! No active task for that user...");
+                        }
+                    }
+                } else {
+                    log.error("Tegevus element KELLELT is NULL!");
+                }
+
+                // Check kellele is forwarded task
+                for (Element kellele : (List<Element>) tegevus.elements("kellele")) {
+                    String kelleleIkood = kellele.elementText("ikood");
+
+                    if(edastamineTaitmiseksKellele.containsKey(kelleleIkood)){
+                        log.debug("docNr [" + docNr + "] - user idCode exists in tasklist: " + kelleleIkood +
+                                "!...continue;");
+                        continue;
+                    }
+                    log.debug("docNr [" + docNr + "] - adding user idCode to tasklist: " + kelleleIkood);
+                    edastamineTaitmiseksKellele.put(kelleleIkood, edastamineTaitmiseksDate);
+                }
+
+            }
+
+            // Remove task from user
+            if(nimetus.equals("Edastuselt tagasi kutsumine")){
+                log.debug("docNr [" + docNr + "] - Found tegevus 'Edastuselt tagasi kutsumine'!");
+                for (Element kellele : (List<Element>) tegevus.elements("kellele")) {
+                    String kelleleIkood = kellele.elementText("ikood");
+                    if (edastamineTaitmiseksKellele.containsKey(kelleleIkood)) {
+                        log.debug("docNr [" + docNr + "] - remove task from user: " + kelleleIkood);
+                        edastamineTaitmiseksKellele.remove(kelleleIkood);
+                    } else {
+                        log.error("docNr [" + docNr + "] - 'EDASTUSELT TAGASI KUTSUMINE' tegevus found UNKNOW user idCode! ["+kelleleIkood+"]" +
+                                " - Can't remove 'EDASTAMINE TÄITMISEKS' task.. ");
+                    }
+                }
+            }
+        }
+
+        if(edastamineTaitmiseksKellele.size() > 0){
+            taskInfo.put("activeTask", edastamineTaitmiseksKellele);
+            String delimiter = ";";
+            String taskUsers = "";
+            for (String key : edastamineTaitmiseksKellele.keySet()){
+                taskUsers += key + " ==> " + edastamineTaitmiseksKellele.get(key).toString() + delimiter;
+            }
+            log.debug("docNr [" + docNr + "] - Some tasks are ACTIVE! userId: " + taskUsers);
+        } else {
+            log.debug("docNr [" + docNr + "] - No active tasks!");
+        }
+        if(!vastamineMap.containsKey("true")){
+            log.debug("----- Vastamine tegevus not found... set 'false' status to map..");
+            vastamineMap.put("false", null);
+        } else {
+            log.debug("----- Vastamine tegevus found!");
+        }
+        taskInfo.put("answerTask", vastamineMap);
+
+        return taskInfo;
+    }
+
     protected void addHistoryItems(NodeRef docRef, Element root, Map<QName, Serializable> docProps, Mapping mapping) throws ParseException {
         Element tegevused = root.element("tegevused");
+		String toimik = root.elementText("toimik");
+        String registNr = root.elementText("regist_nr");
+        String dokNr = toimik + "/" + registNr;
+
         if (tegevused == null) {
+ 			log.debug("dokNr [" + dokNr + "] - Tegevused is null!");
             return;
         }
         boolean responsibleActiveSet = false;
         NodeRef firstTaskRef = null;
         String firstTaskOwnerId = null;
-        boolean isDocumentWfEnabled = BeanHelper.getWorkflowConstantsBean().isDocumentWorkflowEnabled();
+        Boolean vastamineTegevus = false;
 
-        for (Object o : root.element("tegevused").elements()) {
-            Element tegevus = (Element) o;
-            Date kpv = null;
-            String kuupaev = tegevus.elementText("kuupaev");
-            if (StringUtils.isBlank(kuupaev)) {
-                kpv = (Date) docProps.get(DocumentCommonModel.Props.REG_DATE_TIME);
-                Assert.notNull(kpv, "tegevus kuupaev is null and document regDateTime is also null");
-            } else {
-                String kellaaeg = tegevus.elementText("kellaaeg");
-                String dateString = String.format("%s %s", kuupaev, kellaaeg);
-                try {
-                    kpv = dateTimeFormat.parse(dateString);
-                } catch (ParseException e) {
-                    throw new RuntimeException("Unable to parse kuupaev kellaaeg: " + e.getMessage(), e);
-                }
+        Map<String, Date> activeTasks = null;
+
+        log.debug("------------- Find active tasks...START! ------------------------");
+        // Check if document have active task...
+        Map<String, Map<String, Date>> kelleleTask = getKelleleTask(root, docProps, dokNr);
+        if(kelleleTask.containsKey("answerTask")){
+            Map<String, Date> vastamineMap = kelleleTask.get("answerTask");
+            for (String vastamineStatus: vastamineMap.keySet()) {
+                log.debug("....... vastamine status: " + vastamineStatus);
             }
+            if(vastamineMap.containsKey("true")){
+                log.debug("---------- Found vastamine block!");
+                vastamineTegevus = true;
+            }
+        }
+
+        if(kelleleTask.containsKey("activeTask")){
+            activeTasks = kelleleTask.get("activeTask");
+        }
+
+        log.debug("------------- Find active tasks...END! --------------------------");
+
+        boolean isDocumentWfEnabled = BeanHelper.getWorkflowConstantsBean().isDocumentWorkflowEnabled();
+        log.debug("dokNr [" + dokNr + "] - Check tegevused objects...");
+        // Finding 'edastamine täitmiseks' tegevus to save active tasks
+        int i = 0;
+        for (Object o : root.element("tegevused").elements()) {
+			i++;
+            Element tegevus = (Element) o;
+
+            String kuupaev = tegevus.elementText("kuupaev");
+            Date kpv = documentTaskDate(tegevus, docProps, kuupaev, dokNr);
+
             String nimetus = tegevus.elementText("nimetus");
+
+            log.debug("TEGEVUS NR: " + i + " --------------------------------------------------");
             String resolutsioon = tegevus.elementText("resolutsioon");
+            log.debug("dokNr [" + dokNr + "] - Resolutsioon: " + resolutsioon);
             if (nimetus.startsWith("Dokumendi eksportimine") && resolutsioon.startsWith("Auto.eksport")) {
                 // PPA needs to retain "Dokumendi eksportimine" log messages, which are NOT "Auto.eksport"
+                log.debug("dokNr [" + dokNr + "] - Nimetus starts with 'Dokumendi exportimine' and resolutsioon starts with 'Auto" +
+                        ".eksport'...continue");
                 continue;
             }
             String kes = tegevus.elementText("kes");
+            log.debug("dokNr [" + dokNr + "] - Kes: " + kes);
             if (StringUtils.isBlank(kes)) {
                 kes = tegevus.elementText("kellelt_tekst");
+                log.debug("dokNr [" + dokNr + "] - Kes is blank use 'kellelt_tekst': " + kes);
+
             }
             String kelleleTekst = tegevus.elementText("kellele_tekst");
             String description = PostipoissDocumentsMapper.join("; ", nimetus, kelleleTekst, resolutsioon);
 
+            log.debug("dokNr [" + dokNr + "] - Adding 'tegevus' task to log...");
             LogEntry logEntry = new LogEntry();
             logEntry.setComputerIp("127.0.0.1");
             logEntry.setComputerName("localhost");
@@ -1965,15 +2160,42 @@ public class PostipoissDocumentsImporter {
             logEntry.setObjectId(docRef.toString());
             BeanHelper.getLogService().addImportedLogEntry(logEntry, kpv);
 
+            log.debug("dokNr [" + dokNr + "] - Tegevuse nimetus: " + nimetus);
+
             if (!"edastamine täitmiseks".equals(nimetus)) {
+                log.debug("dokNr [" + dokNr + "] - Tegevus 'edastamine täitmiseks' IS NOT TRUE...continue;");
                 continue;
             }
+
+            if(vastamineTegevus){
+                log.debug("dokNr [" + dokNr + "] - Tegevus 'vastamine' block exists! Task done!...continue;");
+                continue;
+            } else {
+                log.debug("dokNr [" + dokNr + "] - Tegevus 'vastamine' don't exist! New task allowed...");
+            }
+
+            if(activeTasks == null){
+                log.debug("dokNr [" + dokNr + "] - No active TASKs found!...continue;");
+                continue;
+            }
+			if(activeTasks.size() == 0){
+                log.debug("dokNr [" + dokNr + "] - No active TASKs found!...continue;");
+                continue;
+            }
+            
+            log.debug("dokNr [" + dokNr + "] - Found tegevuse nimetus 'edastamine täitmiseks'!");
             Element kellelt = tegevus.element("kellelt");
+            log.debug("dokNr [" + dokNr + "] - Kellelt...");
             String kelleltEnimi = kellelt.elementText("enimi");
             String kelleltPnimi = kellelt.elementText("pnimi");
             String kelleltIkood = kellelt.elementText("ikood");
             String kelleltEmail = kellelt.elementText("email");
+            log.debug("dokNr [" + dokNr + "] - kelleltEnimi: " + kelleltEnimi);
+            log.debug("dokNr [" + dokNr + "] - kelleltPnimi: " + kelleltPnimi);
+            log.debug("dokNr [" + dokNr + "] - kelleltIkood: " + kelleltIkood);
+            log.debug("dokNr [" + dokNr + "] - kelleltEmail: " + kelleltEmail);
             if (StringUtils.isBlank(kelleltEnimi) || StringUtils.isBlank(kelleltPnimi) || StringUtils.isBlank(kelleltIkood) || StringUtils.isBlank(kelleltEmail)) {
+                log.debug("dokNr [" + dokNr + "] - Kellelt one object is blank... continue!");
                 continue;
             }
 
@@ -1985,19 +2207,49 @@ public class PostipoissDocumentsImporter {
             Map<QName, Serializable> taskSearchableProps = null;
 
             WorkflowType workflowType = BeanHelper.getWorkflowConstantsBean().getWorkflowTypes().get(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW);
+
+            log.debug("dokNr [" + dokNr + "] - Kellele task...");
             for (Element kellele : (List<Element>) tegevus.elements("kellele")) {
+                String kelleleIkood = kellele.elementText("ikood");
+                log.debug("dokNr [" + dokNr + "] - Kellele user idCode: " + kelleleIkood);
+                if(!activeTasks.containsKey(kelleleIkood)){
+                    log.debug("dokNr [" + dokNr + "] - No active task to this user: " + kelleleIkood +
+                            "!...continue;");
+                    continue;
+                } else {
+                    log.debug("dokNr [" + dokNr + "] - ADD ACTIVE TASK TO USER..." + kelleleIkood);
+                    Date activeTaskDate = activeTasks.get(kelleleIkood);
+                    if(!activeTaskDate.equals(dateTime)){
+                        log.debug("Active task DATE don't match! [" + activeTaskDate + " != " + dateTime +
+                                "]... continue");
+                        continue;
+                    }
+                    log.debug("Found correct userIdCode and task date! Start creating new task....");
+                }
                 String kelleleEnimi = kellele.elementText("enimi");
                 String kellelePnimi = kellele.elementText("pnimi");
-                String kelleleIkood = kellele.elementText("ikood");
                 String kelleleEmail = kellele.elementText("email");
-                String kelleleTahtaeg = kellele.elementText("tahtaeg");
+
+                // HK postipoiss xml don't have that element in kellele block!
+                //String kelleleTahtaeg = kellele.elementText("tahtaeg");
+
+                String kelleleTahtaeg = tegevus.elementText("tahtaeg");
                 String kelleleTehtud = kellele.elementText("tehtud");
+
+                log.debug("dokNr [" + dokNr + "] - kelleleEnimi (isBlank): " + kelleleEnimi);
+                log.debug("dokNr [" + dokNr + "] - kellelePnimi (isBlank): " + kellelePnimi);
+                log.debug("dokNr [" + dokNr + "] - kelleleIkood (isBlank): " + kelleleIkood);
+                log.debug("dokNr [" + dokNr + "] - kelleleEmail (isBlank): " + kelleleEmail);
+                log.debug("dokNr [" + dokNr + "] - kelleleTahtaeg (isBlank): " + kelleleTahtaeg);
+                log.debug("dokNr [" + dokNr + "] - kelleleTehtud (isNotBlank): " + kelleleTehtud);
 
                 if (StringUtils.isBlank(kelleleEnimi) || StringUtils.isBlank(kellelePnimi) || StringUtils.isBlank(kelleleIkood) || StringUtils.isBlank(kelleleEmail)
                         || StringUtils.isBlank(kelleleTahtaeg) || StringUtils.isNotBlank(kelleleTehtud)) {
+                    log.debug("dokNr [" + dokNr + "] - Kellele one object not passed!... continue.");
                     continue;
                 }
                 if (wfRef == null) {
+                    log.debug("dokNr [" + dokNr + "] - New props hashmap... createNode: COMPOUND_WORKFLOW");
                     props = new HashMap<QName, Serializable>();
                     props.put(WorkflowCommonModel.Props.CREATOR_NAME, kelleltEnimi + " " + kelleltPnimi);
                     props.put(WorkflowCommonModel.Props.OWNER_ID, kelleltIkood);
@@ -2005,20 +2257,24 @@ public class PostipoissDocumentsImporter {
                     props.put(WorkflowCommonModel.Props.STARTED_DATE_TIME, dateTime);
                     props.put(WorkflowCommonModel.Props.STATUS, Status.IN_PROGRESS.getName());
                     props.put(WorkflowCommonModel.Props.STOPPED_DATE_TIME, null);
+                    log.debug("dokNr [" + dokNr + "] - Document ref (docRef): " + docRef.toString());
                     props.put(WorkflowCommonModel.Props.TYPE, (isDocumentWfEnabled)?CompoundWorkflowType.DOCUMENT_WORKFLOW.name():CompoundWorkflowType.INDEPENDENT_WORKFLOW.name());
                     props.put(WorkflowCommonModel.Props.TITLE, docProps.get(DocumentCommonModel.Props.DOC_NAME));
+                    log.debug("dokNr [" + dokNr + "] - Create node...");
                     cwfRef = getNodeService().createNode(
-                    		(isDocumentWfEnabled)?docRef:BeanHelper.getConstantNodeRefsBean().getIndependentWorkflowsRoot(),
+                            (isDocumentWfEnabled)?docRef:BeanHelper.getConstantNodeRefsBean().getIndependentWorkflowsRoot(),
                             WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW,
                             WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW,
                             WorkflowCommonModel.Types.COMPOUND_WORKFLOW,
                             props
-                            ).getChildRef();
+                    ).getChildRef();
+					log.debug("dokNr [" + dokNr + "] - Create node (COMPOUND_WORKFLOW)... cwfRef: " + cwfRef.toString());
                     if (isDocumentWfEnabled) {
-                    	getNodeService().createAssociation(docRef, cwfRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT);
-                    	getWorkflowService().updateMainDocument(cwfRef, docRef);
+                        getNodeService().createAssociation(docRef, cwfRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT);
+                        getWorkflowService().updateMainDocument(cwfRef, docRef);
                     }
 
+                    log.debug("dokNr [" + dokNr + "] - New props hashmap... createNode: WORKFLOW");
                     props = new HashMap<QName, Serializable>();
                     props.put(WorkflowCommonModel.Props.CREATOR_NAME, kelleltEnimi + " " + kelleltPnimi);
                     props.put(WorkflowCommonModel.Props.MANDATORY, Boolean.FALSE);
@@ -2034,10 +2290,13 @@ public class PostipoissDocumentsImporter {
                             WorkflowCommonModel.Assocs.WORKFLOW,
                             WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW,
                             props
-                            ).getChildRef();
+                    ).getChildRef();
+					log.debug("dokNr [" + dokNr + "] - Create node (WORKFLOW)... wfRef: " + wfRef.toString());
+                    //cwfRef.getId()
                     taskSearchableProps = WorkflowUtil.getTaskSearchableProps(props);
                 }
 
+                log.debug("dokNr [" + dokNr + "] - New props hashmap... node: TASK");
                 props = new HashMap<QName, Serializable>();
                 props.put(WorkflowSpecificModel.Props.CREATOR_EMAIL, kelleltEmail);
                 props.put(WorkflowSpecificModel.Props.CREATOR_ID, kelleltIkood);
@@ -2046,24 +2305,30 @@ public class PostipoissDocumentsImporter {
                 props.put(WorkflowCommonModel.Props.OWNER_EMAIL, kelleleEmail);
                 props.put(WorkflowCommonModel.Props.OWNER_ID, kelleleIkood);
                 props.put(WorkflowCommonModel.Props.OWNER_NAME, kelleleEnimi + " " + kellelePnimi);
+
                 org.alfresco.util.Pair<NodeRef, Map<QName, Serializable>> kelleleUser = getUserData(kelleleIkood);
                 Serializable taskOwnerJobTitle = null;
                 Serializable taskOwnerStructUnit = null;
+
                 if (kelleleUser != null) {
+                    log.debug("dokNr [" + dokNr + "] - Kellele user defined! idCode: " + kelleleIkood);
                     taskOwnerJobTitle = kelleleUser.getSecond().get(ContentModel.PROP_JOBTITLE);
                     taskOwnerStructUnit = kelleleUser.getSecond().get(ContentModel.PROP_ORGANIZATION_PATH);
                 }
+
                 props.put(WorkflowCommonModel.Props.OWNER_JOB_TITLE, taskOwnerJobTitle);
                 props.put(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME, taskOwnerStructUnit);
                 props.put(WorkflowCommonModel.Props.STARTED_DATE_TIME, dateTime);
                 props.put(WorkflowCommonModel.Props.STOPPED_DATE_TIME, null);
                 props.put(WorkflowCommonModel.Props.STATUS, Status.IN_PROGRESS.getName());
+
                 Date dueDate;
                 try {
                     dueDate = dateTimeFormat.parse(kelleleTahtaeg + " 23:59:59");
                 } catch (ParseException e) {
-                    throw new RuntimeException("Unable to parse kelleleTahtaeg: " + e.getMessage(), e);
+                    throw new RuntimeException("dokNr [" + dokNr + "] - Unable to parse kelleleTahtaeg: " + e.getMessage(), e);
                 }
+
                 props.put(WorkflowSpecificModel.Props.DUE_DATE, dueDate);
                 props.put(WorkflowSpecificModel.Props.DUE_DATE_DAYS, null);
                 props.put(WorkflowSpecificModel.Props.IS_DUE_DATE_WORKING_DAYS, null);
@@ -2075,38 +2340,68 @@ public class PostipoissDocumentsImporter {
                 props.put(WorkflowSpecificModel.Props.COMPOUND_WORKFLOW_ID, cwfRef.getId());
 
                 props.putAll(taskSearchableProps);
+
+                log.debug("dokNr [" + dokNr + "] - Create task in memory...");
                 Task task = BeanHelper.getWorkflowService().createTaskInMemory(wfRef, workflowType, props);
+
                 Set<QName> aspects = task.getNode().getAspects();
                 aspects.add(WorkflowSpecificModel.Aspects.SEARCHABLE);
 
                 if (firstTaskRef == null) {
                     firstTaskRef = task.getNodeRef();
+                    log.debug("dokNr [" + dokNr + "] - First task ref: " + firstTaskRef.toString());
                     firstTaskOwnerId = kelleleIkood;
+                    log.debug("dokNr [" + dokNr + "] - First task owner idCode: " + firstTaskOwnerId);
                 }
                 if (!responsibleActiveSet && kelleleIkood.equals(docProps.get(OWNER_ID))) {
+                    log.debug("dokNr [" + dokNr + "] - Set task ACTIVE! idCode: " + kelleleIkood);
                     task.getNode().getProperties().put(WorkflowSpecificModel.Props.ACTIVE.toString(), Boolean.TRUE);
+                    log.debug("dokNr [" + dokNr + "] - Aspects: RESPONSIBLE... idCode: " + kelleleIkood);
                     aspects.add(WorkflowSpecificModel.Aspects.RESPONSIBLE);
                     responsibleActiveSet = true;
+                    log.debug("dokNr [" + dokNr + "] - Set permissions EDIT_DOCUMENT: kelleleIkood: " + kelleleIkood);
                     getPrivilegeService().setPermissions(docRef, kelleleIkood, Privilege.EDIT_DOCUMENT);
                 } else {
                     if (isDocumentWfEnabled) {
-                    	getPrivilegeService().setPermissions(docRef, kelleleIkood, Privilege.EDIT_DOCUMENT);
-                    } else {	
-                    	getPrivilegeService().setPermissions(docRef, kelleleIkood, Privilege.VIEW_DOCUMENT_FILES);
+                        log.debug("dokNr [" + dokNr + "] - Set permissions EDIT_DOCUMENT: kelleleIkood: " + kelleleIkood);
+                        getPrivilegeService().setPermissions(docRef, kelleleIkood, Privilege.EDIT_DOCUMENT);
+                    } else {
+                        log.debug("dokNr [" + dokNr + "] - Set permissions VIEW_DOCUMENT_FILES: kelleleIkood: " +
+                                kelleleIkood);
+                        getPrivilegeService().setPermissions(docRef, kelleleIkood, Privilege.VIEW_DOCUMENT_FILES);
                     }
                 }
+
                 task.setTaskIndexInWorkflow(taskIndex++);
+                log.debug("dokNr [" + dokNr + "] - Set task index in workflow: " + taskIndex);
+
+                log.debug("dokNr [" + dokNr + "] - Create Task entry...");
                 BeanHelper.getWorkflowDbService().createTaskEntry(task, wfRef);
+                QName searchableHasStartedCompoundWorkflow = DocumentCommonModel.Props
+                        .SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS;
+
+                log.debug("dokNr [" + dokNr + "] - Doc Props put: SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS: name(): " +
+                        searchableHasStartedCompoundWorkflow.getLocalName());
                 docProps.put(DocumentCommonModel.Props.SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS, Boolean.TRUE);
+
                 docProps.put(DocumentCommonModel.Props.DOC_STATUS, DocumentStatus.WORKING.getValueName());
+                log.debug("dokNr [" + dokNr + "] - Next kellele.....");
             }
+            log.debug("dokNr [" + dokNr + "] - Next tegevus....");
         }
+        log.debug("dokNr [" + dokNr + "] - responsibleActiveSet: " + responsibleActiveSet);
+
+
         if (!responsibleActiveSet && firstTaskRef != null) {
+            log.debug("dokNr [" + dokNr + "] - firstTaskRef is not NULL...");
             Map<QName, Serializable> props = new HashMap<QName, Serializable>();
             props.put(WorkflowSpecificModel.Props.ACTIVE, Boolean.TRUE);
+            log.debug("dokNr [" + dokNr + "] - Set permissions...firstTaskOwnerId: " + firstTaskOwnerId);
             getPrivilegeService().setPermissions(docRef, firstTaskOwnerId, Privilege.EDIT_DOCUMENT);
+            log.debug("dokNr [" + dokNr + "] - Update task properties...");
             BeanHelper.getWorkflowDbService().updateTaskProperties(firstTaskRef, props);
         }
+        log.debug("dokNr [" + dokNr + "] - addHistoryItems... DONE!");
     }
 
     // [ASSOCS
@@ -2278,17 +2573,17 @@ public class PostipoissDocumentsImporter {
     private void createAssoc(NodeRef sourceDocRef, NodeRef targetDocRef, Integer sourceDocId, Integer targetDocId, AssocType assocType) {
         QName assocTypeQName;
         switch (assocType) {
-        case REPLY:
-            assocTypeQName = DocumentCommonModel.Assocs.DOCUMENT_REPLY;
-            break;
-        case FOLLOWUP:
-            assocTypeQName = DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP;
-            break;
-        case DEFAULT:
-            assocTypeQName = DocumentCommonModel.Assocs.DOCUMENT_2_DOCUMENT;
-            break;
-        default:
-            throw new RuntimeException("Unsupported assocType: " + assocType);
+            case REPLY:
+                assocTypeQName = DocumentCommonModel.Assocs.DOCUMENT_REPLY;
+                break;
+            case FOLLOWUP:
+                assocTypeQName = DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP;
+                break;
+            case DEFAULT:
+                assocTypeQName = DocumentCommonModel.Assocs.DOCUMENT_2_DOCUMENT;
+                break;
+            default:
+                throw new RuntimeException("Unsupported assocType: " + assocType);
         }
         if (sourceDocRef == null || !nodeService.exists(sourceDocRef)) {
             log.error("Skipping creating assoc, source does not exist, sourceDocumentId=" + sourceDocId + " targetDocumentId="

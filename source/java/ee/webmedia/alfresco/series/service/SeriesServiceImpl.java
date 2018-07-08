@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.series.service;
 
+import static ee.smit.common.Utils.castToAnything;
 import static ee.webmedia.alfresco.classificator.enums.DocListUnitStatus.getStatusNames;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getBulkLoadNodeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
@@ -90,14 +91,12 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     }
 
     private List<NodeRef> getSeriesByFunctionNodeRefs(NodeRef functionRef) {
-    	List<NodeRef> seriesRefs = bulkLoadNodeService.loadChildRefs(functionRef, SeriesModel.Types.SERIES);
-    	
-    	return seriesRefs;
+        return bulkLoadNodeService.loadChildRefs(functionRef, SeriesModel.Types.SERIES);
     }
 
     @Override
     public List<UnmodifiableSeries> getAllSeriesByFunction(NodeRef functionNodeRef, boolean checkAdmin) {
-    	boolean isAdministrator = (checkAdmin)?userService.isAdministrator():false;
+    	boolean isAdministrator = (checkAdmin) && userService.isAdministrator();
     	
         return getAllSeriesByFunctionFiltered(functionNodeRef, isAdministrator);
     }
@@ -533,7 +532,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         List<String> statusNames = getStatusNames(statuses);
         for (Entry<NodeRef, Map<QName, Serializable>> s : seriesProps.entrySet()) {
             Map<QName, Serializable> props = s.getValue();
-            List<String> docTypes = (List<String>) props.get(SeriesModel.Props.DOC_TYPE);
+            List<String> docTypes = castToAnything(props.get(SeriesModel.Props.DOC_TYPE));
             if (docTypes != null && docTypes.containsAll(docTypeIds) && statusNames.contains(props.get(SeriesModel.Props.STATUS))) {
                 return true;
             }

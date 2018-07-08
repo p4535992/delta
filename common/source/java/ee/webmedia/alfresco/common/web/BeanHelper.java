@@ -3,6 +3,8 @@ package ee.webmedia.alfresco.common.web;
 import javax.faces.context.FacesContext;
 import javax.sql.DataSource;
 
+import ee.smit.alfresco.plumbr.PlumbrService;
+import ee.smit.alfresco.visual.VisualService;
 import org.alfresco.repo.node.db.NodeDaoService;
 import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.repo.webdav.WebDAVLockService;
@@ -914,6 +916,14 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
 
     public static ConstantNodeRefsBean getConstantNodeRefsBean() {
         return getService(ConstantNodeRefsBean.class, ConstantNodeRefsBean.BEAN_NAME);
+    }
+
+    public static PlumbrService getPlumbrService(){
+        return getService(PlumbrService.class, PlumbrService.BEAN_NAME);
+    }
+
+    public static VisualService getVisualService(){
+        return getService(VisualService.class, VisualService.BEAN_NAME);
     }
 
     // END: delta services

@@ -78,6 +78,8 @@ public interface GeneralService {
      */
     NodeRef getNodeRef(String nodeRefXPath);
 
+    NodeRef getArchivalNodeRef(String nodeRefXPath);
+
     /**
      * Search for NodeRef with an XPath expression from given store root.
      *

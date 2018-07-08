@@ -235,6 +235,11 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     }
 
     @Override
+    public NodeRef getArchivalNodeRef(String nodeRefXPath) {
+        return getNodeRef(nodeRefXPath, archivalsStore);
+    }
+
+    @Override
     public NodeRef getNodeRef(String nodeRefXPath, StoreRef storeRef) {
         return getNodeRef(nodeRefXPath, nodeService.getRootNode(storeRef));
     }

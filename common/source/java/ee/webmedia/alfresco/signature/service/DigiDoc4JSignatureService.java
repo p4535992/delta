@@ -86,7 +86,17 @@ public interface DigiDoc4JSignatureService {
      * @throws SignatureException
      */
     public SignatureItemsAndDataItems getDataItemsAndSignatureItems(NodeRef nodeRef, boolean includeData) throws SignatureException;
-    
+
+    /**
+     *
+     * @param inputStream
+     * @param includeData include file contents or not
+     * @param fileext - DDOC, BDOC
+     * @return
+     * @throws SignatureException
+     */
+    public SignatureItemsAndDataItems getDataItemsAndSignatureItems(InputStream inputStream, boolean includeData, String fileext) throws SignatureException;
+
     /**
      * Returns data files and signatures in a map. Keys are "signatureItems" for signature items and
      * "dataItems" for data files. Closes the inputStream itself.

@@ -92,6 +92,8 @@ public interface NotificationModel {
         QName GROUP_ASSIGNMENT_TASK_COMPLETED_ORDERED = QName.createQName(URI, "groupAssignmentTaskCompletedOrdered");
         QName DOCUMENT_SEND_FOR_INFORMATION = QName.createQName(URI, "documentSendForInformation");
         QName EMAIL_ATTACHMENT_SIZE_LIMIT_EXCEEDED = QName.createQName(URI, "emailAttachmentSizeLimitExceeded");
+        
+        QName MY_FILE_MODIFIED = QName.createQName(URI, "myFileModified");
     }
 
 }

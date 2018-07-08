@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.common.propertysheet.multivalueeditor;
 
+import static ee.smit.common.Utils.castToAnything;
 import static ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader.AttributeNames.PROP_GENERATOR_DESCRIPTORS;
 import static ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditor.NO_ADD_LINK_LABEL;
 
@@ -201,7 +202,7 @@ public class MultiValueEditorRenderer extends BaseRenderer {
         String previousGroupingValue = null;
         boolean inGroup = false;
         List<String> groupSendModes = getGroupSendModes(context);
-        List<UIComponent> children = multiValueEditor.getChildren();
+        List<UIComponent> children = castToAnything(multiValueEditor.getChildren());
         int renderedRowCount = ComponentUtil.getRenderedChildrenCount(multiValueEditor);
         for (UIComponent child : children) {
             if (!child.isRendered()) {
@@ -228,7 +229,7 @@ public class MultiValueEditorRenderer extends BaseRenderer {
 
                 out.write("<tr>");
 
-                List<UIComponent> columns = child.getChildren();
+                List<UIComponent> columns = castToAnything(child.getChildren());
                 int columnCount = 0;
                 for (UIComponent column : columns) {
                     if (!column.isRendered()) {
@@ -323,9 +324,9 @@ public class MultiValueEditorRenderer extends BaseRenderer {
     	List<String> groupSendModes = new ArrayList<>();
     	
     	ValueBinding vb = createValueBinding(context, "recipientSendMode");
-        List<String> recipientSendModes = (ArrayList<String>)vb.getValue(context);
+        List<String> recipientSendModes = castToAnything(vb.getValue(context));
         vb = createValueBinding(context, "recipientGroup");
-        List<String> recipientGroups = (ArrayList<String>)vb.getValue(context);
+        List<String> recipientGroups = castToAnything(vb.getValue(context));
         
     	
     	String groupToCheck = null;
@@ -507,7 +508,7 @@ public class MultiValueEditorRenderer extends BaseRenderer {
         out.write(Application.getMessage(context, SearchRenderer.CLOSE_WINDOW_MSG));
         out.write("</a></p></div><div class=\"modalpopup-content\"><div class=\"modalpopup-content-inner\">");
 
-        Map<String, Object> attributes = picker.getAttributes();
+        Map<String, Object> attributes = castToAnything(picker.getAttributes());
         attributes.put(Search.PICKER_CALLBACK_KEY, multiValueEditor.getAttributes().get(Search.PICKER_CALLBACK_KEY));
         Utils.encodeRecursive(context, picker);
 

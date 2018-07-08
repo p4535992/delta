@@ -18,6 +18,7 @@
 <meta name="author" content="Nortal">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <link rel="shortcut icon" href="favicon.ico">
+<link rel="stylesheet" href="<c:url value="/mobile/css/logo.css" />">
 <link rel="stylesheet" href="<c:url value="/mobile/css/main.css" />">
 <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
 <script src='<c:url value="/mobile/js/plugins.js" />'></script>

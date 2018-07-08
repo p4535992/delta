@@ -44,6 +44,8 @@ public interface NotificationService {
     public int processTaskDueDateNotificationsIfWorkingDay(Date firingDate);
 
     public int processVolumeDispositionDateNotifications();
+    
+    public int processDocSendFailViaDvkNotifications(Date firingDate);
 
     public int processAccessRestrictionEndDateNotifications();
 
@@ -98,5 +100,7 @@ public interface NotificationService {
     public List<String> getUserSpecificNotification(String userKey);
 
     public void deleteUserSpecificNotification(String userKey);
+
+	public int sendMyFileModifiedNotifications(NodeRef node, String versionNr);
 
 }

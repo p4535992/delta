@@ -128,6 +128,11 @@ public class UserDetailsDialog extends BaseDialogBean {
         return userService.isAdministrator() || userService.isDocumentManager() || isCurrentUser();
     }
 
+    public boolean isAdministrator(){
+    	UserService userService = BeanHelper.getUserService();
+    	return userService.isAdministrator();
+    }
+    
     private boolean isCurrentUser() {
         return user.getProperties().get(ContentModel.PROP_USERNAME.toString()).equals(AuthenticationUtil.getRunAsUser());
     }

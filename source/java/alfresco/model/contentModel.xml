@@ -273,6 +273,9 @@
             <property name="cm:showEmptyTaskMenu">
                <type>d:boolean</type>
             </property>
+            <property name="cm:showDvkMenu">
+               <type>d:boolean</type>
+            </property>
             <property name="cm:openOfficeClientExtensions">
                <type>d:text</type>
             </property>

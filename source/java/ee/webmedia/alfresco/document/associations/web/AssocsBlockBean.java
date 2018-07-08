@@ -90,7 +90,7 @@ public class AssocsBlockBean implements DocumentDynamicBlock {
     @Override
     public void clean() {
         document = null;
-        docAssocInfos = null;
+        docAssocInfos = new ArrayList<DocAssocInfo>();
     }
 
     public int getAssocsCount() {

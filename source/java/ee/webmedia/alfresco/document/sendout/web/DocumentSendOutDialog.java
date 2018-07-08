@@ -888,7 +888,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
 	    				Date validTo = cert.getNotAfter();
     					orgCert.setCertName(cnName);
     					orgCert.setValidTo(validTo);
-    					orgCert.setCertData(skLdapCert.getUserCertificate());
+    					orgCert.setCertData(skLdapCert.getUserEncryptionCertificate());
     					
     					orgCerts.add(orgCert);
 	    			}

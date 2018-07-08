@@ -22,17 +22,22 @@ import org.apache.commons.lang.StringUtils;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
+import org.apache.log4j.Logger;
 
 /**
  * Helps to strip illegal characters from filenames
  */
 public class FilenameUtil {
 
+    private static Logger log = Logger.getLogger(FilenameUtil.class);
+
     public static final String ERR_INVALID_FILE_NAME = "add_file_invalid_file_name";
     public static final String DDOC_EXTENSION = ".ddoc";
     public static final String BDOC_EXTENSION = ".bdoc";
     public static final String ASICE_EXTENSION = ".asice";
+    public static final String ASICS_EXTENSION = ".asics"; // ajatempliga arhiivifail.
     public static final String SCE_EXTENSION = ".sce";
+    public static final String PADES_EXTENSION = ".pades";
 
     private static final int FILE_MAX_LENGTH = 50;
     private static final int FILE_EXTENSION_MAX_LENGTH = FILE_MAX_LENGTH - 7;
@@ -199,12 +204,41 @@ public class FilenameUtil {
     }
 
     public static boolean isBdocFile(String fileName) {
-        return fileName.toLowerCase().endsWith(BDOC_EXTENSION) || fileName.toLowerCase().endsWith(ASICE_EXTENSION) || fileName.toLowerCase().endsWith(SCE_EXTENSION);
+        return fileName.toLowerCase().endsWith(BDOC_EXTENSION) || fileName.toLowerCase().endsWith(ASICE_EXTENSION) || fileName.toLowerCase().endsWith(SCE_EXTENSION) || fileName.toLowerCase().endsWith(ASICS_EXTENSION) || fileName.toLowerCase().endsWith(PADES_EXTENSION);
     }
 
     public static boolean isDigiDocFile(String fileName) {
         String lowerCase = fileName.toLowerCase();
-        return lowerCase.endsWith(DDOC_EXTENSION) || lowerCase.endsWith(BDOC_EXTENSION) || lowerCase.endsWith(ASICE_EXTENSION) || lowerCase.endsWith(SCE_EXTENSION);
+        return lowerCase.endsWith(DDOC_EXTENSION) || lowerCase.endsWith(BDOC_EXTENSION) || lowerCase.endsWith(ASICE_EXTENSION) || lowerCase.endsWith(SCE_EXTENSION) || lowerCase.endsWith(ASICS_EXTENSION) || lowerCase.endsWith(PADES_EXTENSION);
+    }
+
+
+    /**
+     * Checks if filename ends with .bdoc
+     * @param fileName
+     * @return
+     */
+    public static boolean isFileBdoc(String fileName){
+        return fileName.toLowerCase().endsWith(BDOC_EXTENSION);
+    }
+
+    /**
+     * Checks if filename ends with .ddoc
+     * @param fileName
+     * @return
+     */
+    public static boolean isFileDdoc(String fileName) {
+        return fileName.toLowerCase().endsWith(DDOC_EXTENSION);
+    }
+
+    /**
+     *
+     * @param fileName
+     * @return
+     */
+    public static String getDigiDocExt(String fileName){
+        String fn = fileName.toUpperCase();
+        return FilenameUtils.getExtension(fn);
     }
 
     public static boolean isDigiDocContainerFile(FileInfo fileInfo) {

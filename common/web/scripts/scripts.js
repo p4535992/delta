@@ -1,3 +1,5 @@
+
+
 var delta = [];
 delta['translations'] = [];
 
@@ -2547,7 +2549,7 @@ function signDigidoc4j() {
 			} else if (reason == 'Error: no_certificates') {
 				$jQ('#signWait').html('Sertifikaate ei leitud');
 			} else {
-				$jQ('#signWait').html('Tehniline viga');
+               $jQ('#signWait').html('Tehniline viga! veakood: (' + reason + ')');
 			}
 	    });
 	   
@@ -2579,7 +2581,7 @@ function fetchDigidoc4jHash(cert) {
 					} else if (reason == 'Error: invalid_argument') {
 						$jQ('#signWait').html('Vale allkirjastamise PIN');
 					} else {
-						$jQ('#signWait').html('Tehniline viga');
+						$jQ('#signWait').html('Tehniline viga! veakood: (' + reason + ')');
 					}
 				});
 			   }

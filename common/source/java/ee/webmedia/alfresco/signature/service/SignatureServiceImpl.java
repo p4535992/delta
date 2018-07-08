@@ -223,24 +223,24 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
      * Checking jDigidoc DIGIDOC_MAX_DATAFILE_CACHED value. To cache dataFile to disk the value must be bigger than 0
      */
     private void checkJDigidocMaxDataFileCachedParam(){
-    	long lMaxDfCached = ConfigManager.instance().getLongProperty("DIGIDOC_MAX_DATAFILE_CACHED", Long.MAX_VALUE);
-    	log.trace("DIGIDOC_MAX_DATAFILE_CACHED:" + lMaxDfCached);
+        long lMaxDfCached = ConfigManager.instance().getLongProperty("DIGIDOC_MAX_DATAFILE_CACHED", Long.MAX_VALUE);
+        log.trace("DIGIDOC_MAX_DATAFILE_CACHED:" + lMaxDfCached);
 
-    	if(lMaxDfCached < 4096){
+        if(lMaxDfCached < 4096){
 
-    		log.trace("DIGIDOC_MAX_DATAFILE_CACHED value is smaller then '4096'. Change it...");
+            log.trace("DIGIDOC_MAX_DATAFILE_CACHED value is smaller then '4096'. Change it...");
 
-    		ConfigManager.instance().setStringProperty("DIGIDOC_MAX_DATAFILE_CACHED", "4096");
+            ConfigManager.instance().setStringProperty("DIGIDOC_MAX_DATAFILE_CACHED", "4096");
 
-		}
-    	log.trace("Check DIGIDOC_MAX_DATAFILE_CACHED:" + ConfigManager.instance().getProperty("DIGIDOC_MAX_DATAFILE_CACHED"));
+        }
+        log.trace("Check DIGIDOC_MAX_DATAFILE_CACHED:" + ConfigManager.instance().getProperty("DIGIDOC_MAX_DATAFILE_CACHED"));
     }
 
     private DataFile createDDocDataFile(SignedDoc signedDocument, ContentReader reader, String fileName) throws DigiDocException, IOException {
         DataFile dataFile = new DataFile(signedDocument.getNewDataFileId(), DataFile.CONTENT_EMBEDDED_BASE64, fileName, reader.getMimetype(), signedDocument);
-        
+
         checkJDigidocMaxDataFileCachedParam();
-        
+
         dataFile.createCacheFile();
         OutputStream os = new Base64OutputStream(new BufferedOutputStream(new FileOutputStream(dataFile.getDfCacheFile())), true, 64, new byte[] { '\n' });
         reader.getContent(os); // closes both streams
@@ -253,7 +253,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
 
 
 
-    
+
     private static void bindCleanTempFiles(final SignedDoc signedDoc) {
         try {
             Assert.notNull(AlfrescoTransactionSupport.getTransactionId(), "No transaction is present");
@@ -305,10 +305,10 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
      * @return filename that corresponds to filename rules (does not contain special characters and is <= 255 chars in length)
      */
     protected String getFileName(NodeRef fileRef) {
-    	String name = (String) nodeService.getProperty(fileRef, FileModel.Props.DISPLAY_NAME);
-    	if (StringUtils.isNotBlank(name)) {
-    		name = FilenameUtil.stripForbiddenWindowsCharactersAndRedundantWhitespaces(name);
-    	}
+        String name = (String) nodeService.getProperty(fileRef, FileModel.Props.DISPLAY_NAME);
+        if (StringUtils.isNotBlank(name)) {
+            name = FilenameUtil.stripForbiddenWindowsCharactersAndRedundantWhitespaces(name);
+        }
         return StringUtils.isNotBlank(name)?name:(String) nodeService.getProperty(fileRef, ContentModel.PROP_NAME);
     }
 
@@ -326,14 +326,45 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         ArrayList<X509Certificate> results = new ArrayList<X509Certificate>();
         outer: for (SkLdapCertificate skLdapCertificate : certificates) {
             try {
-                X509Certificate cert = SignedDoc.readCertificate(skLdapCertificate.getUserCertificate());
+                log.debug("Read certificate...");
+                if(skLdapCertificate == null){
+                    log.error("Certificate is NULL!");
+                    continue;
+                }
+                log.debug("Certificate info: " + skLdapCertificate.toString());
+                if(skLdapCertificate.getUserEncryptionCertificate() == null){
+                    log.warn("Certificate don't have encryption part!");
+                    continue;
+                } else {
+                    log.debug("Certificate encryption part FOUND!");
+                }
 
+                X509Certificate cert = SignedDoc.readCertificate(skLdapCertificate.getUserEncryptionCertificate());
+                if(cert == null){
+                    log.error("SignedDoc Certificate read failed! NULL!");
+                    continue;
+                }
+                log.debug("Get certificate keyUsage params...");
+                boolean[] certKeyUsage = cert.getKeyUsage();
+                if(certKeyUsage == null){
+                    log.error("Certifiace Key Usage boolean list is NULL!");
+                } else {
+                    log.debug("Certificate key Usage boolean list length: " + certKeyUsage.length );
+                }
                 // In DigiDoc Client 2 and 3, only certificates which contain KeyEncipherment in KeyUsage, are suitable for encryption
                 // (in DigiDoc Client < 3.6 DataEncipherment was checked)
                 // According to https://svn.eesti.ee/projektid/idkaart_public/trunk/qdigidoc/crypto/KeyDialog.cpp
                 // * c.keyUsage().contains( SslCertificate::KeyEncipherment )
-                boolean keyEncipherment = cert.getKeyUsage()[2];
-                if (!keyEncipherment) {
+
+                boolean keyEncipherment = certKeyUsage[2];
+                log.debug("Is KeyEncipherment in use: " + keyEncipherment);
+                boolean keyAgreement = certKeyUsage[4];
+                log.debug("Is KeyAgreement in use: " + keyAgreement);
+
+                if (keyEncipherment == true || keyAgreement == true) {
+                    log.debug("FOUND certificate with encryption support! Returning it...");
+                } else {
+                    log.debug("keyEncipherment is not in use! Returning NULL!");
                     continue;
                 }
 
@@ -345,13 +376,22 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
                 // * if( p.indexOf( QRegExp( "^1\\.3\\.6\\.1\\.4\\.1\\.10015\\.1\\.3.*" ) ) != -1 ||
                 // * p.indexOf( QRegExp( "^1\\.3\\.6\\.1\\.4\\.1\\.10015\\.11\\.1.*" ) ) != -1 )
                 // * return MobileIDType;
+                log.debug("Get certificate policy object identifiers..");
                 List<String> objectIdentifiers = getPolicyObjectIdentifiers(cert);
+                if(objectIdentifiers == null){
+                    log.warn("Object identifiers is NULL!");
+                } else {
+                    log.debug("Object identifiers found: " + objectIdentifiers.size());
+                }
                 for (String objectIdentifier : objectIdentifiers) {
+                    log.debug("Object identifier value: " + objectIdentifier);
                     if (objectIdentifier.startsWith("1.3.6.1.4.1.10015.1.3") || objectIdentifier.startsWith("1.3.6.1.4.1.10015.11.1")) {
+                        log.debug("Object identifier starts with '1.3.6.1.4.1.10015.1.3' or '1.3.6.1.4.1.10015.11.1':: continue to outer...");
                         continue outer;
                     }
                 }
 
+                log.debug("Add certificate to result list...");
                 results.add(cert);
             } catch (Exception e) {
                 throw new SignatureRuntimeException("Failed to parse certificate for " + skLdapCertificate.getCn(), e);
@@ -359,25 +399,53 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         }
         return results;
     }
-    
+
     public X509Certificate getCertificateForEncryption(SkLdapCertificate skLdapCertificate) {
-    	return getCertificateForEncryption(skLdapCertificate.getUserCertificate(), skLdapCertificate.getCn());
+        List<byte []> certificate = skLdapCertificate.getUserCertificate();
+        String certName = skLdapCertificate.getCn();
+
+        X509Certificate cert = null;
+
+        for(byte[] certData : certificate){
+            cert = getCertificateForEncryption(certData, certName);
+            if(cert != null){
+
+                break;
+            }
+        }
+        return cert;
+        //return getCertificateForEncryption(skLdapCertificate.getUserCertificate(), skLdapCertificate.getCn());
     }
-    
+
+
     public X509Certificate getCertificateForEncryption(byte [] certData, String certName) {
-    	X509Certificate cert = null;
-    	try {
+        X509Certificate cert = null;
+        try {
+            log.debug("Reading certificate...");
             cert = SignedDoc.readCertificate(certData);
 
             // In DigiDoc Client 2 and 3, only certificates which contain KeyEncipherment in KeyUsage, are suitable for encryption
             // (in DigiDoc Client < 3.6 DataEncipherment was checked)
             // According to https://svn.eesti.ee/projektid/idkaart_public/trunk/qdigidoc/crypto/KeyDialog.cpp
             // * c.keyUsage().contains( SslCertificate::KeyEncipherment )
-            boolean keyEncipherment = cert.getKeyUsage()[2];
-            if (!keyEncipherment) {
-            	return null;
+
+            boolean[] keyUsageArray = cert.getKeyUsage();
+
+            keyUsageLog(keyUsageArray);
+
+            boolean keyEncipherment = keyUsageArray[2];
+            log.debug("Is KeyEncipherment in use: " + keyEncipherment);
+            boolean keyAgreement = keyUsageArray[4];
+            log.debug("Is KeyAgreement in use: " + keyAgreement);
+
+            if (keyEncipherment == true || keyAgreement == true) {
+                log.debug("FOUND certificate with encryption support! Returning it...");
+            } else {
+                log.debug("keyEncipherment is not in use! Returning NULL!");
+                return null;
             }
-            
+
+
             // In DigiDoc Client 3 (but not 2), additionally Mobile-ID certificates are filtered out (because decryption is not implemented in Mobile-ID)
             // According to https://svn.eesti.ee/projektid/idkaart_public/trunk/qdigidoc/crypto/KeyDialog.cpp
             // * c.type() != SslCertificate::MobileIDType
@@ -388,14 +456,57 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
             // * return MobileIDType;
             List<String> objectIdentifiers = getPolicyObjectIdentifiers(cert);
             for (String objectIdentifier : objectIdentifiers) {
+                log.debug("GetPolicyObjectIdentifiers: identifier: " + objectIdentifier );
                 if (objectIdentifier.startsWith("1.3.6.1.4.1.10015.1.3") || objectIdentifier.startsWith("1.3.6.1.4.1.10015.11.1")) {
-                	return null;
+                    log.debug("GetPolicyObjectIdentifiers: identifier: starts with '1.3.6.1.4.1.10015.1.3' OR with '1.3.6.1.4.1.10015.11.1'! Returnig Null");
+                    return null;
                 }
             }
             return cert;
         } catch (Exception e) {
             throw new SignatureRuntimeException("Failed to parse certificate for " + certName, e);
         }
+    }
+
+    private void keyUsageLog(boolean[] keyUsageArray){
+        // In DigiDoc Client
+        // enum KeyUsage
+        //{
+        //    KeyUsageNone = -1,
+        //    DigitalSignature = 0,
+        //    NonRepudiation,
+        //    KeyEncipherment,
+        //    DataEncipherment,
+        //    KeyAgreement,
+        //    KeyCertificateSign,
+        //    CRLSign,
+        //    EncipherOnly,
+        //    DecipherOnly
+        //};
+
+        List<String> keyUsageParams = new ArrayList<>();
+        keyUsageParams.add(0, "KeyUsageNone");
+        keyUsageParams.add(1, "DigitalSignature");
+        keyUsageParams.add(2, "NonRepudiation");
+        keyUsageParams.add(3, "KeyEncipherment");
+        keyUsageParams.add(4, "DataEncipherment");
+        keyUsageParams.add(5, "KeyAgreement");
+        keyUsageParams.add(6, "KeyCertificateSign");
+        keyUsageParams.add(7, "CRLSign");
+        keyUsageParams.add(8, "EncipherOnly");
+        keyUsageParams.add(9, "DecipherOnly");
+
+        int i = 0;
+        for(boolean keyUsage: keyUsageArray){
+            try{
+                log.trace("KeyUsage: "+keyUsageParams.get(i)+": " + keyUsage);
+            } catch (Exception e){
+                log.error("KeyUsage: NULL: " + keyUsage);
+            }
+            i++;
+        }
+
+        keyUsageParams.clear();
     }
 
     private static List<String> getPolicyObjectIdentifiers(X509Certificate cert) {
@@ -443,9 +554,9 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
 
             int idCounter = 1;
             for (X509Certificate recipientCert : recipientCerts) {
-            	if (CERTIFICATE_ALGORITHM_EC.equals(recipientCert.getPublicKey().getAlgorithm())) {
-            		continue;
-            	}
+                if (CERTIFICATE_ALGORITHM_EC.equals(recipientCert.getPublicKey().getAlgorithm())) {
+                    continue;
+                }
                 X509Principal principal = PrincipalUtil.getSubjectX509Principal(recipientCert);
                 Vector<?> values = principal.getValues(X509Name.CN);
                 String cn = (String) values.get(0);
