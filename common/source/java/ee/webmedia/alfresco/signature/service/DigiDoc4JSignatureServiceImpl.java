@@ -530,7 +530,7 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
     	ContentReader reader = fileFolderService.getReader(nodeRef);
     	try {
     		String fileName = getFileName(nodeRef);
-    		if (fileName != null && fileName.length() > 260) {
+    		if (fileName != null && fileName.length() > 205) {
     			String baseName = FilenameUtils.removeExtension(fileName);
     			String extension = FilenameUtils.getExtension(fileName);
     			fileName = baseName.substring(0, 200) + FilenameUtils.EXTENSION_SEPARATOR + extension;
