@@ -206,6 +206,9 @@ public class VolumeServiceImpl implements VolumeService {
 
     @Override
     public UnmodifiableVolume getUnmodifiableVolume(NodeRef volumeRef, Map<Long, QName> propertyTypes) {
+        if (!BeanHelper.getNodeService().exists(volumeRef)) { //TODO-Igor: temporarty for test
+            return null;
+        }
         UnmodifiableVolume volume = volumeCache.get(volumeRef);
         if (volume == null) {
             // beanPropertyMapper is not used here because this method is very heavily used and direct method call should be faster than using reflection

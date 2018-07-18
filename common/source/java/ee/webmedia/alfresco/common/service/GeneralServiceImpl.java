@@ -80,7 +80,7 @@ import org.apache.commons.io.output.CountingOutputStream;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
-//import org.postgresql.util.PGobject;
+import org.postgresql.util.PGobject;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
@@ -232,6 +232,11 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     @Override
     public NodeRef getNodeRef(String nodeRefXPath) {
         return getNodeRef(nodeRefXPath, store);
+    }
+
+    @Override
+    public NodeRef getArchivalNodeRef(String nodeRefXPath) {
+        return getNodeRef(nodeRefXPath, archivalsStore);
     }
 
     @Override
@@ -397,9 +402,7 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     /**
      * Create nodes from nodRefs and populate it with properties and aspects
      *
-     * @param nodeRefs
-     * @param propsToLoad
-     * @param callback
+     * @param nodeRef
      * @return
      */
     @Override
@@ -422,9 +425,7 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     /**
      * Create nodes from nodRefs and populate it with properties and aspects
      *
-     * @param childAssocs
-     * @param propsToLoad
-     * @param callback
+     * @param nodeRef
      * @return
      */
     @Override
@@ -1138,13 +1139,10 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
         if (input == null) {
             input = "";
         }
-        // TODO: Remove postgresql object
-        //PGobject res = jdbcTemplate.queryForObject("SELECT plainto_tsquery('simple', ?)", PGobject.class, input);
-        //String originalTsquery = res.getValue();
-
-        String originalTsquery = jdbcTemplate.queryForObject("SELECT plainto_tsquery('simple', ?)", String.class, input);
+        PGobject res = jdbcTemplate.queryForObject("SELECT plainto_tsquery('simple', ?)", PGobject.class, input);
         List<String> lexems = new ArrayList<String>();
         Pattern pattern = Pattern.compile("'[^']+'");
+        String originalTsquery = res.getValue();
         Matcher matcher = pattern.matcher(originalTsquery);
         while (matcher.find()) {
             String lexemValue = matcher.group().substring(1, matcher.group().length() - 1);

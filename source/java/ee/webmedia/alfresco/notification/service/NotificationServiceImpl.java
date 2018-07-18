@@ -717,7 +717,7 @@ public class NotificationServiceImpl implements NotificationService {
                     String zipTitle = I18NUtil.getMessage("notification_zip_filename");
 
                     try {
-                        attachments = fileRefs != null ? emailService.getAttachments(fileRefs, true, null, zipTitle) : Collections.<EmailAttachment> emptyList();
+                    attachments = fileRefs != null ? emailService.getAttachments(fileRefs, true, null, zipTitle) : Collections.<EmailAttachment> emptyList();
                     } catch (Exception e) {
                         log.error(e.getMessage(), e);
                        throw new EmailException (e.getMessage());
@@ -783,7 +783,7 @@ public class NotificationServiceImpl implements NotificationService {
         }
         return notification;
     }
-
+    
     private List<Notification> processFinishedWorkflow(Workflow workflow) {
         final CompoundWorkflow compoundWorkflow = workflow.getParent();
 
@@ -796,12 +796,12 @@ public class NotificationServiceImpl implements NotificationService {
         		if (nestedWorkflow.isParallelTasks()) {
         			List<Task> tasks = nestedWorkflow.getTasks();
          			int count = tasks.size();
-        			
+         			
         			if (count <= 1)
         				continue;
 
         			for (Task reviewTask : tasks) {
-        				if(WorkflowSpecificModel.ReviewTaskOutcome.CONFIRMED_WITH_REMARKS.equals(reviewTask.getOutcomeIndex())) {
+        				if((reviewTask.getOutcome().startsWith("Koosk\u00F5lastatud m\u00E4rkustega"))) {
         					needNotifyOwner = true;
         				}
         			}
@@ -1052,7 +1052,7 @@ public class NotificationServiceImpl implements NotificationService {
      * //else : reviewTask -> reviewTaskCompletedWithRemarks -> workflow block[parallelTasks == false] -> every task[status == finished] ownerId
      */
     private List<Notification> processReviewTask(Task task, List<Notification> notifications) {
-        final Workflow workflow = task.getParent();
+        final Workflow workflow = task.getParent();                                              
         final CompoundWorkflow compoundWorkflow = workflow.getParent();
                 
         if (WorkflowSpecificModel.ReviewTaskOutcome.CONFIRMED.equals(task.getOutcomeIndex())) {
@@ -1125,7 +1125,7 @@ public class NotificationServiceImpl implements NotificationService {
                     NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_NOT_ACCEPTED_ORDERED);
             notifications.add(notification);
         }
-
+       
       
         
  /*       if (WorkflowSpecificModel.ReviewTaskOutcome.CONFIRMED.equals(task.getOutcomeIndex())) 
@@ -1502,9 +1502,13 @@ public class NotificationServiceImpl implements NotificationService {
         Map<QName, Serializable> props = nodeService.getProperties(nodeRef);
 
         for (QName key : getAllNotificationProps()) {
-            if (!props.containsKey(key)) {
+            if (!props.containsKey(key) && (key != NotificationModel.NotificationType.REVIEW_DOCUMENT_NOT_SIGNED))  {
                 nodeService.setProperty(nodeRef, key, Boolean.TRUE);
             }
+        }
+        
+        if (!props.containsKey(NotificationModel.NotificationType.REVIEW_DOCUMENT_NOT_SIGNED)) {
+        	nodeService.setProperty(nodeRef, NotificationModel.NotificationType.REVIEW_DOCUMENT_NOT_SIGNED, Boolean.FALSE);
         }
     }
 
@@ -1572,7 +1576,7 @@ public class NotificationServiceImpl implements NotificationService {
         return approaching + exceeded;
     }
 
-    @Override
+@Override
     public int processDocSendFailViaDvkNotifications(Date firingDate) {
         return processDocSendFailViaDvkNotifications();
     }
