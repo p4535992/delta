@@ -42,6 +42,8 @@ public class LDAPDependencyChecker extends DependencyChecker{
 		env.put(Context.SECURITY_AUTHENTICATION, "simple");
         env.put(Context.SECURITY_PRINCIPAL, this.userName);
         env.put(Context.SECURITY_CREDENTIALS, this.passwd);
+        env.put("com.sun.jndi.ldap.read.timeout", "5000");
+        env.put("com.sun.jndi.ldap.connect.timeout", "5000");
 		
 		
 		try{

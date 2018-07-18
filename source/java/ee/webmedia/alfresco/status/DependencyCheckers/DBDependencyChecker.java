@@ -1,15 +1,17 @@
 package ee.webmedia.alfresco.status.DependencyCheckers;
 
-
-import java.net.InetAddress;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Properties;
 
 import javax.sql.DataSource;
-import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
+import org.postgresql.ds.PGPoolingDataSource;
 
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PropertiesLoaderUtils;
 /**
  * 
  * @author viljar.tina
@@ -42,18 +44,36 @@ public class DBDependencyChecker extends DependencyChecker{
 	 * 
 	 */
 	public Boolean Test ( ) {
-		Statement stmt = null;
+		PGPoolingDataSource source = null;
 		Connection con = null;
 		ResultSet rs = null;
 		try{
-			con = dataSource.getConnection();
-			stmt = con.createStatement();
+			Resource resource = new ClassPathResource("alfresco-global.properties");
+	        Properties props = PropertiesLoaderUtils.loadProperties(resource);
+	        
+			source = new PGPoolingDataSource();
+			source.setDataSourceName("Status");
+			source.setServerName(props.getProperty("db.host"));
+			source.setPortNumber(Integer.valueOf(props.getProperty("db.port")));
+			source.setDatabaseName(props.getProperty("db.name"));
+			source.setUser(props.getProperty("db.username"));
+			source.setPassword(props.getProperty("db.password"));
+			source.setMaxConnections(10);
+			source.setLoginTimeout(5);
+			source.setSocketTimeout(5);
+			source.setConnectTimeout(5);
+			
+			con = source.getConnection();
+			
+			Statement stmt = con.createStatement();
+			stmt.setQueryTimeout(5);
 			rs = stmt.executeQuery("select version();");
 			rs.next();
 			
 			String ver = rs.getString(1);
 			
 			StatusMsg = "ver:" + ver;
+			
 		}catch(Exception ex){
 			StatusMsg = ex.getMessage();
 			
@@ -65,11 +85,11 @@ public class DBDependencyChecker extends DependencyChecker{
 				if (rs != null) { rs.close(); }
 			}catch(Exception e){}
 			try{
-				if (stmt != null) { stmt.close(); }
+				if (con != null) { con.close(); }
 			}catch(Exception e){}
 			try{
-				if (con != null) { con.close(); }
-			}catch(Exception e){}	        
+				if (source != null) { source.close(); }
+			}catch(Exception e){}
 	    }
 
         
