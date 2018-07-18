@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.signature.service;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getParametersService;
 import static ee.webmedia.alfresco.utils.CalendarUtil.duration;
+import static ee.webmedia.alfresco.utils.FilenameUtil.makeSafeFilename;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -530,11 +531,13 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
     	ContentReader reader = fileFolderService.getReader(nodeRef);
     	try {
     		String fileName = getFileName(nodeRef);
-    		if (fileName != null && fileName.length() > 260) {
+    		if (fileName != null && fileName.length() > 220) {
     			String baseName = FilenameUtils.removeExtension(fileName);
     			String extension = FilenameUtils.getExtension(fileName);
-    			fileName = baseName.substring(0, 200) + FilenameUtils.EXTENSION_SEPARATOR + extension;
+    			fileName = baseName.substring(0, 210) + FilenameUtils.EXTENSION_SEPARATOR + extension;
     		}
+            // TODO: Alternative is: fileName = makeSafeFilename(fileName); // <-- currently 50 char is max filename...
+
     		is = reader.getContentInputStream();
     		container.addDataFile(is, fileName, reader.getMimetype());
     	} finally {
