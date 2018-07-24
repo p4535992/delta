@@ -1651,9 +1651,9 @@ public class NotificationServiceImpl implements NotificationService {
             notification.setSenderEmail(parametersService.getStringParameter(Parameters.DOC_SENDER_EMAIL));
             notification.setToEmails(emailsList);
             notification.setTemplateName("Dokumendi välja saatmine üle DVK on katkestatud.html");
-            List<DvkSendDocuments> lastHourFailedDocuments = getDvkService().getDvkSendFailedDocuments();
+            List<Document> lastHourFailedDocuments = getDvkService().getDvkSendFailedDocuments();
 
-            for(DvkSendDocuments document : lastHourFailedDocuments){
+            for(Document document : lastHourFailedDocuments){
 	            NodeRef notificationTemplateByName = templateService.getNotificationTemplateByName(notification.getTemplateName());
 	            
 	            String context = templateService.getDvkSendTemplate(notificationTemplateByName, document);

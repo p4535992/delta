@@ -34,6 +34,7 @@ import org.alfresco.util.Pair;
 import org.alfresco.util.TempFileProvider;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.springframework.util.Assert;
@@ -527,14 +528,13 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         } while (retry > 0);
     }
 
-    public String getDvkSendTemplate(NodeRef template, DvkSendDocuments lastHourFailedDocuments){
+    public String getDvkSendTemplate(NodeRef template, Document doc){
     	String templateText = fileFolderService.getReader(template).getContentString();
     	try{
-    		Document doc = documentService.getDocumentByNodeRef(lastHourFailedDocuments.getDocumentNodeRef());
     		templateText = templateText.replace("document.name", doc.getDocName());
         	templateText = templateText.replace("document.reg.number", doc.getRegNumber());
         	templateText = templateText.replace("document.reg.date", doc.getRegDateTimeStr());
-        	templateText = templateText.replace("document.url", doc.getNodeRef().toString());
+        	templateText = templateText.replace("document.url", StringEscapeUtils.escapeHtml(BeanHelper.getDocumentTemplateService().getDocumentUrl(doc.getNodeRef())));
     	}catch(Exception e){
     		log.debug("Faied to send DVK send fail notification");
     	}

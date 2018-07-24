@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.dvk.service;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDvkService;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.REG_NUMBER;
 import static ee.webmedia.alfresco.utils.DvkUtil.getFileContents;
 import static ee.webmedia.alfresco.utils.DvkUtil.getFileName;
@@ -33,6 +34,7 @@ import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
+import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
@@ -46,6 +48,7 @@ import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Transformer;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.xml.security.exceptions.Base64DecodingException;
 import org.apache.xmlbeans.XmlException;
@@ -88,6 +91,7 @@ import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.dvk.model.DvkModel;
+import ee.webmedia.alfresco.dvk.model.DvkSendDocuments;
 import ee.webmedia.alfresco.dvk.model.DvkSendReviewTask;
 import ee.webmedia.alfresco.dvk.model.DvkSendWorkflowDocuments;
 import ee.webmedia.alfresco.dvk.service.ReviewTaskException.ExceptionType;
@@ -144,7 +148,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         = documentSearchService.searchTaskBySendStatusQuery(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK);
         taskRefsAndIds.putAll(documentSearchService.searchTaskBySendStatusQuery(WorkflowSpecificModel.Types.REVIEW_TASK));
         final Map<NodeRef, Pair<String, String>> forwardedDecDocRefsAndIds = documentSearchService.searchForwardedDecDocumentsDvkIds(SendStatus.SENT);
-
+        
         if (docRefsAndIds.size() == 0 && taskRefsAndIds.size() == 0 && forwardedDecDocRefsAndIds.size() == 0) {
             return 0; // no need to ask statuses
         }
@@ -195,7 +199,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
 
         int updatedNodesCount = updateNodeSendStatus(docRefsAndIds, statusesByIds, DocumentCommonModel.Props.SEND_INFO_SEND_STATUS)
                 + updateNodeSendStatus(taskRefsAndIds, statusesByIds, WorkflowSpecificModel.Props.SEND_STATUS);
-
+    
         return updatedNodesCount;
     }
 
@@ -308,6 +312,14 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
                 } else if (workflowDbService != null) {
                     workflowDbService.updateTaskProperties(sendInfoRef, propsToUpdate);
                 }
+                NodeRef docNodeRef = nodeService.getPrimaryParent(sendInfoRef).getParentRef();
+
+                ee.webmedia.alfresco.document.model.Document doc = documentService.getDocumentByNodeRef(docNodeRef);
+                String docName = doc.getDocName();
+            	String regNr = doc.getRegNumber();
+            	String regDateTime = doc.getRegDateTimeStr();
+            	String nodeRef = StringEscapeUtils.escapeHtml(BeanHelper.getDocumentTemplateService().getDocumentUrl(doc.getNodeRef()));
+            	getDvkService().getDvkSendFailedDocuments().add(doc);
             }
         }
 

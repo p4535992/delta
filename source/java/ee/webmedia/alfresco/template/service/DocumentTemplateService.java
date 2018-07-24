@@ -142,6 +142,6 @@ public interface DocumentTemplateService {
 
 	String getProcessedMyFileModified(NodeRef notificationTemplateByName, String fileName, String versionNr, String modifier);
 	
-	String getDvkSendTemplate(NodeRef template, DvkSendDocuments lastHourFailedDocuments);
+	String getDvkSendTemplate(NodeRef template, Document doc);
 
 }
