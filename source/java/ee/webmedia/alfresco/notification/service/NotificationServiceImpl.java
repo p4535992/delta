@@ -81,6 +81,7 @@ import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.substitute.model.Substitute;
 import ee.webmedia.alfresco.substitute.model.UnmodifiableSubstitute;
 import ee.webmedia.alfresco.substitute.service.SubstituteService;
+import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
 import ee.webmedia.alfresco.template.model.ProcessedEmailTemplate;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.user.model.Authority;
@@ -1645,17 +1646,16 @@ public class NotificationServiceImpl implements NotificationService {
     	String[] emailParts = emails.split(";");
     	List<String> emailsList = Arrays.asList(emailParts);  
     	int sentMails = 0;
-
             Notification notification = new Notification();
-            notification.setSubject("Dokumendi välja saatmine üle DVK on katkestatud");
             notification.setSenderEmail(parametersService.getStringParameter(Parameters.DOC_SENDER_EMAIL));
             notification.setToEmails(emailsList);
             notification.setTemplateName("Dokumendi välja saatmine üle DVK on katkestatud.html");
             List<Document> lastHourFailedDocuments = getDvkService().getDvkSendFailedDocuments();
-
+            
             for(Document document : lastHourFailedDocuments){
 	            NodeRef notificationTemplateByName = templateService.getNotificationTemplateByName(notification.getTemplateName());
-	            
+	            String subject = (String) nodeService.getProperty(notificationTemplateByName, DocumentTemplateModel.Prop.NOTIFICATION_SUBJECT);
+	            notification.setSubject(subject);
 	            String context = templateService.getDvkSendTemplate(notificationTemplateByName, document);
 	            
 	            try {
