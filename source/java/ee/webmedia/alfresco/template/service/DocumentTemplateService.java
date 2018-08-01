@@ -139,8 +139,6 @@ public interface DocumentTemplateService {
     List<UnmodifiableDocumentTemplate> getUnmodifiableTemplates();
 
     void removeTemplateFromCache(NodeRef templateRef);
-
-	String getProcessedMyFileModified(NodeRef notificationTemplateByName, String fileName, String versionNr, String modifier);
 	
 	String getDvkSendTemplate(NodeRef template, Document doc);
 

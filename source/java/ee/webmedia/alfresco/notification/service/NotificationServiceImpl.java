@@ -61,6 +61,7 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
+import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.dvk.model.DvkSendDocuments;
 import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.email.model.EmailAttachment;
@@ -1673,23 +1674,25 @@ public class NotificationServiceImpl implements NotificationService {
     }
     
     @Override
-    public int sendMyFileModifiedNotifications(NodeRef node, String versionNr){
-    	Document document = BeanHelper.getDocumentService().getDocumentByNodeRef(node);
-    	String creator = (String) document.getProperties().get(ContentModel.PROP_CREATOR);
-    	String fileName = (String) document.getProperties().get(ContentModel.PROP_NAME);
-    	String modifier = userService.getUserFullName(userService.getCurrentUserName());
+    public int sendMyFileModifiedNotifications(NodeRef content){
+    	NodeRef docRef = nodeService.getPrimaryParent(content).getParentRef();
+    	NodeRef workflow = nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT).get(0).getTargetRef();
+    	
+    	Document document = BeanHelper.getDocumentService().getDocumentByNodeRef(docRef);
     	
     	Notification notification = new Notification();
-    	notification.setSubject(String.format("Minu koostatud dokument %s on muudetud", fileName));
     	notification.setSenderEmail(parametersService.getStringParameter(Parameters.DOC_SENDER_EMAIL));
     	notification.setTemplateName("Minu koostatud dokumenti on muudetud.html");
     	
     	List<String> toEmails =  new ArrayList<String>();
-    	toEmails.add(userService.getUserEmail(creator));
+    	toEmails.add(userService.getUserEmail(document.getOwnerId()));
     	notification.setToEmails(toEmails);
 
     	NodeRef notificationTemplateByName = templateService.getNotificationTemplateByName(notification.getTemplateName());
-    	if(userService.getCurrentUserName().equals(creator) 
+        String subject = (String) nodeService.getProperty(notificationTemplateByName, DocumentTemplateModel.Prop.NOTIFICATION_SUBJECT);
+        notification.setSubject(subject);
+        
+    	if(userService.getCurrentUserName().equals(document.getOwnerName()) 
     			|| !isSubscribed(userService.getCurrentUserName(), NotificationModel.NotificationType.MY_FILE_MODIFIED)){
     		return 0;
     	}
@@ -1700,9 +1703,14 @@ public class NotificationServiceImpl implements NotificationService {
             }
             return 0; // if the admins are lazy and we don't have a template, we don't have to send out notifications... :)
         }
-    	String content = templateService.getProcessedMyFileModified(notificationTemplateByName, fileName, versionNr, modifier);
-    	try {
-			sendEmail(notification, content, null);
+
+    	LinkedHashMap<String, NodeRef> templateDataNodeRefs = new LinkedHashMap<>();
+    	templateDataNodeRefs.put("content", content);
+    	templateDataNodeRefs.put("", docRef);
+    	templateDataNodeRefs.put("workflow", workflow);
+
+        try {
+        	sendNotification(notification, document.getNodeRef(), templateDataNodeRefs);
 			return notification.getToEmails().size();
 		} catch (EmailException e) {
 			e.printStackTrace();
