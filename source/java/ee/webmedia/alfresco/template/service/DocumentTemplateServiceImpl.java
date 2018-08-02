@@ -527,21 +527,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             }
         } while (retry > 0);
     }
-
-    public String getDvkSendTemplate(NodeRef template, Document doc){
-    	String templateText = fileFolderService.getReader(template).getContentString();
-    	try{
-    		templateText = templateText.replace("document.name", doc.getDocName());
-        	templateText = templateText.replace("document.reg.number", doc.getRegNumber());
-        	templateText = templateText.replace("document.reg.date", doc.getRegDateTimeStr());
-        	templateText = templateText.replace("document.url", StringEscapeUtils.escapeHtml(BeanHelper.getDocumentTemplateService().getDocumentUrl(doc.getNodeRef())));
-    	}catch(Exception e){
-    		log.debug("Faied to send DVK send fail notification");
-    	}
-        
-    	return templateText;
-    }
-
+    
     @Override
     public String getProcessedVolumeDispositionTemplate(List<Volume> volumes, NodeRef template) {
         String templateText = fileFolderService.getReader(template).getContentString();

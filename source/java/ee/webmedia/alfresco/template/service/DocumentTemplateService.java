@@ -139,7 +139,5 @@ public interface DocumentTemplateService {
     List<UnmodifiableDocumentTemplate> getUnmodifiableTemplates();
 
     void removeTemplateFromCache(NodeRef templateRef);
-	
-	String getDvkSendTemplate(NodeRef template, Document doc);
 
 }

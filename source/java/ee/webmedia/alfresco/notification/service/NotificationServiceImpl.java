@@ -1572,20 +1572,10 @@ public class NotificationServiceImpl implements NotificationService {
         return approaching + exceeded;
     }
 
-@Override
+    @Override
     public int processDocSendFailViaDvkNotifications(Date firingDate) {
-        return processDocSendFailViaDvkNotifications();
-    }
-    
-    private int processDocSendFailViaDvkNotifications() {
-        String DocSendFailViaDvkNotificationsEmails = parametersService.getStringParameter(Parameters.DOC_SEND_FAIL_VIA_DVK_NOTIFICATION_EMAILS);
-
-
-        NotificationCache cache = new NotificationCache();
-        
-        int approaching = sendDvkSendFailNotifications(DocSendFailViaDvkNotificationsEmails,  cache);
-
-        return approaching;
+    	log.info(String.format("%s %s %s", firingDate, "Sending dvk send fail notifications if needed"));
+        return sendDvkSendFailNotifications();
     }
 
     /**
@@ -1643,8 +1633,10 @@ public class NotificationServiceImpl implements NotificationService {
         return 0;
     }
 
-    private int sendDvkSendFailNotifications(String emails, NotificationCache notificationCache) {
-    	String[] emailParts = emails.split(";");
+    private int sendDvkSendFailNotifications() {
+        String DocSendFailViaDvkNotificationsEmails = parametersService.getStringParameter(Parameters.DOC_SEND_FAIL_VIA_DVK_NOTIFICATION_EMAILS);
+
+    	String[] emailParts = DocSendFailViaDvkNotificationsEmails.split(";");
     	List<String> emailsList = Arrays.asList(emailParts);  
     	int sentMails = 0;
             Notification notification = new Notification();
@@ -1657,13 +1649,13 @@ public class NotificationServiceImpl implements NotificationService {
 	            NodeRef notificationTemplateByName = templateService.getNotificationTemplateByName(notification.getTemplateName());
 	            String subject = (String) nodeService.getProperty(notificationTemplateByName, DocumentTemplateModel.Prop.NOTIFICATION_SUBJECT);
 	            notification.setSubject(subject);
-	            String context = templateService.getDvkSendTemplate(notificationTemplateByName, document);
 	            
+	            LinkedHashMap<String, NodeRef> templateDataNodeRefs = new LinkedHashMap<>();
+	        	templateDataNodeRefs.put("", document.getNodeRef());
+	        	
 	            try {
-	            	emailService.sendEmail(notification.getToEmails(), notification.getToNames(), 
-	            			notification.getSenderEmail(), notification.getSubject(), 
-	            			context, true, null, null);
-	                sentMails++;
+	            	sendNotification(notification, document.getNodeRef(), templateDataNodeRefs);
+	    			return notification.getToEmails().size();
 	            } catch (EmailException e) {
 	                log.error("Dvk send fail notification e-mail sending failed, ignoring and continuing", e);
 	            }
