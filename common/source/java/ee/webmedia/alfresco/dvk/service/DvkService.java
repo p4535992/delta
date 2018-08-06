@@ -13,6 +13,7 @@ import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
 import ee.webmedia.alfresco.document.file.model.File;
+import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.dvk.model.DvkSendDocuments;
 import ee.webmedia.alfresco.notification.model.NotificationCache;
 import ee.webmedia.alfresco.notification.model.NotificationResult;
@@ -37,7 +38,7 @@ public interface DvkService {
 
     Map<QName, Serializable> mapRelatedIncomingElements(String documentTypeId, NodeRef storedDecContainer);
 
-    NotificationResult sendTaskNotificationDocument(Task task, NotificationCache notificationCache) throws Exception;
+    NotificationResult sendTaskNotificationDocument(Task task, NotificationCache notificationCache);
 
     /**
      * Receive all documents from DVK server(using multiple service calls, if server has more documents than can be fetched at a time)
@@ -58,7 +59,7 @@ public interface DvkService {
      * @param compoundWorkflowRef if not null, only this compund workflow recipients are sent updates,
      * @param messageForRecipient
      */
-    void sendDvkTasksWithDocument(NodeRef docNodeRef, NodeRef compoundWorkflowRef, Map<NodeRef, List<String>> additionalRecipients, String messageForRecipient) throws Exception;
+    void sendDvkTasksWithDocument(NodeRef docNodeRef, NodeRef compoundWorkflowRef, Map<NodeRef, List<String>> additionalRecipients, String messageForRecipient);
 
     void sendDvkTask(Task task);
 
@@ -84,6 +85,6 @@ public interface DvkService {
 
     void deleteForwardedDecDocuments();
     
-    List<DvkSendDocuments> getDvkSendFailedDocuments();
+    List<Document> getDvkSendFailedDocuments();
 
 }

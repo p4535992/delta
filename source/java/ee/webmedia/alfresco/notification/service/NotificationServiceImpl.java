@@ -61,6 +61,7 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
+import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.dvk.model.DvkSendDocuments;
 import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.email.model.EmailAttachment;
@@ -81,6 +82,7 @@ import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.substitute.model.Substitute;
 import ee.webmedia.alfresco.substitute.model.UnmodifiableSubstitute;
 import ee.webmedia.alfresco.substitute.service.SubstituteService;
+import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
 import ee.webmedia.alfresco.template.model.ProcessedEmailTemplate;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.user.model.Authority;
@@ -715,13 +717,7 @@ public class NotificationServiceImpl implements NotificationService {
                 if (attachments == null) {
                     List<NodeRef> fileRefs = getActiveFileRefs(docRef);
                     String zipTitle = I18NUtil.getMessage("notification_zip_filename");
-
-                    try {
                     attachments = fileRefs != null ? emailService.getAttachments(fileRefs, true, null, zipTitle) : Collections.<EmailAttachment> emptyList();
-                    } catch (Exception e) {
-                        log.error(e.getMessage(), e);
-                       throw new EmailException (e.getMessage());
-                    }
                     cache.getZippedAttachments().put(docRef, attachments);
                 }
                 sendEmail(notification, content, docRef, attachments);
@@ -1576,20 +1572,10 @@ public class NotificationServiceImpl implements NotificationService {
         return approaching + exceeded;
     }
 
-@Override
+    @Override
     public int processDocSendFailViaDvkNotifications(Date firingDate) {
-        return processDocSendFailViaDvkNotifications();
-    }
-    
-    private int processDocSendFailViaDvkNotifications() {
-        String DocSendFailViaDvkNotificationsEmails = parametersService.getStringParameter(Parameters.DOC_SEND_FAIL_VIA_DVK_NOTIFICATION_EMAILS);
-
-
-        NotificationCache cache = new NotificationCache();
-        
-        int approaching = sendDvkSendFailNotifications(DocSendFailViaDvkNotificationsEmails,  cache);
-
-        return approaching;
+    	log.info(String.format("%s %s %s", firingDate, "Sending dvk send fail notifications if needed"));
+        return sendDvkSendFailNotifications();
     }
 
     /**
@@ -1647,28 +1633,29 @@ public class NotificationServiceImpl implements NotificationService {
         return 0;
     }
 
-    private int sendDvkSendFailNotifications(String emails, NotificationCache notificationCache) {
-    	String[] emailParts = emails.split(";");
+    private int sendDvkSendFailNotifications() {
+        String DocSendFailViaDvkNotificationsEmails = parametersService.getStringParameter(Parameters.DOC_SEND_FAIL_VIA_DVK_NOTIFICATION_EMAILS);
+
+    	String[] emailParts = DocSendFailViaDvkNotificationsEmails.split(";");
     	List<String> emailsList = Arrays.asList(emailParts);  
     	int sentMails = 0;
-
             Notification notification = new Notification();
-            notification.setSubject("Dokumendi välja saatmine üle DVK on katkestatud");
             notification.setSenderEmail(parametersService.getStringParameter(Parameters.DOC_SENDER_EMAIL));
             notification.setToEmails(emailsList);
             notification.setTemplateName("Dokumendi välja saatmine üle DVK on katkestatud.html");
-            List<DvkSendDocuments> lastHourFailedDocuments = getDvkService().getDvkSendFailedDocuments();
-
-            for(DvkSendDocuments document : lastHourFailedDocuments){
+            List<Document> lastHourFailedDocuments = getDvkService().getDvkSendFailedDocuments();
+            
+            for(Document document : lastHourFailedDocuments){
 	            NodeRef notificationTemplateByName = templateService.getNotificationTemplateByName(notification.getTemplateName());
+	            String subject = (String) nodeService.getProperty(notificationTemplateByName, DocumentTemplateModel.Prop.NOTIFICATION_SUBJECT);
+	            notification.setSubject(subject);
 	            
-	            String context = templateService.getDvkSendTemplate(notificationTemplateByName, document);
-	            
+	            LinkedHashMap<String, NodeRef> templateDataNodeRefs = new LinkedHashMap<>();
+	        	templateDataNodeRefs.put("", document.getNodeRef());
+	        	
 	            try {
-	            	emailService.sendEmail(notification.getToEmails(), notification.getToNames(), 
-	            			notification.getSenderEmail(), notification.getSubject(), 
-	            			context, true, null, null);
-	                sentMails++;
+	            	sendNotification(notification, document.getNodeRef(), templateDataNodeRefs);
+	    			return notification.getToEmails().size();
 	            } catch (EmailException e) {
 	                log.error("Dvk send fail notification e-mail sending failed, ignoring and continuing", e);
 	            }
@@ -1679,23 +1666,25 @@ public class NotificationServiceImpl implements NotificationService {
     }
     
     @Override
-    public int sendMyFileModifiedNotifications(NodeRef node, String versionNr){
-    	Document document = BeanHelper.getDocumentService().getDocumentByNodeRef(node);
-    	String creator = (String) document.getProperties().get(ContentModel.PROP_CREATOR);
-    	String fileName = (String) document.getProperties().get(ContentModel.PROP_NAME);
-    	String modifier = userService.getUserFullName(userService.getCurrentUserName());
+    public int sendMyFileModifiedNotifications(NodeRef content){
+    	NodeRef docRef = nodeService.getPrimaryParent(content).getParentRef();
+    	NodeRef workflow = nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT).get(0).getTargetRef();
+    	
+    	Document document = BeanHelper.getDocumentService().getDocumentByNodeRef(docRef);
     	
     	Notification notification = new Notification();
-    	notification.setSubject(String.format("Minu koostatud dokument %s on muudetud", fileName));
     	notification.setSenderEmail(parametersService.getStringParameter(Parameters.DOC_SENDER_EMAIL));
     	notification.setTemplateName("Minu koostatud dokumenti on muudetud.html");
     	
     	List<String> toEmails =  new ArrayList<String>();
-    	toEmails.add(userService.getUserEmail(creator));
+    	toEmails.add(userService.getUserEmail(document.getOwnerId()));
     	notification.setToEmails(toEmails);
 
     	NodeRef notificationTemplateByName = templateService.getNotificationTemplateByName(notification.getTemplateName());
-    	if(userService.getCurrentUserName().equals(creator) 
+        String subject = (String) nodeService.getProperty(notificationTemplateByName, DocumentTemplateModel.Prop.NOTIFICATION_SUBJECT);
+        notification.setSubject(subject);
+        
+    	if(userService.getCurrentUserName().equals(document.getOwnerName()) 
     			|| !isSubscribed(userService.getCurrentUserName(), NotificationModel.NotificationType.MY_FILE_MODIFIED)){
     		return 0;
     	}
@@ -1706,9 +1695,14 @@ public class NotificationServiceImpl implements NotificationService {
             }
             return 0; // if the admins are lazy and we don't have a template, we don't have to send out notifications... :)
         }
-    	String content = templateService.getProcessedMyFileModified(notificationTemplateByName, fileName, versionNr, modifier);
-    	try {
-			sendEmail(notification, content, null);
+
+    	LinkedHashMap<String, NodeRef> templateDataNodeRefs = new LinkedHashMap<>();
+    	templateDataNodeRefs.put("content", content);
+    	templateDataNodeRefs.put("", docRef);
+    	templateDataNodeRefs.put("workflow", workflow);
+
+        try {
+        	sendNotification(notification, document.getNodeRef(), templateDataNodeRefs);
 			return notification.getToEmails().size();
 		} catch (EmailException e) {
 			e.printStackTrace();
@@ -2111,13 +2105,7 @@ public class NotificationServiceImpl implements NotificationService {
                     + "\ndocRef=" + docRef + "\nfileRefs=" + WmNode.toString(fileRefs) + "\nzipIt=" + zipIt + "\nzipName=" + zipTitle);
         }
 
-        List<EmailAttachment> attachments = null;
-        try {
-            attachments = fileRefs != null ? emailService.getAttachments(fileRefs, zipIt, null, zipTitle) : null;
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw new EmailException(e.getMessage());
-        }
+        List<EmailAttachment> attachments = fileRefs != null ? emailService.getAttachments(fileRefs, zipIt, null, zipTitle) : null;
         Object[] descParams = { notification.getSubject(), StringUtils.join(recipient.emails, ", ") };
         logService.addLogEntry(LogEntry.create(LogObject.NOTICE, userService, docRef, "applog_email_notice", descParams));
         emailService.sendEmail(recipient.emails, recipient.names, notification.getSenderEmail(), notification.getSubject(), content, true, docRef, attachments);
