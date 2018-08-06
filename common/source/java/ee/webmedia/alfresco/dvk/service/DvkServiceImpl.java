@@ -913,7 +913,7 @@ public abstract class DvkServiceImpl implements DvkService {
     }
 
     @Override
-    public NotificationResult sendTaskNotificationDocument(Task task, NotificationCache notificationCache) {
+    public NotificationResult sendTaskNotificationDocument(Task task, NotificationCache notificationCache) throws Exception {
         NotificationResult result = new NotificationResult();
         if (task.isStatus(Status.IN_PROGRESS) && StringUtils.isBlank(task.getOwnerId()) && StringUtils.isBlank(task.getInstitutionName())
                 && !task.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK) && task.getParent().getParent().isDocumentWorkflow()) {
@@ -1006,7 +1006,7 @@ public abstract class DvkServiceImpl implements DvkService {
     }
 
     @Override
-    public abstract void sendDvkTasksWithDocument(NodeRef docNodeRef, NodeRef compoundWorkflowNodeRef, Map<NodeRef, List<String>> additionalRecipients, String messageForRecipient);
+    public abstract void sendDvkTasksWithDocument(NodeRef docNodeRef, NodeRef compoundWorkflowNodeRef, Map<NodeRef, List<String>> additionalRecipients, String messageForRecipient) throws Exception;
 
     @Override
     public abstract void sendDvkTask(Task task);

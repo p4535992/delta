@@ -717,7 +717,12 @@ public class NotificationServiceImpl implements NotificationService {
                 if (attachments == null) {
                     List<NodeRef> fileRefs = getActiveFileRefs(docRef);
                     String zipTitle = I18NUtil.getMessage("notification_zip_filename");
-                    attachments = fileRefs != null ? emailService.getAttachments(fileRefs, true, null, zipTitle) : Collections.<EmailAttachment> emptyList();
+                    try {
+                        attachments = fileRefs != null ? emailService.getAttachments(fileRefs, true, null, zipTitle) : Collections.<EmailAttachment> emptyList();
+                        } catch (Exception e) {
+                            log.error(e.getMessage(), e);
+                           throw new EmailException (e.getMessage());
+                        }
                     cache.getZippedAttachments().put(docRef, attachments);
                 }
                 sendEmail(notification, content, docRef, attachments);
@@ -2105,8 +2110,13 @@ public class NotificationServiceImpl implements NotificationService {
                     + "\ndocRef=" + docRef + "\nfileRefs=" + WmNode.toString(fileRefs) + "\nzipIt=" + zipIt + "\nzipName=" + zipTitle);
         }
 
-        List<EmailAttachment> attachments = fileRefs != null ? emailService.getAttachments(fileRefs, zipIt, null, zipTitle) : null;
-        Object[] descParams = { notification.getSubject(), StringUtils.join(recipient.emails, ", ") };
+        List<EmailAttachment> attachments = null;
+        try {
+            attachments = fileRefs != null ? emailService.getAttachments(fileRefs, zipIt, null, zipTitle) : null;
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw new EmailException(e.getMessage());
+        }        Object[] descParams = { notification.getSubject(), StringUtils.join(recipient.emails, ", ") };
         logService.addLogEntry(LogEntry.create(LogObject.NOTICE, userService, docRef, "applog_email_notice", descParams));
         emailService.sendEmail(recipient.emails, recipient.names, notification.getSenderEmail(), notification.getSubject(), content, true, docRef, attachments);
 

@@ -38,7 +38,7 @@ public interface DvkService {
 
     Map<QName, Serializable> mapRelatedIncomingElements(String documentTypeId, NodeRef storedDecContainer);
 
-    NotificationResult sendTaskNotificationDocument(Task task, NotificationCache notificationCache);
+    NotificationResult sendTaskNotificationDocument(Task task, NotificationCache notificationCache) throws Exception;
 
     /**
      * Receive all documents from DVK server(using multiple service calls, if server has more documents than can be fetched at a time)
@@ -59,7 +59,7 @@ public interface DvkService {
      * @param compoundWorkflowRef if not null, only this compund workflow recipients are sent updates,
      * @param messageForRecipient
      */
-    void sendDvkTasksWithDocument(NodeRef docNodeRef, NodeRef compoundWorkflowRef, Map<NodeRef, List<String>> additionalRecipients, String messageForRecipient);
+    void sendDvkTasksWithDocument(NodeRef docNodeRef, NodeRef compoundWorkflowRef, Map<NodeRef, List<String>> additionalRecipients, String messageForRecipient) throws Exception;
 
     void sendDvkTask(Task task);
 
