@@ -62,6 +62,11 @@
       			<h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}reviewTaskCompletedNotAccepted']}" />
       			<h:outputText value="#{msg.notification_reviewTaskCompletedNotAccepted_label}" />
       		</h:panelGroup>
+      		
+      		<h:panelGroup>
+	  			<h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}reviewTaskCompletedWithRemarks']}" />
+      			<h:outputText value="#{msg.notification_reviewTaskCompletedWithRemarks_label}" />
+      		</h:panelGroup>
       
         	<h:panelGroup>
       			<h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}confirmationTaskCompleted']}" rendered="#{NotificationDialog.showConfirmationTaskData}" />
@@ -120,20 +125,38 @@
       		</h:panelGroup>
 		</h:panelGrid>
 	</a:panel>
-      
-      
-      
+            
     <a:panel id="mycompletedtasks-panel" label="#{msg.notification_notifications_related_to_tasks_completed_by_me}" progressive="true">      
     	<h:panelGrid columns="1" style="width: 100%;">
       		<h:panelGroup>
-	  			<h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}reviewTaskCompletedWithRemarks']}" />
-      			<h:outputText value="#{msg.notification_reviewTaskCompletedWithRemarks_label}" />
+	  			<h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}reviewedDocumentReviewed']}" />
+      			<h:outputText value="#{msg.notification_reviewedDocumentReviewed_label}" />
+      		</h:panelGroup>
+      		
+      		<h:panelGroup>
+	  			<h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}reviewedDocumentReviewedNotAccepted']}" />
+      			<h:outputText value="#{msg.notification_reviewedDocumentReviewedNotAccepted_label}" />
+      		</h:panelGroup>
+      		
+      		<h:panelGroup>
+	  			<h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}reviewedDocumentReviewedWithRemarks']}" />
+      			<h:outputText value="#{msg.notification_reviewedDocumentReviewedWithRemarks_label}" />
+      		</h:panelGroup>
+      		
+      		<h:panelGroup>
+	  			<h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}reviewedDocumentConfirmed']}" />
+      			<h:outputText value="#{msg.notification_reviewedDocumentConfirmed_label}" />
+      		</h:panelGroup>
+      		
+      		<h:panelGroup>
+	  			<h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}reviewedDocumentConfirmedNotAccepted']}" />
+      			<h:outputText value="#{msg.notification_reviewedDocumentConfirmedNotAccepted_label}" />
       		</h:panelGroup>
       
-     		 <h:panelGroup>
+     		<h:panelGroup>
 	  			<h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}reviewDocumentSigned']}" />
       			<h:outputText value="#{msg.notification_reviewedDocumentSigned_label}" />
-     		 </h:panelGroup>
+     		</h:panelGroup>
       
       		<h:panelGroup>
 	  			<h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}reviewDocumentNotSigned']}" />

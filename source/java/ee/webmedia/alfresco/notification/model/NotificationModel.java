@@ -62,6 +62,11 @@ public interface NotificationModel {
         QName TASK_DUE_DATE_EXTENSION_TASK_COMPLETED_ORDERED = QName.createQName(URI, "taskDueDateExtensionTaskCompletedOrdered");
         QName TASK_DUE_DATE_EXTENSION_TASK_COMPLETED_NOT_ACCEPTED = QName.createQName(URI, "taskDueDateExtensionTaskCompletedNotAccepted");
         QName TASK_DUE_DATE_EXTENSION_TASK_COMPLETED_NOT_ACCEPTED_ORDERED = QName.createQName(URI, "taskDueDateExtensionTaskCompletedNotAcceptedOrdered");
+        QName TASK_REVIEWED_DOCUMENT_REVIEWED = QName.createQName(URI, "reviewedDocumentReviewed");
+        QName TASK_REVIEWED_DOCUMENT_REVIEWED_NOT_ACCEPTED = QName.createQName(URI, "reviewedDocumentReviewedNotAccepted");
+        QName TASK_REVIEWED_DOCUMENT_REVIEWED_WITH_REMARKS = QName.createQName(URI, "reviewedDocumentReviewedWithRemarks");
+        QName TASK_REVIEWED_DOCUMENT_CONFIRMED = QName.createQName(URI, "reviewedDocumentConfirmed");
+        QName TASK_REVIEWED_DOCUMENT_CONFIRMED_NOT_ACCEPTED = QName.createQName(URI, "reviewedDocumentConfirmedNotAccepted");
         QName WORKFLOW_REGISTRATION_STOPPED_NO_DOCUMENTS = QName.createQName(URI, "workflowRegistrationStoppedNoDocuments");
         QName WORKFLOW_SIGNATURE_STOPPED_NO_DOCUMENTS = QName.createQName(URI, "workflowSignatureStoppedNoDocuments");
         QName COMPOUND_WORKFLOW_STOPPED = QName.createQName(URI, "compoundWorkflowStopped");

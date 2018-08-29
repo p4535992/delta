@@ -53,6 +53,9 @@
             <property name="docdyn:containsCases">
                <type>d:boolean</type>
             </property>
+            <property name="docdyn:casesMandatory">
+               <type>d:boolean</type>
+            </property>
             <property name="docdyn:casesCreatableByUser">
                <type>d:boolean</type>
             </property>

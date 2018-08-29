@@ -28,7 +28,8 @@ public class IsOpenDocListUnitEvaluator extends BaseActionEvaluator {
         NodeService nodeService = BeanHelper.getNodeService();
         if (nodeService.getType(parentRef).equals(CaseModel.Types.CASE)) {
             Case aCase = BeanHelper.getCaseService().getCaseByNoderef(parentRef);
-            return DocListUnitStatus.OPEN.getValueName().equals(aCase.getStatus());
+            return DocListUnitStatus.OPEN.getValueName().equals(aCase.getStatus())
+                    || DocListUnitStatus.CLOSED.getValueName().equals(aCase.getStatus());
         } else if (nodeService.getType(parentRef).equals(VolumeModel.Types.VOLUME)) {
             UnmodifiableVolume volume = BeanHelper.getVolumeService().getUnmodifiableVolume(parentRef, null);
             return (DocListUnitStatus.OPEN.getValueName().equals(volume.getStatus())

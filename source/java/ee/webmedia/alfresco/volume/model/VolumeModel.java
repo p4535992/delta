@@ -39,6 +39,7 @@ public interface VolumeModel {
         QName VALID_TO = QName.createQName(URI, "validTo");
         QName CONTAINING_DOCS_COUNT = QName.createQName(URI, "containingDocsCount");
         QName CONTAINS_CASES = QName.createQName(URI, "containsCases");
+        QName CASES_MANDATORY = QName.createQName(URI, "casesMandatory");
         QName CASES_CREATABLE_BY_USER = QName.createQName(URI, "casesCreatableByUser");
         QName LOCATION = QName.createQName(URI, "location");
 
