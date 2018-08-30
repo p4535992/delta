@@ -34,6 +34,7 @@ import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.service.cmr.security.PersonService;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.dialog.IDialogBean;
@@ -135,7 +136,9 @@ public class MenuBean implements Serializable {
             );
 
     public static final List<String> HIDDEN_FROM_SUBSTITUTOR = Arrays.asList("documentDynamicTypes");
-
+    public static final List<String> HIDDEN_BY_PROPERTIES = Arrays.asList(
+            MenuItem.DVK_CORRUPT,
+            MenuItem.SEND_FAILURE_NOTIFICATION);
     private transient HtmlPanelGroup shortcutsPanelGroup;
     private transient HtmlPanelGroup breadcrumb;
 
@@ -144,7 +147,8 @@ public class MenuBean implements Serializable {
     private transient UserService userService;
     private transient WorkflowConstantsBean workflowConstantsBean;
     private transient EInvoiceService einvoiceService;
-
+    private transient PersonService personService;
+    
     private Menu menu;
     private int updateCount = 0;
     private String lastLinkId;
@@ -1017,6 +1021,22 @@ public class MenuBean implements Serializable {
         if ("volSearch".equals(menuItemId)) {
             return !BeanHelper.getApplicationConstantsBean().isCaseVolumeEnabled();
         }
+        
+        if (HIDDEN_BY_PROPERTIES.contains(menuItemId)) {
+        	String propertyValue = "";
+        	Boolean showDvkMenu = false;
+        	
+        	if(BeanHelper.getPersonService().getPersonProperty(
+        			getUserService().getCurrentUserName(), ContentModel.SHOW_DVK_MENU) != null){
+        		
+        		propertyValue = BeanHelper.getPersonService().getPersonProperty(getUserService().getCurrentUserName(), ContentModel.SHOW_DVK_MENU).toString();
+        		showDvkMenu = Boolean.parseBoolean(propertyValue);
+        	}
+        	if (!showDvkMenu) {
+        		return true;
+        	} 
+        }
+        
         return false;
     }
 
