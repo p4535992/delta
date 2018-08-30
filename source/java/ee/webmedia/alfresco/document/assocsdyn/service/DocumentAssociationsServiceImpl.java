@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.faces.el.EvaluationException;
+
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
@@ -491,6 +493,19 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
             LOG.debug("srcAssocRef=" + srcAssocRef.getTypeQName());
             addDocAssocInfo(srcAssocRef, true, assocInfos);
         }
+        
+       for(DocAssocInfo docs : assocInfos){
+        	try{
+	        	CompoundWorkflow wf = workflowService.getCompoundWorkflow(docs.getTargetNodeRef());
+	            Date date = wf.getCreatedDateTime();
+	            String ownerName = wf.getOwnerName();
+	            docs.setRegDateTime(date);
+	            docs.setWorkflowOwnerName(ownerName);
+        	}catch(Exception e){
+        		
+        	}
+        }
+        
         final Map<String, Map<String, AssociationRef>> addedAssocs = docNode.getAddedAssociations();
         for (Map<String, AssociationRef> typedAssoc : addedAssocs.values()) {
             for (AssociationRef addedAssoc : typedAssoc.values()) {

@@ -25,6 +25,7 @@ public class DocAssocInfo implements Serializable, Comparable<DocAssocInfo> {
     private boolean source;
     private String regNumber;
     private Date regDateTime;
+    private String workflowOwnerName;
 
     private NodeRef thisNodeRef;
     private NodeRef otherNodeRef;
@@ -205,5 +206,13 @@ public class DocAssocInfo implements Serializable, Comparable<DocAssocInfo> {
     public void setAllowDelete(boolean allowDelete) {
         this.allowDelete = allowDelete;
     }
+
+	public String getWorkflowOwnerName() {
+		return workflowOwnerName;
+	}
+
+	public void setWorkflowOwnerName(String workflowOwnerName) {
+		this.workflowOwnerName = workflowOwnerName;
+	}
 
 }
