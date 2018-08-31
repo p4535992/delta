@@ -15,8 +15,6 @@ import javax.mail.internet.ContentType;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.ParseException;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.rtf.RTFEditorKit;
 
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
@@ -357,19 +355,19 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
 
     @Override
     public void saveAttachmentsToSubfolder(NodeRef document, MimeMessage originalMessage, boolean saveBody) throws IOException, MessagingException, TransformationException,
-            FolderException, BadLocationException  {
+            FolderException {
         NodeRef parentNodeRef = findOrCreateFolder(document, AttachmentsFolderAppendBehaviour.BEHAVIOUR_NAME);
         saveAttachments(parentNodeRef, originalMessage, saveBody);
     }
 
     @Override
     public void saveAttachments(NodeRef document, MimeMessage originalMessage, boolean saveBody)
-            throws IOException, MessagingException, BadLocationException  {
+            throws IOException, MessagingException {
         saveAttachments(document, originalMessage, saveBody, null);
     }
 
     private void saveAttachments(NodeRef document, MimeMessage originalMessage, boolean saveBody, Map<NodeRef, Integer> invoiceRefToAttachment) throws IOException,
-            MessagingException, BadLocationException  {
+            MessagingException {
 
         Object content = originalMessage.getContent();
         //if (content instanceof String) {
@@ -524,7 +522,7 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
         return content;
     }
 
-    private boolean saveTnefBodyAndAttachments(NodeRef document, Message tnefMessage, String metadata, boolean saveBody) throws IOException, UnsupportedEncodingException, BadLocationException {
+    private boolean saveTnefBodyAndAttachments(NodeRef document, Message tnefMessage, String metadata, boolean saveBody) throws IOException, UnsupportedEncodingException {
         if (saveBody) {
             String bodyFilename = I18NUtil.getMessage("imap.letter_body_filename");
             MAPIProps props = tnefMessage.getMAPIProps();
@@ -808,12 +806,12 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
         return mimeType;
     }
 
-    private Part createBody(NodeRef document, MimeMessage originalMessage, String metadata) throws MessagingException, IOException, BadLocationException  {
+    private Part createBody(NodeRef document, MimeMessage originalMessage, String metadata) throws MessagingException, IOException {
         String filename = I18NUtil.getMessage("imap.letter_body_filename");
         return createBody(document, originalMessage, filename, metadata);
     }
 
-    private Part createBody(NodeRef document, MimeMessage originalMessage, String filename, String metadata) throws MessagingException, IOException, BadLocationException  {
+    private Part createBody(NodeRef document, MimeMessage originalMessage, String filename, String metadata) throws MessagingException, IOException {
         Part p = getText(originalMessage);
         if (p == null) {
             log.debug("No body part found from message, skipping body PDF creation");
@@ -840,7 +838,7 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
         return p;
     }
 
-    private void createBody(NodeRef document, String mimeType, String encoding, String metadata, InputStream contentStream, String filename) throws IOException, BadLocationException  {
+    private void createBody(NodeRef document, String mimeType, String encoding, String metadata, InputStream contentStream, String filename) throws IOException {
         ContentWriter tempWriter = contentService.getTempWriter();
         tempWriter.setMimetype(mimeType);
         tempWriter.setEncoding(encoding);
@@ -858,27 +856,20 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
         }
     }
 
-    private InputStream createContentString(String metadata, InputStream contentStream, String mimeType, String encoding) throws IOException, BadLocationException {
+    private String createContentString(String metadata, InputStream contentStream, String mimeType, String encoding) throws IOException {
         String resultString = StringUtils.EMPTY;
         if (StringUtils.isNotBlank(metadata)) {
+            String content = IOUtils.toString(contentStream, encoding);
             if (MimetypeMap.MIMETYPE_HTML.equals(mimeType)) {
-                Document html = Jsoup.parse(IOUtils.toString(contentStream, encoding));
+                Document html = Jsoup.parse(content);
                 html.body().before(metadata);
                 resultString = html.toString();
-            } else if ("application/rtf".equals(mimeType)) {
-                RTFEditorKit rtfParser = new RTFEditorKit();
-                javax.swing.text.Document document = rtfParser.createDefaultDocument();
-                rtfParser.read(contentStream, document, 0);
-                String rtfContent = document.getText(0, document.getLength());
-                resultString += metadata;
-                resultString += rtfContent;
             } else {
                 resultString += metadata;
-                resultString += IOUtils.toString(contentStream, encoding);
+                resultString += content;
             }
-            return new ByteArrayInputStream(resultString.getBytes(encoding));
         }
-        return contentStream;
+        return resultString;
     }
 
     // Workaround for getting encoding from content type

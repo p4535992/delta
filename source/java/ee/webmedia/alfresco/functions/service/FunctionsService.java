@@ -31,8 +31,6 @@ public interface FunctionsService {
 
     List<UnmodifiableFunction> getAllFunctions(DocListUnitStatus... status);
 
-    List<UnmodifiableFunction> getAllSpaceStoreFunctions(DocListUnitStatus... status);
-
     Function getFunction(NodeRef functionRef, Map<Long, QName> propertyTypes);
 
     /**

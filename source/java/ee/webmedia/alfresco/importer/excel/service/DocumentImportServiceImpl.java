@@ -534,7 +534,7 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
 
         private NodeRef getFunctionRef(ImportDocument doc, boolean forceRefresh) {
             if (functionsCache == null || forceRefresh) {
-                List<UnmodifiableFunction> allOpenedFunctions = getFunctionsService().getAllSpaceStoreFunctions(DocListUnitStatus.OPEN);
+                List<UnmodifiableFunction> allOpenedFunctions = getFunctionsService().getAllFunctions(DocListUnitStatus.OPEN);
                 functionsCache = new HashMap<String, NodeRef>(allOpenedFunctions.size());
                 for (UnmodifiableFunction function : allOpenedFunctions) {
                     functionsCache.put(function.getMark(), function.getNodeRef());

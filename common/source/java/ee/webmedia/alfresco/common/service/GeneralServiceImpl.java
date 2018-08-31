@@ -235,11 +235,6 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     }
 
     @Override
-    public NodeRef getArchivalNodeRef(String nodeRefXPath) {
-        return getNodeRef(nodeRefXPath, archivalsStore);
-    }
-
-    @Override
     public NodeRef getNodeRef(String nodeRefXPath, StoreRef storeRef) {
         return getNodeRef(nodeRefXPath, nodeService.getRootNode(storeRef));
     }
@@ -1167,7 +1162,7 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
         explainAnalyzeQuery(sqlQuery, traceLog, false, args);
     }
 
-    @Override
+
     public void explainAnalyzeQuery(String sqlQuery, Log traceLog, boolean analyze, Object... args) {
         if (traceLog.isTraceEnabled()) {
             jdbcTemplate.getJdbcOperations().execute("SET enable_seqscan TO off");

@@ -7,7 +7,6 @@ import java.util.Set;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
-import javax.swing.text.BadLocationException;
 
 import org.alfresco.repo.imap.AlfrescoImapUser;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -66,7 +65,7 @@ public interface ImapServiceExt {
      * @throws MessagingException
      * @throws TransformationException
      */
-    void saveAttachments(NodeRef folderNodeRef, MimeMessage originalMessage, boolean saveBody) throws IOException, MessagingException, TransformationException, BadLocationException;
+    void saveAttachments(NodeRef folderNodeRef, MimeMessage originalMessage, boolean saveBody) throws IOException, MessagingException, TransformationException;
 
     void saveIncomingEInvoice(NodeRef folderNodeRef, MimeMessage mimeMessage) throws FolderException;
 
@@ -81,7 +80,7 @@ public interface ImapServiceExt {
     long saveEmailToSubfolder(NodeRef folderNodeRef, MimeMessage mimeMessage, String behaviour, boolean incomingEmail) throws FolderException;
 
     void saveAttachmentsToSubfolder(NodeRef document, MimeMessage originalMessage, boolean saveBody) throws IOException, MessagingException, TransformationException,
-            FolderException, BadLocationException;
+            FolderException;
 
     List<Subfolder> getImapSubfolders(NodeRef parentRef);
 
