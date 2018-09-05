@@ -34,6 +34,7 @@ import org.alfresco.util.Pair;
 import org.alfresco.util.TempFileProvider;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.springframework.util.Assert;
@@ -525,29 +526,6 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                 throw new RuntimeException(e);
             }
         } while (retry > 0);
-    }
-
-    public String getDvkSendTemplate(NodeRef template, DvkSendDocuments lastHourFailedDocuments){
-    	String templateText = fileFolderService.getReader(template).getContentString();
-    	try{
-    		Document doc = documentService.getDocumentByNodeRef(lastHourFailedDocuments.getDocumentNodeRef());
-    		templateText = templateText.replace("document.name", doc.getDocName());
-        	templateText = templateText.replace("document.reg.number", doc.getRegNumber());
-        	templateText = templateText.replace("document.reg.date", doc.getRegDateTimeStr());
-        	templateText = templateText.replace("document.url", doc.getNodeRef().toString());
-    	}catch(Exception e){
-    		log.debug("Faied to send DVK send fail notification");
-    	}
-        
-    	return templateText;
-    }
-    
-    public String getProcessedMyFileModified(NodeRef template, String fileName, String versionNr, String modifier){
-    	String templateText = fileFolderService.getReader(template).getContentString();
-    	templateText = templateText.replace("document.name", fileName);
-    	templateText = templateText.replace("document.version.number", versionNr);
-    	templateText = templateText.replace("modifier.name", modifier);
-		return templateText;
     }
     
     @Override

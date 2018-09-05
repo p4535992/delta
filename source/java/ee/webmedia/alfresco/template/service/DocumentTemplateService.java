@@ -140,8 +140,4 @@ public interface DocumentTemplateService {
 
     void removeTemplateFromCache(NodeRef templateRef);
 
-	String getProcessedMyFileModified(NodeRef notificationTemplateByName, String fileName, String versionNr, String modifier);
-	
-	String getDvkSendTemplate(NodeRef template, DvkSendDocuments lastHourFailedDocuments);
-
 }

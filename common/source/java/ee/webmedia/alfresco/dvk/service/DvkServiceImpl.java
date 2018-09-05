@@ -104,6 +104,7 @@ import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.model.FileModel;
+import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.dvk.model.DvkModel;
 import ee.webmedia.alfresco.dvk.model.DvkReceivedLetterDocument;
@@ -160,8 +161,8 @@ public abstract class DvkServiceImpl implements DvkService {
     private String institutionCode;
     private String subSystemCode;
 
-
-    private List<DvkSendDocuments> dvkSendFailedDocuments = new ArrayList<DvkSendDocuments>();
+    
+    private List<Document> dvkSendFailedDocuments = new ArrayList<Document>();
     private String noTitleSpacePrefix;
 
     @Override
@@ -891,8 +892,7 @@ public abstract class DvkServiceImpl implements DvkService {
             String next = sendDocuments.iterator().next();
             MonitoringUtil.logSuccess(MonitoredService.OUT_XTEE_DVK);
             return next;
-        } catch (RuntimeException e) {
-        	dvkSendFailedDocuments.add(sd);
+        } catch (RuntimeException e) {;
             MonitoringUtil.logError(MonitoredService.OUT_XTEE_DVK, e);
             throw e;
         }
@@ -1607,14 +1607,14 @@ public abstract class DvkServiceImpl implements DvkService {
 	/**
 	 * @return the dvkSendFailedDocuments
 	 */
-	public List<DvkSendDocuments> getDvkSendFailedDocuments() {
+	public List<Document> getDvkSendFailedDocuments() {
 		return dvkSendFailedDocuments;
 	}
 
 	/**
 	 * @param dvkSendFailedDocuments the dvkSendFailedDocuments to set
 	 */
-	public void setDvkSendFailedDocuments(List<DvkSendDocuments> dvkSendFailedDocuments) {
+	public void setDvkSendFailedDocuments(List<Document> dvkSendFailedDocuments) {
 		this.dvkSendFailedDocuments = dvkSendFailedDocuments;
 	}
 

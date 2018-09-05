@@ -104,7 +104,7 @@ public class VersionsServiceImpl implements VersionsService {
                 if (result) { 
 	                // create a new version
 	                org.alfresco.service.cmr.version.Version version = versionServiceExt.createVersion(nodeRef, sourceFileProp);
-	                BeanHelper.getNotificationService().sendMyFileModifiedNotifications(nodeRef, version.getVersionLabel());
+	                BeanHelper.getNotificationService().sendMyFileModifiedNotifications(nodeRef);
 	                logger.info("Created new version (" + version.getVersionLabel() + ") from " + nodeRef + " ( " + filename + "). VersionedNodeRef: " + version.getVersionedNodeRef()
 	                        + " FrozenStateNodeRef: " + version.getFrozenStateNodeRef());
 	                // check the flag as true to prevent creation of new versions until the node is unlocked in UnlockMethod
