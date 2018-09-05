@@ -98,8 +98,10 @@
             readOnlyIf="docdyn:status=suletud||hävitatud" />
          <show-property name="docdyn:containsCases" display-label-id="volume_containsCases" component-generator="CheckboxGenerator" readOnlyIf="#{VolumeDetailsDialog.disableContainsCases}"
             valueChangeListener="#{VolumeDetailsDialog.containsCasesValueChanged}" />
+         <show-property name="docdyn:casesMandatory" display-label-id="volume_casesMandatory" component-generator="CheckboxGenerator"
+                        readOnlyIf="#{VolumeDetailsDialog.isContainsCasesSelectedAndActiveStatus}"/>
          <show-property name="docdyn:casesCreatableByUser" display-label-id="volume_casesCreatableByUser" component-generator="CheckboxGenerator"
-            readOnlyIf="#{VolumeDetailsDialog.disableCasesCreatableByUser}" />
+            readOnlyIf="#{VolumeDetailsDialog.isContainsCasesSelectedAndActiveStatus}" />
          <show-property name="docdyn:description" display-label-id="volume_description" readOnlyIf="docdyn:status=suletud||hävitatud" styleClass="expand19-200"
             component-generator="TextAreaGenerator" />
          <show-property name="docdyn:location" display-label-id="volume_location" readOnlyIf="docdyn:status=hävitatud" />

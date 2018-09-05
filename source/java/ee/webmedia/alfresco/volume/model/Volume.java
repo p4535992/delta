@@ -43,6 +43,7 @@ public class Volume extends EventPlanVolume implements VolumeOrCaseFile {
     // FIXME: milleks see väli? On see üldse kuskil kasutusel?
     private Date seriesIdentifier;
     private boolean containsCases;
+    private boolean casesMandatory;
     private boolean casesCreatableByUser;
     private int containingDocsCount;
     private String ownerName;
@@ -340,9 +341,17 @@ public class Volume extends EventPlanVolume implements VolumeOrCaseFile {
                 .append("\n\tvolumeMark = " + volumeMark)
                 .append("\n\ttitle = " + title)
                 .append("\n\tcontainsCases = " + containsCases)
+                .append("\n\tcasesMandatory = " + casesMandatory)
                 .append("\n\tvalidFrom = " + validFrom)
                 .append("\n\tvalidTo = " + validTo)
                 .append("\n\tstatus = " + status).toString();
     }
 
+    public boolean isCasesMandatory() {
+        return casesMandatory;
+    }
+
+    public void setCasesMandatory(boolean casesMandatory) {
+        this.casesMandatory = casesMandatory;
+    }
 }

@@ -440,7 +440,7 @@ public class NotificationServiceImpl implements NotificationService {
             boolean sentOverDvk, NotificationCache notificationCache) {
         NotificationResult result = new NotificationResult();
         if (task instanceof LinkedReviewTask) {
-            // no notification whatsoever is sent out for linkedReviweTasks
+            // no notification whatsoever is sent out for linkedReviewTasks
             return result;
         }
         Notification substitutionNotification = null;
@@ -1057,74 +1057,50 @@ public class NotificationServiceImpl implements NotificationService {
         final CompoundWorkflow compoundWorkflow = workflow.getParent();
                 
         if (WorkflowSpecificModel.ReviewTaskOutcome.CONFIRMED.equals(task.getOutcomeIndex())) {
-            String ownerIdToCheck = null;
+            List<String> usernamesToCheck = new ArrayList<>();
             if (StringUtils.isNotEmpty(compoundWorkflow.getOwnerId())
                     && isSubscribed(compoundWorkflow.getOwnerId(), NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED)) {
-                ownerIdToCheck = compoundWorkflow.getOwnerId();
+            	usernamesToCheck.add(compoundWorkflow.getOwnerId());
                 Notification ownerNotification = setupNotification(NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED, getTaskWorkflowType(task));
                 addCompoundWorkflowOwnerRecipient(compoundWorkflow, ownerNotification);
                 notifications.add(ownerNotification);
             }
-            addTaskIndependentCompoundWorkflowNotification(compoundWorkflow, notifications, ownerIdToCheck,
+            addReviewersNotifications(notifications, compoundWorkflow, getTaskWorkflowType(task), NotificationModel.NotificationType.TASK_REVIEWED_DOCUMENT_REVIEWED, usernamesToCheck, task.getOwnerId());
+            
+            addTaskIndependentCompoundWorkflowNotification(compoundWorkflow, notifications, usernamesToCheck,
                     NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_ORDERED);
         }
 
         else if (WorkflowSpecificModel.ReviewTaskOutcome.CONFIRMED_WITH_REMARKS.equals(task.getOutcomeIndex())) {
-
-            Notification notification = setupNotification(NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_WITH_REMARKS, getTaskWorkflowType(task));
-            List<String> usernamesToCheck = new ArrayList<>();
-            if (workflow.isParallelTasks()) {
-                for (Task workflowTask : workflow.getTasks()) {
-                    if (StringUtils.isEmpty(workflowTask.getOwnerId())
-                            || !isSubscribed(workflowTask.getOwnerId(), NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_WITH_REMARKS)) {
-                        continue;
-                    }
-                    notification.addRecipient(workflowTask.getOwnerName(), workflowTask.getOwnerEmail());
-                    usernamesToCheck.add(workflowTask.getOwnerId());
-                }
-            } else {
-                for (Task workflowTask : workflow.getTasks()) {
-                    if (StringUtils.isEmpty(workflowTask.getOwnerId()) || !workflowTask.isStatus(Status.FINISHED)
-                            || !isSubscribed(workflowTask.getOwnerId(), NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_WITH_REMARKS)) {
-                        continue;
-                    }
-                    notification.addRecipient(workflowTask.getOwnerName(), workflowTask.getOwnerEmail());
-                    usernamesToCheck.add(workflowTask.getOwnerId());
-                }
+        	
+        	List<String> usernamesToCheck = new ArrayList<>();
+            if (StringUtils.isNotEmpty(compoundWorkflow.getOwnerId())
+                    && isSubscribed(compoundWorkflow.getOwnerId(), NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_WITH_REMARKS)) {
+            	usernamesToCheck.add(compoundWorkflow.getOwnerId());
+                Notification ownerNotification = setupNotification(NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_WITH_REMARKS, getTaskWorkflowType(task));
+                addCompoundWorkflowOwnerRecipient(compoundWorkflow, ownerNotification);
+                notifications.add(ownerNotification);
             }
-            addCompoundWorkflowOwnerRecipient(compoundWorkflow, notification);
+            addReviewersNotifications(notifications, compoundWorkflow, getTaskWorkflowType(task), NotificationModel.NotificationType.TASK_REVIEWED_DOCUMENT_REVIEWED_WITH_REMARKS, usernamesToCheck, task.getOwnerId());
+            
             addTaskIndependentCompoundWorkflowNotification(compoundWorkflow, notifications, usernamesToCheck,
                     NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_WITH_REMARKS_ORDERED);
-            notifications.add(notification);
         }
 
         else if (WorkflowSpecificModel.ReviewTaskOutcome.NOT_CONFIRMED.equals(task.getOutcomeIndex())) {
-
-            Notification notification = setupNotification(NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_NOT_ACCEPTED, getTaskWorkflowType(task));
-            List<String> usernamesToCheck = new ArrayList<>();
-            if (workflow.isParallelTasks()) {
-                for (Task workflowTask : workflow.getTasks()) {
-                    if (StringUtils.isEmpty(workflowTask.getOwnerId())
-                            || !isSubscribed(workflowTask.getOwnerId(), NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_NOT_ACCEPTED)) {
-                        continue;
-                    }
-                    notification.addRecipient(workflowTask.getOwnerName(), workflowTask.getOwnerEmail());
-                    usernamesToCheck.add(workflowTask.getOwnerId());
-                }
-            } else {
-                for (Task workflowTask : workflow.getTasks()) {
-                    if (StringUtils.isEmpty(workflowTask.getOwnerId()) || !workflowTask.isStatus(Status.FINISHED)
-                            || !isSubscribed(workflowTask.getOwnerId(), NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_NOT_ACCEPTED)) {
-                        continue;
-                    }
-                    notification.addRecipient(workflowTask.getOwnerName(), workflowTask.getOwnerEmail());
-                    usernamesToCheck.add(workflowTask.getOwnerId());
-                }
+        	
+        	List<String> usernamesToCheck = new ArrayList<>();
+            if (StringUtils.isNotEmpty(compoundWorkflow.getOwnerId())
+                    && isSubscribed(compoundWorkflow.getOwnerId(), NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_NOT_ACCEPTED)) {
+            	usernamesToCheck.add(compoundWorkflow.getOwnerId());
+                Notification ownerNotification = setupNotification(NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_NOT_ACCEPTED, getTaskWorkflowType(task));
+                addCompoundWorkflowOwnerRecipient(compoundWorkflow, ownerNotification);
+                notifications.add(ownerNotification);
             }
-            addCompoundWorkflowOwnerRecipient(compoundWorkflow, notification);
+            addReviewersNotifications(notifications, compoundWorkflow, getTaskWorkflowType(task), NotificationModel.NotificationType.TASK_REVIEWED_DOCUMENT_REVIEWED_NOT_ACCEPTED, usernamesToCheck, task.getOwnerId());
+            
             addTaskIndependentCompoundWorkflowNotification(compoundWorkflow, notifications, usernamesToCheck,
                     NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_NOT_ACCEPTED_ORDERED);
-            notifications.add(notification);
         }
        
       
@@ -1261,15 +1237,17 @@ public class NotificationServiceImpl implements NotificationService {
             notification = setupNotification(NotificationModel.NotificationType.TASK_CONFIRMATION_TASK_COMPLETED_NOT_ACCEPTED, getTaskWorkflowType(task));
         }
 
-        String usernameToCheck = null;
+        List<String> usernamesToCheck = new ArrayList<>();
         if (notification != null) {
             notification.addRecipient(compoundWorkflow.getOwnerName(), userService.getUserEmail(ownerId));
-            usernameToCheck = compoundWorkflow.getOwnerId();
+            usernamesToCheck.add(compoundWorkflow.getOwnerId());
             notifications.add(notification);
         }
-        addTaskIndependentCompoundWorkflowNotification(task.getParent().getParent(), notifications, usernameToCheck,
+        addTaskIndependentCompoundWorkflowNotification(task.getParent().getParent(), notifications, usernamesToCheck,
                 isAccepted ? NotificationModel.NotificationType.TASK_CONFIRMATION_TASK_COMPLETED_ORDERED
                         : NotificationModel.NotificationType.TASK_CONFIRMATION_TASK_COMPLETED_NOT_ACCEPTED_ORDERED);
+        addReviewersNotifications(notifications, compoundWorkflow, getTaskWorkflowType(task), isAccepted ? NotificationModel.NotificationType.TASK_REVIEWED_DOCUMENT_CONFIRMED
+                : NotificationModel.NotificationType.TASK_REVIEWED_DOCUMENT_CONFIRMED_NOT_ACCEPTED, usernamesToCheck, task.getOwnerId());
         return notifications;
     }
 
@@ -1312,6 +1290,41 @@ public class NotificationServiceImpl implements NotificationService {
         addTaskIndependentCompoundWorkflowNotification(compoundWorkflow, notifications, usernameToCheck,
                 NotificationModel.NotificationType.TASK_OPINION_TASK_COMPLETED_ORDERED);
         return notifications;
+    }
+    
+    private void addReviewersNotifications(List<Notification> notifications, CompoundWorkflow compoundWorkflow, 
+    		CompoundWorkflowType taskWorkflowType, final QName notificationType, List<String> usernamesToCheck, String ownerIdToSkip) {
+    	Predicate<Task> taskPredicate = new Predicate<Task>() {
+            @Override
+            public boolean eval(Task docTask) {
+                // subscribed, review task, finished
+                return WorkflowSpecificModel.Types.REVIEW_TASK.equals(docTask.getType())
+                        && docTask.isStatus(Status.FINISHED)
+                        && isSubscribed(docTask.getOwnerId(), notificationType);
+
+            }
+        };
+        Set<Task> reviewTasks;
+        if (compoundWorkflow.isIndependentWorkflow()) {
+            reviewTasks = WorkflowUtil.getTasks(new HashSet<Task>(), Arrays.asList(compoundWorkflow), taskPredicate);
+        } else {
+            reviewTasks = workflowService.getTasks(compoundWorkflow.getParent(), taskPredicate);
+        }
+        if (!reviewTasks.isEmpty()) {
+            Notification notification = setupNotification(notificationType, taskWorkflowType);
+            Set<String> usersToNotify = new HashSet<>();
+            for (Task reviewTask : reviewTasks) {
+                // Add only distinct e-mails
+                String ownerId = reviewTask.getOwnerId();
+                if (ownerId.equals(ownerIdToSkip) || usersToNotify.contains(ownerId)) {
+                    continue;
+                }
+                notification.addRecipient(reviewTask.getOwnerName(), reviewTask.getOwnerEmail());
+                usernamesToCheck.add(ownerId);
+                usersToNotify.add(ownerId);
+            }
+            notifications.add(notification);
+        }
     }
 
     private List<Notification> processSignatureTask(Task task, List<Notification> notifications) {
@@ -1539,6 +1552,11 @@ public class NotificationServiceImpl implements NotificationService {
                 NotificationModel.NotificationType.WORKFLOW_REGISTRATION_STOPPED_NO_DOCUMENTS,
                 NotificationModel.NotificationType.WORKFLOW_SIGNATURE_STOPPED_NO_DOCUMENTS,
                 NotificationModel.NotificationType.DELEGATED_TASK_COMPLETED,
+                NotificationModel.NotificationType.TASK_REVIEWED_DOCUMENT_REVIEWED,
+                NotificationModel.NotificationType.TASK_REVIEWED_DOCUMENT_REVIEWED_WITH_REMARKS,
+                NotificationModel.NotificationType.TASK_REVIEWED_DOCUMENT_REVIEWED_NOT_ACCEPTED,
+                NotificationModel.NotificationType.TASK_REVIEWED_DOCUMENT_CONFIRMED,
+                NotificationModel.NotificationType.TASK_REVIEWED_DOCUMENT_CONFIRMED_NOT_ACCEPTED,
                 NotificationModel.NotificationType.REVIEW_DOCUMENT_SIGNED,
                 NotificationModel.NotificationType.REVIEW_DOCUMENT_NOT_SIGNED,
                 NotificationModel.NotificationType.TASK_CANCELLED,
@@ -2050,6 +2068,7 @@ public class NotificationServiceImpl implements NotificationService {
         return notification;
     }
 
+    // if subscription  is missing then default true
     private boolean isSubscribed(String userName, QName subscriptionType) {
         NodeRef personRef = userService.getPerson(userName);
         if (personRef == null) {

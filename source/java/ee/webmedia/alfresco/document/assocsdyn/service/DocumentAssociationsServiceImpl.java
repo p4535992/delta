@@ -632,6 +632,7 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
             assocInf.setTitle((String) otherDocProps.get(DOC_NAME));
             assocInf.setRegNumber((String) otherDocProps.get(REG_NUMBER));
             assocInf.setRegDateTime((Date) otherDocProps.get(REG_DATE_TIME));
+            assocInf.setAssocDocument(objectRef != null ? BeanHelper.getDocumentService().getDocumentByNodeRef(objectRef) : null);
             Pair<String, String> documentTypeNameAndId = getDocumentAdminService().getDocumentTypeNameAndId(otherDocNode);
             assocInf.setType(documentTypeNameAndId.getFirst());
             assocInf.setTypeId(documentTypeNameAndId.getSecond());

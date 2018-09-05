@@ -385,11 +385,12 @@ public class SendOutServiceImpl implements SendOutService {
             }
         }
 
-        List<EmailAttachment> attachments = emailService.getAttachments(fileRefs, zipIt, allCertificates, zipOrEncryptFileTitle);
+        boolean sendByDvk = toRegNums.size() > 0 || toDvkIdCodes.size() > 0;
+        List<EmailAttachment> attachments = emailService.getAttachments(fileRefs, !sendByDvk && zipIt, allCertificates, zipOrEncryptFileTitle);
 
         // Send through DVK
         String dvkId = "";
-        if (toRegNums.size() > 0 || toDvkIdCodes.size() > 0) {
+        if (sendByDvk) {
             // Construct DvkSendDocument
             DvkSendDocuments sd = new DvkSendDocuments();
             sd.setSenderOrgName(parametersService.getStringParameter(Parameters.DVK_ORGANIZATION_NAME));
