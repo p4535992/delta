@@ -34,6 +34,7 @@ public class SignatureBlockBean implements Serializable {
     private List<SignatureItem> signatureItems;
 
     protected DigiDoc4JSignatureService getDigiDoc4JSignatureService() {
+        log.debug("getDigiDoc4JSignatureService():...");
         if (digiDoc4JSignatureService == null) {
         	digiDoc4JSignatureService = (DigiDoc4JSignatureService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(
                     DigiDoc4JSignatureService.BEAN_NAME);
@@ -52,6 +53,7 @@ public class SignatureBlockBean implements Serializable {
     }
 
     private void load() {
+        log.debug("load()...");
         dataItems = null;
         signatureItems = null;
         if (!getDigiDoc4JSignatureService().isBDocContainer(file)) {
@@ -59,9 +61,12 @@ public class SignatureBlockBean implements Serializable {
         }
 
         try {
+            log.debug("GET SignatureItemsAndDataItems...");
             SignatureItemsAndDataItems values = getDigiDoc4JSignatureService().getDataItemsAndSignatureItems(file, false);
             signatureItems = values.getSignatureItems();
+            log.debug("SignatureITEMS: " + (signatureItems!= null ? signatureItems.size() : "NULL"));
             dataItems = values.getDataItems();
+            log.debug("dataITEMS: " + (dataItems!= null ? dataItems.size() : "NULL"));
         } catch (SignatureException e) {
             log.debug(e.getMessage(), e);
             Utils.addErrorMessage(Application.getMessage(FacesContext.getCurrentInstance(), "ddoc_container_fail"));
@@ -104,7 +109,7 @@ public class SignatureBlockBean implements Serializable {
     }
 
     public static void addSignatureError(Exception e) {
-        log.warn(e.getMessage(), e);
+        log.warn("addSignatureError(): ERROR MESSAGE: " + e.getMessage(), e);
         String additionalInfo = "";
         if (e.getCause() != null && StringUtils.isNotEmpty(e.getCause().getMessage())) {
             additionalInfo = ": " + e.getCause().getMessage();
