@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.filter.web;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -59,6 +60,8 @@ public abstract class AbstractSearchFilterBlockBean<T extends FilterService> ext
     private Set<String /* nodeRef */> publicFilterRefs;
     private NodeRef selectedFilter;
     private List<SelectItem> allFilters;
+    
+    protected String searchPanelTitlePart;
 
     @Override
     public void init(Map<String, String> parameters) {
@@ -198,6 +201,10 @@ public abstract class AbstractSearchFilterBlockBean<T extends FilterService> ext
 
     public void selectedFilterValueChanged(ValueChangeEvent event) {
         NodeRef newValue = (NodeRef) event.getNewValue();
+        selectedFilterValueChanged(newValue);
+    }
+    
+    public void selectedFilterValueChanged(NodeRef newValue) {
         if (newValue == null) {
             filter = getNewFilter();
         } else {
@@ -210,6 +217,30 @@ public abstract class AbstractSearchFilterBlockBean<T extends FilterService> ext
         }
         propertySheet.getChildren().clear();
         setPublicFilter(newValue);
+    }
+    
+    protected NodeRef savePublicFilterAsNewLocal(ValueChangeEvent event){
+    	NodeRef newValue = (NodeRef) event.getNewValue();
+    	
+    	if(newValue != null){
+	        Serializable name = getNodeService().getProperty(newValue, getFilterService().getFilterNameProperty());
+	     
+	        FilterVO choosenFilter = null;
+	            
+	        for(FilterVO filter: getFilterService().getFilters()){
+	        	if(filter.getFilterRef().equals(newValue)){
+	            	choosenFilter = filter;
+	           }
+	        }
+	            
+	        if(!choosenFilter.isPrivate()){
+	        	HtmlSelectOneMenu object = (HtmlSelectOneMenu) event.getSource();
+	        	object.setValue(null);
+	        	searchPanelTitlePart = name.toString();
+	        	newValue = null;
+	        }
+    	}
+    	return newValue;
     }
 
     protected void setFilterCaseProps() {

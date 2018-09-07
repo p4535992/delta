@@ -5,8 +5,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.faces.context.FacesContext;
+import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -45,6 +47,8 @@ public class CompoundWorkflowSearchDialog extends AbstractSearchFilterBlockBean<
         }
 
         loadAllFilters();
+        
+        searchPanelTitlePart = null;
     }
 
     @Override
@@ -52,6 +56,28 @@ public class CompoundWorkflowSearchDialog extends AbstractSearchFilterBlockBean<
         BeanHelper.getCompoundWorkflowSearchResultsDialog().setup(filter);
         super.isFinished = false;
         return AlfrescoNavigationHandler.DIALOG_PREFIX + "compoundWorkflowSearchResultsDialog";
+    }
+    
+    @Override
+    public void selectedFilterValueChanged(ValueChangeEvent event) {
+    	super.selectedFilterValueChanged(event);
+        NodeRef newValue = (NodeRef) event.getNewValue();             
+        searchPanelTitlePart = null;
+
+        if(!getUserService().isAdministrator()){
+        	NodeRef oldValue = newValue;
+        	newValue = savePublicFilterAsNewLocal(event);
+        	if(oldValue != null && newValue == null){
+        		Map<String, Object> publicSearchFilterParams = filter.getProperties();
+                super.selectedFilterValueChanged(newValue);
+                for(Entry<String, Object> parameter : publicSearchFilterParams.entrySet()){
+                	if(!parameter.getKey().contains("{http://www.alfresco.org/") && !parameter.getKey().equals(CompoundWorkflowSearchModel.Props.NAME)){
+                		filter.getProperties().put(parameter.getKey(), parameter.getValue());
+                	}
+                }
+        	}
+    	}
+        
     }
 
     @Override
@@ -66,7 +92,10 @@ public class CompoundWorkflowSearchDialog extends AbstractSearchFilterBlockBean<
 
     @Override
     public String getFilterPanelTitle() {
-        return MessageUtil.getMessage("task_search");
+    	if(searchPanelTitlePart == null){
+    		return MessageUtil.getMessage("cw_search");
+    	}
+        return String.format("%s: %s", MessageUtil.getMessage("cw_search"), searchPanelTitlePart);
     }
 
     @Override
