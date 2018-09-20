@@ -77,11 +77,13 @@ public class UserContactMappingServiceImpl implements UserContactMappingService 
         Map<QName, UserContactMappingCode> fieldIdsMapping = new HashMap<QName, UserContactMappingCode>();
         FieldGroup group = (FieldGroup) field.getParent();
         for (Field child : group.getFields()) {
-            UserContactMappingCode mappingCode = originalFieldIdsMapping.get(child.getOriginalFieldId());
-            if (mappingCode == null) {
+        	String originalFieldId = child.getOriginalFieldId();
+        	QName qName = child.getQName();
+            UserContactMappingCode mappingCode = originalFieldIdsMapping.get(originalFieldId);
+            if (mappingCode == null || ( originalFieldId.equals("senderFax") && mappingCode.name().equals("FAX")) ) {
                 continue;
             }
-            fieldIdsMapping.put(child.getQName(), mappingCode);
+            fieldIdsMapping.put(qName, mappingCode);
         }
 
         if (group.isSystematic()) {
