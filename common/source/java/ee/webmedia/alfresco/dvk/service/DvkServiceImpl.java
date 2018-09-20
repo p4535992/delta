@@ -1208,7 +1208,7 @@ public abstract class DvkServiceImpl implements DvkService {
                             }
                             usedFieldNameByKey.put(outgoingField, fieldName);
                             foundRelatedOutgoingField = Boolean.TRUE;
-                            if (value != null) {
+                            if (value != null && !fieldName.equals("Isikukood") && !fieldName.equals("Registrikood / Isikukood")) {
                                 DecContainerHandler.setValue(fieldName, outgoingField, decContainer, value);
                             }
                         }
