@@ -783,7 +783,7 @@ public class GroupsDialog extends BaseDialogBean
             List<String> names = new ArrayList<String>();
             
             for(String displayName : displayNames){
-            	names.add(displayName);
+            	names.add(nameByDisplayName.get(displayName));
             }
             objectKeys = names;
             
