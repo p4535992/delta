@@ -148,6 +148,17 @@
       </property>
    </bean>
    
+   <bean id="notificationParametersBootstrap6" parent="notificationImportBootstrap">
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="path">/param:parameters</prop>
+               <prop key="location">ee/webmedia/alfresco/notification/bootstrap/notification-parameters6.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+   
    <bean id="notificationRootBootstrap" parent="notificationImportBootstrap">
       <property name="bootstrapViews">
          <list>
@@ -183,6 +194,25 @@
                </map>
             </property>
          </bean>
+      </property>
+   </bean>
+   
+   <bean id="docDvkFailNotificationTrigger" class="org.alfresco.util.CronTriggerBean">
+      <property name="jobDetail">
+         <bean id="docDvkFailNotificationJobDetails" class="org.springframework.scheduling.quartz.JobDetailBean">
+            <property name="jobClass" value="ee.webmedia.alfresco.notification.job.DocSendFailViaDvkNotificationJob" />
+            <property name="jobDataAsMap">
+               <map>
+                  <entry key="notificationService" value-ref="NotificationService" />
+               </map>
+            </property>
+         </bean>
+      </property>
+      <property name="cronExpression">
+			<value>0 0 0/1 ? * * *</value>
+	  </property>
+      <property name="scheduler">
+            <ref bean="schedulerFactory" />
       </property>
    </bean>
    
