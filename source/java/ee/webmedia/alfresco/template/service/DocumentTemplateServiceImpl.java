@@ -34,6 +34,7 @@ import org.alfresco.util.Pair;
 import org.alfresco.util.TempFileProvider;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.springframework.util.Assert;
@@ -1306,7 +1307,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             if (template != null && nodeService.hasAspect(template, templateAspect)) {
                 return template;
             }
-            if (StringUtils.endsWith(templateName, ".html")) {
+            if (StringUtils.endsWith(templateName, ".html") || StringUtils.endsWith(templateName, ".htm")){
                 // try alternative ".htm" that is default when adding system template through GUI
                 templateName = templateName.substring(0, templateName.length() - 1);
                 return getTemplateByName(templateName, templateAspect);

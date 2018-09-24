@@ -13,6 +13,7 @@ import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
 import ee.webmedia.alfresco.document.file.model.File;
+import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.dvk.model.DvkSendDocuments;
 import ee.webmedia.alfresco.notification.model.NotificationCache;
 import ee.webmedia.alfresco.notification.model.NotificationResult;
@@ -83,5 +84,7 @@ public interface DvkService {
     Pair<Integer, Integer> resendFailedSends();
 
     void deleteForwardedDecDocuments();
+    
+    List<Document> getDvkSendFailedDocuments();
 
 }

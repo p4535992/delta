@@ -61,6 +61,9 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
+import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.dvk.model.DvkSendDocuments;
+import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.email.model.EmailAttachment;
 import ee.webmedia.alfresco.email.service.EmailException;
 import ee.webmedia.alfresco.email.service.EmailService;
@@ -79,6 +82,7 @@ import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.substitute.model.Substitute;
 import ee.webmedia.alfresco.substitute.model.UnmodifiableSubstitute;
 import ee.webmedia.alfresco.substitute.service.SubstituteService;
+import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
 import ee.webmedia.alfresco.template.model.ProcessedEmailTemplate;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.user.model.Authority;
@@ -132,6 +136,7 @@ public class NotificationServiceImpl implements NotificationService {
     private String dispositionNotificationUsergroup;
     private BulkLoadNodeService bulkLoadNodeService;
     private ApplicationConstantsBean applicationConstantsBean;
+    private DvkService _dvkService;
 
     private static BeanPropertyMapper<GeneralNotification> generalNotificationBeanPropertyMapper;
     private static Map<String, List<String>> userSpecificNotifications;
@@ -1473,6 +1478,12 @@ public class NotificationServiceImpl implements NotificationService {
         return approaching + exceeded;
     }
 
+    @Override
+    public int processDocSendFailViaDvkNotifications(Date firingDate) {
+    	log.info(String.format("%s %s", firingDate, "Sending dvk send fail notifications if needed"));
+        return sendDvkSendFailNotifications();
+    }
+
     /**
      * @param tasks
      */
@@ -1528,6 +1539,41 @@ public class NotificationServiceImpl implements NotificationService {
         return 0;
     }
 
+    private int sendDvkSendFailNotifications() {
+        String DocSendFailViaDvkNotificationsEmails = parametersService.getStringParameter(Parameters.DOC_SEND_FAIL_VIA_DVK_NOTIFICATION_EMAILS);
+
+    	String[] emailParts = DocSendFailViaDvkNotificationsEmails.split(";");
+    	List<String> emailsList = new ArrayList();
+        for(String email : emailParts){
+        	emailsList.add(email.trim());
+        }
+    	int sentMails = 0;
+            Notification notification = new Notification();
+            notification.setSenderEmail(parametersService.getStringParameter(Parameters.DOC_SENDER_EMAIL));
+            notification.setToEmails(emailsList);
+            notification.setTemplateName("Dokumendi välja saatmine üle DVK on katkestatud.html");
+            List<Document> lastHourFailedDocuments = getDvkService().getDvkSendFailedDocuments();
+            
+            for(Document document : lastHourFailedDocuments){
+	            NodeRef notificationTemplateByName = templateService.getNotificationTemplateByName(notification.getTemplateName());
+	            String subject = (String) nodeService.getProperty(notificationTemplateByName, DocumentTemplateModel.Prop.NOTIFICATION_SUBJECT);
+	            notification.setSubject(subject);
+	            
+	            LinkedHashMap<String, NodeRef> templateDataNodeRefs = new LinkedHashMap<>();
+	        	templateDataNodeRefs.put("", document.getNodeRef());
+	        	
+	            try {
+	            	sendNotification(notification, document.getNodeRef(), templateDataNodeRefs);
+	            	sentMails += notification.getToEmails().size();
+	            } catch (EmailException e) {
+	                log.error("Dvk send fail notification e-mail sending failed, ignoring and continuing", e);
+	            }
+            }
+            lastHourFailedDocuments.clear();
+        
+        return sentMails;
+    }
+    
     private int sendVolumesDispositionDateNotifications(List<Volume> volumesDispositionedAfterDate) {
         Notification notification = setupNotification(new Notification(), NotificationModel.NotificationType.VOLUME_DISPOSITION_DATE);
         if (StringUtils.isBlank(dispositionNotificationUsergroup) || !dispositionNotificationUsergroup.startsWith("GROUP_")) {
@@ -2139,6 +2185,13 @@ public class NotificationServiceImpl implements NotificationService {
 
     public void setBulkLoadNodeService(BulkLoadNodeService bulkLoadNodeService) {
         this.bulkLoadNodeService = bulkLoadNodeService;
+    }
+    
+    private DvkService getDvkService() {
+        if (_dvkService == null) {
+            _dvkService = BeanHelper.getDvkService();
+        }
+        return _dvkService;
     }
 
 }

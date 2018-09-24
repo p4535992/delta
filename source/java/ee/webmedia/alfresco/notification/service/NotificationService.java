@@ -44,6 +44,8 @@ public interface NotificationService {
     public int processTaskDueDateNotificationsIfWorkingDay(Date firingDate);
 
     public int processVolumeDispositionDateNotifications();
+    
+    public int processDocSendFailViaDvkNotifications(Date firingDate);
 
     public int processAccessRestrictionEndDateNotifications();
 
