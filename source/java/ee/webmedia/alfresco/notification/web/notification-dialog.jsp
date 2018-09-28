@@ -72,7 +72,10 @@
       <h:outputText value="#{msg.notification_taskCancelled_label}" /> 
       
       <h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}groupAssignmentTaskCompletedByOthers']}" rendered="#{NotificationDialog.showGroupAssignmentTaskData}" />
-      <h:outputText value="#{msg.notification_groupAssignmentTaskCompletedByOthers_label}" rendered="#{NotificationDialog.showGroupAssignmentTaskData}" />       
+      <h:outputText value="#{msg.notification_groupAssignmentTaskCompletedByOthers_label}" rendered="#{NotificationDialog.showGroupAssignmentTaskData}" />
+      
+      <h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}myFileModified']}" />
+      <h:outputText value="#{msg.notification_file_modified}" />   
 
    </h:panelGrid>
 
