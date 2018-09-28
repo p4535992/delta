@@ -79,6 +79,7 @@ import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.substitute.model.Substitute;
 import ee.webmedia.alfresco.substitute.model.UnmodifiableSubstitute;
 import ee.webmedia.alfresco.substitute.service.SubstituteService;
+import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
 import ee.webmedia.alfresco.template.model.ProcessedEmailTemplate;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.user.model.Authority;
@@ -1527,7 +1528,58 @@ public class NotificationServiceImpl implements NotificationService {
 
         return 0;
     }
+    @Override
+    public int sendMyFileModifiedNotifications(NodeRef content){
+    	NodeRef docRef = nodeService.getPrimaryParent(content).getParentRef();
+    	
+    	List<AssociationRef> targetAssocs = nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT);
+    	
+    	NodeRef workflow = null;
+    	if(!targetAssocs.isEmpty()) workflow = targetAssocs.get(0).getTargetRef();
+    	
+    	Document document = BeanHelper.getDocumentService().getDocumentByNodeRef(docRef);
+    	
+    	Notification notification = new Notification();
+    	notification.setSenderEmail(parametersService.getStringParameter(Parameters.DOC_SENDER_EMAIL));
+    	notification.setTemplateName("Minu koostatud dokumenti on muudetud.html");
+    	
+    	List<String> toEmails =  new ArrayList<String>();
+    	toEmails.add(userService.getUserEmail(document.getOwnerId()));
+    	notification.setToEmails(toEmails);
 
+    	NodeRef notificationTemplateByName = templateService.getNotificationTemplateByName(notification.getTemplateName());
+        
+    	if (notificationTemplateByName == null) {
+            if (log.isDebugEnabled()) {
+                log.debug("My file modified date notification email template '" + notification.getTemplateName()
+                        + "' not found, no notification email is sent");
+            }
+            return 0; // if the admins are lazy and we don't have a template, we don't have to send out notifications... :)
+        }
+    	
+    	String subject = (String) nodeService.getProperty(notificationTemplateByName, DocumentTemplateModel.Prop.NOTIFICATION_SUBJECT);
+        notification.setSubject(subject);
+        
+    	if(userService.getCurrentUserName().equals(document.getOwnerId())
+    			|| !isSubscribed(document.getOwnerId(), NotificationModel.NotificationType.MY_FILE_MODIFIED)){
+    		return 0;
+    	}
+
+    	LinkedHashMap<String, NodeRef> templateDataNodeRefs = new LinkedHashMap<>();
+    	if(content != null) templateDataNodeRefs.put("content", content);
+    	if(docRef != null) templateDataNodeRefs.put("", docRef);
+    	if(workflow != null) templateDataNodeRefs.put("workflow", workflow);
+    	templateDataNodeRefs.put("fileModifier", userService.getCurrentUser());
+
+        try {
+        	sendNotification(notification, document.getNodeRef(), templateDataNodeRefs);
+			return notification.getToEmails().size();
+		} catch (EmailException e) {
+			e.printStackTrace();
+		}
+    	return 0;
+    }
+    
     private int sendVolumesDispositionDateNotifications(List<Volume> volumesDispositionedAfterDate) {
         Notification notification = setupNotification(new Notification(), NotificationModel.NotificationType.VOLUME_DISPOSITION_DATE);
         if (StringUtils.isBlank(dispositionNotificationUsergroup) || !dispositionNotificationUsergroup.startsWith("GROUP_")) {
