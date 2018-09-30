@@ -114,7 +114,7 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
     protected void doInitialSearch() {
         try {
             DocumentSearchService documentSearchService = getDocumentSearchService();
-            List<NodeRef> documents = setLimited(documentSearchService.queryDocuments(searchFilter, getLimit(), DocumentCommonModel.Props.REG_DATE_TIME, false));
+            List<NodeRef> documents = setLimited(documentSearchService.queryDocuments(searchFilter, getLimit()));
             documentProvider = new DocumentListDataProvider(documents);
             documentProvider.orderInitial(true, DocumentCommonModel.Props.REG_DATE_TIME);
             if (log.isDebugEnabled()) {
