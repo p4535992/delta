@@ -62,9 +62,10 @@ public interface DocumentSearchService {
      * where multiple files under the same document matched the search criteria.
      *
      * @param filter
+     * @param sortBy
      * @return list of matching documents (max 100 entries)
      */
-    Pair<List<NodeRef>, Boolean> queryDocuments(Node filter, int limit);
+    Pair<List<NodeRef>, Boolean> queryDocuments(Node filter, int limit, QName sortBy, boolean ascending);
 
     Pair<List<VolumeOrCaseFile>, Boolean> queryVolumes(Node filter, int limit);
 

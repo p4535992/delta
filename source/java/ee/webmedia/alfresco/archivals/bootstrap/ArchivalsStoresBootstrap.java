@@ -29,7 +29,7 @@ public class ArchivalsStoresBootstrap extends AbstractModuleComponent {
 
     @Override
     protected void executeInternal() throws Throwable {
-        archivalsStoreVOs.add(new ArchivalsStoreVO("", "Arhivaalide loetelu"));
+        archivalsStoreVOs.add(new ArchivalsStoreVO("", "Arhiiv"));
         for (String string : StringUtils.split(additionalArchivals, ';')) {
             ArchivalsStoreVO archivalsStoreVO = ArchivalsStoreVO.newInstance(string);
             Assert.isTrue(!archivalsStoreVOs.contains(archivalsStoreVO));
