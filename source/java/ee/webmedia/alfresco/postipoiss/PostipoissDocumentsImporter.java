@@ -902,9 +902,8 @@ public class PostipoissDocumentsImporter {
                 cal.add(Calendar.YEAR, 5);
                 props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE, cal.getTime());
             }
-            if (props.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE) == null
-                    && StringUtils.isBlank((String) props.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DESC))) {
-                throw new RuntimeException("accessRestrictionEndDate is null and accessRestrictionEndDesc is blank, but accessRestriction = " + accessRestriction);
+            if (props.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE) == null) {
+                throw new RuntimeException("accessRestrictionEndDate is null, but accessRestriction = " + accessRestriction);
             }
         }
         if (AccessRestriction.OPEN.equals(accessRestriction) || AccessRestriction.INTERNAL.equals(accessRestriction)) {
