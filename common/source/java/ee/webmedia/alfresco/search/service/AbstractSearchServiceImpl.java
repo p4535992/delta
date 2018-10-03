@@ -170,15 +170,6 @@ public abstract class AbstractSearchServiceImpl {
         return searchNodes(query, limit, queryName, storeRefs, true);
     }
 
-    protected Pair<List<NodeRef>, Boolean> searchNodes(String query, int limit, String queryName, Collection<StoreRef> storeRefs, QName sortBy, boolean ascending) {
-        return searchGeneralImplWithSort(query, limit, queryName, new SearchCallback<NodeRef>() {
-            @Override
-            public NodeRef addResult(ResultSetRow row) {
-                return row.getNodeRef();
-            }
-        }, storeRefs, sortBy, ascending);
-    }
-
     protected Pair<List<NodeRef>, Boolean> searchNodes(String query, int limit, String queryName, Collection<StoreRef> storeRefs, boolean checkExists) {
         return searchGeneralImplWithoutSort(query, limit, queryName, new SearchCallback<NodeRef>() {
             @Override
@@ -242,28 +233,6 @@ public abstract class AbstractSearchServiceImpl {
             resultSets = doSearches(query, limit, queryName, storeRefs);
         }
         final Pair<List<E>, Boolean> extractResults = extractResults(callback, startTime, resultSets, limit, checkExists);
-        return extractResults;
-    }
-
-    protected <E> Pair<List<E>, Boolean> searchGeneralImplWithSort(String query, int limit, String queryName, SearchCallback<E> callback,
-                                                                   Collection<StoreRef> storeRefs, QName sortBy, boolean ascending) {
-        if (StringUtils.isBlank(query)) {
-            return new Pair<List<E>, Boolean>(new ArrayList<E>(), false);
-        }
-        StoreRef singleStoreRef = null;
-        if (storeRefs == null) {
-            singleStoreRef = generalService.getStore();
-        } else if (storeRefs.size() == 1) {
-            singleStoreRef = storeRefs.iterator().next();
-        }
-        long startTime = System.currentTimeMillis();
-        final List<ResultSet> resultSets;
-        if (singleStoreRef != null) {
-            resultSets = Arrays.asList(doSearch(query, limit, queryName, singleStoreRef, sortBy, ascending));
-        } else {
-            resultSets = doSearches(query, limit, queryName, storeRefs, sortBy, ascending);
-        }
-        final Pair<List<E>, Boolean> extractResults = extractResults(callback, startTime, resultSets, limit, false);
         return extractResults;
     }
 
@@ -334,31 +303,20 @@ public abstract class AbstractSearchServiceImpl {
      * @return query resultset
      */
     protected ResultSet doSearch(String query, int limit, String queryName, StoreRef storeRef) {
-        return doSearch(query, 0, limit, queryName, storeRef, null, true);
+        return doSearch(query, 0, limit, queryName, storeRef);
     }
-
-    protected ResultSet doSearch(String query, int limit, String queryName, StoreRef storeRef, QName sortBy, boolean ascending) {
-        return doSearch(query, 0, limit, queryName, storeRef, sortBy, ascending);
-    }
-
-    protected ResultSet doSearch(String query, int startFrom, int limit, String queryName, StoreRef storeRef, QName sortBy, boolean ascending) {
-        final SearchParameters sp = generateLuceneSearchParams(query, storeRef == null ? generalService.getStore() : storeRef, startFrom, limit, sortBy, ascending);
+    
+    protected ResultSet doSearch(String query, int startFrom, int limit, String queryName, StoreRef storeRef) {
+        final SearchParameters sp = generateLuceneSearchParams(query, storeRef == null ? generalService.getStore() : storeRef, startFrom, limit);
         return doSearchQuery(sp, queryName);
     }
     
     protected List<ResultSet> doSearches(String query, int limit, String queryName, Collection<StoreRef> storeRefs) {
-    	return doSearches(query, 0, limit, queryName, storeRefs, null, true);
+    	return doSearches(query, 0, limit, queryName, storeRefs);
     }
 
-    protected List<ResultSet> doSearches(String query, int limit, String queryName, Collection<StoreRef> storeRefs, QName sortBy, boolean ascending) {
-        return doSearches(query, 0, limit, queryName, storeRefs, sortBy, ascending);
-    }
-
-    protected List<ResultSet> doSearches(String query, int startFrom, int limit, String queryName, Collection<StoreRef> storeRefs, QName sortBy, boolean ascending) {
+    protected List<ResultSet> doSearches(String query, int startFrom, int limit, String queryName, Collection<StoreRef> storeRefs) {
         final SearchParameters sp = generateLuceneSearchParams(query, null, startFrom, limit);
-        if (sortBy != null) {
-            sp.addSort("@" + sortBy, ascending);
-        }
         if (storeRefs == null || storeRefs.size() == 0) {
             storeRefs = Arrays.asList(generalService.getStore());
         }

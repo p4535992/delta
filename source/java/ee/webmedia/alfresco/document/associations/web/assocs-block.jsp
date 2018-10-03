@@ -3,9 +3,11 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="/WEB-INF/alfresco.tld" prefix="a"%>
 <%@ taglib uri="/WEB-INF/repo.tld" prefix="r"%>
+<%@ taglib uri="/WEB-INF/wm.tld" prefix="wm"%>
 
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
+<%@ page import="ee.webmedia.alfresco.document.associations.web.AssocsBlockBean" %>
 
 <h:panelGroup id="assocs-panel-facets">
    <f:facet name="title">
@@ -40,35 +42,33 @@
          </h:outputText>
       </a:column>
       
-	  <a:column id="col7" >
-         <f:facet name="header">
-            <a:sortLink id="col7-header" label="#{msg.document_assocsBlockBean_workflowOwnerName}" value="workflowOwnerName" styleClass="header" />
-         </f:facet>
-         <h:outputText id="col7-txt" value="#{r.workflowOwnerName}" />
-      </a:column>
-      
       <a:column id="col4">
          <f:facet name="header">
             <a:sortLink id="col4-header" label="#{msg.document_assocsBlockBean_title}" value="title" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col4-text" value="#{r.title}" tooltip="#{msg.document_details_info}" showLink="false"
-            actionListener="#{DocumentDynamicDialog.openFromDocumentList}" rendered="#{r.document}">
+         <a:actionLink id="col4-text" value="#{r.title}" tooltip="#{r.title}" showLink="false"
+            actionListener="#{DocumentDynamicDialog.openFromDocumentList}" rendered="#{r.document}"
+            styleClass="#{AssocsBlockBean.titleStyle}">
             <f:param id="col4-act-param" name="nodeRef" value="#{r.otherNodeRef}" />
          </a:actionLink>
          <a:actionLink id="col4-link2docList" value="#{r.title}" action="dialog:documentListDialog" tooltip="#{r.title}"
-            showLink="false" actionListener="#{DocumentListDialog.setup}" rendered="#{r.case}">
+            showLink="false" actionListener="#{DocumentListDialog.setup}" rendered="#{r.case}"
+            styleClass="#{AssocsBlockBean.titleStyle}">
             <f:param id="col4-doclist-act-param" name="caseNodeRef" value="#{r.otherNodeRef}" />
          </a:actionLink>
          <a:actionLink id="col2-act" value="#{r.title}" action="dialog:compoundWorkflowDialog" tooltip="#{r.title}" 
-            actionListener="#{CompoundWorkflowDialog.setupWorkflow}" rendered="#{r.workflow}" >
+            actionListener="#{CompoundWorkflowDialog.setupWorkflow}" rendered="#{r.workflow}"
+            styleClass="#{AssocsBlockBean.titleStyle}">
             <f:param id="col2-act-param" name="nodeRef" value="#{r.otherNodeRef}" />
          </a:actionLink>
          <a:actionLink id="col4-link2volume" value="#{r.title}" action="dialog:caseDocListDialog" tooltip="#{r.title}"
-            showLink="false" actionListener="#{CaseDocumentListDialog.showAll}" rendered="#{r.volume && !r.caseFileVolume}">
+            showLink="false" actionListener="#{CaseDocumentListDialog.showAll}" rendered="#{r.volume && !r.caseFileVolume}"
+            styleClass="#{AssocsBlockBean.titleStyle}">
             <f:param id="col4-volumeNodeRef" name="volumeNodeRef" value="#{r.otherNodeRef}" />
          </a:actionLink>
          <a:actionLink id="col4-link2caseFile" value="#{r.title}" tooltip="#{r.title}"
-            showLink="false" actionListener="#{CaseFileDialog.openFromDocumentList}" rendered="#{r.caseFileVolume}">
+            showLink="false" actionListener="#{CaseFileDialog.openFromDocumentList}" rendered="#{r.caseFileVolume}"
+            styleClass="#{AssocsBlockBean.titleStyle}">
             <f:param id="col4-nodeRef" name="nodeRef" value="#{r.otherNodeRef}" />
          </a:actionLink>         
       </a:column>
@@ -77,8 +77,22 @@
          <f:facet name="header">
             <a:sortLink id="col3-header" label="#{msg.document_assocsBlockBean_type}" value="type" styleClass="header" />
          </f:facet>
-         <h:outputText id="col3-txt" value="#{r.type}" />
+         <h:outputText id="col3-txt" value="#{r.type}" title="#{r.type}" styleClass="tooltip condence20- strictTrim no-underline"/>
       </a:column>
+
+       <a:column id="col15" rendered="#{AssocsBlockBean.showAssociationSenderReceiver}">
+           <f:facet name="header">
+               <a:sortLink id="col15-header" label="#{msg.document_assocsBlockBean_recipientsSenders}" value="senderOrRecipient" styleClass="header" />
+           </f:facet>
+           <h:outputText id="col15-txt" value="#{r.senderOrRecipient}" title="#{r.senderOrRecipient}" styleClass="tooltip condence20- strictTrim no-underline"/>
+       </a:column>
+
+       <a:column id="col7" >
+           <f:facet name="header">
+               <a:sortLink id="col7-header" label="#{msg.document_assocsBlockBean_workflowOwnerName}" value="workflowOwnerName" styleClass="header" />
+           </f:facet>
+           <h:outputText id="col7-txt" value="#{r.workflowOwnerName}" />
+       </a:column>
 
       <a:column id="col5">
          <f:facet name="header">
@@ -86,6 +100,13 @@
          </f:facet>
          <h:outputText id="col5-txt" value="#{r.assocType.valueName}" />
       </a:column>
+
+       <a:column id="col16" rendered="#{AssocsBlockBean.showAssociationFiles}">
+           <f:facet name="header">
+               <h:outputText id="col16-header" value="#{msg.document_assocsBlockBean_files}" styleClass="header" />
+           </f:facet>
+           <wm:customChildrenContainer id="assocs-workflow-document-files" childGenerator="#{DocumentListDialog.documentRowFileGenerator}" parameterList="#{r.assocDocument}"/>
+       </a:column>
       
       <a:column id="col6" actions="true">
          <f:facet name="header">

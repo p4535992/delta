@@ -437,24 +437,13 @@ public class SearchUtil {
     	return generateLuceneSearchParams(query, store, 0, limit);
     }
 
-    public static SearchParameters generateLuceneSearchParams(String query, StoreRef store, int limit, QName sortBy, boolean ascending) {
-        return generateLuceneSearchParams(query, store, 0, limit, sortBy, ascending);
-    }
-
     public static SearchParameters generateLuceneSearchParams(String query, StoreRef store, int startFrom, int limit) {
-        return generateLuceneSearchParams(query, store, startFrom, limit, null, true);
-    }
-
-    public static SearchParameters generateLuceneSearchParams(String query, StoreRef store, int startFrom, int limit, QName sortBy, boolean ascending) {
         SearchParameters sp = new SearchParameters();
         sp.setLanguage(SearchService.LANGUAGE_LUCENE);
         sp.setQuery(query);
         sp.addStore(store);
-        if (sortBy != null) {
-            sp.addSort("@" + sortBy, ascending);
-        }
         if (startFrom > 0) {
-            sp.setSkipCount(startFrom);
+        	sp.setSkipCount(startFrom);
         }
         if (limit < 0) {
             sp.setLimitBy(LimitBy.UNLIMITED);
