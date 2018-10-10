@@ -231,7 +231,7 @@ public class SendOutServiceImpl implements SendOutService {
         String zipOrEncryptFileTitle = null;
         boolean isEncrypted = false;
         StringBuilder sentFiles = new StringBuilder();
-        if (fileRefs != null && fileRefs.size() > 0 && (toRegNums.size() > 0 || toEmails.size() > 0)) {
+        if (fileRefs != null && fileRefs.size() > 0 && (toRegNums.size() > 0 || toEmails.size() > 0 || toBccEmails.size() > 0)) {
         	if ((zipIt || !allCertificates.isEmpty())) {
         		zipOrEncryptFileTitle = buildZipAndEncryptFileTitle(docProperties);
         	}
