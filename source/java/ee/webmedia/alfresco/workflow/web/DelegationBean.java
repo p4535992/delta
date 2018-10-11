@@ -728,7 +728,7 @@ public class DelegationBean implements Serializable {
                 && task.getDueDate() == null && task.isResponsible()) {
             feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, key + "_dueDate"));
         } else if (taskType.equals(WorkflowSpecificModel.Types.INFORMATION_TASK)) {
-            if (noOwner) {
+            if (noOwner || task.getDueDate() == null) {
                 feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, key));
             }
             if (initialDateDueDate != null && task.getDueDate() == null) {
