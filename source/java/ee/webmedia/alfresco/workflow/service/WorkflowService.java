@@ -183,7 +183,7 @@ public interface WorkflowService {
     List<String> checkAndAddMissingOwnerEmails(CompoundWorkflow compoundWorkflow);
 
     void createDueDateExtension(String reason, Date newDate, Date dueDate, Task initiatingTask, NodeRef containerRef, String dueDateExtenderUsername,
-            String dueDateExtenderUserFullname);
+                                String dueDateExtenderUserFullname, String extenderEmail);
 
     void registerMultiEventListener(WorkflowMultiEventListener listener);
 

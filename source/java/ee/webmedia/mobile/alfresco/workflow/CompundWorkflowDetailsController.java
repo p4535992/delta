@@ -467,6 +467,7 @@ public class CompundWorkflowDetailsController extends AbstractCompoundWorkflowCo
         NodeRef taskRef = new NodeRef(cwfRef.getStoreRef(), taskId);
         String userId = form.getUserId();
         String extenderUserFullname = getUserService().getUserFullName(userId);
+        String extenderEmail = getUserService().getUserEmail(userId);
         ee.webmedia.alfresco.workflow.service.Task initiatingTask = workflowService.getTaskWithParents(taskRef);
         
      // set lock
@@ -480,7 +481,8 @@ public class CompundWorkflowDetailsController extends AbstractCompoundWorkflowCo
 		                initiatingTask,
 		                cwfRef,
 		                userId,
-		                extenderUserFullname);
+		                extenderUserFullname,
+                        extenderEmail);
 		
 		        addRedirectInfoMsg(redirectAttributes, "workflow.task.dueDate.extension.submitted");
 	        } finally {
