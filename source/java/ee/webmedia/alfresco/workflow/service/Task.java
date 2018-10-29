@@ -718,4 +718,8 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         return Boolean.TRUE.equals(getProp(BaseWorkflowObject.TMP_ADDED_BY_DELEGATION));
     }
 
+    public boolean isDelegated() {
+        return getPropBoolean(WorkflowSpecificModel.Props.DELEGATED_BY_BUTTON);
+    }
+
 }
