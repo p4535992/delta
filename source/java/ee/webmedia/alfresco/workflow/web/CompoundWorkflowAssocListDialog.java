@@ -54,6 +54,10 @@ public class CompoundWorkflowAssocListDialog extends BaseDocumentListDialog {
             if (compoundWorkflow.isSaved()) {
                 documents = BeanHelper.getWorkflowService().getCompoundWorkflowDocuments(compoundWorkflow.getNodeRef());
                 if (!resetNewAssocs) {
+                	Document firstDoc = documents.get(0);
+                	if(!firstDoc.getDocumentTypeName().equals("Sissetulev kiri")  && documents.size() == 1){
+                		firstDoc.setDocumentToSign(Boolean.TRUE);
+                    }
                     for (Document document : documents) {
                         updateDocumentMarking(currentDocuments, document);
                     }
@@ -63,7 +67,7 @@ public class CompoundWorkflowAssocListDialog extends BaseDocumentListDialog {
                 if (newAssocs != null) {
                     for (NodeRef docRef : newAssocs) {
                         Document document = new Document(docRef);
-                        if(!document.getDocumentTypeName().equals("Sissetulev kiri")){
+                        if(!document.getDocumentTypeName().equals("Sissetulev kiri")  && newAssocs.size() == 1){
                         	document.setDocumentToSign(Boolean.TRUE);
                         }
                         documents.add(document);
