@@ -32,14 +32,16 @@ public class MSODependencyChecker extends DependencyChecker{
 			URL url = new URL(this.Uri + "?singleWsdl");
 			
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-			conn.setDoOutput( true );
+			conn.setConnectTimeout(5000);
+			conn.setReadTimeout(5000);
+			conn.setDoOutput(true);
 			conn.setDoInput(true);
-			conn.setInstanceFollowRedirects( false );
+			conn.setInstanceFollowRedirects(false);
 			conn.setRequestMethod("POST");
 			conn.setRequestProperty( "Content-Type", "text/xml;charset=UTF-8"); 
 			conn.setRequestProperty( "SOAPAction", "http://webmedia.ee/mso/MsoPortBinding/convertToPdf");
 
-			conn.setUseCaches( false );
+			conn.setUseCaches(false);
 			
 			
 			StringBuilder postData = new StringBuilder();

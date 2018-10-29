@@ -24,6 +24,7 @@ import ee.webmedia.alfresco.signature.model.SignatureItem;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
 
 public class File implements Serializable, IClonable<File>, Comparable<File> {
+    private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(File.class);
 
     private static final long serialVersionUID = 1L;
 
@@ -63,8 +64,12 @@ public class File implements Serializable, IClonable<File>, Comparable<File> {
 
     public File(FileInfo fileInfo) {
         name = fileInfo.getName();
+        log.debug("Filename: " + name);
+
         Map<QName, Serializable> fileProps = fileInfo.getProperties();
         displayName = (fileProps.get(DISPLAY_NAME) == null) ? name : fileProps.get(DISPLAY_NAME).toString();
+        log.debug("Filename: displayName: " + displayName);
+
         created = fileInfo.getCreatedDate();
         modified = fileInfo.getModifiedDate();
         // fileInfo.getContentData() != null is here for testing purposes only; normally fileInfo.getContentData() shouldn't be null

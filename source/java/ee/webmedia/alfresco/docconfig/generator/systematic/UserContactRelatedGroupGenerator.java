@@ -2,12 +2,15 @@ package ee.webmedia.alfresco.docconfig.generator.systematic;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserContactMappingService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getAddressbookService;
 import static org.alfresco.service.cmr.repository.NodeRef.isNodeRef;
 
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -19,6 +22,7 @@ import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.springframework.util.Assert;
 
+import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO.ConfigItemType;
@@ -315,6 +319,16 @@ public class UserContactRelatedGroupGenerator extends BaseSystematicFieldGenerat
                 String key = entry.getKey().toString();
                 Serializable value = entry.getValue();
                 node.getProperties().put(key, value);
+            }
+            QName type = getNodeService().getType(userRef);
+            if(type.equals(AddressbookModel.Types.PRIV_PERSON) || type.equals(AddressbookModel.Types.ORGPERSON)){
+            	Map<QName, Serializable> properties = getNodeService().getProperties(userRef);
+            	Serializable personId = properties.get(AddressbookModel.Props.PERSON_ID);
+            	node.getProperties().put(DocumentDynamicModel.Props.SENDER_ID.toString(), personId);
+            }else if(type.equals(AddressbookModel.Types.ORGANIZATION)){
+            	Map<QName, Serializable> properties = getNodeService().getProperties(userRef);
+            	Serializable orgCode = properties.get(AddressbookModel.Props.ORGANIZATION_CODE);
+            	node.getProperties().put(DocumentDynamicModel.Props.SENDER_ID.toString(), orgCode);
             }
             return;
         }

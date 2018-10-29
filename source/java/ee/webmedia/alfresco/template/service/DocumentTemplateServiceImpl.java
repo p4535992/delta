@@ -34,6 +34,7 @@ import org.alfresco.util.Pair;
 import org.alfresco.util.TempFileProvider;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.springframework.util.Assert;
@@ -69,7 +70,6 @@ import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
-import ee.webmedia.alfresco.dvk.model.DvkSendDocuments;
 import ee.webmedia.alfresco.functions.model.UnmodifiableFunction;
 import ee.webmedia.alfresco.mso.service.MsoService;
 import ee.webmedia.alfresco.notification.model.NotificationCache;
@@ -527,29 +527,6 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         } while (retry > 0);
     }
 
-    public String getDvkSendTemplate(NodeRef template, DvkSendDocuments lastHourFailedDocuments){
-    	String templateText = fileFolderService.getReader(template).getContentString();
-    	try{
-    		Document doc = documentService.getDocumentByNodeRef(lastHourFailedDocuments.getDocumentNodeRef());
-    		templateText = templateText.replace("document.name", doc.getDocName());
-        	templateText = templateText.replace("document.reg.number", doc.getRegNumber());
-        	templateText = templateText.replace("document.reg.date", doc.getRegDateTimeStr());
-        	templateText = templateText.replace("document.url", doc.getNodeRef().toString());
-    	}catch(Exception e){
-    		log.debug("Faied to send DVK send fail notification");
-    	}
-        
-    	return templateText;
-    }
-    
-    public String getProcessedMyFileModified(NodeRef template, String fileName, String versionNr, String modifier){
-    	String templateText = fileFolderService.getReader(template).getContentString();
-    	templateText = templateText.replace("document.name", fileName);
-    	templateText = templateText.replace("document.version.number", versionNr);
-    	templateText = templateText.replace("modifier.name", modifier);
-		return templateText;
-    }
-    
     @Override
     public String getProcessedVolumeDispositionTemplate(List<Volume> volumes, NodeRef template) {
         String templateText = fileFolderService.getReader(template).getContentString();

@@ -305,10 +305,15 @@ public interface FileFolderService
      */
     @Auditable(key = Auditable.Key.ARG_0, parameters = {"nodeRef"})
     public ContentWriter getWriter(NodeRef nodeRef);
-    
+
+    @Auditable(key = Auditable.Key.ARG_0, parameters = {"nodeRef", "CURRENT_USER"})
+    public ContentWriter getWriter(NodeRef nodeRef, String CURRENT_USER);
+
     @Auditable(key = Auditable.Key.ARG_0, parameters = {"nodeRef"})
     public ContentWriter getWriter(NodeRef nodeRef, boolean update);
-    
+
+    @Auditable(key = Auditable.Key.ARG_0, parameters = {"nodeRef", "CURRENT_USER"})
+    public ContentWriter getWriter(NodeRef nodeRef, boolean update, String CURRENT_USER);
     /**
      * Check the validity of a node reference
      * 

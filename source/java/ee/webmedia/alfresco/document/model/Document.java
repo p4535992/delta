@@ -53,10 +53,11 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.volume.model.UnmodifiableVolume;
+import ee.webmedia.alfresco.volume.service.VolumeServiceImpl;
 
 public class Document extends Node implements Comparable<Document>, CssStylable, CreatedAndRegistered, DocumentListRowLink {
+    private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(VolumeServiceImpl.class);
     public static final String GENERIC_DOCUMENT_STYLECLASS = "genericDocument";
-
     private static final QName MAIN_DOCUMENT_PROP = RepoUtil.createTransientProp("mainDocument");
     private static final QName DOCUMENT_TO_SIGN_PROP = RepoUtil.createTransientProp("documentToSign");
     private static final Set<QName> MDELTA_FILE_PROPS = new HashSet<QName>(Arrays.asList(FileModel.Props.DISPLAY_NAME, DvkModel.Props.DVK_ID,
@@ -594,6 +595,7 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
     }
 
     public UnmodifiableVolume getDocumentVolume() {
+        log.debug("Getting DocumentVolume for: " + this.getNode().getNodeRef().toString());
         return getDocumentVolume(null);
     }
 

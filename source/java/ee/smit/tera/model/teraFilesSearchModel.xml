@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="log:logSearchModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+
+   <imports>
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/tera/1.0" prefix="tera" />
+   </namespaces>
+
+   <types>
+      <type name="tera:logFilter">
+         <parent>sys:base</parent>
+         <properties>
+            <property name="tera:logEntryId">
+              <type>d:text</type>
+            </property>
+            <property name="tera:dateCreatedStart">
+              <type>d:date</type>
+            </property>
+            <property name="tera:dateCreatedStart_EndDate">
+              <type>d:date</type>
+            </property>
+            <property name="tera:creatorName">
+              <type>d:text</type>
+            </property>
+            <property name="tera:computerId">
+              <type>d:text</type>
+            </property>
+            <property name="tera:description">
+              <type>d:text</type>
+            </property>
+            <property name="tera:objectName">
+              <type>d:text</type>
+            </property>
+            <property name="tera:objectId">
+              <type>d:text</type>
+            </property>
+         </properties>
+      </type>
+   </types>
+
+</model>

@@ -46,6 +46,8 @@ import javax.faces.event.ActionEvent;
 import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 
+import ee.sk.digidoc.SignedDoc;
+import ee.smit.digisign.SignCertificate;
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
@@ -853,7 +855,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         return result;
     }
     
-    private List<OrgCertificate> fillOrgCertificates(NodeRef contactNodeRef, String name, String orgIdCode) {
+    private List<OrgCertificate> fillOrgCertificates(NodeRef contactNodeRef, String orgName, String orgCode) {
     	List<OrgCertificate> orgCerts = new ArrayList<OrgCertificate>();
     	// get stored orgCerts
     	List<AddressbookEntry> addressbookOrgCerts = null;
@@ -861,39 +863,71 @@ public class DocumentSendOutDialog extends BaseDialogBean {
     		addressbookOrgCerts = getAddressbookService().listOrganizationCertificates(contactNodeRef);
     	}
 		if (addressbookOrgCerts == null || addressbookOrgCerts.isEmpty()) {
-			// if no stored orgCerts, retrieve from SKLDAP
-			List<SkLdapCertificate> skLdapCerts;
-			if (StringUtils.isNotBlank(orgIdCode)) {
-				try {
-	    			skLdapCerts = getSkLdapService().getCertificates(orgIdCode);
-	    		} catch (Exception e) {
-	    			// if SKLDAP by serialNumber returns error try to search by cn
-	    			if (StringUtils.isNotBlank(name)) {
-	    	    		skLdapCerts = getSkLdapService().getCertificatesByName(name);
-	    			} else {
-	    				throw e;
-	    			}
-	    		}
-			} else {
-				skLdapCerts = getSkLdapService().getCertificatesByName(name);
-			}
-			
-			if (skLdapCerts != null && !skLdapCerts.isEmpty()) {
-	    		// update orgCertificates
-	    		for (SkLdapCertificate skLdapCert: skLdapCerts) {
-	    			X509Certificate cert = getSignatureService().getCertificateForEncryption(skLdapCert);
-	    			if (cert != null) {
-	    				OrgCertificate orgCert = new OrgCertificate();
-	    				String cnName = skLdapCert.getCn();
-	    				Date validTo = cert.getNotAfter();
-    					orgCert.setCertName(cnName);
-    					orgCert.setValidTo(validTo);
-    					orgCert.setCertData(skLdapCert.getUserEncryptionCertificate());
-    					
-    					orgCerts.add(orgCert);
-	    			}
-	    		}
-	    	}
+
+            if(BeanHelper.getDigiSignService().getDigiSignServiceActive()){
+                log.info("Using DigiSign-service to get certificates...");
+                List<SignCertificate> signCertificateList = BeanHelper.getDigiSignSearches().getCertificatesFromDigiSignService(orgCode, orgName);
+                if(signCertificateList == null || signCertificateList.isEmpty()){
+                    log.info("Certificates not found!");
+                }
+
+                int i = 0;
+                for(SignCertificate cert : signCertificateList){
+                    i++;
+                    try{
+                        X509Certificate certX509 = SignedDoc.readCertificate(cert.getData());
+                        log.info("Certificate CN: " + cert.getCn());
+                        OrgCertificate orgCert = new OrgCertificate();
+                        orgCert.setCertName(cert.getCn());
+                        orgCert.setCertData(cert.getData());
+
+                        Date validTo = certX509.getNotAfter();
+                        orgCert.setValidTo(validTo);
+                        orgCerts.add(orgCert);
+
+                    }catch (Exception e){
+                        log.error(e.getMessage(), e);
+                    }
+                }
+
+
+
+            } else {
+                log.info("Using SK LDAP to get certificates...");
+                // if no stored orgCerts, retrieve from SKLDAP
+                List<SkLdapCertificate> skLdapCerts;
+                if (StringUtils.isNotBlank(orgCode)) {
+                    try {
+                        skLdapCerts = getSkLdapService().getCertificates(orgCode);
+                    } catch (Exception e) {
+                        // if SKLDAP by serialNumber returns error try to search by cn
+                        if (StringUtils.isNotBlank(orgName)) {
+                            skLdapCerts = getSkLdapService().getCertificatesByName(orgName);
+                        } else {
+                            throw e;
+                        }
+                    }
+                } else {
+                    skLdapCerts = getSkLdapService().getCertificatesByName(orgName);
+                }
+
+                if (skLdapCerts != null && !skLdapCerts.isEmpty()) {
+                    // update orgCertificates
+                    for (SkLdapCertificate skLdapCert: skLdapCerts) {
+                        X509Certificate cert = getSignatureService().getCertificateForEncryption(skLdapCert);
+                        if (cert != null) {
+                            OrgCertificate orgCert = new OrgCertificate();
+                            String cnName = skLdapCert.getCn();
+                            Date validTo = cert.getNotAfter();
+                            orgCert.setCertName(cnName);
+                            orgCert.setValidTo(validTo);
+                            orgCert.setCertData(skLdapCert.getUserEncryptionCertificate());
+
+                            orgCerts.add(orgCert);
+                        }
+                    }
+                }
+            }
 		} else {
 			for (AddressbookEntry addressbookOrgCert: addressbookOrgCerts) {
 				OrgCertificate orgCert = new OrgCertificate();

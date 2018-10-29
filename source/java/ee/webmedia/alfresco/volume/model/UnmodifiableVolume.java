@@ -32,6 +32,7 @@ public class UnmodifiableVolume implements Serializable, Comparable<Unmodifiable
     private final String volumeLabel;
     private final boolean isDynamic;
     private final boolean containsCases;
+    private final boolean casesMandatory;
     private final boolean markedForDestruction;
     private final boolean transferConfirmed;
     private final String volumeType;
@@ -54,6 +55,7 @@ public class UnmodifiableVolume implements Serializable, Comparable<Unmodifiable
             volumeType = getProp(VolumeModel.Props.VOLUME_TYPE, node);
         }
         containsCases = Boolean.TRUE.equals(getProp(VolumeModel.Props.CONTAINS_CASES, node));
+        casesMandatory = Boolean.TRUE.equals(getProp(VolumeModel.Props.CASES_MANDATORY, node));
         markedForDestruction = Boolean.TRUE.equals(getProp(VolumeModel.Props.MARKED_FOR_DESTRUCTING, node));
         transferConfirmed = Boolean.TRUE.equals(getProp(EventPlanModel.Props.TRANSFER_CONFIRMED, node));
         retainUntilDate = getProp(EventPlanModel.Props.RETAIN_UNTIL_DATE, node);
@@ -176,5 +178,9 @@ public class UnmodifiableVolume implements Serializable, Comparable<Unmodifiable
 
     public boolean isTransferConfirmed() {
         return transferConfirmed;
+    }
+
+    public boolean isCasesMandatory() {
+        return casesMandatory;
     }
 }

@@ -427,7 +427,7 @@ public class FileFolderServiceImpl implements FileFolderService
     
     /**
      * Performs a full search, but doesn't translate the node references into
-     * file info objects.  This allows {@link #checkExists(NodeRef, String)} to
+     * file info objects.  This allows  to
      * bypass the retrieval of node properties.
      */
     private List<NodeRef> searchInternal(
@@ -976,17 +976,31 @@ public class FileFolderServiceImpl implements FileFolderService
 
     public ContentWriter getWriter(NodeRef nodeRef)
     {
-        return getWriter(nodeRef, true);
+        return getWriter(nodeRef, null);
     }
-    
+
+    public ContentWriter getWriter(NodeRef nodeRef, String CURRENT_USER)
+    {
+        logger.trace("getWriter()... CURRENT_USER: " + CURRENT_USER);
+        return getWriter(nodeRef, true, CURRENT_USER);
+    }
+
+
     @Override
     public ContentWriter getWriter(NodeRef nodeRef, boolean update){
+        return getWriter(nodeRef, update, null);
+    }
+
+    @Override
+    public ContentWriter getWriter(NodeRef nodeRef, boolean update, String CURRENT_USER){
+        logger.trace("getWriter()... CURRENT_USER: " + CURRENT_USER);
         FileInfo fileInfo = toFileInfo(nodeRef, false);
         if (fileInfo.isFolder())
         {
             throw new InvalidTypeException("Unable to get a content writer for a folder: " + fileInfo);
         }
-        return contentService.getWriter(nodeRef, ContentModel.PROP_CONTENT, update);        
+        logger.trace("contentService.getWriter(()... CURRENT_USER: " + CURRENT_USER);
+        return contentService.getWriter(nodeRef, ContentModel.PROP_CONTENT, update, CURRENT_USER);
     }
     
     /**

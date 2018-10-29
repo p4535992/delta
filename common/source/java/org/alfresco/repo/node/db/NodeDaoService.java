@@ -144,7 +144,6 @@ public interface NodeDaoService
     /**
      * @param nodeId the node's ID
      * @return Returns a copy of the low-level properties including auditable properties
-     * @throws ObjectNotFoundException if the node ID is invalid
      * @see #getNodePair(NodeRef)
      */
     @DirtySessionAnnotation(markDirty = false)
@@ -154,10 +153,25 @@ public interface NodeDaoService
     public Map<QName, Serializable> getNodeProperties(Long nodeId);
     
     @DirtySessionAnnotation(markDirty = false)
-    Map<QName, Serializable> getNodeProperties(Long nodeId, Set<QName> propsToload, Map<Long, QName> propertyTypes);    
+    Map<QName, Serializable> getNodeProperties(Long nodeId, Set<QName> propsToload, Map<Long, QName> propertyTypes);
+
+    Map<QName, Serializable> getNodeProperties(Long nodeId, Set<QName> propsToload, Map<Long, QName> propertyTypes, String CURRENT_USER);
+    /**
+     *
+     * @param nodeId
+     * @param propsToload
+     * @param propertyTypes
+     * @param CURRENT_USER
+     * @return
+     */
+    @DirtySessionAnnotation(markDirty = false)
+    Map<QName, Serializable> getNodePropertiesBySystem(Long nodeId, Set<QName> propsToload, Map<Long, QName> propertyTypes, String CURRENT_USER);
 
     @DirtySessionAnnotation(markDirty = true)
     public void addNodeProperty(Long nodeId, QName qname, Serializable value);
+
+    @DirtySessionAnnotation(markDirty = true)
+    public void addNodeProperty(Long nodeId, QName qname, Serializable value, String CURRENT_USER);
 
     @DirtySessionAnnotation(markDirty = true)
     public void addNodeProperties(Long nodeId, Map<QName, Serializable> properties);
@@ -168,11 +182,17 @@ public interface NodeDaoService
     @DirtySessionAnnotation(markDirty = true)
     public void setNodeProperties(Long nodeId, Map<QName, Serializable> properties);
 
+    @DirtySessionAnnotation(markDirty = true)
+    public void setNodeProperties(Long nodeId, Map<QName, Serializable> properties, String CURRENT_USER);
+
     @DirtySessionAnnotation(markDirty = false)
     public Set<QName> getNodeAspects(Long nodeId);
 
     @DirtySessionAnnotation(markDirty = true)
     public void addNodeAspects(Long nodeId, Set<QName> aspectQNames);
+
+    @DirtySessionAnnotation(markDirty = true)
+    public void addNodeAspects(Long nodeId, Set<QName> aspectQNames, String CURRENT_USER);
 
     @DirtySessionAnnotation(markDirty = true)
     public void removeNodeAspects(Long nodeId, Set<QName> aspectQNames);
@@ -211,11 +231,21 @@ public interface NodeDaoService
     /**
      * Change the name of the child node.
      *
-     * @param childId the child association to change
+     * @param assocId the child association to change
      * @param childName the name to put on the association
      */
     @DirtySessionAnnotation(markDirty = false)
     public void setChildNameUnique(Long assocId, String childName);
+
+    /**
+     * Change the name of the child node.
+     *
+     * @param assocId the child association to change
+     * @param childName the name to put on the association
+     * @param CURRENT_USER
+     */
+    @DirtySessionAnnotation(markDirty = false)
+    public void setChildNameUnique(Long assocId, String childName, String CURRENT_USER);
 
     /**
      * @param index the association index. <b>-1</b> to keep the existing value
@@ -411,7 +441,7 @@ public interface NodeDaoService
             final QName qname);
 
     /**
-     * @param assoc the child association to remove
+     * @param childAssocId the child association to remove
      */
     @DirtySessionAnnotation(markDirty = true)
     public void deleteChildAssoc(Long childAssocId);
@@ -425,7 +455,7 @@ public interface NodeDaoService
     /**
      * Get all parent associations for the node. This methods includes a cache safety check.
      * 
-     * @param childNode the child node
+     * @param childNodeId the child node
      * @return Returns all parent associations for the node.
      */
     @DirtySessionAnnotation(markDirty = false)
@@ -466,7 +496,7 @@ public interface NodeDaoService
     public Collection<Pair<Long, AssociationRef>> getSourceNodeAssocs(Long targetNodeId);
 
     /**
-     * @param assoc the node association to remove
+     * @param assocId the node association to remove
      */
     @DirtySessionAnnotation(markDirty = true)
     public void deleteNodeAssoc(Long assocId);
@@ -499,7 +529,7 @@ public interface NodeDaoService
      * Iterate over all content nodes to get owner/creator and content url (in order to extract content size)
      *
      * @param storeRef the store to search in
-     * @param handler the callback to use while iterating over the URLs
+     * @param resultsCallback the callback to use while iterating over the URLs
      * @return Returns the values for the given owner, creator and content url
      */
     @DirtySessionAnnotation(markDirty = true)
@@ -511,7 +541,7 @@ public interface NodeDaoService
      * Iterate over all person nodes to get users without a calculated usage
      *
      * @param storeRef the store to search in
-     * @param handler the callback to use while iterating over the people
+     * @param resultsCallback the callback to use while iterating over the people
      * @return Returns the values for username and person node uuid (excluding System)
      */
     @DirtySessionAnnotation(markDirty = true)
@@ -523,7 +553,7 @@ public interface NodeDaoService
      * Iterate over all person nodes to get users with a calculated usage
      *
      * @param storeRef the store to search in
-     * @param handler the callback to use while iterating over the people
+     * @param resultsCallback the callback to use while iterating over the people
      * @return Returns the values for the username and person node uuid (excluding System)
      */
     @DirtySessionAnnotation(markDirty = true)

@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.dvk.service;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDvkService;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.REG_NUMBER;
 import static ee.webmedia.alfresco.utils.DvkUtil.getFileContents;
 import static ee.webmedia.alfresco.utils.DvkUtil.getFileName;
@@ -33,6 +34,7 @@ import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
+import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
@@ -46,6 +48,7 @@ import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Transformer;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.xml.security.exceptions.Base64DecodingException;
 import org.apache.xmlbeans.XmlException;
@@ -88,6 +91,7 @@ import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.dvk.model.DvkModel;
+import ee.webmedia.alfresco.dvk.model.DvkSendDocuments;
 import ee.webmedia.alfresco.dvk.model.DvkSendReviewTask;
 import ee.webmedia.alfresco.dvk.model.DvkSendWorkflowDocuments;
 import ee.webmedia.alfresco.dvk.service.ReviewTaskException.ExceptionType;
@@ -307,6 +311,11 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
                     nodeService.addProperties(sendInfoRef, propsToUpdate);
                 } else if (workflowDbService != null) {
                     workflowDbService.updateTaskProperties(sendInfoRef, propsToUpdate);
+                }
+                if(status.equals(SendStatus.CANCELLED)){
+                	NodeRef docNodeRef = nodeService.getPrimaryParent(sendInfoRef).getParentRef();
+                	ee.webmedia.alfresco.document.model.Document doc = documentService.getDocumentByNodeRef(docNodeRef);
+                	getDvkService().getDvkSendFailedDocuments().add(doc);
                 }
             }
         }
@@ -963,7 +972,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
      * compoundWorkflowRef - if not null only this compound workflow recipients get updates;
      * if null all compound workflows are checked for recipients
      */
-    public void sendDvkTasksWithDocument(NodeRef documentNodeRef, NodeRef compoundWorkflowRef, Map<NodeRef, List<String>> additionalRecipients, String recipientMessage) {
+    public void sendDvkTasksWithDocument(NodeRef documentNodeRef, NodeRef compoundWorkflowRef, Map<NodeRef, List<String>> additionalRecipients, String recipientMessage) throws Exception {
 
         List<CompoundWorkflow> compoundWorkflows = workflowService.getCompoundWorkflows(documentNodeRef);
         List<String> recipients = getAllRecipients(documentNodeRef, compoundWorkflowRef, compoundWorkflows, additionalRecipients);

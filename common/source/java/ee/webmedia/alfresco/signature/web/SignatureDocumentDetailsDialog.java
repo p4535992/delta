@@ -5,6 +5,7 @@ import java.util.Map;
 
 import javax.faces.context.FacesContext;
 
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.bean.content.DocumentDetailsDialog;
 import org.alfresco.web.ui.common.Utils;
@@ -35,6 +36,7 @@ public class SignatureDocumentDetailsDialog extends DocumentDetailsDialog {
     }
 
     protected DigiDoc4JSignatureService getDigiDoc4JSignatureService() {
+        log.debug("getDigiDoc4JSignatureService()...");
         if (digiDoc4JSignatureService == null) {
         	digiDoc4JSignatureService = (DigiDoc4JSignatureService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(
                     DigiDoc4JSignatureService.BEAN_NAME);
@@ -55,17 +57,21 @@ public class SignatureDocumentDetailsDialog extends DocumentDetailsDialog {
     }
 
     private void loadDigiDoc() {
+        log.debug("loadDigiDoc()...");
         resetData();
         // null when document was deleted
         if (browseBean.getDocument() == null) {
             return;
         }
-        if (!getDigiDoc4JSignatureService().isBDocContainer(browseBean.getDocument().getNodeRef())) {
+        NodeRef nodeRef = browseBean.getDocument().getNodeRef();
+        log.debug("Document nodeRef: " + nodeRef);
+        if (!getDigiDoc4JSignatureService().isBDocContainer(nodeRef)) {
             return;
         }
 
         try {
-            getDataFilesAndSignatures();
+            log.debug("getDataFilesAndSignatures()..");
+            getDataFilesAndSignatures(nodeRef);
         } catch (SignatureException e) {
             log.debug(e.getMessage(), e);
             Utils.addErrorMessage(Application.getMessage(FacesContext.getCurrentInstance(), "ddoc_container_fail"));
@@ -76,17 +82,20 @@ public class SignatureDocumentDetailsDialog extends DocumentDetailsDialog {
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Exception {
+        log.debug("finishImpl()...");
         resetData();
         return super.finishImpl(context, outcome);
     }
 
     @Override
     public String cancel() {
+        log.debug("Cancel()...");
         resetData();
         return super.cancel();
     }
 
     private void resetData() {
+        log.debug("resetData()...");
         isDdocValid = false;
         dataItems = null;
         signatures = null;
@@ -118,8 +127,8 @@ public class SignatureDocumentDetailsDialog extends DocumentDetailsDialog {
         return isDdocValid();
     }
 
-    private void getDataFilesAndSignatures() throws SignatureException {
-        SignatureItemsAndDataItems values = getDigiDoc4JSignatureService().getDataItemsAndSignatureItems(browseBean.getDocument().getNodeRef(), false);
+    private void getDataFilesAndSignatures(NodeRef nodeRef) throws SignatureException {
+        SignatureItemsAndDataItems values = getDigiDoc4JSignatureService().getDataItemsAndSignatureItems(nodeRef, false);
         signatures = values.getSignatureItems();
         dataItems = values.getDataItems();
     }

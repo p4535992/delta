@@ -495,15 +495,18 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
             addDocAssocInfo(srcAssocRef, true, assocInfos);
         }
         
-       for(DocAssocInfo docs : assocInfos){
+        for(DocAssocInfo docs : assocInfos){
         	try{
-	        	CompoundWorkflow wf = workflowService.getCompoundWorkflow(docs.getTargetNodeRef());
-	            Date date = wf.getCreatedDateTime();
-	            String ownerName = wf.getOwnerName();
-	            docs.setRegDateTime(date);
-	            docs.setWorkflowOwnerName(ownerName);
+        		NodeRef nodeRef = docs.getTargetNodeRef();
+        		if(nodeService.isType(nodeRef, WorkflowCommonModel.Types.COMPOUND_WORKFLOW)){
+		        	CompoundWorkflow wf = workflowService.getCompoundWorkflow(nodeRef);
+		            Date date = wf.getCreatedDateTime();
+		            String ownerName = wf.getOwnerName();
+		            docs.setRegDateTime(date);
+		            docs.setWorkflowOwnerName(ownerName);
+        		}
         	}catch(Exception e){
-        		
+        		e.printStackTrace();
         	}
         }
         
@@ -632,6 +635,7 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
             assocInf.setTitle((String) otherDocProps.get(DOC_NAME));
             assocInf.setRegNumber((String) otherDocProps.get(REG_NUMBER));
             assocInf.setRegDateTime((Date) otherDocProps.get(REG_DATE_TIME));
+            assocInf.setAssocDocument(objectRef != null ? BeanHelper.getDocumentService().getDocumentByNodeRef(objectRef) : null);
             Pair<String, String> documentTypeNameAndId = getDocumentAdminService().getDocumentTypeNameAndId(otherDocNode);
             assocInf.setType(documentTypeNameAndId.getFirst());
             assocInf.setTypeId(documentTypeNameAndId.getSecond());

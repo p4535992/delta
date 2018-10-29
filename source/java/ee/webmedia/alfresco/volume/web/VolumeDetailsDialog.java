@@ -314,7 +314,7 @@ public class VolumeDetailsDialog extends BaseDialogBean implements BlockBeanProv
                 || getCaseService().getCasesCountByVolume(currentEntry.getNode().getNodeRef()) > 0);
     }
 
-    public Boolean disableCasesCreatableByUser() {
+    public Boolean isContainsCasesSelectedAndActiveStatus(){
         return !Boolean.TRUE.equals(currentEntry.getNode().getProperties().get(VolumeModel.Props.CONTAINS_CASES))
                 || DocListUnitStatus.CLOSED.equals(currentEntry.getStatus())
                 || DocListUnitStatus.DESTROYED.equals(currentEntry.getStatus());
@@ -337,6 +337,7 @@ public class VolumeDetailsDialog extends BaseDialogBean implements BlockBeanProv
             @Override
             public void execute(Object input) {
                 getCurrentNode().getProperties().put(VolumeModel.Props.CASES_CREATABLE_BY_USER.toString(), event.getNewValue().equals(Boolean.TRUE));
+                getCurrentNode().getProperties().put(VolumeModel.Props.CASES_MANDATORY.toString(), event.getNewValue().equals(Boolean.TRUE));
                 if (propertySheet != null) {
                     propertySheet.getChildren().clear();
                     propertySheet.getClientValidations().clear();

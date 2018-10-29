@@ -79,7 +79,7 @@ public interface NodeService
      * may create the store in any number of locations, including a database or
      * Subversion.
      * 
-     * @param protocolthe implementation protocol
+     * @param protocol the implementation protocol
      * @param identifier the protocol-specific identifier
      * @return Returns a reference to the store
      * @throws StoreExistsException
@@ -412,7 +412,34 @@ public interface NodeService
      */
     @Auditable(key = Auditable.Key.ARG_0 ,parameters = {"nodeRef", "properties"})
     public void setProperties(NodeRef nodeRef, Map<QName, Serializable> properties) throws InvalidNodeRefException;
-    
+
+    /**
+     * Set the values of all properties to be an <code>Serializable</code> instances.
+     * The properties given must still fulfill the requirements of the class and
+     * aspects relevant to the node.
+     * <p>
+     * <b>NOTE:</b> Null values <u>are</u> allowed.
+     *
+     * @param nodeRef           the node to chance
+     * @param properties        all the properties of the node keyed by their qualified names
+     * @throws InvalidNodeRefException if the node could not be found
+     */
+    @Auditable(key = Auditable.Key.ARG_0 ,parameters = {"nodeRef", "properties",  "CURRENT_USER"})
+    public void setProperties(NodeRef nodeRef, Map<QName, Serializable> properties, String CURRENT_USER) throws InvalidNodeRefException;
+
+    /**
+     * Set the values of all properties to be an <code>Serializable</code> instances.
+     * The properties given must still fulfill the requirements of the class and
+     * aspects relevant to the node.
+     * <p>
+     * <b>NOTE:</b> Null values <u>are</u> allowed.
+     *
+     * @param nodeRef           the node to chance
+     * @param properties        all the properties of the node keyed by their qualified names
+     * @throws InvalidNodeRefException if the node could not be found
+     */
+    @Auditable(key = Auditable.Key.ARG_0 ,parameters = {"nodeRef", "properties",  "CURRENT_USER"})
+    public void setNodePropertiesBySystem(NodeRef nodeRef, Map<QName, Serializable> properties, String CURRENT_USER) throws InvalidNodeRefException;
     /**
      * Add all given properties to the node.
      * <p>
@@ -424,7 +451,20 @@ public interface NodeService
      */
     @Auditable(key = Auditable.Key.ARG_0 ,parameters = {"nodeRef", "properties"})
     public void addProperties(NodeRef nodeRef, Map<QName, Serializable> properties) throws InvalidNodeRefException;
-    
+
+    /**
+     * Add all given properties to the node.
+     * <p>
+     * <b>NOTE:</b> Null values <u>are</u> allowed and will replace the existing value.
+     *
+     * @param nodeRef           the node to change
+     * @param properties        the properties to change, keyed by their qualified names
+     * @param CURRENT_USER      override username, if system process
+     * @throws InvalidNodeRefException if the node could not be found
+     */
+    @Auditable(key = Auditable.Key.ARG_0 ,parameters = {"nodeRef", "properties", "CURRENT_USER"})
+    public void addProperties(NodeRef nodeRef, Map<QName, Serializable> properties, String CURRENT_USER) throws InvalidNodeRefException;
+
     /**
      * Sets the value of a property to be any <code>Serializable</code> instance.
      * <p>
@@ -432,12 +472,24 @@ public interface NodeService
      * 
      * @param nodeRef   a reference to an existing node
      * @param qname the fully qualified name of the property
-     * @param propertyValue the value of the property - never null
+     * @param value the value of the property - never null
      * @throws InvalidNodeRefException if the node could not be found
      */
     @Auditable(key = Auditable.Key.ARG_0 ,parameters = {"nodeRef", "qname", "value"})
     public void setProperty(NodeRef nodeRef, QName qname, Serializable value) throws InvalidNodeRefException;
-    
+
+    /**
+     * Sets the value of a property to be any <code>Serializable</code> instance.
+     * <p>
+     * <b>NOTE:</b> Null values <u>are</u> allowed.
+     *
+     * @param nodeRef   a reference to an existing node
+     * @param qname the fully qualified name of the property
+     * @param value the value of the property - never null
+     * @throws InvalidNodeRefException if the node could not be found
+     */
+    @Auditable(key = Auditable.Key.ARG_0 ,parameters = {"nodeRef", "qname", "value", "CURRENT_USER"})
+    void setProperty(NodeRef nodeRef, QName qname, Serializable value, String CURRENT_USER) throws InvalidNodeRefException;
     /**
      * Removes a property value completely.
      * 
@@ -527,7 +579,7 @@ public interface NodeService
      * and not in the given exclusive list.
      * 
      * @param nodeRef           the parent node - usually a <b>container</b>
-     * @param childNodeTypes    the types that the children may be.  Subtypes are not automatically calculated
+     * @param childNodeTypeQNames    the types that the children may be.  Subtypes are not automatically calculated
      *                          and the list must therefore be exhaustive.
      * @return                  Returns a list of <code>ChildAssociationRef</code> instances.
      * @throws InvalidNodeRefException      if the node could not be found

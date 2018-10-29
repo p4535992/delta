@@ -50,6 +50,20 @@ public class ImportStatus implements Serializable {
         end("FINISHED: document import");
     }
 
+    public void beginFiles(){
+        begin("START: finding digidoc files from timestamping.");
+    }
+    public void endFiles(){
+        end("FINISHED: finding digidoc files from timestamping.");
+    }
+
+    public void beginTimestamping(){
+        begin("START: timestamping digidoc files.");
+    }
+    public void endTimestamping(){
+        end("FINISHED: timestamping digidoc files.");
+    }
+
     public void beginWorkflow() {
         begin("START: workflow import");
     }

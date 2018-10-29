@@ -344,6 +344,11 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
                     log.error("SignedDoc Certificate read failed! NULL!");
                     continue;
                 }
+
+                if (CERTIFICATE_ALGORITHM_EC.equals(cert.getPublicKey().getAlgorithm())) {
+                    continue;
+                }
+
                 log.debug("Get certificate keyUsage params...");
                 boolean[] certKeyUsage = cert.getKeyUsage();
                 if(certKeyUsage == null){

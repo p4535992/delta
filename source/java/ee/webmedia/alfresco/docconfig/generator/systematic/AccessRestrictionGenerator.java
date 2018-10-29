@@ -138,7 +138,7 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
                         itemLabel, group, namespaceService);
                 List<String> componentsWithMandatoryIf = new ArrayList<String>();
                 componentsWithMandatoryIf.add(components.get(0) + "¤mandatoryIf=" + accessRestrictionPropName);
-                componentsWithMandatoryIf.add(components.get(1) + "¤mandatoryIf=" + accessRestrictionPropName + "," + accessRestrictionEndDescProp.getLocalName() + "=null");
+                componentsWithMandatoryIf.add(components.get(1) + "¤mandatoryIf=" + accessRestrictionPropName);
                 item.setOptionsSeparator(PropsBuilder.DEFAULT_OPTIONS_SEPARATOR);
                 String propSeparator = "|";
                 item.getCustomAttributes().put(PROPERTIES_SEPARATOR, propSeparator);
@@ -306,26 +306,36 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
             String accessRestrictionReasonClassificatorName, QName accessRestrictionBeginDateProp, QName accessRestrictionEndDateProp,
             QName accessRestrictionEndDescProp) {
         String valueData = BeanHelper.getClassificatorService().getClassificatorValuesValueData(accessRestrictionReasonClassificatorName, accessRestrictionReason);
-        Integer monthsToAdd = null;
-        try {
-            monthsToAdd = Integer.parseInt(valueData);
-        } catch (NumberFormatException e) {
-            // no need to add date
+        if(valueData == null){
+        	return;
         }
-        if (monthsToAdd != null) {
-            Date restrictionBeginDate = (Date) docProps.get(accessRestrictionBeginDateProp.toString());
-            if (restrictionBeginDate != null) {
-                Date newRestrictionEndDate = DateUtils.addMonths(restrictionBeginDate, monthsToAdd);
-                Date restrictionEndDate = (Date) docProps.get(accessRestrictionEndDateProp.toString());
-                if (restrictionEndDate == null || restrictionEndDate.before(newRestrictionEndDate)) {
-                    docProps.put(accessRestrictionEndDateProp.toString(), newRestrictionEndDate);
-                }
-            }
-        } else if (StringUtils.isNotBlank(valueData)) {
-            String accessRestrictionEndDesc = (String) docProps.get(accessRestrictionEndDescProp.toString());
-            String newAccessRestrictionEndDesc = StringUtils.isBlank(accessRestrictionEndDesc) ? valueData : accessRestrictionEndDesc + ", "
-                    + valueData;
-            docProps.put(accessRestrictionEndDescProp.toString(), newAccessRestrictionEndDesc);
+        Integer monthsToAdd = null;
+        String newAccessRestrictionEndDescData = "";
+        
+        for(String valueDataPart : valueData.split(";")){
+        	monthsToAdd = null;
+        	valueDataPart = valueDataPart.trim();
+	        try {
+	            monthsToAdd = Integer.parseInt(valueDataPart);
+	        } catch (NumberFormatException e) {
+	            // no need to add date
+	        	newAccessRestrictionEndDescData += valueDataPart;
+	        }
+	        if (monthsToAdd != null) {
+	            Date restrictionBeginDate = (Date) docProps.get(accessRestrictionBeginDateProp.toString());
+	            if (restrictionBeginDate != null) {
+	                Date newRestrictionEndDate = DateUtils.addMonths(restrictionBeginDate, monthsToAdd);
+	                Date restrictionEndDate = (Date) docProps.get(accessRestrictionEndDateProp.toString());
+	                if (restrictionEndDate == null || restrictionEndDate.before(newRestrictionEndDate)) {
+	                    docProps.put(accessRestrictionEndDateProp.toString(), newRestrictionEndDate);
+	                }
+	            }
+	        } else if (StringUtils.isNotBlank(newAccessRestrictionEndDescData)) {
+	            String accessRestrictionEndDesc = (String) docProps.get(accessRestrictionEndDescProp.toString());
+	            String newAccessRestrictionEndDesc = StringUtils.isBlank(accessRestrictionEndDesc) ? newAccessRestrictionEndDescData : accessRestrictionEndDesc + ", "
+	                    + newAccessRestrictionEndDescData;
+	            docProps.put(accessRestrictionEndDescProp.toString(), newAccessRestrictionEndDesc);
+	        }
         }
     }
 

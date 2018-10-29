@@ -32,10 +32,10 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
@@ -752,7 +752,15 @@ public class GroupsDialog extends BaseDialogBean
         	//Estonian Alphabet for correct sorting order with Estonian letters
         	final String ORDER= "0123456789AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsŠšZzŽžTtUuVvWwÕõÄäÖöÜüXxYy";
          
-            Map<String, String> treeMap = new TreeMap<String, String>(new Comparator<String>() {
+            Map<String, String> nameByDisplayName = new LinkedHashMap<String, String>();
+            
+            for(String authority : authorities){
+            	nameByDisplayName.put(getAuthorityService().getAuthorityDisplayName(authority), authority);
+            }
+            
+            List<String> displayNames = new ArrayList<String>(nameByDisplayName.keySet());
+            
+            Collections.sort(displayNames, new Comparator<String>() {
             	
         	public int compare(String s1, String s2){
         	
@@ -772,15 +780,16 @@ public class GroupsDialog extends BaseDialogBean
                 return pos1 - pos2;
             }});
             
-            for(String authority : authorities){
-            	treeMap.put(getAuthorityService().getAuthorityDisplayName(authority), authority);
-            }
+            List<String> names = new ArrayList<String>();
             
-            objectKeys = new ArrayList<String>(treeMap.values());
+            for(String displayName : displayNames){
+            	names.add(nameByDisplayName.get(displayName));
+            }
+            objectKeys = names;
             
         }
-        
-        private int toUpperCase(int pos){
+		
+		private int toUpperCase(int pos){
         	if (pos % 2 != 0 && pos > 9) {
         		pos--;
     		}

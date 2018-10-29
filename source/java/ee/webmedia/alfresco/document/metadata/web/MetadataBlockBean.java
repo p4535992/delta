@@ -979,7 +979,7 @@ public class MetadataBlockBean implements ClearStateListener {
      * Called after selection has been made from series dropdown.<br>
      * If accessRestriction is not filled, then values related to accessRestriction are set according to selected series.
      *
-     * @param submittedValue
+     * @param seriesRef
      */
     public void updateAccessRestrictionProperties(NodeRef seriesRef) {
         final Map<String, Object> docProps = document.getProperties();
@@ -1435,6 +1435,9 @@ public class MetadataBlockBean implements ClearStateListener {
                 MessageUtil.addStatusMessage(FacesContext.getCurrentInstance(), e);
                 return false;
             } catch (ReviewTaskException e) {
+                MessageUtil.addInfoMessage("dvk_sending_failed");
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
                 MessageUtil.addInfoMessage("dvk_sending_failed");
             } finally {
                 BeanHelper.getDocumentLockHelperBean().lockOrUnlockIfNeeded(BeanHelper.getDocumentLockHelperBean().isLockingAllowed());

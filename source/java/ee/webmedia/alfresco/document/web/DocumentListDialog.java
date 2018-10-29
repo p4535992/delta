@@ -219,6 +219,11 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         if (!isValidLocation(function, series, volume)) {
             return;
         }
+        Volume newVolume = BeanHelper.getVolumeService().getVolumeByNodeRef(volume, null);
+        if (newVolume.isContainsCases() && newVolume.isCasesMandatory() && StringUtils.isBlank(caseLabel)) {
+            MessageUtil.addErrorMessage("document_loc_validationMsg_mandatory_case");
+            return;
+        }
         // assume that current document list contains documents from one location, check location for first document only
         if (!getListCheckboxes().isEmpty()) {
             DocumentDynamic document = getDocumentDynamicService().getDocument(getListCheckboxes().keySet().iterator().next());
@@ -446,7 +451,8 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
             if (generalService.isArchivalsStoreRef(parentCase.getNode().getNodeRef().getStoreRef())) {
                 return true;
             }
-            return DocListUnitStatus.OPEN.getValueName().equals(parentCase.getStatus());
+            return DocListUnitStatus.OPEN.getValueName().equals(parentCase.getStatus())
+                    || DocListUnitStatus.CLOSED.getValueName().equals(parentCase.getStatus());
         } else if (parentVolume != null) {
             return DocListUnitStatus.OPEN.getValueName().equals(parentVolume.getStatus())
                     || DocListUnitStatus.CLOSED.getValueName().equals(parentVolume.getStatus())
@@ -503,7 +509,7 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         sheet.setMode("edit");
         Map<String, Object> sheetAttributes = ComponentUtil.getAttributes(sheet);
         sheetAttributes.put("externalConfig", Boolean.TRUE);
-        sheetAttributes.put("labelStyleClass", "propertiesLabel wrap");
+        sheetAttributes.put("labelStyleClass", "propertiesLabel wrap test5");
         sheetAttributes.put("columns", 1);
         sheet.setValueBinding("binding", application.createValueBinding("#{DialogManager.bean.propSheet}")); // this is friggin important!!
         sheet.setValueBinding("config", application.createValueBinding("#{DialogManager.bean.locationNodeConfig}"));

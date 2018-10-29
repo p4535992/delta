@@ -5,6 +5,9 @@ import javax.sql.DataSource;
 
 import ee.smit.alfresco.plumbr.PlumbrService;
 import ee.smit.alfresco.visual.VisualService;
+import ee.smit.digisign.DigiSignSearches;
+import ee.smit.digisign.DigiSignService;
+import ee.smit.tera.TeraService;
 import org.alfresco.repo.node.db.NodeDaoService;
 import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.repo.webdav.WebDAVLockService;
@@ -924,6 +927,18 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
 
     public static VisualService getVisualService(){
         return getService(VisualService.class, VisualService.BEAN_NAME);
+    }
+
+    public static DigiSignService getDigiSignService(){
+        return getService(DigiSignService.class, DigiSignService.BEAN_NAME);
+    }
+
+    public static DigiSignSearches getDigiSignSearches(){
+        return getService(DigiSignSearches.class, DigiSignSearches.BEAN_NAME);
+    }
+
+    public static TeraService getTeraService(){
+        return getService(TeraService.class, TeraService.BEAN_NAME);
     }
 
     // END: delta services

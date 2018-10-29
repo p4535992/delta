@@ -51,6 +51,9 @@ public interface DigiDoc4JSignatureService {
      */
     public SignatureDigest getSignatureDigest(List<NodeRef> contents, String certHex) throws SignatureException;
     public boolean isDigiDocContainer(NodeRef nodeRef);
+
+    public NodeRef createContentNode(NodeRef parentRef, String filename);
+
     public NodeRef createAndSignContainer(NodeRef parent, List<NodeRef> contents, String filename, DataToSign dataToSign, String signatureHex);
     public void addSignature(NodeRef nodeRef, DataToSign dataToSign, String signatureHex);
     

@@ -29,6 +29,8 @@ public class CASDependencyChecker extends DependencyChecker{
 		try{
 			URL url = new URL(this.Uri+"status");
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+			conn.setConnectTimeout(5000);
+			conn.setReadTimeout(5000);
 			conn.setRequestMethod("GET");
 			BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
 		

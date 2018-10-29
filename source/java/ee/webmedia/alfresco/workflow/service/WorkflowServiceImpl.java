@@ -1562,6 +1562,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         for (Workflow workflow : cWorkflowWorkflowsCopy) {
             for (Task task : workflow.getTasks()) {
                 if (WorkflowUtil.isGeneratedByDelegation(task)) {
+                    task.setProp(WorkflowSpecificModel.Props.DELEGATED_BY_BUTTON, true);
                     Date dueDate = task.getDueDate();
                     if (dueDate != null) {
                         dueDate.setHours(23);

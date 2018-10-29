@@ -26,6 +26,7 @@ package org.alfresco.repo.node.db;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentListService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
+import static org.alfresco.model.ContentModel.PROP_MODIFIER;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -219,7 +220,6 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
     /**
      * Defers to the typed service
      * 
-     *
      */
     @Override
     public StoreRef createStore(String protocol, String identifier)
@@ -1088,6 +1088,7 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
      * <p>
      * This method also ensures that the {@link ContentModel#PROP_NAME name property} is always present as a property on a node.
      *
+     * @param nodePair the node reference containing the values required
      * @param properties the node properties
      */
     private void addIntrinsicProperties(Pair<Long, NodeRef> nodePair, Map<QName, Serializable> properties)
@@ -1160,23 +1161,44 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
     /**
      * Gets, converts and adds the intrinsic properties to the current node's properties
      */
-    private Map<QName, Serializable> getPropertiesImpl(Pair<Long, NodeRef> nodePair, Set<QName> propsToload, Map<Long, QName> propertyTypes) throws InvalidNodeRefException
+    private Map<QName, Serializable> getPropertiesImpl(Pair<Long, NodeRef> nodePair, Set<QName> propsToload, Map<Long, QName> propertyTypes) throws InvalidNodeRefException{
+        return getPropertiesImpl(nodePair, propsToload, propertyTypes, "");
+    }
+
+    /**
+     * Gets, converts and adds the intrinsic properties to the current node's properties
+     */
+    private Map<QName, Serializable> getPropertiesImpl(Pair<Long, NodeRef> nodePair, Set<QName> propsToload, Map<Long, QName> propertyTypes, String CURRENT_USER) throws InvalidNodeRefException
     {
         Long nodeId = nodePair.getFirst();
+
         Map<QName, Serializable> nodeProperties = nodeDaoService.getNodeProperties(nodeId, propsToload, propertyTypes);
+
+        if(!CURRENT_USER.isEmpty()){
+            nodeProperties.put(ContentModel.PROP_MODIFIER, CURRENT_USER);
+        }
+
         // spoof referencable properties
         addIntrinsicProperties(nodePair, nodeProperties);
         // done
         return nodeProperties;
     }
 
+    private void addMissingAspects(
+            Pair<Long, NodeRef> nodePair,
+            Map<QName, Serializable> propertiesBefore,
+            Map<QName, Serializable> propertiesAfter)
+    {
+        addMissingAspects(nodePair, propertiesBefore, propertiesAfter, null);
+    }
     /**
      * Find any aspects that are missing for the node, given the properties before and after an update.
      */
     private void addMissingAspects(
             Pair<Long, NodeRef> nodePair,
             Map<QName, Serializable> propertiesBefore,
-            Map<QName, Serializable> propertiesAfter)
+            Map<QName, Serializable> propertiesAfter,
+            String CURRENT_USER)
     {
         Long nodeId = nodePair.getFirst();
         NodeRef nodeRef = nodePair.getSecond();
@@ -1204,6 +1226,7 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
             }
             aspectQNamesToAdd.add(containerClassQName);
         }
+
         // Add the aspects and any missing, default properties
         if (aspectQNamesToAdd.size() > 0)
         {
@@ -1211,7 +1234,7 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
             {
                 invokeBeforeAddAspect(nodeRef, aspectQNameToAdd);
             }
-            nodeDaoService.addNodeAspects(nodeId, aspectQNamesToAdd);
+            nodeDaoService.addNodeAspects(nodeId, aspectQNamesToAdd, CURRENT_USER);
             // Add the aspects and then their appropriate default values.
             for (QName aspectQNameToAdd : aspectQNamesToAdd)
             {
@@ -1260,13 +1283,17 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
         invokeOnAddAspect(nodeRef, aspectQNameToAdd);
     }
 
+    @Override
+    public void setProperty(NodeRef nodeRef, QName qname, Serializable value) throws InvalidNodeRefException {
+        setProperty(nodeRef, qname, value, null);
+    }
     /**
      * Gets the properties map, sets the value (null is allowed) and checks that the new set
      * of properties is valid.
      *
      */
     @Override
-    public void setProperty(NodeRef nodeRef, QName qname, Serializable value) throws InvalidNodeRefException
+    public void setProperty(NodeRef nodeRef, QName qname, Serializable value, String CURRENT_USER) throws InvalidNodeRefException
     {
         Assert.notNull(qname);
 
@@ -1290,7 +1317,7 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
 
         invokeBeforeUpdateNode(nodeRef);
         // Update the properties
-        setPropertyImpl(nodeId, qname, value);
+        setPropertyImpl(nodeId, qname, value, CURRENT_USER);
         // Policy callbacks
         Map<QName, Serializable> propertiesAfter = getPropertiesImpl(nodePair, null, null);
         invokeOnUpdateNode(nodeRef);
@@ -1303,10 +1330,13 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
         nodeIndexer.indexUpdateNode(nodeRef);
     }
 
-    /**
-     * Sets the property, taking special care to handle intrinsic properties and <b>cm:name</b> properly
-     */
-    private void setPropertyImpl(Long nodeId, QName qname, Serializable value)
+    private void setPropertyImpl(Long nodeId, QName qname, Serializable value) {
+        setPropertyImpl(nodeId, qname, value, null);
+    }
+        /**
+         * Sets the property, taking special care to handle intrinsic properties and <b>cm:name</b> properly
+         */
+    private void setPropertyImpl(Long nodeId, QName qname, Serializable value, String CURRENT_USER)
     {
         if (qname.equals(ContentModel.PROP_NODE_UUID))
         {
@@ -1322,11 +1352,11 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
                 {
                     String oldName = extractNameProperty(nodeDaoService.getNodeProperties(nodeId));
                     String newName = DefaultTypeConverter.INSTANCE.convert(String.class, value);
-                    setChildNameUnique(primaryParentAssocPair, newName, oldName);
+                    setChildNameUnique(primaryParentAssocPair, newName, oldName, CURRENT_USER);
                 }
             }
             // Set the property
-            nodeDaoService.addNodeProperty(nodeId, qname, value);
+            nodeDaoService.addNodeProperty(nodeId, qname, value, CURRENT_USER);
         }
     }
 
@@ -1341,34 +1371,52 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
      * @see Node#getProperties()
      */
     @Override
-    public void setProperties(NodeRef nodeRef, Map<QName, Serializable> properties) throws InvalidNodeRefException
+    public void setProperties(NodeRef nodeRef, Map<QName, Serializable> properties){
+        setNodePropertiesBySystem(nodeRef, properties, "");
+    }
+
+    @Override
+    public void setProperties(NodeRef nodeRef, Map<QName, Serializable> properties, String CURRENT_USER) throws InvalidNodeRefException {
+        setNodePropertiesBySystem(nodeRef, properties, CURRENT_USER);
+    }
+
+    @Override
+    public void setNodePropertiesBySystem(NodeRef nodeRef, Map<QName, Serializable> properties, String CURRENT_USER) throws InvalidNodeRefException
     {
         Pair<Long, NodeRef> nodePair = getNodePairNotNull(nodeRef);
-        Long nodeId = nodePair.getFirst();
 
+        Long nodeId = nodePair.getFirst();
         extractIntrinsicProperties(properties);
 
         // Invoke policy behaviours
         Map<QName, Serializable> propertiesBefore = getPropertiesImpl(nodePair, null, null);
+
         invokeBeforeUpdateNode(nodeRef);
 
         // Do the set properties
-        setPropertiesImpl(nodeId, properties);
-
+        setPropertiesImpl(nodeId, properties, CURRENT_USER);
         // Invoke policy behaviours
         Map<QName, Serializable> propertiesAfter = getPropertiesImpl(nodePair, null, null);
+
         invokeOnUpdateNode(nodeRef);
+        if(CURRENT_USER != null && !CURRENT_USER.isEmpty()) {
+            propertiesBefore.remove(PROP_MODIFIER);
+        }
         invokeOnUpdateProperties(nodeRef, propertiesBefore, propertiesAfter);
-
         // Add any missing aspects
-        addMissingAspects(nodePair, propertiesBefore, propertiesAfter);
-
+        addMissingAspects(nodePair, propertiesBefore, propertiesAfter, CURRENT_USER);
         // Index
         nodeIndexer.indexUpdateNode(nodeRef);
     }
 
     @Override
     public void addProperties(NodeRef nodeRef, Map<QName, Serializable> properties) throws InvalidNodeRefException
+    {
+        addProperties(nodeRef,properties, null);
+    }
+
+    @Override
+    public void addProperties(NodeRef nodeRef, Map<QName, Serializable> properties, String CURRENT_USER) throws InvalidNodeRefException
     {
         Pair<Long, NodeRef> nodePair = getNodePairNotNull(nodeRef);
         Long nodeId = nodePair.getFirst();
@@ -1417,6 +1465,24 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
         nodeDaoService.setNodeProperties(nodeId, properties);
     }
 
+    private void setPropertiesImpl(Long nodeId, Map<QName, Serializable> properties, String CURRENT_USER)
+    {
+        // Get the cm:name and uuid for special handling
+        if (properties.containsKey(ContentModel.PROP_NAME))
+        {
+            Serializable name = properties.get(ContentModel.PROP_NAME);
+            setPropertyImpl(nodeId, ContentModel.PROP_NAME, name);
+        }
+        if (properties.containsKey(ContentModel.PROP_NODE_UUID))
+        {
+            throw new IllegalArgumentException("The node UUID cannot be set");
+        }
+        // Now remove special properties
+        extractIntrinsicProperties(properties);
+        // Update the node
+        nodeDaoService.setNodeProperties(nodeId, properties, CURRENT_USER);
+    }
+
     @Override
     public void removeProperty(NodeRef nodeRef, QName qname) throws InvalidNodeRefException
     {
@@ -1436,7 +1502,7 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
             Pair<Long, ChildAssociationRef> primaryParentAssocPair = nodeDaoService.getPrimaryParentAssoc(nodeId);
             String oldName = extractNameProperty(nodeDaoService.getNodeProperties(nodeId));
             String newName = null;
-            setChildNameUnique(primaryParentAssocPair, newName, oldName);
+            setChildNameUnique(primaryParentAssocPair, newName, oldName, null);
         }
 
         // Remove
@@ -1559,22 +1625,18 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
                 public boolean handle(Pair<Long, ChildAssociationRef> childAssocPair, Pair<Long, NodeRef> parentNodePair, Pair<Long, NodeRef> childNodePair)
                 {
                     ChildAssociationRef assocRef = childAssocPair.getSecond();
-                    if(assocRef != null){
-                        logger.debug("ChildAssociationRef QName: " + assocRef.getQName().toString());
-                    }
                     QName assocTypeQName = assocRef.getTypeQName();
-                    if(assocTypeQName == null){
-                        logger.error("assocTypeQName is NULL!");
+                    QName assocQName = assocRef.getQName();
+                    if(qnamePattern == null){
+                        logger.error("qnamePattern is NULL! Return false...");
+                        return false;
+                    }
+                    if(typeQNamePattern == null){
+                        logger.error("typeQNamePattern is NULL! Return false...");
                         return false;
                     }
 
-                    QName assocQName = assocRef.getQName();
-                    if(assocQName == null){
-                        logger.error("assocQName is NULL!");
-                        logger.debug("assocTypeQName: " + assocTypeQName.toString());
-                        return false;
-                    }
-                    if (!qnamePattern.isMatch(assocQName) || !typeQNamePattern.isMatch(assocTypeQName))
+                    if ((qnamePattern != null &&!qnamePattern.isMatch(assocQName)) || (typeQNamePattern != null && !typeQNamePattern.isMatch(assocTypeQName)))
                     {
                         // No match
                         return false;
@@ -1846,8 +1908,10 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
      * Whilst walking up the hierarchy to the root, some nodes may have a <b>root</b> aspect. Everytime one of these is encountered, a new path is farmed off, but the method
      * continues to walk up the hierarchy.
      *
+     * @param currentNodePair the node to start from, i.e. the child node to work upwards from
      * @param currentPath the path from the current node to the descendent that we started from
      * @param completedPaths paths that have reached the root are added to this collection
+     * @param assocIdStack the parent-child relationships traversed whilst building the path.
      *            Used to detected cyclic relationships.
      * @param primaryOnly true if only the primary parent association must be traversed.
      *            If this is true, then the only root is the top level node having no parents.
@@ -2472,14 +2536,14 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
         // Get the node's existing name
         Serializable nameValue = nodeDaoService.getNodeProperty(childNodePair.getFirst(), ContentModel.PROP_NAME);
         String name = DefaultTypeConverter.INSTANCE.convert(String.class, nameValue);
-        setChildNameUnique(childAssocPair, name, null);
+        setChildNameUnique(childAssocPair, name, null, null);
     }
 
     /**
      * Ensures name uniqueness for the child and the child association. Note that nothing is done if the
      * association type doesn't enforce name uniqueness.
      */
-    private void setChildNameUnique(Pair<Long, ChildAssociationRef> childAssocPair, String newName, String oldName)
+    private void setChildNameUnique(Pair<Long, ChildAssociationRef> childAssocPair, String newName, String oldName, String CURRENT_USER)
     {
         if (childAssocPair == null)
         {
@@ -2501,7 +2565,7 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
         ChildAssociationDefinition childAssocDef = (ChildAssociationDefinition) assocDef;
         if (!childAssocDef.getDuplicateChildNamesAllowed())
         {
-            nodeDaoService.setChildNameUnique(assocId, newName);
+            nodeDaoService.setChildNameUnique(assocId, newName, CURRENT_USER);
         }
     }
 
