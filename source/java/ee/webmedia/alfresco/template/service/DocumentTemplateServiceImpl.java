@@ -70,7 +70,6 @@ import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
-import ee.webmedia.alfresco.dvk.model.DvkSendDocuments;
 import ee.webmedia.alfresco.functions.model.UnmodifiableFunction;
 import ee.webmedia.alfresco.mso.service.MsoService;
 import ee.webmedia.alfresco.notification.model.NotificationCache;
@@ -527,7 +526,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             }
         } while (retry > 0);
     }
-    
+
     @Override
     public String getProcessedVolumeDispositionTemplate(List<Volume> volumes, NodeRef template) {
         String templateText = fileFolderService.getReader(template).getContentString();

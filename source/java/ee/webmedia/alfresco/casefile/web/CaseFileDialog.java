@@ -347,6 +347,9 @@ BlockBeanProviderProvider {
     }
 
     public void searchDocsAndCases(@SuppressWarnings("unused") ActionEvent event) {
+    	if(renderedModal != null && renderedModal.equals("generateCaseFileLinkModal")){
+    		renderedModal = null;
+    	}
         getCurrentSnapshot().showDocsAndCasesAssocs = true;
         SearchBlockBean searchBlockBean = (SearchBlockBean) getBlocks().get(SearchBlockBean.class);
         searchBlockBean.init(getDataProvider());

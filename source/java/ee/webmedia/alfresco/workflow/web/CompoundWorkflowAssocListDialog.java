@@ -63,6 +63,9 @@ public class CompoundWorkflowAssocListDialog extends BaseDocumentListDialog {
                 if (newAssocs != null) {
                     for (NodeRef docRef : newAssocs) {
                         Document document = new Document(docRef);
+                        if(!document.getDocumentTypeName().equals("Sissetulev kiri")){
+                        	document.setDocumentToSign(Boolean.TRUE);
+                        }
                         documents.add(document);
                         updateDocumentMarking(currentDocuments, document);
                     }

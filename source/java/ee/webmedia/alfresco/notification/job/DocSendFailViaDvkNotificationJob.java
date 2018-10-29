@@ -19,7 +19,7 @@ public class DocSendFailViaDvkNotificationJob implements StatefulJob{
 	
 	@Override
 	public void execute(JobExecutionContext context) throws JobExecutionException {
-		log.debug("Starting ContractDueDateNotificationJob");
+		log.debug("Starting DocSendFailViaDvkNotificationJob");
 		JobDataMap jobData = context.getJobDetail().getJobDataMap();
         Object workerObj = jobData.get("notificationService");
         if (workerObj == null || !(workerObj instanceof NotificationService)) {

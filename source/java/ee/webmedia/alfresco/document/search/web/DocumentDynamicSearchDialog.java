@@ -19,6 +19,7 @@ import java.util.Set;
 
 import javax.faces.component.UIInput;
 import javax.faces.component.html.HtmlSelectManyListbox;
+import javax.faces.component.html.HtmlSelectOneMenu;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 import javax.faces.event.PhaseId;
@@ -55,6 +56,7 @@ import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.document.search.model.DocumentReportModel;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchFilterService;
+import ee.webmedia.alfresco.filter.model.FilterVO;
 import ee.webmedia.alfresco.filter.web.AbstractSearchFilterBlockBean;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -99,6 +101,8 @@ public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<D
         }
 
         loadAllFilters();
+        
+        searchPanelTitlePart = null;
     }
 
     protected void loadConfig() {
@@ -127,7 +131,23 @@ public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<D
     @Override
     public void selectedFilterValueChanged(ValueChangeEvent event) {
         super.selectedFilterValueChanged(event);
-        NodeRef newValue = (NodeRef) event.getNewValue();
+        NodeRef newValue = (NodeRef) event.getNewValue();             
+        searchPanelTitlePart = null;
+        
+        if(!getUserService().isAdministrator()){
+        	NodeRef oldValue = newValue;
+        	newValue = savePublicFilterAsNewLocal(event);
+        	if(oldValue != null && newValue == null){
+        		Map<String, Object> publicSearchFilterParams = filter.getProperties();
+                super.selectedFilterValueChanged(newValue);
+                for(Entry<String, Object> parameter : publicSearchFilterParams.entrySet()){
+                	if(!parameter.getKey().contains("{http://www.alfresco.org/") && !parameter.getKey().equals(DocumentSearchModel.Props.NAME)){
+                		filter.getProperties().put(parameter.getKey(), parameter.getValue());
+                	}
+                }
+        	}
+    	}
+        
         if (newValue != null) {
             // remove saved filter properties that are not defined in config any more
             Set<String> currentFilterPropNames = config.getPropertySheetConfigElement().getItems().keySet();
@@ -328,7 +348,10 @@ public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<D
 
     @Override
     public String getFilterPanelTitle() {
-        return MessageUtil.getMessage("document_search");
+    	if(searchPanelTitlePart == null){
+    		return MessageUtil.getMessage("document_search");
+    	}
+        return String.format("%s: %s", MessageUtil.getMessage("document_search"), searchPanelTitlePart);
     }
 
     // GeneralSelectorGenerator 'selectionItems' method bindings
