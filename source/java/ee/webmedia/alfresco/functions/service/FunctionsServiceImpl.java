@@ -64,6 +64,10 @@ public class FunctionsServiceImpl implements FunctionsService {
         return getFunctions(getFunctionsRoot());
     }
 
+    private List<UnmodifiableFunction> getArchivalStoreFunctions() {
+        return getFunctions(getArchivalFunctionsRoot());
+    }
+
     @Override
     public List<UnmodifiableFunction> getFunctions(NodeRef functionsRoot) {
         List<ChildAssociationRef> childRefs = getFunctionAssocs(functionsRoot);
@@ -80,6 +84,21 @@ public class FunctionsServiceImpl implements FunctionsService {
 
     @Override
     public List<UnmodifiableFunction> getAllFunctions(DocListUnitStatus... statuses) {
+        List<UnmodifiableFunction> functions = getAllSpaceStoreFunctions(statuses);
+        List<UnmodifiableFunction> archivalFunctions = getArchivalStoreFunctions();
+        List<String> statusNames = DocListUnitStatus.getStatusNames(statuses);
+        for (Iterator<UnmodifiableFunction> i = archivalFunctions.iterator(); i.hasNext();) {
+            UnmodifiableFunction function = i.next();
+            if (!statusNames.contains(function.getStatus())) {
+                i.remove();
+            }
+        }
+        functions.addAll(archivalFunctions);
+        return functions;
+    }
+
+    @Override
+    public List<UnmodifiableFunction> getAllSpaceStoreFunctions(DocListUnitStatus... statuses) {
         List<UnmodifiableFunction> functions = getAllFunctions();
         List<String> statusNames = DocListUnitStatus.getStatusNames(statuses);
         for (Iterator<UnmodifiableFunction> i = functions.iterator(); i.hasNext();) {
@@ -316,6 +335,11 @@ public class FunctionsServiceImpl implements FunctionsService {
     public NodeRef getFunctionsRoot() {
         return generalService.getNodeRef(FunctionsModel.Repo.FUNCTIONS_SPACE);
     }
+
+    private NodeRef getArchivalFunctionsRoot() {
+        return generalService.getArchivalNodeRef(FunctionsModel.Repo.FUNCTIONS_SPACE);
+    }
+
 
     @Override
     public Location getDocumentListLocation() {

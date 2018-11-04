@@ -29,8 +29,6 @@ public interface SignatureService {
     
     X509Certificate getCertificateForEncryption(SkLdapCertificate skLdapCertificate);
 
-    //X509Certificate getCertificateForEncryption(List<byte []> certificate, String certName);
-
     X509Certificate getCertificateForEncryption(byte [] certData, String certName);
 
 

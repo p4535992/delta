@@ -91,8 +91,8 @@ public class CompoundWorkflowAssocListDialog extends BaseDocumentListDialog {
         Collections.sort(documents, new Comparator<Document>() {
             @Override
             public int compare(Document o1, Document o2) {
-                return o1 == null || o2 == null || o2.getRegDateTime() == null || o1.getRegDateTime() == null
-                        ? -1 : o2.getRegDateTime().compareTo(o1.getRegDateTime());
+                return o1 == null || o2 == null || o2.getCreated() == null || o1.getCreated() == null
+                        ? -1 : o2.getCreated().compareTo(o1.getCreated());
             }
         });
     }

@@ -630,7 +630,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                     }
                 }
 
-                List<UnmodifiableVolume> allVolumes = isDocumentLocationPopup ? getVolumesForModal(seriesRef, docTypeNull)
+                List<UnmodifiableVolume> allVolumes = isDocumentLocationPopup ? getVolumesForModal(seriesRef)
                         : getAllVolumes(seriesRef, isSearchFilter, docTypeNull);
                 volumes = new ArrayList<>(allVolumes.size());
                 volumes.add(new SelectItem("", ""));
@@ -879,11 +879,8 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             return allVolumes;
         }
 
-        private List<UnmodifiableVolume> getVolumesForModal(NodeRef seriesRef, boolean docTypeNull) {
-            if (docTypeNull || getGeneralService().getStore().equals(seriesRef.getStoreRef())) {
-                return  _getVolumeService().getAllStartedVolumesBySeries(seriesRef, DocListUnitStatus.OPEN, DocListUnitStatus.CLOSED);
-            }
-            return Collections.emptyList();
+        private List<UnmodifiableVolume> getVolumesForModal(NodeRef seriesRef) {
+            return  _getVolumeService().getAllStartedVolumesBySeries(seriesRef, DocListUnitStatus.OPEN, DocListUnitStatus.CLOSED);
         }
 
         public boolean isNewVolumeSelected(NodeRef volumeRef) {
@@ -925,7 +922,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
         @SuppressWarnings("unchecked")
         private List<UnmodifiableFunction> getAllFunctions(Node document, boolean isSearchFilter) {
             if (!isSearchFilter) {
-                return _getFunctionsService().getAllFunctions(DocListUnitStatus.OPEN);
+                return _getFunctionsService().getAllSpaceStoreFunctions(DocListUnitStatus.OPEN);
             }
 
             List<NodeRef> selectedStores = (List<NodeRef>) document.getProperties().get(DocumentDynamicSearchDialog.SELECTED_STORES);
@@ -971,10 +968,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
         }
 
         private List<UnmodifiableSeries> getSeriesForModal(NodeRef functionRef, Set<String> idList) {
-            if (getGeneralService().getStore().equals(functionRef.getStoreRef())) {
-                return _getSeriesService().getAllSeriesByFunction(functionRef, idList, DocListUnitStatus.OPEN, DocListUnitStatus.CLOSED);
-            }
-            return Collections.emptyList();
+            return _getSeriesService().getAllSeriesByFunction(functionRef, idList, DocListUnitStatus.OPEN, DocListUnitStatus.CLOSED);
         }
 
         private void updateAccessRestrictionProperties(NodeRef seriesRef) {
