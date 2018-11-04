@@ -39,7 +39,6 @@ import org.alfresco.util.MD5;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.joda.time.LocalDate;
@@ -1910,15 +1909,8 @@ public class NotificationServiceImpl implements NotificationService {
             String recipientEmail = null;
             if (StringUtils.isNotBlank(recipientRegNr)) {
                 List<Node> contacts = addressbookService.getContactsByRegNumber(recipientRegNr);
-                if (CollectionUtils.isNotEmpty(contacts)) {
-                    for (Node contact : contacts) {
-                        String orgCode = (String) contact.getProperties().get(AddressbookModel.Props.ORGANIZATION_CODE);
-                        String personId = (String) contact.getProperties().get(AddressbookModel.Props.PERSON_ID);
-                        if (recipientRegNr.equals(orgCode) || recipientRegNr.equals(personId)) {
-                            recipientEmail = (String) contact.getProperties().get(AddressbookModel.Props.EMAIL);
-                            break;
-                        }
-                    }
+                if (contacts != null && contacts.size() > 0) {
+                    recipientEmail = (String) contacts.get(0).getProperties().get(AddressbookModel.Props.EMAIL);
                 }
             } else {
                 String recipient = sendInfo.getRecipient();
