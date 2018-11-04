@@ -77,14 +77,14 @@
          <f:facet name="header">
             <a:sortLink id="col3-header" label="#{msg.document_assocsBlockBean_type}" value="type" styleClass="header" />
          </f:facet>
-         <h:outputText id="col3-txt" value="#{r.type}" title="#{r.type}" styleClass="tooltip condence20- no-underline"/>
+         <h:outputText id="col3-txt" value="#{r.type}" title="#{r.type}" styleClass="tooltip condence20- strictTrim no-underline"/>
       </a:column>
 
        <a:column id="col15" rendered="#{AssocsBlockBean.showAssociationSenderReceiver}">
            <f:facet name="header">
                <a:sortLink id="col15-header" label="#{msg.document_assocsBlockBean_recipientsSenders}" value="senderOrRecipient" styleClass="header" />
            </f:facet>
-           <h:outputText id="col15-txt" value="#{r.senderOrRecipient}" title="#{r.senderOrRecipient}" styleClass="tooltip condence20- no-underline"/>
+           <h:outputText id="col15-txt" value="#{r.senderOrRecipient}" title="#{r.senderOrRecipient}" styleClass="tooltip condence20- strictTrim no-underline"/>
        </a:column>
 
        <a:column id="col7" >
