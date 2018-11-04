@@ -62,7 +62,12 @@
       			<h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}reviewTaskCompletedNotAccepted']}" />
       			<h:outputText value="#{msg.notification_reviewTaskCompletedNotAccepted_label}" />
       		</h:panelGroup>
-      		
+
+			<h:panelGroup>
+				<h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}myFileModified']}" />
+				<h:outputText value="#{msg.notification_myFileModified_label}" />
+			</h:panelGroup>
+
       		<h:panelGroup>
 	  			<h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}reviewTaskCompletedWithRemarks']}" />
       			<h:outputText value="#{msg.notification_reviewTaskCompletedWithRemarks_label}" />
