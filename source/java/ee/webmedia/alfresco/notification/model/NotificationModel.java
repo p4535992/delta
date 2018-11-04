@@ -48,6 +48,7 @@ public interface NotificationModel {
         QName TASK_REVIEW_TASK_COMPLETED_NOT_ACCEPTED_ORDERED = QName.createQName(URI, "reviewTaskCompletedNotAcceptedOrdered");
         QName TASK_REVIEW_TASK_COMPLETED_WITH_REMARKS = QName.createQName(URI, "reviewTaskCompletedWithRemarks");
         QName TASK_REVIEW_TASK_COMPLETED_WITH_REMARKS_ORDERED = QName.createQName(URI, "reviewTaskCompletedWithRemarksOrdered");
+        QName PARRALEL_WORKFLOW_COMPLETED = QName.createQName(URI, "parralelWorkflowCompleted");
         QName WORKFLOW_WORKFLOW_COMPLETED = QName.createQName(URI, "workflowCompleted");
         QName WORKFLOW_NEW_WORKFLOW_STARTED = QName.createQName(URI, "newWorkflowStarted");
         QName TASK_ORDER_ASSIGNMENT_WORKFLOW_COMPLETED = QName.createQName(URI, "orderAssignmentWorkflowCompleted");
@@ -61,6 +62,11 @@ public interface NotificationModel {
         QName TASK_DUE_DATE_EXTENSION_TASK_COMPLETED_ORDERED = QName.createQName(URI, "taskDueDateExtensionTaskCompletedOrdered");
         QName TASK_DUE_DATE_EXTENSION_TASK_COMPLETED_NOT_ACCEPTED = QName.createQName(URI, "taskDueDateExtensionTaskCompletedNotAccepted");
         QName TASK_DUE_DATE_EXTENSION_TASK_COMPLETED_NOT_ACCEPTED_ORDERED = QName.createQName(URI, "taskDueDateExtensionTaskCompletedNotAcceptedOrdered");
+        QName TASK_REVIEWED_DOCUMENT_REVIEWED = QName.createQName(URI, "reviewedDocumentReviewed");
+        QName TASK_REVIEWED_DOCUMENT_REVIEWED_NOT_ACCEPTED = QName.createQName(URI, "reviewedDocumentReviewedNotAccepted");
+        QName TASK_REVIEWED_DOCUMENT_REVIEWED_WITH_REMARKS = QName.createQName(URI, "reviewedDocumentReviewedWithRemarks");
+        QName TASK_REVIEWED_DOCUMENT_CONFIRMED = QName.createQName(URI, "reviewedDocumentConfirmed");
+        QName TASK_REVIEWED_DOCUMENT_CONFIRMED_NOT_ACCEPTED = QName.createQName(URI, "reviewedDocumentConfirmedNotAccepted");
         QName WORKFLOW_REGISTRATION_STOPPED_NO_DOCUMENTS = QName.createQName(URI, "workflowRegistrationStoppedNoDocuments");
         QName WORKFLOW_SIGNATURE_STOPPED_NO_DOCUMENTS = QName.createQName(URI, "workflowSignatureStoppedNoDocuments");
         QName COMPOUND_WORKFLOW_STOPPED = QName.createQName(URI, "compoundWorkflowStopped");
@@ -84,6 +90,7 @@ public interface NotificationModel {
 
         QName DELEGATED_TASK_COMPLETED = QName.createQName(URI, "delegatedTaskCompleted");
         QName REVIEW_DOCUMENT_SIGNED = QName.createQName(URI, "reviewDocumentSigned");
+        QName REVIEW_DOCUMENT_NOT_SIGNED = QName.createQName(URI, "reviewDocumentNotSigned");
         QName TASK_CANCELLED = QName.createQName(URI, "taskCancelled");
         QName TASK_CANCELLED_ORDERED = QName.createQName(URI, "taskCancelledOrdered");
         QName GROUP_ASSIGNMENT_TASK_COMPLETED_BY_OTHERS = QName.createQName(URI, "groupAssignmentTaskCompletedByOthers");

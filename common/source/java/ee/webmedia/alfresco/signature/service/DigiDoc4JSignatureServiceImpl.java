@@ -381,7 +381,7 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
         Container container = null;
         try {
             container = getContainer(nodeRef);
-            //signContainer(container, dataToSign, signatureHex);
+            signContainer(container, dataToSign, signatureHex);
             writeSignedContainer(nodeRef, container);
         } catch (Exception e) {
             throw new SignatureRuntimeException("Failed to add signature to bdoc file, nodeRef = " + nodeRef + ", dataToSign = " + dataToSign

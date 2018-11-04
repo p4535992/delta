@@ -1,20 +1,18 @@
 package ee.webmedia.alfresco.common.propertysheet.workflow;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.utils.ComponentUtil;
+import ee.webmedia.alfresco.workflow.web.CompoundWorkflowDefinitionDialog;
+import org.alfresco.web.data.IDataContainer;
+
+import javax.faces.component.UIComponent;
+import javax.faces.component.html.HtmlPanelGroup;
+import javax.faces.context.FacesContext;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import javax.faces.component.UIComponent;
-import javax.faces.component.html.HtmlPanelGroup;
-import javax.faces.context.FacesContext;
-
-import org.alfresco.web.data.IDataContainer;
-
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.utils.ComponentUtil;
-import ee.webmedia.alfresco.workflow.web.CompoundWorkflowDefinitionDialog;
 
 public class TaskListContainer extends HtmlPanelGroup implements IDataContainer {
 
@@ -37,133 +35,22 @@ public class TaskListContainer extends HtmlPanelGroup implements IDataContainer 
         this.workflowIndex = workflowIndex;
     }
 
-    public void setRowCount(int rowCount) {
-        pageCount = (rowCount / pageSize) + 1;
-        if (rowCount % pageSize == 0 && pageCount != 1) {
-            pageCount--;
-        }
-    }
-
-    public boolean isRowRangeOnCurrentPage(int rangeStartRow, int rangeEndRow) {
-        return rangeStartRow <= getFirstPageRowNumber() && rangeEndRow >= getFirstPageRowNumber()    // Range overlaps from left
-                || isRowOnCurrentPage(rangeStartRow) && isRowOnCurrentPage(rangeEndRow)              // Range is entirely on page
-                || rangeStartRow <= getLastPageRowNumber() && rangeEndRow >= getLastPageRowNumber(); // Range overlaps from right
-    }
-
-    public boolean isRowOnCurrentPage(int rowNumber) {
-        return getFirstPageRowNumber() <= rowNumber && rowNumber <= getLastPageRowNumber();
-    }
-
-    public int getFirstPageRowNumber() {
-        return currentPage * pageSize;
-    }
-
-    public int getLastPageRowNumber() {
-        return currentPage * pageSize + pageSize - 1;
-    }
-
-    @Override
-    public void setCurrentPage(int i) {
-        currentPage = i;
-        saveSelectedPageNumber(new PageInfo(i, pageSize));
-    }
-
-    private void saveSelectedPageNumber(PageInfo selectedPage) {
-        UIComponent persistentParent = getPersistentParent(this);
-        if (persistentParent == null) {
-            return;
-        }
-        setTaskListCurrentPageInfo(persistentParent, workflowIndex, currentPageAttributeKey, selectedPage);
-        updateView();
-    }
-
-    protected void updateView() {
-        ((CompoundWorkflowDefinitionDialog) BeanHelper.getDialogManager().getBean()).updatePanelGroupWithoutWorkflowBlockUpdate();
-    }
-
-    @Override
-    public Object saveState(FacesContext context) {
-        Object values[] = new Object[6];
-        values[0] = super.saveState(context);
-        values[1] = pageSize;
-        values[2] = pageCount;
-        values[3] = currentPage;
-        values[4] = currentPageAttributeKey;
-        values[5] = workflowIndex;
-        return values;
-    }
-
-    @Override
-    public void restoreState(FacesContext context, Object state) {
-        Object values[] = (Object[]) state;
-        super.restoreState(context, values[0]);
-        pageSize = (int) values[1];
-        pageCount = (int) values[2];
-        currentPage = (int) values[3];
-        currentPageAttributeKey = (String) values[4];
-        workflowIndex = (int) values[5];
-    }
-
-    @Override
-    public int getPageSize() {
-        return pageSize;
-    }
-
-    @Override
-    public int getCurrentPage() {
-        return currentPage;
-    }
-
-    @Override
-    public int getPageCount() {
-        return pageCount;
-    }
-
-    @Override
-    public String getCurrentSortColumn() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean isCurrentSortDescending() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean isDataAvailable() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Object nextRow() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void sort(String s, boolean b, String s2) {
-        throw new UnsupportedOperationException();
-    }
-
-    protected UIComponent getPersistentParent(UIComponent searchFromComponent) {
-        return getCompoundWorkflowDialog(searchFromComponent);
-    }
-
-    // Static helper methods
-
     public static void addWorkflowTaskListPageInfo(UIComponent eventSource, int addedWorkflowIndex) {
         List<Map<String, PageInfo>> pageAttribute = getCurrentPageAttribute(getCompoundWorkflowDialog(eventSource));
-        try{
-        	pageAttribute.add(addedWorkflowIndex, new HashMap<String, PageInfo>());
-        }catch(IndexOutOfBoundsException e){
-        	pageAttribute.add(new HashMap<String, PageInfo>());
+        try {
+            pageAttribute.add(addedWorkflowIndex, new HashMap<String, PageInfo>());
+        } catch (IndexOutOfBoundsException e) {
+            pageAttribute.add(new HashMap<String, PageInfo>());
         }
     }
 
     public static void removeWorkflowTaskListPageInfo(UIComponent eventSource, int removedWorkflowIndex) {
         List<Map<String, PageInfo>> pageAttribute = getCurrentPageAttribute(getCompoundWorkflowDialog(eventSource));
-        try{
-        	pageAttribute.remove(removedWorkflowIndex);
-        }catch(IndexOutOfBoundsException e){}
+        try {
+            pageAttribute.remove(removedWorkflowIndex);
+        } catch (IndexOutOfBoundsException e) {
+
+        }
     }
 
     private static void setTaskListCurrentPageInfo(UIComponent persistentParentComponent, int workflowIndex, String currentPageAttributeKey, PageInfo currentPageInfo) {
@@ -220,6 +107,119 @@ public class TaskListContainer extends HtmlPanelGroup implements IDataContainer 
 
     private static UIComponent getCompoundWorkflowDialog(UIComponent searchFromComponent) {
         return ComponentUtil.findParentComponentById(searchFromComponent, "compound-workflow-dialog");
+    }
+
+    public void setRowCount(int rowCount) {
+        pageCount = (rowCount / pageSize) + 1;
+        if (rowCount % pageSize == 0 && pageCount != 1) {
+            pageCount--;
+        }
+    }
+
+    public boolean isRowRangeOnCurrentPage(int rangeStartRow, int rangeEndRow) {
+        return rangeStartRow <= getFirstPageRowNumber() && rangeEndRow >= getFirstPageRowNumber()    // Range overlaps from left
+                || isRowOnCurrentPage(rangeStartRow) && isRowOnCurrentPage(rangeEndRow)              // Range is entirely on page
+                || rangeStartRow <= getLastPageRowNumber() && rangeEndRow >= getLastPageRowNumber(); // Range overlaps from right
+    }
+
+    public boolean isRowOnCurrentPage(int rowNumber) {
+        return getFirstPageRowNumber() <= rowNumber && rowNumber <= getLastPageRowNumber();
+    }
+
+    public int getFirstPageRowNumber() {
+        return currentPage * pageSize;
+    }
+
+    public int getLastPageRowNumber() {
+        return currentPage * pageSize + pageSize - 1;
+    }
+
+    private void saveSelectedPageNumber(PageInfo selectedPage) {
+        UIComponent persistentParent = getPersistentParent(this);
+        if (persistentParent == null) {
+            return;
+        }
+        setTaskListCurrentPageInfo(persistentParent, workflowIndex, currentPageAttributeKey, selectedPage);
+        updateView();
+    }
+
+    protected void updateView() {
+        ((CompoundWorkflowDefinitionDialog) BeanHelper.getDialogManager().getBean()).updatePanelGroupWithoutWorkflowBlockUpdate();
+    }
+
+    @Override
+    public Object saveState(FacesContext context) {
+        Object values[] = new Object[6];
+        values[0] = super.saveState(context);
+        values[1] = pageSize;
+        values[2] = pageCount;
+        values[3] = currentPage;
+        values[4] = currentPageAttributeKey;
+        values[5] = workflowIndex;
+        return values;
+    }
+
+    @Override
+    public void restoreState(FacesContext context, Object state) {
+        Object values[] = (Object[]) state;
+        super.restoreState(context, values[0]);
+        pageSize = (int) values[1];
+        pageCount = (int) values[2];
+        currentPage = (int) values[3];
+        currentPageAttributeKey = (String) values[4];
+        workflowIndex = (int) values[5];
+    }
+
+    @Override
+    public int getPageSize() {
+        return pageSize;
+    }
+
+    @Override
+    public int getCurrentPage() {
+        return currentPage;
+    }
+
+    @Override
+    public void setCurrentPage(int i) {
+        currentPage = i;
+        saveSelectedPageNumber(new PageInfo(i, pageSize));
+    }
+
+    // Static helper methods
+
+    @Override
+    public int getPageCount() {
+        return pageCount;
+    }
+
+    @Override
+    public String getCurrentSortColumn() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean isCurrentSortDescending() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean isDataAvailable() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Object nextRow() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void sort(String s, boolean b, String s2) {
+        throw new UnsupportedOperationException();
+    }
+
+    protected UIComponent getPersistentParent(UIComponent searchFromComponent) {
+        return getCompoundWorkflowDialog(searchFromComponent);
     }
 
     private static class PageInfo implements Serializable {

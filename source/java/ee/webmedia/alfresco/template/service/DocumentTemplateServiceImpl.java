@@ -1,45 +1,5 @@
 package ee.webmedia.alfresco.template.service;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getConstantNodeRefsBean;
-import static org.apache.commons.io.FilenameUtils.getExtension;
-import static org.apache.commons.lang.StringUtils.equalsIgnoreCase;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.Serializable;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import javax.faces.model.SelectItem;
-import javax.servlet.ServletContext;
-import javax.xml.ws.soap.SOAPFaultException;
-
-import org.alfresco.i18n.I18NUtil;
-import org.alfresco.model.ContentModel;
-import org.alfresco.model.ForumModel;
-import org.alfresco.repo.cache.SimpleCache;
-import org.alfresco.repo.content.MimetypeMap;
-import org.alfresco.service.cmr.dictionary.DictionaryService;
-import org.alfresco.service.cmr.model.FileFolderService;
-import org.alfresco.service.cmr.model.FileInfo;
-import org.alfresco.service.cmr.model.FileNotFoundException;
-import org.alfresco.service.cmr.repository.*;
-import org.alfresco.service.namespace.QName;
-import org.alfresco.service.namespace.RegexQNamePattern;
-import org.alfresco.util.Pair;
-import org.alfresco.util.TempFileProvider;
-import org.alfresco.web.bean.repository.Node;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang.StringEscapeUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.time.FastDateFormat;
-import org.springframework.util.Assert;
-import org.springframework.web.context.ServletContextAware;
-
 import ee.webmedia.alfresco.archivals.ArchivalReportGenerator;
 import ee.webmedia.alfresco.archivals.model.ActivityFileType;
 import ee.webmedia.alfresco.base.BaseObject;
@@ -93,6 +53,39 @@ import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
+import org.alfresco.i18n.I18NUtil;
+import org.alfresco.model.ContentModel;
+import org.alfresco.model.ForumModel;
+import org.alfresco.repo.cache.SimpleCache;
+import org.alfresco.repo.content.MimetypeMap;
+import org.alfresco.service.cmr.dictionary.DictionaryService;
+import org.alfresco.service.cmr.model.FileFolderService;
+import org.alfresco.service.cmr.model.FileInfo;
+import org.alfresco.service.cmr.model.FileNotFoundException;
+import org.alfresco.service.cmr.repository.*;
+import org.alfresco.service.namespace.QName;
+import org.alfresco.service.namespace.RegexQNamePattern;
+import org.alfresco.util.Pair;
+import org.alfresco.util.TempFileProvider;
+import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.FastDateFormat;
+import org.springframework.util.Assert;
+import org.springframework.web.context.ServletContextAware;
+
+import javax.faces.model.SelectItem;
+import javax.servlet.ServletContext;
+import javax.xml.ws.soap.SOAPFaultException;
+import java.io.*;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static ee.webmedia.alfresco.common.web.BeanHelper.getConstantNodeRefsBean;
+import static org.apache.commons.io.FilenameUtils.getExtension;
+import static org.apache.commons.lang.StringUtils.equalsIgnoreCase;
 
 public class DocumentTemplateServiceImpl implements DocumentTemplateService, ServletContextAware {
 

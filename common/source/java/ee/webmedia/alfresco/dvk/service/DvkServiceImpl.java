@@ -892,7 +892,7 @@ public abstract class DvkServiceImpl implements DvkService {
             String next = sendDocuments.iterator().next();
             MonitoringUtil.logSuccess(MonitoredService.OUT_XTEE_DVK);
             return next;
-        } catch (RuntimeException e) {;
+        } catch (RuntimeException e) {
             MonitoringUtil.logError(MonitoredService.OUT_XTEE_DVK, e);
             throw e;
         }
