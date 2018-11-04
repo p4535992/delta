@@ -28,6 +28,7 @@ public interface DocumentDynamicModel {
         QName ADDITIONAL_RECIPIENT_POSTAL_CITY = QName.createQName(URI, "additionalRecipientPostalCity");
         QName ADDITIONAL_RECIPIENT_ID = QName.createQName(URI, "additionalRecipientId");
 
+        QName SENDER_ID = QName.createQName(URI, "senderID");
         QName SENDER_PERSON_NAME = QName.createQName(URI, "senderPersonName");
         QName SENDER_INITIALS_TO_ADR = QName.createQName(URI, "senderInitialsToAdr");
         QName SENDER_STREET_HOUSE = QName.createQName(URI, "senderStreetHouse");

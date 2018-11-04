@@ -440,7 +440,7 @@ public class NotificationServiceImpl implements NotificationService {
             boolean sentOverDvk, NotificationCache notificationCache) {
         NotificationResult result = new NotificationResult();
         if (task instanceof LinkedReviewTask) {
-            // no notification whatsoever is sent out for linkedReviewTasks
+            // no notification whatsoever is sent out for linkedReviweTasks
             return result;
         }
         Notification substitutionNotification = null;
@@ -717,12 +717,7 @@ public class NotificationServiceImpl implements NotificationService {
                 if (attachments == null) {
                     List<NodeRef> fileRefs = getActiveFileRefs(docRef);
                     String zipTitle = I18NUtil.getMessage("notification_zip_filename");
-                    try {
-                        attachments = fileRefs != null ? emailService.getAttachments(fileRefs, true, null, zipTitle) : Collections.<EmailAttachment> emptyList();
-                        } catch (Exception e) {
-                            log.error(e.getMessage(), e);
-                           throw new EmailException (e.getMessage());
-                        }
+                    attachments = fileRefs != null ? emailService.getAttachments(fileRefs, true, null, zipTitle) : Collections.<EmailAttachment> emptyList();
                     cache.getZippedAttachments().put(docRef, attachments);
                 }
                 sendEmail(notification, content, docRef, attachments);
@@ -784,39 +779,11 @@ public class NotificationServiceImpl implements NotificationService {
         }
         return notification;
     }
-    
+
     private List<Notification> processFinishedWorkflow(Workflow workflow) {
         final CompoundWorkflow compoundWorkflow = workflow.getParent();
 
         List<Notification> notifications = new ArrayList<>();
-        
-        List<Workflow> workflows = compoundWorkflow.getWorkflows();
-        boolean needNotifyOwner = false;
-        for (Workflow nestedWorkflow : workflows) {
-        	if (nestedWorkflow.isType(WorkflowSpecificModel.Types.REVIEW_WORKFLOW)) {
-        		if (nestedWorkflow.isParallelTasks()) {
-        			List<Task> tasks = nestedWorkflow.getTasks();
-         			int count = tasks.size();
-         			
-        			if (count <= 1)
-        				continue;
-
-        			for (Task reviewTask : tasks) {
-        				if((reviewTask.getOutcome().startsWith("Koosk\u00F5lastatud m\u00E4rkustega"))) {
-        					needNotifyOwner = true;
-        				}
-        			}
-        		
-		    	if (needNotifyOwner) {
-		    		Notification notification = setupNotification(new Notification(), NotificationModel.NotificationType.PARRALEL_WORKFLOW_COMPLETED, getWorkflowType(workflow));
-		            addCompoundWorkflowOwnerRecipient(compoundWorkflow, notification);
-		            notifications.add(notification);
-		            break;
-		        	}
-        		}
-        	}
-        }
-        
         if (isSubscribed(compoundWorkflow.getOwnerId(), NotificationModel.NotificationType.WORKFLOW_WORKFLOW_COMPLETED)) {
             Notification notification = setupNotification(new Notification(), NotificationModel.NotificationType.WORKFLOW_WORKFLOW_COMPLETED, getWorkflowType(workflow));
             addCompoundWorkflowOwnerRecipient(compoundWorkflow, notification);
@@ -831,7 +798,6 @@ public class NotificationServiceImpl implements NotificationService {
                 notifications.add(notification);
             }
         }
-        
         return notifications;
 
     }
@@ -1053,70 +1019,80 @@ public class NotificationServiceImpl implements NotificationService {
      * //else : reviewTask -> reviewTaskCompletedWithRemarks -> workflow block[parallelTasks == false] -> every task[status == finished] ownerId
      */
     private List<Notification> processReviewTask(Task task, List<Notification> notifications) {
-        final Workflow workflow = task.getParent();                                              
+        final Workflow workflow = task.getParent();
         final CompoundWorkflow compoundWorkflow = workflow.getParent();
-                
         if (WorkflowSpecificModel.ReviewTaskOutcome.CONFIRMED.equals(task.getOutcomeIndex())) {
-            List<String> usernamesToCheck = new ArrayList<>();
+            String ownerIdToCheck = null;
             if (StringUtils.isNotEmpty(compoundWorkflow.getOwnerId())
                     && isSubscribed(compoundWorkflow.getOwnerId(), NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED)) {
-            	usernamesToCheck.add(compoundWorkflow.getOwnerId());
+                ownerIdToCheck = compoundWorkflow.getOwnerId();
                 Notification ownerNotification = setupNotification(NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED, getTaskWorkflowType(task));
                 addCompoundWorkflowOwnerRecipient(compoundWorkflow, ownerNotification);
                 notifications.add(ownerNotification);
             }
-            addReviewersNotifications(notifications, compoundWorkflow, getTaskWorkflowType(task), NotificationModel.NotificationType.TASK_REVIEWED_DOCUMENT_REVIEWED, usernamesToCheck, task.getOwnerId());
-            
-            addTaskIndependentCompoundWorkflowNotification(compoundWorkflow, notifications, usernamesToCheck,
+            addTaskIndependentCompoundWorkflowNotification(compoundWorkflow, notifications, ownerIdToCheck,
                     NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_ORDERED);
         }
 
         else if (WorkflowSpecificModel.ReviewTaskOutcome.CONFIRMED_WITH_REMARKS.equals(task.getOutcomeIndex())) {
-        	
-        	List<String> usernamesToCheck = new ArrayList<>();
-            if (StringUtils.isNotEmpty(compoundWorkflow.getOwnerId())
-                    && isSubscribed(compoundWorkflow.getOwnerId(), NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_WITH_REMARKS)) {
-            	usernamesToCheck.add(compoundWorkflow.getOwnerId());
-                Notification ownerNotification = setupNotification(NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_WITH_REMARKS, getTaskWorkflowType(task));
-                addCompoundWorkflowOwnerRecipient(compoundWorkflow, ownerNotification);
-                notifications.add(ownerNotification);
+
+            Notification notification = setupNotification(NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_WITH_REMARKS, getTaskWorkflowType(task));
+            List<String> usernamesToCheck = new ArrayList<>();
+            if (workflow.isParallelTasks()) {
+                for (Task workflowTask : workflow.getTasks()) {
+                    if (StringUtils.isEmpty(workflowTask.getOwnerId())
+                            || !isSubscribed(workflowTask.getOwnerId(), NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_WITH_REMARKS)) {
+                        continue;
+                    }
+                    notification.addRecipient(workflowTask.getOwnerName(), workflowTask.getOwnerEmail());
+                    usernamesToCheck.add(workflowTask.getOwnerId());
+                }
+            } else {
+                for (Task workflowTask : workflow.getTasks()) {
+                    if (StringUtils.isEmpty(workflowTask.getOwnerId()) || !workflowTask.isStatus(Status.FINISHED)
+                            || !isSubscribed(workflowTask.getOwnerId(), NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_WITH_REMARKS)) {
+                        continue;
+                    }
+                    notification.addRecipient(workflowTask.getOwnerName(), workflowTask.getOwnerEmail());
+                    usernamesToCheck.add(workflowTask.getOwnerId());
+                }
             }
-            addReviewersNotifications(notifications, compoundWorkflow, getTaskWorkflowType(task), NotificationModel.NotificationType.TASK_REVIEWED_DOCUMENT_REVIEWED_WITH_REMARKS, usernamesToCheck, task.getOwnerId());
-            
+            addCompoundWorkflowOwnerRecipient(compoundWorkflow, notification);
             addTaskIndependentCompoundWorkflowNotification(compoundWorkflow, notifications, usernamesToCheck,
                     NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_WITH_REMARKS_ORDERED);
+            notifications.add(notification);
         }
 
         else if (WorkflowSpecificModel.ReviewTaskOutcome.NOT_CONFIRMED.equals(task.getOutcomeIndex())) {
-        	
-        	List<String> usernamesToCheck = new ArrayList<>();
-            if (StringUtils.isNotEmpty(compoundWorkflow.getOwnerId())
-                    && isSubscribed(compoundWorkflow.getOwnerId(), NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_NOT_ACCEPTED)) {
-            	usernamesToCheck.add(compoundWorkflow.getOwnerId());
-                Notification ownerNotification = setupNotification(NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_NOT_ACCEPTED, getTaskWorkflowType(task));
-                addCompoundWorkflowOwnerRecipient(compoundWorkflow, ownerNotification);
-                notifications.add(ownerNotification);
+
+            Notification notification = setupNotification(NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_NOT_ACCEPTED, getTaskWorkflowType(task));
+            List<String> usernamesToCheck = new ArrayList<>();
+            if (workflow.isParallelTasks()) {
+                for (Task workflowTask : workflow.getTasks()) {
+                    if (StringUtils.isEmpty(workflowTask.getOwnerId())
+                            || !isSubscribed(workflowTask.getOwnerId(), NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_NOT_ACCEPTED)) {
+                        continue;
+                    }
+                    notification.addRecipient(workflowTask.getOwnerName(), workflowTask.getOwnerEmail());
+                    usernamesToCheck.add(workflowTask.getOwnerId());
+                }
+            } else {
+                for (Task workflowTask : workflow.getTasks()) {
+                    if (StringUtils.isEmpty(workflowTask.getOwnerId()) || !workflowTask.isStatus(Status.FINISHED)
+                            || !isSubscribed(workflowTask.getOwnerId(), NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_NOT_ACCEPTED)) {
+                        continue;
+                    }
+                    notification.addRecipient(workflowTask.getOwnerName(), workflowTask.getOwnerEmail());
+                    usernamesToCheck.add(workflowTask.getOwnerId());
+                }
             }
-            addReviewersNotifications(notifications, compoundWorkflow, getTaskWorkflowType(task), NotificationModel.NotificationType.TASK_REVIEWED_DOCUMENT_REVIEWED_NOT_ACCEPTED, usernamesToCheck, task.getOwnerId());
-            
+            addCompoundWorkflowOwnerRecipient(compoundWorkflow, notification);
             addTaskIndependentCompoundWorkflowNotification(compoundWorkflow, notifications, usernamesToCheck,
                     NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_NOT_ACCEPTED_ORDERED);
+            notifications.add(notification);
         }
-       
-      
-        
- /*       if (WorkflowSpecificModel.ReviewTaskOutcome.CONFIRMED.equals(task.getOutcomeIndex())) 
-        	&& (WorkflowSpecificModel.ReviewTaskOutcome.CONFIRMED_WITH_REMARKS.equals(task.getOutcomeIndex()))  
-        	&& (WorkflowSpecificModel.ReviewTaskOutcome.NOT_CONFIRMED.equals(task.getOutcomeIndex())) {
-        	
-        }
-         
-   */     
-        
-      
 
         return notifications;
-        
     }
 
     private List<Notification> processExternalReviewTask(Task task, List<Notification> notifications) {
@@ -1167,9 +1143,10 @@ public class NotificationServiceImpl implements NotificationService {
         }
 
         // delegated task completed
+        CompoundWorkflow compoundWf = workflow.getParent();
         Notification delegatingNotification = null;
         String usernameToCheck = null;
-        if (task.isDelegated() && isSubscribed(task.getCreatorId(), NotificationModel.NotificationType.DELEGATED_TASK_COMPLETED)) {
+        if (!StringUtils.equals(task.getCreatorId(), compoundWf.getOwnerId()) && isSubscribed(task.getCreatorId(), NotificationModel.NotificationType.DELEGATED_TASK_COMPLETED)) {
             delegatingNotification = setupNotification(NotificationModel.NotificationType.DELEGATED_TASK_COMPLETED, getTaskWorkflowType(task));
             delegatingNotification.addRecipient(task.getCreatorName(), task.getCreatorEmail());
             usernameToCheck = task.getCreatorId();
@@ -1236,17 +1213,15 @@ public class NotificationServiceImpl implements NotificationService {
             notification = setupNotification(NotificationModel.NotificationType.TASK_CONFIRMATION_TASK_COMPLETED_NOT_ACCEPTED, getTaskWorkflowType(task));
         }
 
-        List<String> usernamesToCheck = new ArrayList<>();
+        String usernameToCheck = null;
         if (notification != null) {
             notification.addRecipient(compoundWorkflow.getOwnerName(), userService.getUserEmail(ownerId));
-            usernamesToCheck.add(compoundWorkflow.getOwnerId());
+            usernameToCheck = compoundWorkflow.getOwnerId();
             notifications.add(notification);
         }
-        addTaskIndependentCompoundWorkflowNotification(task.getParent().getParent(), notifications, usernamesToCheck,
+        addTaskIndependentCompoundWorkflowNotification(task.getParent().getParent(), notifications, usernameToCheck,
                 isAccepted ? NotificationModel.NotificationType.TASK_CONFIRMATION_TASK_COMPLETED_ORDERED
                         : NotificationModel.NotificationType.TASK_CONFIRMATION_TASK_COMPLETED_NOT_ACCEPTED_ORDERED);
-        addReviewersNotifications(notifications, compoundWorkflow, getTaskWorkflowType(task), isAccepted ? NotificationModel.NotificationType.TASK_REVIEWED_DOCUMENT_CONFIRMED
-                : NotificationModel.NotificationType.TASK_REVIEWED_DOCUMENT_CONFIRMED_NOT_ACCEPTED, usernamesToCheck, task.getOwnerId());
         return notifications;
     }
 
@@ -1289,41 +1264,6 @@ public class NotificationServiceImpl implements NotificationService {
         addTaskIndependentCompoundWorkflowNotification(compoundWorkflow, notifications, usernameToCheck,
                 NotificationModel.NotificationType.TASK_OPINION_TASK_COMPLETED_ORDERED);
         return notifications;
-    }
-    
-    private void addReviewersNotifications(List<Notification> notifications, CompoundWorkflow compoundWorkflow, 
-    		CompoundWorkflowType taskWorkflowType, final QName notificationType, List<String> usernamesToCheck, String ownerIdToSkip) {
-    	Predicate<Task> taskPredicate = new Predicate<Task>() {
-            @Override
-            public boolean eval(Task docTask) {
-                // subscribed, review task, finished
-                return WorkflowSpecificModel.Types.REVIEW_TASK.equals(docTask.getType())
-                        && docTask.isStatus(Status.FINISHED)
-                        && isSubscribed(docTask.getOwnerId(), notificationType);
-
-            }
-        };
-        Set<Task> reviewTasks;
-        if (compoundWorkflow.isIndependentWorkflow()) {
-            reviewTasks = WorkflowUtil.getTasks(new HashSet<Task>(), Arrays.asList(compoundWorkflow), taskPredicate);
-        } else {
-            reviewTasks = workflowService.getTasks(compoundWorkflow.getParent(), taskPredicate);
-        }
-        if (!reviewTasks.isEmpty()) {
-            Notification notification = setupNotification(notificationType, taskWorkflowType);
-            Set<String> usersToNotify = new HashSet<>();
-            for (Task reviewTask : reviewTasks) {
-                // Add only distinct e-mails
-                String ownerId = reviewTask.getOwnerId();
-                if (ownerId.equals(ownerIdToSkip) || usersToNotify.contains(ownerId)) {
-                    continue;
-                }
-                notification.addRecipient(reviewTask.getOwnerName(), reviewTask.getOwnerEmail());
-                usernamesToCheck.add(ownerId);
-                usersToNotify.add(ownerId);
-            }
-            notifications.add(notification);
-        }
     }
 
     private List<Notification> processSignatureTask(Task task, List<Notification> notifications) {
@@ -1381,46 +1321,6 @@ public class NotificationServiceImpl implements NotificationService {
             addCompoundWorkflowOwnerRecipient(compoundWorkflow, notification);
             addTaskIndependentCompoundWorkflowNotification(compoundWorkflow, notifications, Arrays.asList(compoundWorkflow.getOwnerId()),
                     NotificationModel.NotificationType.TASK_SIGNATURE_TASK_COMPLETED_ORDERED, 1);
-            
-            // notify reviewers 
-            
-            Predicate<Task> taskPredicate = new Predicate<Task>() {
-                @Override
-                public boolean eval(Task docTask) {
-                    // subscribed, review task, finished and outcome is positive
-                    return WorkflowSpecificModel.Types.REVIEW_TASK.equals(docTask.getType())
-                            && docTask.isStatus(Status.FINISHED)
-                            && !WorkflowSpecificModel.ReviewTaskOutcome.NOT_CONFIRMED.equals(docTask.getOutcomeIndex())
-                            && isSubscribed(docTask.getOwnerId(), NotificationModel.NotificationType.REVIEW_DOCUMENT_NOT_SIGNED);
-                    
-                }
-            };
-            Set<Task> reviewTasks;
-            if (compoundWorkflow.isIndependentWorkflow()) {
-                reviewTasks = WorkflowUtil.getTasks(new HashSet<Task>(), Arrays.asList(compoundWorkflow), taskPredicate);
-            } else {
-                reviewTasks = workflowService.getTasks(compoundWorkflow.getParent(), taskPredicate);
-            }
-            
-            if (!reviewTasks.isEmpty()) {
-            	
-                notification = setupNotification(NotificationModel.NotificationType.REVIEW_DOCUMENT_NOT_SIGNED, taskWorkflowType);
-                Set<String> usersToNotify = new HashSet<>();
-                List<String> usernamesToCheck = new ArrayList<>();
-                for (Task reviewTask : reviewTasks) {
-                    // Add only distinct e-mails
-                    String ownerId = reviewTask.getOwnerId();
-                    if (usersToNotify.contains(ownerId)) {
-                        continue;
-                    }
-                    notification.addRecipient(reviewTask.getOwnerName(), reviewTask.getOwnerEmail());
-                    usernamesToCheck.add(ownerId);
-                    usersToNotify.add(ownerId);
-                }
-                notifications.add(notification);
-            }
-            
-            //
         }
         return notifications;
     }
@@ -1464,11 +1364,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     /**
-     *
-     * @param notificationType
-     * @param version
-     * @param compoundWorkflowType
-     * @return
+     * @param notification
      */
     private Notification setupNotification(QName notificationType, int version, CompoundWorkflowType compoundWorkflowType) {
         return setupNotification(new Notification(), notificationType, version, compoundWorkflowType);
@@ -1493,7 +1389,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     private Notification setupNotification(QName notificationType, CompoundWorkflowType compoundWorkflowType) {
-        return setupNotification(new Notification(), notificationType, compoundWorkflowType); // new compoundworkflow created
+        return setupNotification(new Notification(), notificationType, compoundWorkflowType);
     }
 
     private Notification setupNotificationWithoutWorkflowSuffix(QName notificationType) {
@@ -1515,13 +1411,9 @@ public class NotificationServiceImpl implements NotificationService {
         Map<QName, Serializable> props = nodeService.getProperties(nodeRef);
 
         for (QName key : getAllNotificationProps()) {
-            if (!props.containsKey(key) && (key != NotificationModel.NotificationType.REVIEW_DOCUMENT_NOT_SIGNED))  {
+            if (!props.containsKey(key)) {
                 nodeService.setProperty(nodeRef, key, Boolean.TRUE);
             }
-        }
-        
-        if (!props.containsKey(NotificationModel.NotificationType.REVIEW_DOCUMENT_NOT_SIGNED)) {
-        	nodeService.setProperty(nodeRef, NotificationModel.NotificationType.REVIEW_DOCUMENT_NOT_SIGNED, Boolean.FALSE);
         }
     }
 
@@ -1538,7 +1430,6 @@ public class NotificationServiceImpl implements NotificationService {
                 NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED,
                 NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_NOT_ACCEPTED,
                 NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_WITH_REMARKS,
-                NotificationModel.NotificationType.PARRALEL_WORKFLOW_COMPLETED,
                 NotificationModel.NotificationType.TASK_SIGNATURE_TASK_COMPLETED,
                 NotificationModel.NotificationType.TASK_ORDER_ASSIGNMENT_WORKFLOW_COMPLETED,
                 NotificationModel.NotificationType.TASK_ORDER_ASSIGNMENT_TASK_COMPLETED,
@@ -1551,17 +1442,10 @@ public class NotificationServiceImpl implements NotificationService {
                 NotificationModel.NotificationType.WORKFLOW_REGISTRATION_STOPPED_NO_DOCUMENTS,
                 NotificationModel.NotificationType.WORKFLOW_SIGNATURE_STOPPED_NO_DOCUMENTS,
                 NotificationModel.NotificationType.DELEGATED_TASK_COMPLETED,
-                NotificationModel.NotificationType.TASK_REVIEWED_DOCUMENT_REVIEWED,
-                NotificationModel.NotificationType.TASK_REVIEWED_DOCUMENT_REVIEWED_WITH_REMARKS,
-                NotificationModel.NotificationType.TASK_REVIEWED_DOCUMENT_REVIEWED_NOT_ACCEPTED,
-                NotificationModel.NotificationType.TASK_REVIEWED_DOCUMENT_CONFIRMED,
-                NotificationModel.NotificationType.TASK_REVIEWED_DOCUMENT_CONFIRMED_NOT_ACCEPTED,
                 NotificationModel.NotificationType.REVIEW_DOCUMENT_SIGNED,
-                NotificationModel.NotificationType.REVIEW_DOCUMENT_NOT_SIGNED,
                 NotificationModel.NotificationType.TASK_CANCELLED,
                 NotificationModel.NotificationType.GROUP_ASSIGNMENT_TASK_COMPLETED_BY_OTHERS,
                 NotificationModel.NotificationType.COMPOUND_WORKFLOW_STOPPED);
-                
     }
 
     @Override
@@ -1596,7 +1480,7 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public int processDocSendFailViaDvkNotifications(Date firingDate) {
-    	log.info(String.format("%s %s %s", firingDate, "Sending dvk send fail notifications if needed"));
+    	log.info(String.format("%s %s", firingDate, "Sending dvk send fail notifications if needed"));
         return sendDvkSendFailNotifications();
     }
 
@@ -1655,11 +1539,66 @@ public class NotificationServiceImpl implements NotificationService {
         return 0;
     }
 
+    @Override
+    public int sendMyFileModifiedNotifications(NodeRef content){
+    	NodeRef docRef = nodeService.getPrimaryParent(content).getParentRef();
+    	
+    	List<AssociationRef> targetAssocs = nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT);
+    	
+    	NodeRef workflow = null;
+    	if(!targetAssocs.isEmpty()) workflow = targetAssocs.get(0).getTargetRef();
+    	
+    	Document document = BeanHelper.getDocumentService().getDocumentByNodeRef(docRef);
+    	
+    	Notification notification = new Notification();
+    	notification.setSenderEmail(parametersService.getStringParameter(Parameters.DOC_SENDER_EMAIL));
+    	notification.setTemplateName("Minu koostatud dokumenti on muudetud.html");
+    	
+    	List<String> toEmails =  new ArrayList<String>();
+    	toEmails.add(userService.getUserEmail(document.getOwnerId()));
+    	notification.setToEmails(toEmails);
+
+    	NodeRef notificationTemplateByName = templateService.getNotificationTemplateByName(notification.getTemplateName());
+        
+    	if (notificationTemplateByName == null) {
+            if (log.isDebugEnabled()) {
+                log.debug("My file modified date notification email template '" + notification.getTemplateName()
+                        + "' not found, no notification email is sent");
+            }
+            return 0; // if the admins are lazy and we don't have a template, we don't have to send out notifications... :)
+        }
+    	
+    	String subject = (String) nodeService.getProperty(notificationTemplateByName, DocumentTemplateModel.Prop.NOTIFICATION_SUBJECT);
+        notification.setSubject(subject);
+        
+    	if(userService.getCurrentUserName().equals(document.getOwnerId())
+    			|| !isSubscribed(document.getOwnerId(), NotificationModel.NotificationType.MY_FILE_MODIFIED)){
+    		return 0;
+    	}
+
+    	LinkedHashMap<String, NodeRef> templateDataNodeRefs = new LinkedHashMap<>();
+    	if(content != null) templateDataNodeRefs.put("content", content);
+    	if(docRef != null) templateDataNodeRefs.put("", docRef);
+    	if(workflow != null) templateDataNodeRefs.put("workflow", workflow);
+    	templateDataNodeRefs.put("fileModifier", userService.getCurrentUser());
+
+        try {
+        	sendNotification(notification, document.getNodeRef(), templateDataNodeRefs);
+			return notification.getToEmails().size();
+		} catch (EmailException e) {
+			e.printStackTrace();
+		}
+    	return 0;
+    }
+
     private int sendDvkSendFailNotifications() {
         String DocSendFailViaDvkNotificationsEmails = parametersService.getStringParameter(Parameters.DOC_SEND_FAIL_VIA_DVK_NOTIFICATION_EMAILS);
 
     	String[] emailParts = DocSendFailViaDvkNotificationsEmails.split(";");
-    	List<String> emailsList = Arrays.asList(emailParts);  
+    	List<String> emailsList = new ArrayList();
+        for(String email : emailParts){
+        	emailsList.add(email.trim());
+        }
     	int sentMails = 0;
             Notification notification = new Notification();
             notification.setSenderEmail(parametersService.getStringParameter(Parameters.DOC_SENDER_EMAIL));
@@ -1677,7 +1616,7 @@ public class NotificationServiceImpl implements NotificationService {
 	        	
 	            try {
 	            	sendNotification(notification, document.getNodeRef(), templateDataNodeRefs);
-	    			return notification.getToEmails().size();
+	            	sentMails += notification.getToEmails().size();
 	            } catch (EmailException e) {
 	                log.error("Dvk send fail notification e-mail sending failed, ignoring and continuing", e);
 	            }
@@ -1685,51 +1624,6 @@ public class NotificationServiceImpl implements NotificationService {
             lastHourFailedDocuments.clear();
         
         return sentMails;
-    }
-    
-    @Override
-    public int sendMyFileModifiedNotifications(NodeRef content){
-    	NodeRef docRef = nodeService.getPrimaryParent(content).getParentRef();
-    	NodeRef workflow = nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT).get(0).getTargetRef();
-    	
-    	Document document = BeanHelper.getDocumentService().getDocumentByNodeRef(docRef);
-    	
-    	Notification notification = new Notification();
-    	notification.setSenderEmail(parametersService.getStringParameter(Parameters.DOC_SENDER_EMAIL));
-    	notification.setTemplateName("Minu koostatud dokumenti on muudetud.html");
-    	
-    	List<String> toEmails =  new ArrayList<String>();
-    	toEmails.add(userService.getUserEmail(document.getOwnerId()));
-    	notification.setToEmails(toEmails);
-
-    	NodeRef notificationTemplateByName = templateService.getNotificationTemplateByName(notification.getTemplateName());
-        String subject = (String) nodeService.getProperty(notificationTemplateByName, DocumentTemplateModel.Prop.NOTIFICATION_SUBJECT);
-        notification.setSubject(subject);
-        
-    	if(userService.getCurrentUserName().equals(document.getOwnerName()) 
-    			|| !isSubscribed(userService.getCurrentUserName(), NotificationModel.NotificationType.MY_FILE_MODIFIED)){
-    		return 0;
-    	}
-    	if (notificationTemplateByName == null) {
-            if (log.isDebugEnabled()) {
-                log.debug("My file modified date notification email template '" + notification.getTemplateName()
-                        + "' not found, no notification email is sent");
-            }
-            return 0; // if the admins are lazy and we don't have a template, we don't have to send out notifications... :)
-        }
-
-    	LinkedHashMap<String, NodeRef> templateDataNodeRefs = new LinkedHashMap<>();
-    	templateDataNodeRefs.put("content", content);
-    	templateDataNodeRefs.put("", docRef);
-    	templateDataNodeRefs.put("workflow", workflow);
-
-        try {
-        	sendNotification(notification, document.getNodeRef(), templateDataNodeRefs);
-			return notification.getToEmails().size();
-		} catch (EmailException e) {
-			e.printStackTrace();
-		}
-    	return 0;
     }
     
     private int sendVolumesDispositionDateNotifications(List<Volume> volumesDispositionedAfterDate) {
@@ -2067,7 +1961,6 @@ public class NotificationServiceImpl implements NotificationService {
         return notification;
     }
 
-    // if subscription  is missing then default true
     private boolean isSubscribed(String userName, QName subscriptionType) {
         NodeRef personRef = userService.getPerson(userName);
         if (personRef == null) {
@@ -2128,13 +2021,8 @@ public class NotificationServiceImpl implements NotificationService {
                     + "\ndocRef=" + docRef + "\nfileRefs=" + WmNode.toString(fileRefs) + "\nzipIt=" + zipIt + "\nzipName=" + zipTitle);
         }
 
-        List<EmailAttachment> attachments = null;
-        try {
-            attachments = fileRefs != null ? emailService.getAttachments(fileRefs, zipIt, null, zipTitle) : null;
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw new EmailException(e.getMessage());
-        }        Object[] descParams = { notification.getSubject(), StringUtils.join(recipient.emails, ", ") };
+        List<EmailAttachment> attachments = fileRefs != null ? emailService.getAttachments(fileRefs, zipIt, null, zipTitle) : null;
+        Object[] descParams = { notification.getSubject(), StringUtils.join(recipient.emails, ", ") };
         logService.addLogEntry(LogEntry.create(LogObject.NOTICE, userService, docRef, "applog_email_notice", descParams));
         emailService.sendEmail(recipient.emails, recipient.names, notification.getSenderEmail(), notification.getSubject(), content, true, docRef, attachments);
 

@@ -148,7 +148,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         = documentSearchService.searchTaskBySendStatusQuery(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK);
         taskRefsAndIds.putAll(documentSearchService.searchTaskBySendStatusQuery(WorkflowSpecificModel.Types.REVIEW_TASK));
         final Map<NodeRef, Pair<String, String>> forwardedDecDocRefsAndIds = documentSearchService.searchForwardedDecDocumentsDvkIds(SendStatus.SENT);
-        
+
         if (docRefsAndIds.size() == 0 && taskRefsAndIds.size() == 0 && forwardedDecDocRefsAndIds.size() == 0) {
             return 0; // no need to ask statuses
         }
@@ -199,7 +199,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
 
         int updatedNodesCount = updateNodeSendStatus(docRefsAndIds, statusesByIds, DocumentCommonModel.Props.SEND_INFO_SEND_STATUS)
                 + updateNodeSendStatus(taskRefsAndIds, statusesByIds, WorkflowSpecificModel.Props.SEND_STATUS);
-    
+
         return updatedNodesCount;
     }
 
@@ -312,14 +312,11 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
                 } else if (workflowDbService != null) {
                     workflowDbService.updateTaskProperties(sendInfoRef, propsToUpdate);
                 }
-                NodeRef docNodeRef = nodeService.getPrimaryParent(sendInfoRef).getParentRef();
-
-                ee.webmedia.alfresco.document.model.Document doc = documentService.getDocumentByNodeRef(docNodeRef);
-                String docName = doc.getDocName();
-            	String regNr = doc.getRegNumber();
-            	String regDateTime = doc.getRegDateTimeStr();
-            	String nodeRef = StringEscapeUtils.escapeHtml(BeanHelper.getDocumentTemplateService().getDocumentUrl(doc.getNodeRef()));
-            	getDvkService().getDvkSendFailedDocuments().add(doc);
+                if(status.equals(SendStatus.CANCELLED)){
+                	NodeRef docNodeRef = nodeService.getPrimaryParent(sendInfoRef).getParentRef();
+                	ee.webmedia.alfresco.document.model.Document doc = documentService.getDocumentByNodeRef(docNodeRef);
+                	getDvkService().getDvkSendFailedDocuments().add(doc);
+                }
             }
         }
 
@@ -975,7 +972,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
      * compoundWorkflowRef - if not null only this compound workflow recipients get updates;
      * if null all compound workflows are checked for recipients
      */
-    public void sendDvkTasksWithDocument(NodeRef documentNodeRef, NodeRef compoundWorkflowRef, Map<NodeRef, List<String>> additionalRecipients, String recipientMessage) throws Exception {
+    public void sendDvkTasksWithDocument(NodeRef documentNodeRef, NodeRef compoundWorkflowRef, Map<NodeRef, List<String>> additionalRecipients, String recipientMessage) {
 
         List<CompoundWorkflow> compoundWorkflows = workflowService.getCompoundWorkflows(documentNodeRef);
         List<String> recipients = getAllRecipients(documentNodeRef, compoundWorkflowRef, compoundWorkflows, additionalRecipients);

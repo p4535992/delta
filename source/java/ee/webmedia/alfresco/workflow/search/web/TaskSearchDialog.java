@@ -7,10 +7,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.faces.component.UIInput;
 import javax.faces.component.html.HtmlSelectManyListbox;
 import javax.faces.context.FacesContext;
+import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -81,6 +83,8 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
                     new SelectItem(UserContactGroupSearchBean.CONTACTS_FILTER, MessageUtil.getMessage("task_owner_contacts")), };
         }
         loadAllFilters();
+        
+        searchPanelTitlePart = null;
     }
 
     @Override
@@ -97,6 +101,29 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
         super.isFinished = false;
         return AlfrescoNavigationHandler.DIALOG_PREFIX + "taskSearchResultsDialog";
     }
+    
+    @Override
+    public void selectedFilterValueChanged(ValueChangeEvent event) {
+    	super.selectedFilterValueChanged(event);
+        NodeRef newValue = (NodeRef) event.getNewValue();             
+        searchPanelTitlePart = null;
+
+        if(!getUserService().isAdministrator()){
+        	NodeRef oldValue = newValue;
+        	newValue = savePublicFilterAsNewLocal(event);
+        	if(oldValue != null && newValue == null){
+        		Map<String, Object> publicSearchFilterParams = filter.getProperties();
+                super.selectedFilterValueChanged(newValue);
+                for(Entry<String, Object> parameter : publicSearchFilterParams.entrySet()){
+                	if(!parameter.getKey().contains("{http://www.alfresco.org/") && !parameter.getKey().equals(TaskSearchModel.Props.NAME)){
+                		filter.getProperties().put(parameter.getKey(), parameter.getValue());
+                	}
+                }
+        	}
+    	}
+        
+    }
+
 
     @Override
     public String getManageSavedBlockTitle() {
@@ -110,7 +137,10 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
 
     @Override
     public String getFilterPanelTitle() {
-        return MessageUtil.getMessage("task_search");
+    	if(searchPanelTitlePart == null){
+    		return MessageUtil.getMessage("task_search");
+    	}
+        return String.format("%s: %s", MessageUtil.getMessage("task_search"), searchPanelTitlePart);
     }
 
     @Override
