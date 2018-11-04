@@ -19,6 +19,9 @@
       <property name="generateNewRegNumberInReregistration" value="${conf.document-regnumber.generate-new-in-reregistration.enabled}" />
       <property name="finishUnregisteredDocumentEnabled" value="${conf.document.finish-unregistered-document.enabled}" />
       <property name="volumeColumnEnabled" value="${conf.documents-list.volume-column.enabled}" />
+      <property name="showAssociationSenderReceiver" value="${conf.showAssociationSenderReceiver}" />
+      <property name="associationShortTitle" value="${conf.association.shortTitle}" />
+      <property name="showAssociationFiles" value="${conf.showAssociationFiles}" />
       <property name="myTasksAndDocumentsMenuClosed" value="${conf.myTasksAndDocuments.menu.closed}" />
       <property name="syncActiveStatus" value="${sync.active.status}" />
    </bean>

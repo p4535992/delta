@@ -57,8 +57,8 @@ import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.cases.service.UnmodifiableCase;
-import ee.webmedia.alfresco.cases.web.CaseDocumentListDialog;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
+import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.common.model.DynamicBase;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
@@ -87,6 +87,7 @@ import ee.webmedia.alfresco.document.search.model.DocumentReportModel;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.search.web.DocumentDynamicSearchDialog;
 import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.document.web.DocumentListDialog;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.functions.model.UnmodifiableFunction;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
@@ -422,11 +423,11 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
 
         private boolean isDocumentLocationPopup(){
             return isCaseFileDialogPopup()
-                    || isCaseDocumentListPopup();
+                    || isDocumentListPopup();
         }
 
-        private boolean isCaseDocumentListPopup() {
-            return dialogDataProvider instanceof CaseDocumentListDialog && ((CaseDocumentListDialog) dialogDataProvider).isShowDocumentsLocationPopup();
+        private boolean isDocumentListPopup() {
+            return dialogDataProvider instanceof DocumentListDialog && ((DocumentListDialog) dialogDataProvider).isShowDocumentsLocationPopup();
         }
 
         private boolean isCaseFileDialogPopup() {
@@ -1054,9 +1055,13 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             validationHelper.addErrorMessage("document_validationMsg_mandatory_functionSeriesVolume");
             return;
         }
-
         UnmodifiableVolume volume = isDocument && RepoUtil.isSaved(volumeRef) ? volumeService.getUnmodifiableVolume(volumeRef, null) : null;
         String caseLabel = StringUtils.trimToNull((String) props.get(CASE_LABEL_EDITABLE));
+        String status = StringUtils.trimToNull((String) props.get(DocumentCommonModel.Props.DOC_STATUS.toString()));
+        if (isWorkingDocument(status) && volume != null && volume.isContainsCases() && volume.isCasesMandatory() && StringUtils.isBlank(caseLabel)) {
+            validationHelper.addErrorMessage("document_validationMsg_mandatory_case");
+            return;
+        }
         NodeRef caseRef = isDocument ? ((DocumentDynamic) document).getCase() : null;
 
         if (volume != null && volume.isContainsCases()) {
@@ -1083,17 +1088,10 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
         }
         props.put(CASE.toString(), caseRef);
         props.put(CASE_LABEL_EDITABLE.toString(), caseLabel);
+    }
 
-        boolean isClosedUnitCheckNeeded = !isDocument || isDocument
-                && isClosedUnitCheckNeeded((DocumentDynamic) document, documentService.getAncestorNodesByDocument(document.getNodeRef()), volumeRef, caseRef);
-
-        if (!isDocument) {
-            return;
-        }
-
-        if (isClosedUnitCheckNeeded && caseRef != null && DocListUnitStatus.CLOSED.equals(caseService.getCaseByNoderef(caseRef).getStatus())) {
-            validationHelper.addErrorMessage("document_validationMsg_closed_case");
-        }
+    private boolean isWorkingDocument(String status){
+        return DocumentStatus.WORKING.getValueName().equals(status);
     }
 
     /**
@@ -1109,6 +1107,12 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
 
         NodeRef caseNodeRef = isDocument ? ((DocumentDynamic) document).getCase() : null; // getCaseNodeRef(document, volumeNodeRef);
         String caseLabel = document.getProp(CASE_LABEL_EDITABLE);
+        final Map<String, Object> props = document.getNode().getProperties();
+        String status = StringUtils.trimToNull((String) props.get(DocumentCommonModel.Props.DOC_STATUS.toString()));
+        if (isWorkingDocument(status) && volume != null && volume.isContainsCases() && volume.isCasesMandatory() && caseNodeRef == null && StringUtils.isBlank(caseLabel)) {
+            MessageUtil.addErrorMessage("document_validationMsg_mandatory_case");
+            return;
+        }
         if (isDocument && StringUtils.isNotBlank(caseLabel)) {
             Assert.isTrue(caseNodeRef == null && volume.isContainsCases() && (volume.isCasesCreatableByUser() || getUserService().isDocumentManager()));
             // create case

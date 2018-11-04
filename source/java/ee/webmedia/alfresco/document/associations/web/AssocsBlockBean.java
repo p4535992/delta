@@ -25,6 +25,7 @@ import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog;
 import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
 import ee.webmedia.alfresco.document.assocsdyn.web.AddFollowUpAssocEvaluator;
 import ee.webmedia.alfresco.document.assocsdyn.web.AddReplyAssocEvaluator;
+import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
@@ -231,6 +232,22 @@ public class AssocsBlockBean implements DocumentDynamicBlock {
 
     public String getAddRepliesLabel() {
         return MessageUtil.getMessage("document_addReply");
+    }
+
+    public boolean isShowAssociationFiles() {
+        return BeanHelper.getApplicationConstantsBean().isShowAssociationFiles();
+    }
+
+    public boolean isShowAssociationSenderReceiver() {
+        return BeanHelper.getApplicationConstantsBean().isShowAssociationSenderReceiver();
+    }
+
+    public boolean isAssociationShortTitle() {
+        return BeanHelper.getApplicationConstantsBean().isAssociationShortTitle();
+    }
+
+    public String getTitleStyle() {
+        return isAssociationShortTitle() ? "tooltip condence20- no-underline" : StringUtils.EMPTY;
     }
 
     // START: getters / setters

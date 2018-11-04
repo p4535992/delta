@@ -9,7 +9,9 @@ import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.app.AppConstants;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.assocsdyn.service.DocumentAssociationsServiceImpl;
+import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService.AssocType;
 
@@ -26,6 +28,7 @@ public class DocAssocInfo implements Serializable, Comparable<DocAssocInfo> {
     private String regNumber;
     private Date regDateTime;
     private String workflowOwnerName;
+    private Document assocDocument;
 
     private NodeRef thisNodeRef;
     private NodeRef otherNodeRef;
@@ -215,4 +218,15 @@ public class DocAssocInfo implements Serializable, Comparable<DocAssocInfo> {
 		this.workflowOwnerName = workflowOwnerName;
 	}
 
+    public Document getAssocDocument() {
+        return assocDocument;
+    }
+
+    public void setAssocDocument(Document assocDocument) {
+        this.assocDocument = assocDocument;
+    }
+
+    public String getSenderOrRecipient() {
+        return assocDocument != null ? assocDocument.getSenderOrRecipient() : StringUtils.EMPTY;
+    }
 }

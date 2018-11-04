@@ -49,6 +49,9 @@ public class ApplicationConstantsBean implements InitializingBean {
     private boolean volumeColumnEnabled;
     private boolean myTasksAndDocumentsMenuClosed;
     private boolean syncActiveStatus;
+    private boolean showAssociationSenderReceiver;
+    private boolean associationShortTitle;
+    private boolean showAssociationFiles;
 
     public boolean isGenerateNewRegNumberInReregistration() {
         return generateNewRegNumberInReregistration;
@@ -160,5 +163,29 @@ public class ApplicationConstantsBean implements InitializingBean {
         log.debug("getSyncActiveStatus(): Sync active status: " + this.syncActiveStatus);
         log.debug("---------------------------------------------------------");
         return this.syncActiveStatus;
+    }
+
+    public void setShowAssociationSenderReceiver(boolean showAssociationSenderReceiver) {
+        this.showAssociationSenderReceiver = showAssociationSenderReceiver;
+    }
+
+    public boolean isShowAssociationSenderReceiver() {
+        return showAssociationSenderReceiver;
+    }
+
+    public void setAssociationShortTitle(boolean associationShortTitle) {
+        this.associationShortTitle = associationShortTitle;
+    }
+
+    public boolean isAssociationShortTitle() {
+        return associationShortTitle;
+    }
+
+    public void setShowAssociationFiles(boolean showAssociationFiles) {
+        this.showAssociationFiles = showAssociationFiles;
+    }
+
+    public boolean isShowAssociationFiles() {
+        return showAssociationFiles;
     }
 }
