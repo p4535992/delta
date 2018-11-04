@@ -875,8 +875,8 @@ public class DocumentImporter {
             throw new RuntimeException("accessRestrictionBeginDate is null, but accessRestriction = " + accessRestriction);
         }
 
-        if (props.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE) == null && props.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DESC) == null) {
-            throw new RuntimeException("accessRestrictionEndDate is null and accessRestrictionEndDesc is blank, but accessRestriction = " + accessRestriction);
+        if (props.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE) == null) {
+            throw new RuntimeException("accessRestrictionEndDate is null, but accessRestriction = " + accessRestriction);
         }
     }
 
