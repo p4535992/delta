@@ -247,7 +247,7 @@ public class AssocsBlockBean implements DocumentDynamicBlock {
     }
 
     public String getTitleStyle() {
-        return isAssociationShortTitle() ? "tooltip condence20- strictTrim no-underline" : StringUtils.EMPTY;
+        return isAssociationShortTitle() ? "tooltip condence20- no-underline" : StringUtils.EMPTY;
     }
 
     // START: getters / setters
