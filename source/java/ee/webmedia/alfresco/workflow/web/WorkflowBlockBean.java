@@ -83,6 +83,8 @@ import org.apache.commons.collections.comparators.TransformingComparator;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
+import org.digidoc4j.Container;
+import org.digidoc4j.DataToSign;
 import org.joda.time.LocalDate;
 
 import ee.webmedia.alfresco.app.AppConstants;
@@ -951,7 +953,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             extender = ActionUtil.getParam(event, MODAL_KEY_EXTENDER);
             extenderFullName = ActionUtil.getParam(event, MODAL_KEY_EXTENDER_FULL_NAME);
         }
-        String extenderEmail = getUserService().getUserEmail(extender);
         NodeRef compoundWfNodeRef = null;
     	try {
     		if (compoundWorkflow != null && compoundWorkflow.getNodeRef() != null) {
@@ -978,7 +979,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
 		
 		        Task initiatingTask = reloadWorkflow(taskIndex);
 		
-		        getWorkflowService().createDueDateExtension(reason, newDate, dueDate, initiatingTask, containerRef, extender, extenderFullName, extenderEmail);
+		        getWorkflowService().createDueDateExtension(reason, newDate, dueDate, initiatingTask, containerRef, extender, extenderFullName);
 		
 		        MessageUtil.addInfoMessage("task_sendDueDateExtensionRequest_success_defaultMsg");
         	

@@ -212,6 +212,7 @@
          <mandatory-aspects>
             <aspect>wfs:commonTask</aspect>
             <aspect>wfs:resolution</aspect>
+            <aspect>wfs:delegatedByButton</aspect>
             <aspect>wfs:taskDueDateExtensionContainer</aspect>
          </mandatory-aspects>
       </type>
@@ -345,6 +346,14 @@
          <properties>
             <property name="wfs:comment">
                <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>      
+      
+      <aspect name="wfs:delegatedByButton">
+         <properties>
+            <property name="wfs:delegatedByButton">
+               <type>d:boolean</type>
             </property>
          </properties>
       </aspect>

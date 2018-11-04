@@ -94,6 +94,7 @@ public interface WorkflowSpecificModel {
 
     interface Aspects {
         QName COMMENT = QName.createQName(URI, "comment");
+        QName DELEGATED_BY_BUTTON = QName.createQName(URI, "delegatedByButton");
         QName RESOLUTION = QName.createQName(URI, "resolution");
         QName RESPONSIBLE = QName.createQName(URI, "responsible");
         QName SEARCHABLE = QName.createQName(URI, "searchable");
@@ -140,6 +141,7 @@ public interface WorkflowSpecificModel {
         QName SIGNING_TYPE = QName.createQName(URI, "signingType");
         // properties duplicated from compound workflow for task search
         QName COMPOUND_WORKFLOW_TITLE = QName.createQName(URI, "compoundWorkflowTitle");
+        QName DELEGATED_BY_BUTTON = QName.createQName(URI, "delegatedByButton");
         /**
          * Deprecated - compound workflow comments are not used in search any more; comments are moved to delta_compound_workflow_comment table
          */

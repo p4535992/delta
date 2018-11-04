@@ -1167,10 +1167,9 @@ public class NotificationServiceImpl implements NotificationService {
         }
 
         // delegated task completed
-        CompoundWorkflow compoundWf = workflow.getParent();
         Notification delegatingNotification = null;
         String usernameToCheck = null;
-        if (!StringUtils.equals(task.getCreatorId(), compoundWf.getOwnerId()) && isSubscribed(task.getCreatorId(), NotificationModel.NotificationType.DELEGATED_TASK_COMPLETED)) {
+        if (task.isDelegated() && isSubscribed(task.getCreatorId(), NotificationModel.NotificationType.DELEGATED_TASK_COMPLETED)) {
             delegatingNotification = setupNotification(NotificationModel.NotificationType.DELEGATED_TASK_COMPLETED, getTaskWorkflowType(task));
             delegatingNotification.addRecipient(task.getCreatorName(), task.getCreatorEmail());
             usernameToCheck = task.getCreatorId();

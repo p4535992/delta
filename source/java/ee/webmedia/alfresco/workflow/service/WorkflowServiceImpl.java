@@ -1562,6 +1562,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         for (Workflow workflow : cWorkflowWorkflowsCopy) {
             for (Task task : workflow.getTasks()) {
                 if (WorkflowUtil.isGeneratedByDelegation(task)) {
+                    task.setProp(WorkflowSpecificModel.Props.DELEGATED_BY_BUTTON, true);
                     Date dueDate = task.getDueDate();
                     if (dueDate != null) {
                         dueDate.setHours(23);
@@ -3920,7 +3921,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     @Override
     public void createDueDateExtension(String reason, Date newDate, Date dueDate, Task initiatingTask, NodeRef containerRef, String dueDateExtenderUsername,
-                                       String dueDateExtenderUserFullname, String extenderEmail) {
+            String dueDateExtenderUserFullname) {
         CompoundWorkflow extensionCompoundWorkflow = getNewCompoundWorkflow(getNewCompoundWorkflowDefinition().getNode(), containerRef);
         extensionCompoundWorkflow.setTypeEnum(initiatingTask.getParent().getParent().getTypeEnum());
         Workflow workflow = getWorkflowService().addNewWorkflow(extensionCompoundWorkflow, WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_WORKFLOW,
@@ -3932,7 +3933,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         String creatorName = StringUtils.isBlank(dueDateExtenderUserFullname) ? initiatingTask.getCreatorName() : dueDateExtenderUserFullname;
         extensionTask.setOwnerName(creatorName);
         extensionTask.setOwnerId(StringUtils.isBlank(dueDateExtenderUsername) ? initiatingTask.getCreatorId() : dueDateExtenderUsername);
-        extensionTask.setOwnerEmail(StringUtils.isBlank(extenderEmail) ? initiatingTask.getCreatorEmail() : extenderEmail); // updater
+        extensionTask.setOwnerEmail(initiatingTask.getCreatorEmail()); // updater
         extensionTask.setCompoundWorkflowId(initiatingTask.getCompoundWorkflowId());
         Map<QName, Serializable> creatorProps = userService.getUserProperties(initiatingTask.getCreatorId());
         if (creatorProps != null) {
