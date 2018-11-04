@@ -5,6 +5,8 @@ Dokumendihaldussüsteem DELTA.
 
 
 ### Versioonid ###
+5.9.0
+corrected branch
 
 5.2.3.184.1
 
