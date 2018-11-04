@@ -7,6 +7,7 @@ import java.sql.Statement;
 import java.util.Properties;
 
 import javax.sql.DataSource;
+//TODO: REMOVE PostgreSQL direct connection!!
 import org.postgresql.ds.PGPoolingDataSource;
 
 import org.springframework.core.io.ClassPathResource;
@@ -44,13 +45,15 @@ public class DBDependencyChecker extends DependencyChecker{
 	 * 
 	 */
 	public Boolean Test ( ) {
+		//TODO: REMOVE PostgreSQL direct connection!!
 		PGPoolingDataSource source = null;
 		Connection con = null;
 		ResultSet rs = null;
 		try{
 			Resource resource = new ClassPathResource("alfresco-global.properties");
 	        Properties props = PropertiesLoaderUtils.loadProperties(resource);
-	        
+
+			//TODO: REMOVE PostgreSQL direct connection!!
 			source = new PGPoolingDataSource();
 			source.setDataSourceName("Status");
 			source.setServerName(props.getProperty("db.host"));
