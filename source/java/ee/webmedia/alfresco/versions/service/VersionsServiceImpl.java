@@ -111,7 +111,7 @@ public class VersionsServiceImpl implements VersionsService {
 		                setVersionLockableAspect(nodeRef, true);
 	
 	                	getNodeService().removeProperty(nodeRef, FileModel.Props.COMMENT);
-	                	BeanHelper.getNotificationService().sendMyFileModifiedNotifications(nodeRef);
+	                	BeanHelper.getNotificationService().sendMyFileModifiedNotifications(nodeRef, version.getVersionLabel());
                 	}catch(Exception e){
                 		e.printStackTrace();
                 	}
