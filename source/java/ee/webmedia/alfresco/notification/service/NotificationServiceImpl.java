@@ -1656,7 +1656,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public int sendMyFileModifiedNotifications(NodeRef content){
+    public int sendMyFileModifiedNotifications(NodeRef content, String version){
         NodeRef docRef = nodeService.getPrimaryParent(content).getParentRef();
 
         List<AssociationRef> targetAssocs = nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT);
@@ -1673,6 +1673,19 @@ public class NotificationServiceImpl implements NotificationService {
         List<String> toEmails =  new ArrayList<String>();
         toEmails.add(userService.getUserEmail(document.getOwnerId()));
         notification.setToEmails(toEmails);
+
+        Map<String, String> additionalFormulas = new HashMap<>();
+    	try{
+	    	String[] versionNr = version.split("\\.");
+	    	additionalFormulas.put("file.version", versionNr[0] + "." + (Integer.parseInt(versionNr[1]) + 1));
+    	}catch(Exception e){
+    		if (log.isDebugEnabled()) {
+                log.debug("Unable to parse versionNr for sendMyFileModifiedNotification template");
+            }
+    		e.printStackTrace();
+    	}
+
+    	notification.setAdditionalFormulas(additionalFormulas);
 
         NodeRef notificationTemplateByName = templateService.getNotificationTemplateByName(notification.getTemplateName());
 
