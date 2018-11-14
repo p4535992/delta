@@ -1596,7 +1596,7 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public int processDocSendFailViaDvkNotifications(Date firingDate) {
-        log.info(String.format("%s %s %s", firingDate, "Sending dvk send fail notifications if needed"));
+        log.info(String.format("%s %s", firingDate, "Sending dvk send fail notifications if needed"));
         return sendDvkSendFailNotifications();
     }
 
