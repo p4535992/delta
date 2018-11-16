@@ -83,8 +83,6 @@ import org.apache.commons.collections.comparators.TransformingComparator;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
-import org.digidoc4j.Container;
-import org.digidoc4j.DataToSign;
 import org.joda.time.LocalDate;
 
 import ee.webmedia.alfresco.app.AppConstants;
@@ -603,18 +601,10 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     public void saveTask(ActionEvent event) {
         Integer index = ActionUtil.hasParam(event, ATTRIB_INDEX) ? ActionUtil.getParam(event, ATTRIB_INDEX, Integer.class) : (Integer) event.getComponent().getAttributes()
                 .get(ATTRIB_INDEX);
-        
-        NodeRef compoundWfNodeRef = null;
-    	try {
-    		if (compoundWorkflow != null && compoundWorkflow.getNodeRef() != null) {
-    			compoundWfNodeRef = compoundWorkflow.getNodeRef();
-    		} else {
-    			compoundWfNodeRef = new NodeRef(getMyTasks().get(index).getStoreRef() + "/" + getMyTasks().get(index).getCompoundWorkflowId());
-    		}
-    	} catch (Throwable t) {
-    		log.error("Error getting compoundWfNodeRef: " + t.getMessage());
-    	}
-    	boolean locked = (compoundWfNodeRef != null)?setLock(FacesContext.getCurrentInstance(), compoundWfNodeRef, "workflow_compond_locked_for_change"):false;
+
+        NodeRef compoundWfNodeRef = getNodeRefFromCompoundWfNodeRef(index);
+
+        boolean locked = (compoundWfNodeRef != null)?setLock(FacesContext.getCurrentInstance(), compoundWfNodeRef, "workflow_compond_locked_for_change"):false;
         if (compoundWfNodeRef == null || locked) {
         	try {
 		        List<Pair<String, Object>> params = new ArrayList<Pair<String, Object>>();
@@ -706,18 +696,9 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         	lockMsgKey = "workflow_compond_locked_for_delegate";
         }
 
-    	NodeRef compoundWfNodeRef = null;
-    	try {
-    		if (compoundWorkflow != null && compoundWorkflow.getNodeRef() != null) {
-    			compoundWfNodeRef = compoundWorkflow.getNodeRef();
-    		} else {
-    			compoundWfNodeRef = new NodeRef(getMyTasks().get(index).getStoreRef() + "/" + getMyTasks().get(index).getCompoundWorkflowId());
-    		}
-    	} catch (Throwable t) {
-    		log.error("Error getting compoundWfNodeRef: " + t.getMessage());
-    	}
-    	
-    	boolean locked = (compoundWfNodeRef != null)?setLock(FacesContext.getCurrentInstance(), compoundWfNodeRef, lockMsgKey):false;
+        NodeRef compoundWfNodeRef = getNodeRefFromCompoundWfNodeRef(index);
+
+        boolean locked = (compoundWfNodeRef != null)?setLock(FacesContext.getCurrentInstance(), compoundWfNodeRef, lockMsgKey):false;
         if (compoundWfNodeRef == null || locked) {
         	boolean canUnlock = true; // signing tasks will be unlocked later
         	lockedCompoundWorkflowNodeRef = compoundWfNodeRef;
@@ -953,18 +934,11 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             extender = ActionUtil.getParam(event, MODAL_KEY_EXTENDER);
             extenderFullName = ActionUtil.getParam(event, MODAL_KEY_EXTENDER_FULL_NAME);
         }
-        NodeRef compoundWfNodeRef = null;
-    	try {
-    		if (compoundWorkflow != null && compoundWorkflow.getNodeRef() != null) {
-    			compoundWfNodeRef = compoundWorkflow.getNodeRef();
-    		} else {
-    			compoundWfNodeRef = new NodeRef(getMyTasks().get(taskIndex).getStoreRef() + "/" + getMyTasks().get(taskIndex).getCompoundWorkflowId());
-    		}
-    	} catch (Throwable t) {
-    		log.error("Error getting compoundWfNodeRef: " + t.getMessage());
-    	}
-    	
-    	boolean locked = (compoundWfNodeRef != null)?setLock(FacesContext.getCurrentInstance(), compoundWfNodeRef, "workflow_compond_locked_for_change"):false;
+
+        String extenderEmail = getUserService().getUserEmail(extender);
+        NodeRef compoundWfNodeRef = getNodeRefFromCompoundWfNodeRef(taskIndex);
+
+        boolean locked = (compoundWfNodeRef != null)?setLock(FacesContext.getCurrentInstance(), compoundWfNodeRef, "workflow_compond_locked_for_change"):false;
         if (compoundWfNodeRef == null || locked) {
         	try {
 
@@ -979,7 +953,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
 		
 		        Task initiatingTask = reloadWorkflow(taskIndex);
 		
-		        getWorkflowService().createDueDateExtension(reason, newDate, dueDate, initiatingTask, containerRef, extender, extenderFullName);
+		        getWorkflowService().createDueDateExtension(reason, newDate, dueDate, initiatingTask, containerRef, extender, extenderFullName, extenderEmail);
 		
 		        MessageUtil.addInfoMessage("task_sendDueDateExtensionRequest_success_defaultMsg");
         	
@@ -991,6 +965,20 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         	notifyDialogsIfNeeded();
 	    }
         
+    }
+
+    private NodeRef getNodeRefFromCompoundWfNodeRef(Integer taskIndex) {
+        NodeRef compoundWfNodeRef = null;
+        try {
+            if (compoundWorkflow != null && compoundWorkflow.getNodeRef() != null) {
+                compoundWfNodeRef = compoundWorkflow.getNodeRef();
+            } else {
+                compoundWfNodeRef = new NodeRef(getMyTasks().get(taskIndex).getStoreRef() + "/" + getMyTasks().get(taskIndex).getCompoundWorkflowId());
+            }
+        } catch (Throwable t) {
+            log.error("Error getting compoundWfNodeRef: " + t.getMessage());
+        }
+        return compoundWfNodeRef;
     }
 
     public static List<Pair<String, String>> validate(Task task, Integer outcomeIndex) {

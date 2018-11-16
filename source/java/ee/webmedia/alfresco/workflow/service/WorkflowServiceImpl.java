@@ -3921,7 +3921,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     @Override
     public void createDueDateExtension(String reason, Date newDate, Date dueDate, Task initiatingTask, NodeRef containerRef, String dueDateExtenderUsername,
-            String dueDateExtenderUserFullname) {
+            String dueDateExtenderUserFullname, String extenderEmail ) {
         CompoundWorkflow extensionCompoundWorkflow = getNewCompoundWorkflow(getNewCompoundWorkflowDefinition().getNode(), containerRef);
         extensionCompoundWorkflow.setTypeEnum(initiatingTask.getParent().getParent().getTypeEnum());
         Workflow workflow = getWorkflowService().addNewWorkflow(extensionCompoundWorkflow, WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_WORKFLOW,
@@ -3933,7 +3933,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         String creatorName = StringUtils.isBlank(dueDateExtenderUserFullname) ? initiatingTask.getCreatorName() : dueDateExtenderUserFullname;
         extensionTask.setOwnerName(creatorName);
         extensionTask.setOwnerId(StringUtils.isBlank(dueDateExtenderUsername) ? initiatingTask.getCreatorId() : dueDateExtenderUsername);
-        extensionTask.setOwnerEmail(initiatingTask.getCreatorEmail()); // updater
+        extensionTask.setOwnerEmail(StringUtils.isBlank(extenderEmail) ? initiatingTask.getCreatorEmail() : extenderEmail); // updater
         extensionTask.setCompoundWorkflowId(initiatingTask.getCompoundWorkflowId());
         Map<QName, Serializable> creatorProps = userService.getUserProperties(initiatingTask.getCreatorId());
         if (creatorProps != null) {

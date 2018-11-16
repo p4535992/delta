@@ -468,6 +468,7 @@ public class CompundWorkflowDetailsController extends AbstractCompoundWorkflowCo
         String userId = form.getUserId();
         String extenderUserFullname = getUserService().getUserFullName(userId);
         ee.webmedia.alfresco.workflow.service.Task initiatingTask = workflowService.getTaskWithParents(taskRef);
+        String extenderEmail = getUserService().getUserEmail(userId);
         
      // set lock
         boolean locked = (compoundWorkflowNodeId != null)?setLock(new NodeRef(cwfRef.getStoreRef(), compoundWorkflowNodeId), "workflow_compond.locked", redirectAttributes):false;
@@ -480,7 +481,8 @@ public class CompundWorkflowDetailsController extends AbstractCompoundWorkflowCo
 		                initiatingTask,
 		                cwfRef,
 		                userId,
-		                extenderUserFullname);
+		                extenderUserFullname,
+                        extenderEmail);
 		
 		        addRedirectInfoMsg(redirectAttributes, "workflow.task.dueDate.extension.submitted");
 	        } finally {
