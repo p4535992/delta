@@ -13,6 +13,7 @@ import java.util.Map;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.ui.common.Utils;
+import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
@@ -390,5 +391,8 @@ public class Field extends FieldAndGroupBase {
         }
         return fieldDefinitionIds;
     }
-
+    
+    public boolean isParameterInDocSearch() {
+        return BooleanUtils.isTrue((Boolean) getProp(DocumentAdminModel.Props.IS_PARAMETER_IN_DOC_SEARCH));
+    }
 }

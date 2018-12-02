@@ -229,4 +229,8 @@ public class DocAssocInfo implements Serializable, Comparable<DocAssocInfo> {
     public String getSenderOrRecipient() {
         return assocDocument != null ? assocDocument.getSenderOrRecipient() : StringUtils.EMPTY;
     }
+
+    public String getOwnerName() {
+        return assocDocument != null ? assocDocument.getOwnerName() : getWorkflowOwnerName(); 
+    }
 }

@@ -1,6 +1,6 @@
 <%@ taglib uri="http://java.sun.com/jsf/html" prefix="h"%>
 <%@ taglib uri="http://java.sun.com/jsf/core" prefix="f"%>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%> 
 <%@ taglib uri="/WEB-INF/alfresco.tld" prefix="a"%>
 <%@ taglib uri="/WEB-INF/repo.tld" prefix="r"%>
 <%@ taglib uri="/WEB-INF/wm.tld" prefix="wm"%>
@@ -77,21 +77,21 @@
          <f:facet name="header">
             <a:sortLink id="col3-header" label="#{msg.document_assocsBlockBean_type}" value="type" styleClass="header" />
          </f:facet>
-         <h:outputText id="col3-txt" value="#{r.type}" title="#{r.type}" styleClass="tooltip condence20- no-underline"/>
+         <h:outputText id="col3-txt" value="#{r.type}" title="#{r.type}" styleClass="tooltip condence20- strictTrim no-underline"/>
       </a:column>
 
        <a:column id="col15" rendered="#{AssocsBlockBean.showAssociationSenderReceiver}">
            <f:facet name="header">
                <a:sortLink id="col15-header" label="#{msg.document_assocsBlockBean_recipientsSenders}" value="senderOrRecipient" styleClass="header" />
            </f:facet>
-           <h:outputText id="col15-txt" value="#{r.senderOrRecipient}" title="#{r.senderOrRecipient}" styleClass="tooltip condence20- no-underline"/>
+           <h:outputText id="col15-txt" value="#{r.senderOrRecipient}" title="#{r.senderOrRecipient}" styleClass="tooltip condence20- strictTrim no-underline"/>
        </a:column>
 
        <a:column id="col7" >
            <f:facet name="header">
                <a:sortLink id="col7-header" label="#{msg.document_assocsBlockBean_workflowOwnerName}" value="workflowOwnerName" styleClass="header" />
            </f:facet>
-           <h:outputText id="col7-txt" value="#{r.workflowOwnerName}" />
+           <h:outputText id="col7-txt" value="#{r.ownerName}" />
        </a:column>
 
       <a:column id="col5">
