@@ -91,7 +91,7 @@
            <f:facet name="header">
                <a:sortLink id="col7-header" label="#{msg.document_assocsBlockBean_workflowOwnerName}" value="workflowOwnerName" styleClass="header" />
            </f:facet>
-           <h:outputText id="col7-txt" value="#{r.workflowOwnerName}" />
+           <h:outputText id="col7-txt" value="#{r.ownerName}" />
        </a:column>
 
       <a:column id="col5">
