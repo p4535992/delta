@@ -16,6 +16,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.NodePropertyResolver;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.commons.lang.time.FastDateFormat;
@@ -311,6 +312,10 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         setProp(WorkflowSpecificModel.Props.ACTIVE, active);
     }
 
+    public boolean isActive() {
+        return BooleanUtils.isTrue((Boolean) getProp(WorkflowSpecificModel.Props.ACTIVE));
+    }
+    
     public boolean isResponsible() {
         return getNode().hasAspect(WorkflowSpecificModel.Aspects.RESPONSIBLE);
     }
