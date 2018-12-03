@@ -77,8 +77,9 @@ public class ImportContext {
     }
     
 
-    public NodeRef getDocumentListRef(Date volumeEndDate) {
-        return data.isVolumeOpen(volumeEndDate) ? mainDocsList : archDocsList;
+    public NodeRef getDocumentListRef(Date volumeEndDate, String volumeStatus) {
+    	NodeRef docsList = data.isVolumeOpen(volumeEndDate, volumeStatus) ? mainDocsList : archDocsList;
+        return docsList;
     }
 
     public NodeRef getCachedFunction(NodeRef docsListRef, String mark) {
