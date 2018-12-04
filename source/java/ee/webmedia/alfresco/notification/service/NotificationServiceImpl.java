@@ -531,12 +531,29 @@ public class NotificationServiceImpl implements NotificationService {
         NodeRef docRef = !compoundWorkflow.isIndependentWorkflow() ? compoundWorkflow.getParent() : null;
         for (Notification notification : notifications) {
             try {
-                sendNotification(notification, docRef, setupTemplateData(task, notificationCache), false, notificationCache, task);
+                Task activeTask = getActiveTask(task);
+                sendNotification(notification, docRef, setupTemplateData(activeTask, notificationCache), false, notificationCache, activeTask);
             } catch (EmailException e) {
                 log.error("Workflow task event notification e-mail sending failed, ignoring and continuing", e);
             }
         }
 
+    }
+
+    private Task getActiveTask(Task unfinishedTask) {
+        CompoundWorkflow compoundWorkflow = unfinishedTask.getParent().getParent();
+        if (compoundWorkflow.isDocumentWorkflow()) {
+            for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+                if (workflow.getNode().getType().equals(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW)) {
+                    for (Task task : workflow.getTasks()) {
+                        if (task.isActive()) {
+                            return task;
+                        }
+                    }
+                }
+            }
+        }
+        return unfinishedTask;
     }
 
     private List<Notification> processTaskUnfinishedNotification(Task task, boolean manuallyCancelled) {
