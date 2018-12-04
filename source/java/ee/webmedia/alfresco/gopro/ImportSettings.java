@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 
 
 public class ImportSettings implements Cloneable {
@@ -19,8 +20,14 @@ public class ImportSettings implements Cloneable {
     private String mappingsFileName;
 
     private String defaultOwnerId;
+    
+    private boolean publishToAdr;
+    
+	private boolean allFilesActive;
+	
+	private boolean allWfFinished;
 
-    private String taskOwnerStructUnitAuthority;
+	private String taskOwnerStructUnitAuthority;
     
     private List<String> taskOwnerStructUnitAuthorityPrivileges;
 
@@ -67,6 +74,30 @@ public class ImportSettings implements Cloneable {
         return taskOwnerStructUnitAuthority;
     }
 
+    public boolean isPublishToAdr() {
+		return publishToAdr;
+	}
+
+	public void setPublishToAdr(boolean publishToAdr) {
+		this.publishToAdr = publishToAdr;
+	}
+
+	public boolean isAllFilesActive() {
+		return allFilesActive;
+	}
+
+	public void setAllFilesActive(boolean allFilesActive) {
+		this.allFilesActive = allFilesActive;
+	}
+	
+	public boolean isAllWfFinished() {
+		return allWfFinished;
+	}
+
+	public void setAllWfFinished(boolean allWfFinished) {
+		this.allWfFinished = allWfFinished;
+	}
+	
     public void setTaskOwnerStructUnitAuthority(String taskOwnerStructUnitAuthority) {
         this.taskOwnerStructUnitAuthority = taskOwnerStructUnitAuthority;
     }
@@ -123,7 +154,10 @@ public class ImportSettings implements Cloneable {
         return new File(workFolder, file);
     }
     
-    public boolean isVolumeOpen(Date volumeEnded) {
-        return docListArchivalsSeparatingDate == null || volumeEnded == null || !volumeEnded.before(docListArchivalsSeparatingDate);
+    public boolean isVolumeOpen(Date volumeEnded, String volumeStatus) {
+    	if (StringUtils.isNotBlank(volumeStatus) && ("suletud".equalsIgnoreCase(volumeStatus) || "hävitatud".equalsIgnoreCase(volumeStatus))) {
+    		return false;
+    	}
+        return (StringUtils.isNotBlank(volumeStatus) && "avatud".equalsIgnoreCase(volumeStatus)) || docListArchivalsSeparatingDate == null || volumeEnded == null || !volumeEnded.before(docListArchivalsSeparatingDate);
     }
 }

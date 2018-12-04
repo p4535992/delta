@@ -1043,8 +1043,12 @@
 <li>* <strong>workFolder</strong> &ndash; absoluutne tee olemasoleva kaustani rakenduse serveris, kuhu kirjutatakse logifailid.</li>
 <li>* <strong>mappingsFileName</strong> &ndash; absoluutne tee GoPro-st eksporditud XML failide ja Delta dokumendi liikide vahelist vastavust kirjedava XML failini.</li>
 <li>* <strong>defaultOwnerId</strong> &ndash; vaikimisi dokumendi/menetluse vastutajaks määratava kasutaja isikukood.</li>
-<li>* <strong>taskOwnerStructUnitAuthority</strong> &ndash; kasutajagrupp, mis lisatakse sarjade õigustesse, et grupi liikmed saaksid sarja dokumente ja faile vaadata.</li>
-<li>* <strong>taskOwnerStructUnit</strong> &ndash; kasutajagrupp, mis lisatakse sarjade õigustesse, et grupi liikmed saaksid sarja dokumente ja faile vaadata.</li>
+<li>  <strong>publishToAdr</strong> &ndash; true/false väärtus, Kui väärtus = false, määratakse kõik dokumendid ADRi mitteavadatavateks, true väärtuse korral rakendatakse avalikustamise reeglistikku.</li>
+<li>  <strong>Kõik failid failide plokki</strong> &ndash; true/false</li>
+<li>  <strong>Kõik tööülesanded teostatuks</strong> &ndash; true/false</li>
+<li>* <strong>docListArchivalsSeparatingDate</strong> &ndash; kuupäev (PP.KK.AAAA), millest varem loodud toimikud pannakse arhiivi, kui sisendfaili veerg "Toimiku staatus" on täitmata</li>
+<li> <strong>taskOwnerStructUnitAuthority</strong> &ndash; kasutajagrupp, mis lisatakse sarjade õigustesse, et grupi liikmed saaksid sarja dokumente ja faile vaadata ning muuta.</li>
+<li> <strong>taskOwnerStructUnitAuthorityPrivileges</strong> &ndash; privileegid, mis lisatakse sarjade õigustesse, et grupi liikmed saaksid sarja dokumente ja faile vaadata ning muuta.</li>
 </ul>
 <br/>
 </f:verbatim>
@@ -1063,6 +1067,18 @@
 
 <h:outputText value="defaultOwnerId [*]: "/>
 <h:inputText value="#{goproImporter.data.defaultOwnerId}" size="60" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="publishToAdr: "/>
+<h:selectBooleanCheckbox value="#{goproImporter.data.publishToAdr}" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="Kõik failid failide plokki: "/>
+<h:selectBooleanCheckbox value="#{goproImporter.data.allFilesActive}" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="Kõik tööülesanded teostatuks: "/>
+<h:selectBooleanCheckbox value="#{goproImporter.data.allWfFinished}" />
 <f:verbatim><br/></f:verbatim>
 
 <h:outputText value="docListArchivalsSeparatingDate [*]: "/>
