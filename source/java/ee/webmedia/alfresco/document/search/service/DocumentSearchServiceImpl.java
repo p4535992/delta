@@ -40,6 +40,7 @@ import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
+import org.apache.axis.utils.BeanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.springframework.jdbc.core.RowMapper;
@@ -1132,8 +1133,41 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         return count;
     }
     
+    /**
+     * query documents with storeRefs provided
+     * @param filter
+     * @param limit
+     * @param storeRefs
+     * @return
+     */
+    private List<NodeRef> queryDocuments(Node filter, int limit, List<StoreRef> storeRefs) {
+        long startTime = System.currentTimeMillis();
+        Map<String, Object> properties = filter.getProperties();
+        
+        String query = generateDocumentSearchQuery(filter, storeRefs);
+        if (StringUtils.isBlank(query)) {
+            throw new UnableToPerformException(UnableToPerformException.MessageSeverity.INFO, "docSearch_error_noInput");
+        }
+        try {
+            Pair<List<NodeRef>, Boolean> results = searchDocumentsImpl(query, limit, /* queryName */"documentsByFilter", storeRefs);
+            
+            
+            if (log.isDebugEnabled()) {
+                log.debug("Documents search total time " + (System.currentTimeMillis() - startTime) + " ms");
+            }
+            return results.getFirst();
+        } catch (RuntimeException e) {
+            Map<QName, Serializable> filterProps = RepoUtil.getNotEmptyProperties(RepoUtil.toQNameProperties(properties));
+            log.error("Document search failed: "
+                    + e.getMessage()
+                    + "\n  searchFilter=" + WmNode.toString(filterProps, namespaceService)
+                    + "\n  query=" + query, e);
+            throw e;
+        }
+    }
+    
     @Override
-    public Pair<List<NodeRef>, Boolean> queryDocuments(Node filter, int limit, QName sortBy, boolean ascending) {
+    public Pair<List<NodeRef>, Boolean> queryDocuments(Node filter, int limit) {
         long startTime = System.currentTimeMillis();
         Map<String, Object> properties = filter.getProperties();
         @SuppressWarnings("unchecked")
@@ -1147,7 +1181,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
             throw new UnableToPerformException(UnableToPerformException.MessageSeverity.INFO, "docSearch_error_noInput");
         }
         try {
-            Pair<List<NodeRef>, Boolean> results = searchDocumentsImpl(query, limit, /* queryName */"documentsByFilter", storeRefs, sortBy, ascending);
+            Pair<List<NodeRef>, Boolean> results = searchDocumentsImpl(query, limit, /* queryName */"documentsByFilter", storeRefs);
             
             
             if (log.isDebugEnabled()) {
@@ -2797,16 +2831,6 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     	// in case of GUEST user take out open for all documents if guest user or group is not set
         if (results != null && userService.isGuest()) {
         	results.setFirst(filterDocumentsForGuest(results.getFirst()));
-        }
-        return results;
-    }
-
-    private Pair<List<NodeRef>, Boolean> searchDocumentsImpl(String query, int limit, String queryName, Collection<StoreRef> storeRefs, QName sortBy, boolean ascending) {
-        Pair<List<NodeRef>, Boolean> results = searchNodes(query, limit, queryName, storeRefs, sortBy, ascending);
-
-        // in case of GUEST user take out open for all documents if guest user or group is not set
-        if (results != null && userService.isGuest()) {
-            results.setFirst(filterDocumentsForGuest(results.getFirst()));
         }
         return results;
     }
