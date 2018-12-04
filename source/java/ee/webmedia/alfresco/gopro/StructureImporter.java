@@ -42,6 +42,7 @@ import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
@@ -91,7 +92,7 @@ public class StructureImporter {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(StructureImporter.class);
 
     private static final String SOURCE_FILENAME = "struktuur.csv";
-    static final String COMPLETED_FILENAME = "completed_volumes_cases.csv";
+    public static final String COMPLETED_FILENAME = "completed_volumes_cases.csv";
     private static final String FAILED_FILENAME = "failed_import.csv";
 
     private static final String REGISTER_NAME = "Üldregister";
@@ -241,13 +242,14 @@ public class StructureImporter {
 
                 String functionRef = (String) nodeService.getProperty(function, FunctionsModel.Props.MARK);
                 String seriesRef = (String) nodeService.getProperty(series, SeriesModel.Props.SERIES_IDENTIFIER);
+                String seriesTitle = (String) nodeService.getProperty(series, SeriesModel.Props.TITLE);
                 String url = null;
 
                 if (caseRef == null) {
-                    logVolume(logWriter, volume, url, functionRef, seriesRef);
+                    logVolume(logWriter, volume, url, functionRef, seriesRef, seriesTitle);
                 } else {
                 	nodeService.setProperty(volume, VolumeModel.Props.CONTAINS_CASES, Boolean.TRUE);
-                    logCase(logWriter, caseRef, url, functionRef, seriesRef);
+                    logCase(logWriter, caseRef, url, functionRef, seriesRef, seriesTitle);
                 }
 
                 canContinue = reader.readRecord();
@@ -303,11 +305,13 @@ public class StructureImporter {
     }
 
     private NodeRef doFunction(CsvReader reader, ImportContext context, Map<Long, QName> propertyTypes) throws IOException {
-        Date volumeEndDate = getDate(reader, 20);
-        String mark = getString(reader, 9);
+    	String volumeStatus = (reader.getColumnCount() > 24)?getString(reader, 25):null;
+    	Date volumeEndDate = getDate(reader, 20);
+        
+    	String mark = getString(reader, 9);
         String title = getString(reader, 10);
 
-        NodeRef docsList = context.getDocumentListRef(volumeEndDate);
+        NodeRef docsList = context.getDocumentListRef(volumeEndDate, volumeStatus);
         NodeRef function = context.getCachedFunction(docsList, mark + title);
 
         if (function == null) {
@@ -320,7 +324,7 @@ public class StructureImporter {
                     if ("suletud".equals(f.getStatus())) {
                         functionsService.reopenFunction(f);
 
-                        if (!context.getData().isVolumeOpen(volumeEndDate)) {
+                        if (!context.getData().isVolumeOpen(volumeEndDate, volumeStatus)) {
                             context.closeFunction(function);
                         }
                     }
@@ -343,7 +347,7 @@ public class StructureImporter {
                     .getChildRef();
             context.cacheFunction(mark + title, function);
 
-            if (!context.getData().isVolumeOpen(volumeEndDate)) {
+            if (!context.getData().isVolumeOpen(volumeEndDate, volumeStatus)) {
                 context.closeFunction(function);
             }
         }
@@ -352,10 +356,13 @@ public class StructureImporter {
     }
 
     private NodeRef doSeries(CsvReader reader, final NodeRef function, ImportContext context) throws IOException, ImportValidationException {
-        Date volumeEndDate = getDate(reader, 20);
+        String volumeStatus = (reader.getColumnCount() > 24)?getString(reader, 25):null;
+        String eventPlanName = (reader.getColumnCount() > 26)?getString(reader, 27):null;
+        
+    	Date volumeEndDate = getDate(reader, 20);
         String volumeType = VOLUME_TYPE_CODES[Arrays.binarySearch(VOLUME_TYPES, getString(reader, 15))];
 
-        boolean seriesOpen = context.getData().isVolumeOpen(volumeEndDate);
+        boolean seriesOpen = context.getData().isVolumeOpen(volumeEndDate, volumeStatus);
         boolean subseries = getString(reader, 13) != null;
 
         String seriesId = getString(reader, subseries ? 13 : 11);
@@ -375,15 +382,27 @@ public class StructureImporter {
             }
         }
 
+        NodeRef eventPlanRef = null;
+        if (StringUtils.isNotBlank(eventPlanName)) {
+        	eventPlanRef = getEventPlanRef(eventPlanName);
+        	if (eventPlanRef == null) {
+        		LOG.warn("event plan was not found; eventPlanName = " + eventPlanName + ", series.register = " + getRegisterId() + ", sereis.title = " + title); 
+        	}
+        }
+        
         // ===============================
         // *** BEGIN check existing series
-
         if (series != null) {
             Series s = seriesService.getSeriesByNodeRef(series);
-            if (seriesOpen && "suletud".equals(s.getStatus())) {
+            if (seriesOpen && ("suletud".equals(s.getStatus()) || "hävitatud".equals(s.getStatus()))) {
                 seriesService.openSeries(s);
             }
 
+            NodeRef existingEventPlanRef = (NodeRef)nodeService.getProperty(series, SeriesModel.Props.EVENT_PLAN);
+            if (existingEventPlanRef == null && eventPlanRef != null) {
+        		nodeService.setProperty(series, SeriesModel.Props.EVENT_PLAN, eventPlanRef);
+        	}
+            
             List<String> volTypes = (List<String>) s.getNode().getProperties().get(SeriesModel.Props.VOL_TYPE);
             if (!volTypes.contains(volumeType)) {
                 volTypes.add(volumeType);
@@ -405,6 +424,15 @@ public class StructureImporter {
         // ===============================
 
         if (series == null) {
+        	
+            if (eventPlanRef == null) {
+            	// for series from archived store check main store
+            	NodeRef docsList = context.getDocumentListRef(volumeEndDate, volumeStatus);
+            	if (docsList.equals(context.getArchDocsList())) {
+            		eventPlanRef = getEventPlanRefFromGeneralStore(reader, context);
+            	}
+            }
+        	
             boolean restrictionAK = false;
 
             if ("AK".equals(getString(reader, 22))) {
@@ -434,6 +462,10 @@ public class StructureImporter {
                 props.put(SeriesModel.Props.ACCESS_RESTRICTION_REASON, getString(reader, 23));
                 props.put(SeriesModel.Props.ACCESS_RESTRICTION_BEGIN_DATE, getDate(reader, 19));
             }
+            
+        	if (eventPlanRef != null) {
+        		props.put(SeriesModel.Props.EVENT_PLAN, eventPlanRef);
+        	}
 
             series = nodeService.createNode(function, SeriesModel.Associations.SERIES, SeriesModel.Associations.SERIES, SeriesModel.Types.SERIES, props).getChildRef();
             seriesService.setSeriesDefaultPermissionsOnCreate(series);
@@ -447,10 +479,82 @@ public class StructureImporter {
 
         return series;
     }
+    
+    private NodeRef getEventPlanRef(String name) {
+    	ResultSet result = searchService.query(generalService.getStore(), SearchService.LANGUAGE_LUCENE,
+                SearchUtil.generateTypeQuery(EventPlanModel.Types.EVENT_PLAN) 
+                + " AND " 
+                + SearchUtil.generatePropertyExactQuery(EventPlanModel.Props.NAME, name));
+    	if (result != null && result.length() > 0) {
+    		return result.getNodeRef(0);
+    	}
+    	
+    	return null;
+    }
+    
+    
+    // gets eventPlan from the series with the same id and title but from general store (workspace space store)
+    private NodeRef getEventPlanRefFromGeneralStore(CsvReader reader, ImportContext context) throws IOException {
+    	String mark = getString(reader, 9);
+        String title = getString(reader, 10);
+        
+        NodeRef docsList = context.getMainDocsList();
+        NodeRef function = context.getCachedFunction(docsList, mark + title);
+        if (function == null) {
+            for (ChildAssociationRef assoc : nodeService.getChildAssocs(docsList, FunctionsModel.Associations.FUNCTION, FunctionsModel.Associations.FUNCTION)) {
+                if (mark.equals(nodeService.getProperty(assoc.getChildRef(), FunctionsModel.Props.MARK))
+                        && title.equals(nodeService.getProperty(assoc.getChildRef(), FunctionsModel.Props.TITLE))) {
+                    
+                	function = assoc.getChildRef();
+
+                    context.cacheFunction(mark + title, function);
+                    
+                    break;
+                }
+            }
+        }
+        
+        if (function != null) {
+        	boolean subseries = getString(reader, 13) != null;
+            String seriesId = getString(reader, subseries ? 13 : 11);
+            String seriesTitle = getString(reader, subseries ? 14 : 12);
+
+            NodeRef series = context.getCachedSeries(function, seriesId + seriesTitle);
+
+            if (series == null) {
+                for (ChildAssociationRef seriesAssoc : nodeService.getChildAssocs(function, SeriesModel.Associations.SERIES, SeriesModel.Associations.SERIES)) {
+                    if (seriesId.equals(nodeService.getProperty(seriesAssoc.getChildRef(), SeriesModel.Props.SERIES_IDENTIFIER))
+                            && seriesTitle.equals(nodeService.getProperty(seriesAssoc.getChildRef(), SeriesModel.Props.TITLE))) {
+                        series = seriesAssoc.getChildRef();
+
+                        context.cacheSeries(seriesId + seriesTitle, series, function);
+                        break;
+                    }
+                }
+            }
+
+            if (series != null) {
+            	return (NodeRef) nodeService.getProperty(series, SeriesModel.Props.EVENT_PLAN);
+            }
+        }
+        
+        return null;
+
+    }
+    
+    private String getStatus(String status, boolean isOpen) {
+    	if (StringUtils.isNotBlank(status)) {
+    		return status.toLowerCase();
+    	}
+    	return isOpen ? "avatud" : "suletud";
+    }
 
     private NodeRef doVolume(CsvReader reader, final NodeRef series, ImportContext context) throws IOException {
-        Date volumeEndDate = getDate(reader, 20);
-        boolean volumeOpen = context.getData().isVolumeOpen(volumeEndDate);
+    	String volumeStatus = (reader.getColumnCount() > 24)?getString(reader, 25):null;
+        String volumeDescription = (reader.getColumnCount() > 25)?getString(reader, 26):null;
+       
+    	Date volumeEndDate = getDate(reader, 20);
+        boolean volumeOpen = context.getData().isVolumeOpen(volumeEndDate, volumeStatus);
 
         String mark = getString(reader, 16);
         String title = getString(reader, 17);
@@ -480,8 +584,11 @@ public class StructureImporter {
             props.put(VolumeModel.Props.VOLUME_TYPE, volumeType);
             props.put(VolumeModel.Props.VALID_FROM, validFrom);
             props.put(VolumeModel.Props.VALID_TO, volumeEndDate);
-            props.put(VolumeModel.Props.STATUS, volumeOpen ? "avatud" : "suletud");
+            props.put(VolumeModel.Props.STATUS, getStatus(volumeStatus, volumeOpen));
             props.put(VolumeModel.Props.CONTAINS_CASES, Boolean.FALSE);
+            if (StringUtils.isNotBlank(volumeDescription)) {
+            	props.put(VolumeModel.Props.DESCRIPTION, volumeDescription);
+            }
 
             if (!VolumeType.CASE_FILE.name().equals(volumeType)) {
 
@@ -583,13 +690,13 @@ public class StructureImporter {
         CsvWriter logWriter = ImportUtil.createLogWriter(logFile, true);
 
         if (fileNew) {
-            logWriter.writeRecord(new String[] { "type", "volume_mark", "title", "old_url", "noderef", "valid_from", "valid_to", "function", "series" });
+            logWriter.writeRecord(new String[] { "type", "volume_mark", "title", "old_url", "noderef", "valid_from", "valid_to", "function", "series", "seriesTitle" });
         }
 
         return logWriter;
     }
 
-    private void logVolume(CsvWriter writer, NodeRef volume, String url, String functionRef, String seriesRef) throws IOException {
+    private void logVolume(CsvWriter writer, NodeRef volume, String url, String functionRef, String seriesRef, String seriesTitle) throws IOException {
         if (CaseFileModel.Types.CASE_FILE.equals(nodeService.getType(volume))) {
             writer.write("caseFile");
         } else {
@@ -603,10 +710,11 @@ public class StructureImporter {
         writer.write(ImportUtil.formatDate((Date) nodeService.getProperty(volume, VolumeModel.Props.VALID_TO)));
         writer.write(functionRef);
         writer.write(seriesRef);
+        writer.write(seriesTitle);
         writer.endRecord();
     }
 
-    private void logCase(CsvWriter writer, NodeRef caseRef, String url, String functionRef, String seriesRef) throws IOException {
+    private void logCase(CsvWriter writer, NodeRef caseRef, String url, String functionRef, String seriesRef, String seriesTitle) throws IOException {
         NodeRef volume = nodeService.getPrimaryParent(caseRef).getParentRef();
 
         writer.write("case");
@@ -618,6 +726,7 @@ public class StructureImporter {
         writer.write(ImportUtil.formatDate((Date) nodeService.getProperty(volume, VolumeModel.Props.VALID_TO)));
         writer.write(functionRef);
         writer.write(seriesRef);
+        writer.write(seriesTitle);
         writer.endRecord();
     }
 

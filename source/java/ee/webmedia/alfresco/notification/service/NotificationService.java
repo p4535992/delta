@@ -101,6 +101,6 @@ public interface NotificationService {
 
     public void deleteUserSpecificNotification(String userKey);
 
-    public int sendMyFileModifiedNotifications(NodeRef node, String version);
+    public int sendMyFileModifiedNotifications(NodeRef node);
 
 }

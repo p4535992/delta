@@ -835,7 +835,14 @@ public class DigiDoc4JSignatureServiceImpl implements DigiDoc4JSignatureService,
             String subjectLastName = certValue.getSubjectName(X509Cert.SubjectName.SURNAME);
             log.debug("X509Cert subject lastname: " + subjectLastName);
             String legalCode = certValue.getSubjectName(X509Cert.SubjectName.SERIALNUMBER);
-            log.debug("X509Cert subject serialnumber: " + legalCode);
+            if(legalCode.startsWith("PNOEE-")){
+                log.debug("X509Cert subject (NEW: ESTEID 2018) serialnumber: " + legalCode);
+                String[] idParts = legalCode.split("-");
+                legalCode = idParts[1];
+                log.debug("X509Cert subject (NEW: ESTEID 2018) serialnumber: AFTER: " + legalCode);
+            } else {
+                log.debug("X509Cert subject (OLD STYLE) serialnumber: " + legalCode);
+            }
             String name = UserUtil.getPersonFullName(subjectFirstName, subjectLastName);
 
 
