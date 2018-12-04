@@ -118,7 +118,6 @@ import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
 import ee.webmedia.alfresco.signature.web.Digidoc4jSignatureModalComponent;
-import ee.webmedia.alfresco.signature.web.SignatureAppletModalComponent;
 import ee.webmedia.alfresco.signature.web.SignatureBlockBean;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.CalendarUtil;
@@ -1097,36 +1096,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         return MessageUtil.getMessage("compoundWorkflow_new_independent_workflow");
     }
 
-    public void processCert() {
-        @SuppressWarnings("unchecked")
-        Map<String, String> requestParameterMap = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap();
-        String certHex = requestParameterMap.get("certHex");
-        String certId = requestParameterMap.get("certId");
-        try {
-            long step0 = System.currentTimeMillis();
-            if (!signingFlow.collectAndCheckSigningFiles()) {
-                closeModal();
-                resetSigningData();
-                return;
-            }
-            SignatureDigest signatureDigest = getDocumentService().prepareDocumentDigest(signingFlow.getSigningDocument(0), certHex,
-                    signingFlow.getMainDocumentRef() != null ? compoundWorkflow.getNodeRef() : null);
-            long step1 = System.currentTimeMillis();
-            showModal(signatureDigest.getDigestHex(), certId);
-            signingFlow.setSignatureDigest(signatureDigest);
-            if (log.isInfoEnabled()) {
-                log.info("prepareDocumentDigest took total time " + (step1 - step0) + " ms\n    service call - " + (step1 - step0) + " ms");
-            }
-        } catch (SignatureException e) {
-            SignatureBlockBean.addSignatureError(e);
-            closeModal();
-            resetSigningData();
-        } catch (UnableToPerformException e) {
-            MessageUtil.addStatusMessage(e);
-            closeModal();
-            resetSigningData();
-        }
-    }
+
 
     // deprecated
     public void signDocument() {
@@ -1379,7 +1349,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         FacesContext context = FacesContext.getCurrentInstance();
         Application app = context.getApplication();
 
-        generateSignatureAppletModal(panelGroupChildren, app);
+        generateSignatureModal(panelGroupChildren, app);
 
         List<Task> taskList = getMyTasks(); // Restrict loading
         ValidatingModalLayerComponent dueDateExtensionLayer = addDueDateExtensionLayerIfNeeded(panelGroupChildren, context, app, taskList);
@@ -1578,10 +1548,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         return null;
     }
 
-    
-    
-    private void generateSignatureAppletModal(List<UIComponent> panelGroupChildren, Application app) {
-        // 1st child must always be SignatureAppletModalComponent
+    private void generateSignatureModal(List<UIComponent> panelGroupChildren, Application app) {
         panelGroupChildren.add(new Digidoc4jSignatureModalComponent());
 
         if (getDigiDoc4JSignatureService().isMobileIdEnabled()) {
@@ -1738,30 +1705,16 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         return link;
     }
 
-    private void showModal() {
-        getIdCardModalApplet().showModal();
-    }
-    
+
     private void showModalDigidoc4j() {
     	getIdCardDigidoc4jModalComponent().showModal();
     }
 
-    private void showModal(String digestHex, String certId) {
-        getIdCardModalApplet().showModal(digestHex, certId);
-    }
 
-    private void closeModal() {
-        getIdCardModalApplet().closeModal();
-    }
-    
     private void closeModalDigidoc4j() {
     	getIdCardDigidoc4jModalComponent().closeModal();
     }
 
-    private SignatureAppletModalComponent getIdCardModalApplet() {
-        return (SignatureAppletModalComponent) getDataTableGroupInner().getChildren().get(0);
-    }
-    
     private Digidoc4jSignatureModalComponent getIdCardDigidoc4jModalComponent() {
         return (Digidoc4jSignatureModalComponent) getDataTableGroupInner().getChildren().get(0);
     }

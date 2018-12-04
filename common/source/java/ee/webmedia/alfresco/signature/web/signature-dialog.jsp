@@ -69,41 +69,6 @@
       </script>
 
       <div id="signature-div" style="text-align: center">
-      <object classid="clsid:8AD9C840-044E-11D1-B3E9-00805F499D93" width="400" height="80"
-         codebase="https://java.sun.com/update/1.6.0/jinstall-6u18-windows-i586.cab#Version=1,4,0,0" id="signApplet">
-         <param name="java_code" value="SignApplet.class" />
-         <param name="java_codebase" value="<%=request.getContextPath()%>/applet" />
-         <param name="java_archive" value="SignApplet_sig.jar, iaikPkcs11Wrapper_sig.jar" />
-         <param name="name" value="SignApplet1" />
-         <param name="mayscript" value="true" />
-         <param name="java_type" value="application/x-java-applet;version=1.4" />
-         <param name="scriptable" value="true" />
-         <param name="LANGUAGE" value="EST" />
-         <param name="FUNC_SET_CERT" value="window.processCert" />
-         <param name="FUNC_SET_SIGN" value="window.signDocument" />
-         <param name="FUNC_CANCEL" value="window.cancelDlg" />
-         <param name="FUNC_DRIVER_ERR" value="window.driverError" />
-         <param name="DEBUG_LEVEL" value="3" />
-         <param name="OPERATION"
-            value="<%if (session.getAttribute("operation") != null)
-                           out.write((String) session.getAttribute("operation"));%>" />
-         <param name="HASH"
-            value="<%if (session.getAttribute("digest") != null)
-                           out.write((String) session.getAttribute("digest"));%>" />
-         <param name="TOKEN_ID" value="" />
-         <param name="legacy_lifecycle" value="true" />
-
-         <embed id="signApplet" type="application/x-java-applet;version=1.4" width="400" height="80"
-            pluginspage="http://javadl.sun.com/webapps/download/GetFile/1.6.0_18-b07/windows-i586/xpiinstall.exe" java_code="SignApplet.class"
-            java_codebase="<%=request.getContextPath()%>/applet" java_archive="SignApplet_sig.jar, iaikPkcs11Wrapper_sig.jar" NAME="SignApplet" MAYSCRIPT="true"
-            LANGUAGE="EST" FUNC_SET_CERT="window.processCert" FUNC_SET_SIGN="window.signDocument" FUNC_CANCEL="window.cancelDlg"
-            FUNC_DRIVER_ERR="window.driverError" DEBUG_LEVEL="3"
-            OPERATION="<%if (session.getAttribute("operation") != null)
-                               out.write((String) session.getAttribute("operation"));%>"
-            HASH="<%if (session.getAttribute("digest") != null)
-                          out.write((String) session.getAttribute("digest"));%>" TOKEN_ID="" LEGACY_LIFECYCLE="true">
-         <noembed></noembed>
-         </embed></object>
       </div>
    </f:verbatim>
 </a:panel>
