@@ -892,6 +892,11 @@
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
    </bean>
+
+   <bean id="fixedParameterInDocSearchUpdater" class="ee.webmedia.alfresco.docconfig.bootstrap.FixedParameterInDocSearchUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+   </bean>
    
    <bean id="documentSenderRegNrFieldGroupUpdater" class="ee.webmedia.alfresco.docconfig.bootstrap.DocumentSenderRegNrFieldGroupUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />

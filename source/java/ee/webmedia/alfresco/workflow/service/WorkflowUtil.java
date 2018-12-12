@@ -599,6 +599,10 @@ public class WorkflowUtil {
         return isResponsible(task) && Boolean.TRUE.equals(task.getNode().getProperties().get(WorkflowSpecificModel.Props.ACTIVE));
     }
 
+    public static boolean isActive(Task task) {
+        return Boolean.TRUE.equals(task.getNode().getProperties().get(WorkflowSpecificModel.Props.ACTIVE));
+    }
+
     public static boolean isInactiveResponsible(Task task) {
         return isResponsible(task) && Boolean.FALSE.equals(task.getNode().getProperties().get(WorkflowSpecificModel.Props.ACTIVE));
     }

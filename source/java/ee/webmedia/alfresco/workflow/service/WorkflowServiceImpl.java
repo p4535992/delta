@@ -2089,10 +2089,46 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         WorkflowEventQueue queue = getNewEventQueue();
         queue.setParameter(WorkflowQueueParameter.WORKFLOW_CANCELLED_MANUALLY, Boolean.TRUE);
         proccessPreSave(queue, compoundWorkflow);
+        finishRelatedWorkflows(queue, compoundWorkflow);
         CompoundWorkflow freshCompoundWorkflow = finishCompoundWorkflow(queue, compoundWorkflow, "task_outcome_finished_manually");
         handleEvents(queue);
         copyInfoMessages(compoundWorkflow.getReviewTaskDvkInfoMessages(), freshCompoundWorkflow);
         return freshCompoundWorkflow;
+    }
+
+    private void finishRelatedWorkflows(WorkflowEventQueue queue, CompoundWorkflow workflow) {
+        boolean hasActiveAssignmentTask = hasActiveAssignmentTask(workflow);
+        QName parentType = nodeService.getType(workflow.getParent());
+        if (hasActiveAssignmentTask && !WorkflowCommonModel.Types.INDEPENDENT_COMPOUND_WORKFLOWS_ROOT.equals(parentType)) {
+            List<CompoundWorkflow> compoundWorkflows = getCompoundWorkflows(workflow.getParent());
+            for (CompoundWorkflow cp : compoundWorkflows) {
+                if (!workflow.equals(cp) && hasAssignmentWorkflow(cp)) {
+                    proccessPreSave(queue, cp);
+                    finishCompoundWorkflow(queue, cp, "task_outcome_finished_manually");
+                }
+            }
+        }
+    }
+
+    private boolean hasAssignmentWorkflow(CompoundWorkflow workflow) {
+        for (Workflow w : workflow.getWorkflows()) {
+            if (w.getNode().getType().equals(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean hasActiveAssignmentTask(CompoundWorkflow workflow) {
+        for (Workflow w : workflow.getWorkflows()) {
+            if (w.getNode().getType().equals(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW))
+                for (Task task : w.getTasks()) {
+                    if (WorkflowUtil.isActive(task)) {
+                        return true;
+                    }
+                }
+        }
+        return false;
     }
 
     private void copyInfoMessages(List<Pair<String, Object[]>> originalReviewTaskDvkInfoMessages, CompoundWorkflow freshCompoundWorkflow) {

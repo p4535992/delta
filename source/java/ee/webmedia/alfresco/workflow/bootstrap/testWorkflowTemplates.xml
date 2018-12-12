@@ -788,7 +788,7 @@
       </view:properties>
    </cm:content>
 
-   <cm:content view:childName="cm:Minu poolt kooskõlastatud dokument on allkirjastatud.html">
+   <cm:content view:childName="cm:Minu kooskõlastamisel olnud dokument on allkirjastatud.html">
       <view:aspects>
          <docTempl:template />
          <docTempl:notificationTemplate />
@@ -796,13 +796,13 @@
       <view:properties>
          <docTempl:templateType>NOTIFICATION_TEMPLATE</docTempl:templateType>
          <docTempl:comment>Süsteemne mall</docTempl:comment>
-         <cm:name>Minu poolt kooskõlastatud dokument on allkirjastatud.html</cm:name>
-         <docTempl:name>Minu poolt kooskõlastatud dokument on allkirjastatud.html</docTempl:name>
+         <cm:name>Minu kooskõlastamisel olnud dokument on allkirjastatud.html</cm:name>
+         <docTempl:name>Minu kooskõlastamisel olnud dokument on allkirjastatud.html</docTempl:name>
          <cm:content>contentUrl=classpath:ee/webmedia/alfresco/workflow/bootstrap/testWorkflowTemplate.html|mimetype=text/html|size=|encoding=UTF-8</cm:content>
       </view:properties>
    </cm:content>
 
-   <cm:content view:childName="cm:Minu poolt kooskõlastatud dokument on allkirjastatud iseseisvas terviktöövoos.html">
+   <cm:content view:childName="cm:Minu kooskõlastamisel olnud dokument on allkirjastatud iseseisvas terviktöövoos.html">
       <view:aspects>
          <docTempl:template />
          <docTempl:notificationTemplate />
@@ -810,8 +810,8 @@
       <view:properties>
          <docTempl:templateType>NOTIFICATION_TEMPLATE</docTempl:templateType>
          <docTempl:comment>Süsteemne mall</docTempl:comment>
-         <cm:name>Minu poolt kooskõlastatud dokument on allkirjastatud iseseisvas terviktöövoos.html</cm:name>
-         <docTempl:name>Minu poolt kooskõlastatud dokument on allkirjastatud iseseisvas terviktöövoos.html</docTempl:name>
+         <cm:name>Minu kooskõlastamisel olnud dokument on allkirjastatud iseseisvas terviktöövoos.html</cm:name>
+         <docTempl:name>Minu kooskõlastamisel olnud dokument on allkirjastatud iseseisvas terviktöövoos.html</docTempl:name>
          <cm:content>contentUrl=classpath:ee/webmedia/alfresco/workflow/bootstrap/testWorkflowTemplate.html|mimetype=text/html|size=|encoding=UTF-8</cm:content>
       </view:properties>
    </cm:content>

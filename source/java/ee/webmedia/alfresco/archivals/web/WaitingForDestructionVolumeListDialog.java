@@ -189,11 +189,12 @@ public class WaitingForDestructionVolumeListDialog extends VolumeArchiveBaseDial
             @Override
             public Void execute() {
                 List<NodeRef> selectedVolumes = getSelectedVolumes();
-                
                 boolean simpleDestruction = false;
-                if(activityType.equals(ActivityType.SIMPLE_DESTRUCTION)){
+
+                if (activityType.equals(ActivityType.SIMPLE_DESTRUCTION)) {
                 	simpleDestruction = true;
                 }
+
                 if (!validateVolumesForDisposal(selectedVolumes, simpleDestruction)) {
                     return null;
                 }
@@ -235,9 +236,9 @@ public class WaitingForDestructionVolumeListDialog extends VolumeArchiveBaseDial
                 MessageUtil.addErrorMessage("archivals_volume_start_destruction_error_no_disposal_act");
                 return false;
             }
-
-            FirstEvent nextEvent = getNextEvent(volume);
             
+            FirstEvent nextEvent = getNextEvent(volume);
+                        
             if(volume.isRetainPermanent()==false && volume.isHasArchivalValue()==false) {
             	
             	Date retainUntil = volume.getRetainUntilDate();
@@ -245,7 +246,7 @@ public class WaitingForDestructionVolumeListDialog extends VolumeArchiveBaseDial
             		MessageUtil.addErrorMessage("archivals_volume_start_destruction_error_retention_not_expired_yet");
             		return false;
             	}
-            	
+            
 	            boolean notSimpleDestructionEvent = FirstEvent.SIMPLE_DESTRUCTION != nextEvent;
 	            if ((FirstEvent.DESTRUCTION != nextEvent && notSimpleDestructionEvent)
 	                    || (simpleDestruction && notSimpleDestructionEvent)) {
@@ -255,17 +256,16 @@ public class WaitingForDestructionVolumeListDialog extends VolumeArchiveBaseDial
             }
             
             if(FirstEvent.DESTRUCTION.equals(nextEvent) && simpleDestruction){
-            	 MessageUtil.addErrorMessage("archivals_volume_start_destruction_error_simple_destruction_not_allowed");
-	             return false;
+            	MessageUtil.addErrorMessage("archivals_volume_start_destruction_error_simple_destruction_not_allowed");
+            	return false;
             }
-            
         }
         return true;
     }
     
     private FirstEvent getNextEvent(Volume volume){
     	String nextEventStr = volume.getNextEvent();
-        return StringUtils.isNotBlank(nextEventStr) ? FirstEvent.valueOf(nextEventStr) : null;
+    	return StringUtils.isNotBlank(nextEventStr) ? FirstEvent.valueOf(nextEventStr) : null;
     }
 
     @Override

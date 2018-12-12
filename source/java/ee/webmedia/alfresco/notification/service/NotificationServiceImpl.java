@@ -39,6 +39,7 @@ import org.alfresco.util.MD5;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.joda.time.LocalDate;
@@ -530,12 +531,29 @@ public class NotificationServiceImpl implements NotificationService {
         NodeRef docRef = !compoundWorkflow.isIndependentWorkflow() ? compoundWorkflow.getParent() : null;
         for (Notification notification : notifications) {
             try {
-                sendNotification(notification, docRef, setupTemplateData(task, notificationCache), false, notificationCache, task);
+                Task activeTask = getActiveTask(task);
+                sendNotification(notification, docRef, setupTemplateData(activeTask, notificationCache), false, notificationCache, activeTask);
             } catch (EmailException e) {
                 log.error("Workflow task event notification e-mail sending failed, ignoring and continuing", e);
             }
         }
 
+    }
+
+    private Task getActiveTask(Task unfinishedTask) {
+        CompoundWorkflow compoundWorkflow = unfinishedTask.getParent().getParent();
+        if (compoundWorkflow.isDocumentWorkflow()) {
+            for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+                if (workflow.getNode().getType().equals(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW)) {
+                    for (Task task : workflow.getTasks()) {
+                        if (task.isActive()) {
+                            return task;
+                        }
+                    }
+                }
+            }
+        }
+        return unfinishedTask;
     }
 
     private List<Notification> processTaskUnfinishedNotification(Task task, boolean manuallyCancelled) {
@@ -1656,7 +1674,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public int sendMyFileModifiedNotifications(NodeRef content, String version){
+    public int sendMyFileModifiedNotifications(NodeRef content){
         NodeRef docRef = nodeService.getPrimaryParent(content).getParentRef();
 
         List<AssociationRef> targetAssocs = nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT);
@@ -1673,19 +1691,6 @@ public class NotificationServiceImpl implements NotificationService {
         List<String> toEmails =  new ArrayList<String>();
         toEmails.add(userService.getUserEmail(document.getOwnerId()));
         notification.setToEmails(toEmails);
-
-        Map<String, String> additionalFormulas = new HashMap<>();
-    	try{
-	    	String[] versionNr = version.split("\\.");
-	    	additionalFormulas.put("file.version", versionNr[0] + "." + (Integer.parseInt(versionNr[1]) + 1));
-    	}catch(Exception e){
-    		if (log.isDebugEnabled()) {
-                log.debug("Unable to parse versionNr for sendMyFileModifiedNotification template");
-            }
-    		e.printStackTrace();
-    	}
-
-    	notification.setAdditionalFormulas(additionalFormulas);
 
         NodeRef notificationTemplateByName = templateService.getNotificationTemplateByName(notification.getTemplateName());
 
@@ -1931,8 +1936,15 @@ public class NotificationServiceImpl implements NotificationService {
             String recipientEmail = null;
             if (StringUtils.isNotBlank(recipientRegNr)) {
                 List<Node> contacts = addressbookService.getContactsByRegNumber(recipientRegNr);
-                if (contacts != null && contacts.size() > 0) {
-                    recipientEmail = (String) contacts.get(0).getProperties().get(AddressbookModel.Props.EMAIL);
+                if (CollectionUtils.isNotEmpty(contacts)) {
+                    for (Node contact : contacts) {
+                        String orgCode = (String) contact.getProperties().get(AddressbookModel.Props.ORGANIZATION_CODE);
+                        String personId = (String) contact.getProperties().get(AddressbookModel.Props.PERSON_ID);
+                        if (recipientRegNr.equals(orgCode) || recipientRegNr.equals(personId)) {
+                            recipientEmail = (String) contact.getProperties().get(AddressbookModel.Props.EMAIL);
+                            break;
+                        }
+                    }
                 }
             } else {
                 String recipient = sendInfo.getRecipient();

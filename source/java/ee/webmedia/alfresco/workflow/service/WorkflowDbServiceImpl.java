@@ -739,6 +739,9 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
                     || WorkflowSpecificModel.Props.SEARCHABLE_COMPOUND_WORKFLOW_OWNER_ORGANIZATION_NAME.equals(propName)) && value != null) {
                 value = getArrayValueForDb(value, connection);
             }
+            if (WorkflowSpecificModel.Props.WORKFLOW_RESOLUTION.equals(propName) && value != null && !taskProps.keySet().contains(WorkflowSpecificModel.Props.RESOLUTION)) {
+                updateInfo.add(getDbFieldName(WorkflowSpecificModel.Props.RESOLUTION), value);
+            }
             updateInfo.add(getDbFieldName(propName), value);
         }
     }

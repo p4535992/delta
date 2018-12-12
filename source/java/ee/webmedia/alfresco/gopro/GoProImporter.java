@@ -268,7 +268,8 @@ public class GoProImporter implements SaveListener {
             		Thread.sleep(180000);
             	} catch (InterruptedException e) {
             	}
-        		importer.runImport(new File(importData.getDataFolder()), new File(importData.getWorkFolder()), importData.getMappingsFile(), importData.getBatchSize(), importData.getDefaultOwnerId(), institutionCode);
+        		importer.runImport(new File(importData.getDataFolder()), new File(importData.getWorkFolder()), importData.getMappingsFile(), importData.getBatchSize()
+        				, importData.getDefaultOwnerId(), institutionCode, importData.isPublishToAdr(), importData.isAllFilesActive(), importData.isAllWfFinished());
         	} catch (Exception e) {
         		LOG.error("GoProDocumentsImporter failed: " + e.getMessage());
         		return false;

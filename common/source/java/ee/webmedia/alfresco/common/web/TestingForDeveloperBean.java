@@ -227,7 +227,7 @@ public class TestingForDeveloperBean implements Serializable {
                 new TransientNode(VolumeSearchModel.Types.ARCHIVE_LIST_FILTER, null, null), false, false, storeNodeRefs);
         resetMarkedForDestruction(volumes);
         // hack for incorrect view id in the next request
-        JspStateManagerImpl.ignoreCurrentViewSequenceHack();
+        JspStateManagerImpl.ignoreCurrentViewSequenceHack(); 
     }
 
     private List<NodeRef> getArchivalStores() {
