@@ -53,8 +53,6 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
     /**
      * Helper to generate a URL to a content node for downloading content from the server.
      *
-     * @param pattern
-     *            The pattern to use for the URL
      * @param ref
      *            NodeRef of the content node to generate URL for (cannot be null)
      * @param name
