@@ -440,7 +440,7 @@ public abstract class BaseDownloadContentServlet extends BaseServlet
       }
    }
 
-   private void logFileOpened(NodeRef fileRef, String fileName, NodeService nodeService) {
+   protected void logFileOpened(NodeRef fileRef, String fileName, NodeService nodeService) {
        final NodeRef parentRef = nodeService.getPrimaryParent(fileRef).getParentRef();
        if (nodeService.isType(parentRef, DocumentCommonModel.Types.DOCUMENT)) {
            final String fName = TextUtil.decodeUrl(fileName); // fileName is extracted from url and may contain special symbols

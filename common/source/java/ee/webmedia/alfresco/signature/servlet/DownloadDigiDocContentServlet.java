@@ -242,6 +242,7 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
 
             ServletOutputStream os = res.getOutputStream();
             FileCopyUtils.copy(item.getData(), os); // closes both streams
+            logFileOpened(dDocRef, item.getDisplayName(), nodeService);
         } catch (SignatureException e) {
             logger.error("Failed to fetch a document from " + (isBdoc ? ".bdoc" : ".ddoc") + ", noderef: " + dDocRef + ", id = " + dataFileOrderNr, e);
         }
