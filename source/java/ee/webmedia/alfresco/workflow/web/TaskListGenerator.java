@@ -43,10 +43,15 @@ import javax.faces.component.html.HtmlPanelGrid;
 import javax.faces.component.html.HtmlPanelGroup;
 import javax.faces.component.html.HtmlSelectOneMenu;
 import javax.faces.context.FacesContext;
+import javax.faces.context.ResponseWriter;
 import javax.faces.el.MethodBinding;
 import javax.faces.el.ValueBinding;
+import javax.faces.event.AbortProcessingException;
 import javax.faces.event.ActionEvent;
+import javax.faces.event.FacesEvent;
+import javax.faces.event.FacesListener;
 import javax.faces.event.ValueChangeEvent;
+import javax.faces.event.ValueChangeListener;
 import javax.faces.model.SelectItem;
 
 import org.alfresco.model.ContentModel;
@@ -73,6 +78,7 @@ import ee.webmedia.alfresco.common.propertysheet.classificatorselector.ValueBind
 import ee.webmedia.alfresco.common.propertysheet.datepicker.DateTimePicker;
 import ee.webmedia.alfresco.common.propertysheet.datepicker.DateTimePickerGenerator;
 import ee.webmedia.alfresco.common.propertysheet.datepicker.DateTimePickerRenderer;
+import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
 import ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent;
 import ee.webmedia.alfresco.common.propertysheet.modalLayer.ValidatingModalLayerComponent;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
@@ -84,6 +90,7 @@ import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
@@ -371,8 +378,11 @@ public class TaskListGenerator extends BaseComponentGenerator {
 
         HtmlInputText nameInput = (HtmlInputText) application.createComponent(HtmlInputText.COMPONENT_TYPE);
         nameInput.setId("task-name-" + taskRowId);
-        nameInput.setReadonly(true);
+        nameInput.setReadonly(false);
+        nameInput.getAttributes().put("autocomplete", "off");
         putAttribute(nameInput, "styleClass", "ownerName medium");
+        nameInput.setValueChangeListener(context.getApplication().createMethodBinding("#{DialogManager.bean.ownerNameChanged}",
+                new Class[] { ValueChangeEvent.class }));
         if (list.signatureWorkflow && taskIndex == 0 && task.getOwnerId() == null && signatureTaskOwnerProps != null) {
             task.getNode().getProperties().putAll(signatureTaskOwnerProps);
         }
@@ -410,6 +420,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
                 dateTimePickerGenerator.setupValidDateConstraint(context, propertySheet, null, dueDateTimeInput);
             } else {
                 dateTimePickerGenerator.setReadonly(dueDateTimeInput, true);
+                nameInput.setReadonly(true);
             }
             Map<String, Object> componentAttributes = new HashMap<>(DUE_DATE_TIME_ATTRIBUTES);
             if (taskGroup != null) {
@@ -464,6 +475,8 @@ public class TaskListGenerator extends BaseComponentGenerator {
 
         if (isTaskRowEditable) {
             actionChildren.add(createDeleteTaskLink(application, taskRowId, list.workflowIndex, taskIndex));
+            String callBack = BeanHelper.getUserListDialog().getCallbackByPickerFilterValues(picker.getFilterOptions());
+            SearchUtil.addSimpleSearchSuggest(nameInput, callBack, picker.getClientId(context), true);
         }
 
         if (taskAction == Action.NONE) {

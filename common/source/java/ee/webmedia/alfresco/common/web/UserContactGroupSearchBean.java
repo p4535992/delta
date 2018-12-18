@@ -122,7 +122,7 @@ public class UserContactGroupSearchBean implements Serializable {
     }
 
     public SelectItem[] searchAllWithoutLogOnUser(PickerSearchParams params) {
-        SelectItem[] results = BeanHelper.getUserListDialog().searchUsersWithoutCurrentUser(params);
+        SelectItem[] results = BeanHelper.getUserListDialog().searchOtherUsers(params);
         return results;
     }
 

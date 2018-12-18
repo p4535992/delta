@@ -12,6 +12,10 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.faces.component.html.HtmlInputText;
+import javax.faces.context.FacesContext;
+import javax.faces.context.ResponseWriter;
+
 import org.alfresco.repo.search.impl.lucene.LuceneQueryParser;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
@@ -541,6 +545,23 @@ public class SearchUtil {
                 list.add(date);
             }
         }
+    }
+
+    public static void addSimpleSearchSuggest(HtmlInputText htmlInputText, String callBackName, String pickerClientId, Boolean isAjax){
+    	 try {
+    		FacesContext context = FacesContext.getCurrentInstance();
+    	   	ResponseWriter out = context.getResponseWriter();
+            String id = htmlInputText.getClientId(context);
+            Object value = htmlInputText.getAttributes().get("readonly");
+            if(value == null || !(Boolean) htmlInputText.getAttributes().get("readonly")){
+	         	String suggestSearch = String.format("<script type=\"text/javascript\">addSimpleSearchSuggest(\"%s\", \"%s\", \"4\", \"%s\", %s);</script>", id, callBackName, pickerClientId, isAjax);
+	         	out.write(suggestSearch);
+	         	context.setResponseWriter(out);
+            }
+         	
+         } catch (Exception e) {
+         	e.printStackTrace();
+         }
     }
 
 }
