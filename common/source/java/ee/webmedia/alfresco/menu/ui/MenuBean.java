@@ -794,6 +794,7 @@ public class MenuBean implements Serializable {
 
     @SuppressWarnings("unchecked")
     public int getShortcutAddable() {
+    	clickedId = getMainMenuClickedId();
         if (!StringUtils.contains(clickedId, ":sm")) {
             return 0;
         }
@@ -844,6 +845,16 @@ public class MenuBean implements Serializable {
         return 1;
     }
 
+    private String getMainMenuClickedId() {
+    	if (StringUtils.contains(clickedId, ":pm4")) {
+    		return "dialog:sm0_0";
+    	}
+    	if (StringUtils.contains(clickedId, ":pm3") || (StringUtils.contains(clickedId, ":pm5"))) {
+    		return "dialog:sm0";
+    	}
+    	return clickedId;
+    }
+    
     private String getMenuItemIdFromShortcut(String shortcut) {
         return getMenuItemIdFromShortcut(shortcut, menu);
     }
