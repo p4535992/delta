@@ -103,6 +103,8 @@
             <entry key="GUESTS" value="${ldap.synchronization.systematicGroupQuery.guests}" />
          </map>
       </property>
+      <property name="fromDatabase" value="${orgstruct.fromdatabase}" />
+      <property name="orgStructDao" ref="orgStructDao" />
    </bean>
 
 </beans>

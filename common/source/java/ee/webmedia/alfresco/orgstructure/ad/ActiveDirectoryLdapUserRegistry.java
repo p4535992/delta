@@ -50,8 +50,10 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.monitoring.MonitoredService;
 import ee.webmedia.alfresco.monitoring.MonitoringUtil;
+import ee.webmedia.alfresco.orgstructure.dao.OrgStructDao;
 import ee.webmedia.alfresco.orgstructure.model.OrganizationStructure;
 import ee.webmedia.alfresco.orgstructure.model.OrganizationStructureModel;
+import ee.webmedia.alfresco.orgstructure.model.PersonOrgDto;
 import ee.webmedia.alfresco.utils.UserUtil;
 
 public class ActiveDirectoryLdapUserRegistry implements UserRegistry, InitializingBean {
@@ -80,6 +82,9 @@ public class ActiveDirectoryLdapUserRegistry implements UserRegistry, Initializi
     private String[] groupAttributeNames;
     private String[] orgStructAttributeNames;
     private final QName groupDnProp = QName.createQName("groupDn", getNamespaceService());
+    
+    private Boolean fromDatabase;
+    private OrgStructDao orgStructDao;
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -126,16 +131,28 @@ public class ActiveDirectoryLdapUserRegistry implements UserRegistry, Initializi
         for (NodeDescription person : results) {
             String organizationId = null;
             List<String> organizationPath = null;
-            DistinguishedName dn = (DistinguishedName) person.getProperties().get(ContentModel.PROP_ORGID);
-            while (!dn.isEmpty()) {
-                String superUnitId = dn.toString();
-                OrganizationStructure orgStruct = getOrganizationStructureService().getOrganizationStructure(superUnitId);
-                if (orgStruct != null) {
-                    organizationId = orgStruct.getUnitId();
-                    organizationPath = orgStruct.getOrganizationPath();
-                    break;
-                }
-                dn.removeLast();
+            if (fromDatabase) {
+            	String username = (String)person.getProperties().get(ContentModel.PROP_USERNAME);
+            	PersonOrgDto personOrgDto = orgStructDao.getPersonOrg(username);
+            	if (personOrgDto != null) {
+            		OrganizationStructure orgStruct = getOrganizationStructureService().getOrganizationStructure(personOrgDto.getUnitId());
+	                if (orgStruct != null) {
+	                    organizationId = orgStruct.getUnitId();
+	                    organizationPath = orgStruct.getOrganizationPath();
+	                }
+            	}
+            } else {
+	            DistinguishedName dn = (DistinguishedName) person.getProperties().get(ContentModel.PROP_ORGID);
+	            while (!dn.isEmpty()) {
+	                String superUnitId = dn.toString();
+	                OrganizationStructure orgStruct = getOrganizationStructureService().getOrganizationStructure(superUnitId);
+	                if (orgStruct != null) {
+	                    organizationId = orgStruct.getUnitId();
+	                    organizationPath = orgStruct.getOrganizationPath();
+	                    break;
+	                }
+	                dn.removeLast();
+	            }
             }
             person.getProperties().put(ContentModel.PROP_ORGID, organizationId);
             person.getProperties().put(ContentModel.PROP_ORGANIZATION_PATH, (Serializable) organizationPath);
@@ -165,18 +182,30 @@ public class ActiveDirectoryLdapUserRegistry implements UserRegistry, Initializi
             for (NodeDescription person : personsByIdCode.values()) {
                 String organizationId = null;
                 List<String> organizationPath = null;
-                DistinguishedName dn = (DistinguishedName) person.getProperties().get(ContentModel.PROP_ORGID);
-                while (!dn.isEmpty()) {
-                    String superUnitId = dn.toString();
-                    if (orgStructsPathsById.containsKey(superUnitId)) {
-                        organizationId = superUnitId;
-                        organizationPath = orgStructsPathsById.get(superUnitId);
-                        break;
-                    }
-                    dn.removeLast();
+                if (fromDatabase) {
+                	String username = (String)person.getProperties().get(ContentModel.PROP_USERNAME);
+                	PersonOrgDto personOrgDto = orgStructDao.getPersonOrg(username);
+                	if (personOrgDto != null) {
+                		OrganizationStructure orgStruct = getOrganizationStructureService().getOrganizationStructure(personOrgDto.getUnitId());
+    	                if (orgStruct != null) {
+    	                    organizationId = orgStruct.getUnitId();
+    	                    organizationPath = orgStruct.getOrganizationPath();
+    	                }
+                	}
+                } else {
+	                DistinguishedName dn = (DistinguishedName) person.getProperties().get(ContentModel.PROP_ORGID);
+	                while (dn != null && !dn.isEmpty()) {
+	                    String superUnitId = dn.toString();
+	                    if (orgStructsPathsById.containsKey(superUnitId)) {
+	                        organizationId = superUnitId;
+	                        organizationPath = orgStructsPathsById.get(superUnitId);
+	                        break;
+	                    }
+	                    dn.removeLast();
+	                }
                 }
                 person.getProperties().put(ContentModel.PROP_ORGID, organizationId);
-                person.getProperties().put(ContentModel.PROP_ORGANIZATION_PATH, (Serializable) organizationPath);
+               	person.getProperties().put(ContentModel.PROP_ORGANIZATION_PATH, (Serializable) organizationPath);
             }
 
             LOG.info("Found " + personsByIdCode.size() + " users:\n" + WmNode.toString(personsByIdCode.values(), true));
@@ -186,7 +215,7 @@ public class ActiveDirectoryLdapUserRegistry implements UserRegistry, Initializi
             ctx.destroy();
         }
     }
-
+    
     private void searchAndAddPersons(ContextSource ctx, String queryName, Map<String, NodeDescription> personsByIdCode, String searchBase, String personSearchFilter) {
         List<NodeDescription> persons = searchPaged(
                 ctx,
@@ -620,6 +649,14 @@ public class ActiveDirectoryLdapUserRegistry implements UserRegistry, Initializi
 
     public void setSystematicGroupQueryFilters(Map<String, String> systematicGroupQueryFilters) {
         this.systematicGroupQueryFilters = systematicGroupQueryFilters;
+    }
+    
+    public void setFromDatabase(Boolean fromDatabase) {
+    	this.fromDatabase = fromDatabase;
+    }
+    
+    public void setOrgStructDao(OrgStructDao orgStructDao) {
+        this.orgStructDao = orgStructDao;
     }
 
 }
