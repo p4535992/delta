@@ -1973,9 +1973,11 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         if (compoundWorkflows == null || compoundWorkflows.isEmpty()) {
             return new HashMap<NodeRef, String>();
         }
-        String sqlQuery = "SELECT wfs_compound_workflow_id, task_type, string_agg(wfc_owner_name, ', ') AS owner_names FROM delta_task "
+        String sqlQuery = "SELECT wfs_compound_workflow_id, task_type, string_agg(owner_duedate, ', ') AS owner_names FROM  "
+        		+ "( SELECT workflow_id, wfs_compound_workflow_id, task_type, concat(wfc_owner_name,' ', to_char(wfs_due_date, 'DD.MM.YYYY'))  AS owner_duedate  FROM delta_task " 
                 + "     WHERE delta_task.wfc_status = '" + Status.IN_PROGRESS.getName() + "'"
                 + "     AND delta_task.wfs_compound_workflow_id IN (" + getQuestionMarks(compoundWorkflows.size()) + ")"
+                + ") as TasksInProgres"
                 + " GROUP BY wfs_compound_workflow_id, workflow_id, task_type"
                 + " ORDER BY wfs_compound_workflow_id, workflow_id";
 
