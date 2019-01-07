@@ -1,6 +1,5 @@
 package ee.webmedia.alfresco.orgstructure.job;
 
-import ee.webmedia.alfresco.common.web.BeanHelper;
 import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
@@ -12,6 +11,7 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.StatefulJob;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 
 /**
@@ -27,7 +27,7 @@ public class UpdateUsersGroupsOrganizationsListJob implements StatefulJob {
         log.info("Starting UpdateUsersGroupsOrganizationsListJob");
         JobDataMap jobData = context.getJobDetail().getJobDataMap();
 
-        if(getSyncActiveStatus() == true){
+        if(getSyncActiveStatus()){
             log.info("USERS AND GROUPS SYNC IS ACTIVE....");
             // Run the jobs
             log.info("UPDATE ORGANISATIONSTRUCTURE...");
@@ -48,7 +48,7 @@ public class UpdateUsersGroupsOrganizationsListJob implements StatefulJob {
     public Boolean getSyncActiveStatus() {
         return BeanHelper.getApplicationConstantsBean().isSyncActiveStatus();
     }
-
+    
     private void updateOrganisationStructureBasedGroups(JobDataMap jobData) {
         log.debug("Starting to update organization structure based groups");
 
@@ -58,7 +58,8 @@ public class UpdateUsersGroupsOrganizationsListJob implements StatefulJob {
                     + workerObj);
         }
         final OrganizationStructureService worker = (OrganizationStructureService) workerObj;
-
+        
+        
         // Run job as with systemUser privileges
         AuthenticationUtil.runAs(new RunAsWork<Integer>() {
             @Override
@@ -77,7 +78,7 @@ public class UpdateUsersGroupsOrganizationsListJob implements StatefulJob {
                     + workerObj);
         }
         final OrganizationStructureService worker = (OrganizationStructureService) workerObj;
-
+        
         // Run job as with systemUser privileges
         AuthenticationUtil.runAs(new RunAsWork<Integer>() {
             @Override
@@ -85,6 +86,7 @@ public class UpdateUsersGroupsOrganizationsListJob implements StatefulJob {
                 return worker.updateOrganisationStructures();
             }
         }, AuthenticationUtil.getSystemUserName());
+        
     }
 
     private void updateUsersAndGroups(JobDataMap jobData) {
@@ -103,4 +105,5 @@ public class UpdateUsersGroupsOrganizationsListJob implements StatefulJob {
             }
                 }, AuthenticationUtil.getSystemUserName());
     }
+    
 }

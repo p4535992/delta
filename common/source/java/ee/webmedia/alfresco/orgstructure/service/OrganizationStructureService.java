@@ -77,5 +77,4 @@ public interface OrganizationStructureService {
 
     void loadUserUnit(Node user);
 
-
 }

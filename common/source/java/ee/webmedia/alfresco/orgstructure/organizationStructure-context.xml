@@ -90,6 +90,11 @@
       </property>
    </bean>
 
+   <bean id="orgStructDao" class="ee.webmedia.alfresco.orgstructure.dao.OrgStructDaoImpl">
+      <property name="dataSource" ref="oracleDataSource" />
+      <property name="txManager" ref="oracleTxManager" />
+   </bean>
+
    <bean id="organizationStructureService" class="ee.webmedia.alfresco.orgstructure.service.OrganizationStructureServiceImpl">
       <property name="generalService" ref="GeneralService" />
       <property name="nodeService" ref="NodeService" />
@@ -97,6 +102,8 @@
       <property name="authorityService" ref="AuthorityService" />
       <property name="orgStructPropertiesCache" ref="orgStructPropertiesCache" /> 
       <property name="applicationConstantsBean" ref="applicationConstantsBean" />
+      <property name="orgStructDao" ref="orgStructDao" />
+      <property name="fromDatabase" value="${orgstruct.fromdatabase}" />
    </bean>
 
    <bean id="OrganizationStructureService" class="org.springframework.aop.framework.ProxyFactoryBean">
