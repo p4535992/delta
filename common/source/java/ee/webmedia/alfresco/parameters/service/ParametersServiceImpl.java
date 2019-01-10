@@ -151,6 +151,10 @@ public class ParametersServiceImpl implements ParametersService {
     }
 
     @Override
+    public Date getDateParameter(Parameters parameter){
+        return getParameterValue(parameter, Date.class);
+    }
+    @Override
     public String getStringParameter(Parameters parameter) {
         return getParameterValue(parameter, String.class);
     }

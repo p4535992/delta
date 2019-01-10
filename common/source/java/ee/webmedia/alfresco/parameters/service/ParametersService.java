@@ -1,10 +1,7 @@
 package ee.webmedia.alfresco.parameters.service;
 
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean;
 import ee.webmedia.alfresco.parameters.model.Parameter;
@@ -30,6 +27,8 @@ public interface ParametersService {
      * @return value of given parameter converted to requiredClazz
      */
     <T> T getParameterValue(Parameters parameter, Class<T> requiredClazz);
+
+    Date getDateParameter(Parameters parameter);
 
     String getStringParameter(Parameters parameter);
 

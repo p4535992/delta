@@ -564,18 +564,27 @@ public class DigiSignSearchesImpl implements DigiSignSearches {
         return certList;
     }
 
-    public Date digiSignStringToDate(String stringDate){
+    public Date stringToDate(String dateValue){
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        return parseStringToDate(dateValue, format);
+    }
+
+    public Date digiSignStringToDate(String dateValue){
         // "2017-11-17T12:02:01Z"
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.000+0000");
+        return parseStringToDate(dateValue, format);
+    }
 
+    private Date parseStringToDate(String dateValue, SimpleDateFormat format){
         try {
-            Date date = format.parse(stringDate);
+            Date date = format.parse(dateValue);
             return date;
         } catch (ParseException e) {
             log.error("String to Date convert failed! " + e.getMessage(), e);
         }
 
         return null;
+
     }
 
     private JSONObject getCertBySerialNumber(String orgCode){

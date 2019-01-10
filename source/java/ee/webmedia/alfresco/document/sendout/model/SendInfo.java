@@ -32,7 +32,7 @@ public abstract class SendInfo {
     public abstract Date getSendDateTime();
 
     public abstract String getSendMode();
-    
+
     public abstract String getSendModeExtended();
 
     public abstract String getSentFiles();

@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -32,6 +33,10 @@ public interface DigiSignSearches {
     byte[] makeAsicS(String filename, InputStream is);
 
     List<SignCertificate> checkJsonResponse(JSONObject json);
+
+    Date stringToDate(String dateValue);
+
+    Date digiSignStringToDate(String dateValue);
 
     List<SignCertificate> getCertificatesFromDigiSignService(String orgCode, String orgName);
 
