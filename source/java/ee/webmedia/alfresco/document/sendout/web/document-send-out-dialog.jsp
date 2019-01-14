@@ -130,7 +130,11 @@
       <h:inputTextarea id="editor" value="#{DocumentSendOutDialog.model.content}" rows="5" cols="40" />
       
    </h:panelGrid>
-
+   <f:verbatim>
+   <script type="text/javascript">
+       attachSendOutSearchSuggest();
+   </script>
+   </f:verbatim>
    <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/docdynamic/web/metadata-block-lockRefresh.jsp" />
 
 </a:panel>

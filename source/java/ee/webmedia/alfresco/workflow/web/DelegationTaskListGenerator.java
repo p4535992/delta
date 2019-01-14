@@ -11,6 +11,7 @@ import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.getActionId;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.getDialogId;
 import static org.alfresco.web.app.servlet.FacesHelper.makeLegalId;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -25,6 +26,7 @@ import javax.faces.component.html.HtmlPanelGroup;
 import javax.faces.context.FacesContext;
 import javax.faces.el.ValueBinding;
 import javax.faces.event.ActionEvent;
+import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 
 import org.alfresco.service.namespace.QName;
@@ -42,9 +44,11 @@ import ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.propertysheet.workflow.DelegationTaskListContainer;
 import ee.webmedia.alfresco.common.propertysheet.workflow.TaskListContainer;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.Task;
@@ -159,6 +163,21 @@ public class DelegationTaskListGenerator extends TaskListGenerator {
             createTaskListFooter(context, item, listInfo, genContext.taskGrid);
             ComponentUtil.setAjaxEnabledOnActionLinksRecursive(taskListContainer, 1);
             taskListContainer.setRowCount(rows);
+            
+            HtmlInputText htmlInputText = null;
+            List<HtmlInputText> htmlInputTextList = new ArrayList<>();
+            BeanHelper.getCompoundWorkflowDialog().findChildrenByType(taskListContainer, htmlInputTextList, HtmlInputText.class);
+            
+            UIGenericPicker picker = null;
+            List<UIGenericPicker> pickersList = new ArrayList<>();
+            BeanHelper.getCompoundWorkflowDialog().findChildrenByType(taskListContainer, pickersList, UIGenericPicker.class);
+            
+            htmlInputText = htmlInputTextList.get(0);
+            htmlInputText.setReadonly(false);
+            
+            picker = pickersList.get(0);
+            String callBack = BeanHelper.getUserListDialog().getCallbackByPickerFilterValues(picker.getFilterOptions());
+            SearchUtil.addSimpleSearchSuggest(htmlInputText, callBack, picker.getClientId(context), false);
         } else {
             if (!dTaskType.equals(DelegatableTaskType.ASSIGNMENT_RESPONSIBLE)) {
                 UIActionLink taskAddLink = createAddTaskLink(genContext, 0, 0, true, false);
@@ -350,10 +369,13 @@ public class DelegationTaskListGenerator extends TaskListGenerator {
         HtmlInputText nameInput = (HtmlInputText) application.createComponent(HtmlInputText.COMPONENT_TYPE);
         nameInput.setId("task-name-" + genContext.listInfo.listId + "-" + taskIndex);
         nameInput.setReadonly(true);
-        putAttribute(nameInput, "styleClass", "ownerName width120");
+        putAttribute(nameInput, "styleClass", "ownerName width140");
+
         ValueBinding nameValueBinding = createTaskPropValueBinding(dTaskType, delegatableTaskIndex, taskIndex, WorkflowCommonModel.Props.OWNER_NAME,
                 application, isSingleTaskTypeDelegation);
         nameInput.setValueBinding("value", nameValueBinding);
+        nameInput.setValueChangeListener(FacesContext.getCurrentInstance().getApplication().createMethodBinding("#{DelegationBean.ownerNameChanged}",
+                new Class[] { ValueChangeEvent.class }));
         taskGridChildren.add(nameInput);
 
         if (genContext.displayResolutionField) {

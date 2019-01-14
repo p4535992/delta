@@ -18,9 +18,11 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.faces.component.UIComponent;
+import javax.faces.component.UIViewRoot;
 import javax.faces.component.html.HtmlInputText;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
@@ -49,6 +51,7 @@ import org.joda.time.LocalDate;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
+import ee.webmedia.alfresco.common.propertysheet.datepicker.DateTimePicker;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
@@ -312,6 +315,21 @@ public class DelegationBean implements Serializable {
             dTaskType = (DelegatableTaskType) attributes.get(DelegationTaskListGenerator.ATTRIB_DELEGATE_TASK_TYPE);
         }
         boolean singleTaskType = BooleanUtils.toBoolean(ActionUtil.getEventParamOrAttirbuteValue(event, ATTRIB_SINGLE_TASK_TYPE_DELEGATION, Boolean.class));
+        return getOrCreateWorkflow(originalTaskWorkflow, dTaskType, singleTaskType);
+    }
+
+    private Workflow getWorkflowByAction(UIGenericPicker picker) {
+        DelegatableTaskType dTaskType;
+        Workflow originalTaskWorkflow;
+        Map<String, Object> attributes = ComponentUtil.getAttributes(picker);
+        int delegatableTaskIndex = (Integer) attributes.get(ATTRIB_DELEGATABLE_TASK_INDEX);
+        originalTaskWorkflow = getWorkflowByOriginalTask(delegatableTaskIndex);
+        dTaskType = (DelegatableTaskType) attributes.get(DelegationTaskListGenerator.ATTRIB_DELEGATE_TASK_TYPE);
+
+        boolean singleTaskType = false;
+        if(getOrCreateWorkflow(originalTaskWorkflow, dTaskType, singleTaskType).getTasks().isEmpty()){
+        	singleTaskType = true;
+        }
         return getOrCreateWorkflow(originalTaskWorkflow, dTaskType, singleTaskType);
     }
 
@@ -909,6 +927,89 @@ public class DelegationBean implements Serializable {
         UIGenericPicker picker = (UIGenericPicker) event.getComponent();
         int filterIndex = picker.getFilterIndex();
         processOwnerSearchResults(event, filterIndex);
+    }
+    
+    /**
+     * Action listener for JSP.
+     */
+    public void ownerNameChanged(ValueChangeEvent event)
+    {
+    	String value = event.getNewValue().toString().trim();
+    	CompoundWorkflowDialog dialog = BeanHelper.getCompoundWorkflowDialog();
+		UIViewRoot root = FacesContext.getCurrentInstance().getViewRoot();
+		String pickerValue = dialog.getPickerValueFromParam();
+		
+		HtmlInputText ownerNameinput = (HtmlInputText) event.getComponent();
+    	ownerNameinput.setValue(value);
+		
+		List<HtmlInputText> dateTimePicker = new ArrayList<>();
+	    dialog.findChildrenByType(root, dateTimePicker, HtmlInputText.class);
+
+		if(value != "" && pickerValue != null){
+            UIGenericPicker inputPicker = dialog.getPickerByInput(event);
+            String inputId = event.getComponent().getId();
+            inputPicker.getAttributes().put(Search.OPEN_DIALOG_KEY, dialog.getOpenDialogKey(inputId));
+            
+	    	Integer filterIndex = Integer.parseInt(pickerValue.split("¤")[1]);
+	    	if (filterIndex == UserContactGroupSearchBean.USER_GROUPS_FILTER) {
+                filterIndex = UserContactGroupSearchBean.CONTACTS_FILTER;
+		    }
+	    	processOwnerSearchResults(event, inputPicker, filterIndex);
+    	}else if(value == ""){
+    		String valueBinding = ownerNameinput.getValueBinding("value").getExpressionString();
+    		Task task = dialog.getTaskFromValueBinding(valueBinding);
+    		task.setOwnerName(null);
+    	}
+		
+		setTaskDates(dateTimePicker);
+    }
+    
+    private void setTaskDates(List<HtmlInputText> inputs){
+    	List<HtmlInputText> dateTimePickers = new ArrayList<>();
+    	
+    	for(HtmlInputText input : inputs){
+    		if(input.getId().contains("task-duedate-")) dateTimePickers.add(input);
+    	}
+    	
+    	for(HtmlInputText dateTimePicker: dateTimePickers){
+    		String vb = dateTimePicker.getValueBinding("value").getExpressionString();
+    		Task task = BeanHelper.getCompoundWorkflowDialog().getTaskFromValueBinding(vb);
+    		Date date = (Date) dateTimePicker.getValue();
+    		if(task != null) task.setDueDate(date);
+    	}
+    	
+    }
+    
+    private boolean onlyAssignmentResponible(List<UIGenericPicker> pickersList){
+    	for(UIGenericPicker picker : pickersList){
+    		DelegatableTaskType type = (DelegatableTaskType) picker.getAttributes().get("delegateTaskType");
+    		if(type == null){
+    			continue;
+    		}
+    		if(type.equals(DelegatableTaskType.ASSIGNMENT_NOT_RESPONSIBLE) || type.equals(DelegatableTaskType.INFORMATION)
+    				|| type.equals(DelegatableTaskType.OPINION)){
+    			return false;
+    		}
+    	}
+    	return true;
+    }
+    
+    private void processOwnerSearchResults(ValueChangeEvent event, UIGenericPicker picker, int filterIndex){
+    	
+    	Map attributes = picker.getAttributes();
+        int taskIndex = Integer.parseInt((String) attributes.get(Search.OPEN_DIALOG_KEY));
+        String[] results = new String[1];
+        Map<String, String> params = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap();    
+    	results[0] = BeanHelper.getCompoundWorkflowDialog().getPickerValueFromParam().split("¤")[0];
+    	
+    	if (results == null) {
+    		return;
+    	}
+        Workflow workflow = getWorkflowByAction(picker);
+        for (String result : results) {
+            taskIndex = addOwners(filterIndex, taskIndex, workflow, result);
+        }
+        updatePanelGroup("processOwnerSearchResults");
     }
 
     /** Used for JSF binding in {@link DelegationTaskListGenerator#createTaskPropValueBinding()} */
