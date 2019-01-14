@@ -149,7 +149,7 @@
         <!--     ${server.transaction.allow-writes}                   -->
         <!--     false                                                -->
         <property name="createMissingPeople">
-           <value>false</value>
+           <value>true</value>
         </property>
         <property name="userNameMatcher">
            <ref bean="userNameMatcher" />
@@ -193,6 +193,19 @@
         </property>
         <property name="defaultObject">
             <ref bean="defaultDataSource" />
+        </property>
+    </bean>
+    
+    <bean id="oracleDataSource" class="org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy">
+        <constructor-arg ref="oracleEagerDataSource"/>
+    </bean>
+
+    <bean id="oracleEagerDataSource" class="org.alfresco.config.JndiObjectFactoryBean">
+        <property name="jndiName">
+            <value>java:comp/env/jdbc/oracleDataSource</value>
+        </property>
+        <property name="defaultObject">
+            <ref bean="oracleDefaultDataSource" />
         </property>
     </bean>    
 

@@ -144,7 +144,7 @@ public class CaseFile extends DynamicBase implements Cloneable, VolumeOrCaseFile
 
     public String getWorkflowsStatus() {
         if (compoundWorkflowState == null) {
-            compoundWorkflowState = WorkflowUtil.getCompoundWorkflowsState(BeanHelper.getWorkflowService().getCompoundWorkflows(super.getNodeRef()), true);
+            compoundWorkflowState = WorkflowUtil.getCompoundWorkflowsState(BeanHelper.getWorkflowService().getCompoundWorkflows(super.getNodeRef()), false);
         }
         return compoundWorkflowState;
     }

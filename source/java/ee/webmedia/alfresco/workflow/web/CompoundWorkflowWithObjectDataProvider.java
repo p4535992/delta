@@ -15,6 +15,7 @@ import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransacti
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.lang3.StringUtils;
 
 import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.common.richlist.LazyListDataProvider;
@@ -25,8 +26,10 @@ import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.workflow.model.CompoundWorkflowWithObject;
+import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
+import ee.webmedia.alfresco.workflow.service.Workflow;
 
 public class CompoundWorkflowWithObjectDataProvider extends LazyListDataProvider<NodeRef, CompoundWorkflowWithObject> {
 
@@ -39,7 +42,7 @@ public class CompoundWorkflowWithObjectDataProvider extends LazyListDataProvider
     static {
         Set<QName> props = new HashSet<>(Arrays.asList(WorkflowCommonModel.Props.TYPE, WorkflowCommonModel.Props.TITLE, WorkflowCommonModel.Props.OWNER_NAME,
                 WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME, WorkflowCommonModel.Props.OWNER_JOB_TITLE, WorkflowCommonModel.Props.CREATED_DATE_TIME,
-                WorkflowCommonModel.Props.STARTED_DATE_TIME, WorkflowCommonModel.Props.STOPPED_DATE_TIME, WorkflowCommonModel.Props.FINISHED_DATE_TIME));
+                WorkflowCommonModel.Props.STARTED_DATE_TIME, WorkflowCommonModel.Props.STOPPED_DATE_TIME, WorkflowCommonModel.Props.FINISHED_DATE_TIME, WorkflowCommonModel.Props.STATUS));
         COMPOUND_WORKFLOW_PROPS_TO_LOAD = Collections.unmodifiableSet(props);
     }
 
@@ -47,6 +50,33 @@ public class CompoundWorkflowWithObjectDataProvider extends LazyListDataProvider
         super(taskRefs, null);
     }
 
+    protected String getStoppedWorkflows(NodeRef refNode) {
+    	StringBuilder sb = new StringBuilder();
+    	
+    	CompoundWorkflow cw = BeanHelper.getWorkflowService().getCompoundWorkflow(refNode);
+    	
+    	if (null == cw) return "";
+    	
+    	for (Workflow workflow : cw.getWorkflows()) {
+    		
+    		if (workflow.getStatus() != null && workflow.getStatus().equals(Status.STOPPED.getName())) {
+    			if (sb.length() > 0)
+    				sb.append("; ");
+    			sb.append("Peatatud");
+    		}
+    	}
+    	
+    	if (sb.length() == 0) {
+        	if(cw.getStatus() != null && cw.getStatus().equals(Status.STOPPED.getName())) {
+        		sb.append("Peatatud");
+        	} else {
+        		return "";
+        	}
+    	}
+    	
+    	return sb.toString();
+    }
+    
     @Override
     protected Map<NodeRef, CompoundWorkflowWithObject> loadData(final List<NodeRef> rowsToLoad) {
         return BeanHelper.getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Map<NodeRef, CompoundWorkflowWithObject>>() {
@@ -96,9 +126,21 @@ public class CompoundWorkflowWithObjectDataProvider extends LazyListDataProvider
                     }
                 }
 
+                //here to fill compound workflow status.
                 Map<NodeRef, String> tasksByCompoundWorkflow = BeanHelper.getWorkflowDbService().getInProgressTaskOwners(rowsToLoad);
                 for (Map.Entry<NodeRef, CompoundWorkflowWithObject> entry : compoundWorkflows.entrySet()) {
-                    entry.getValue().setWorkflowStatus(tasksByCompoundWorkflow.get(entry.getKey()));
+                	String tasksForWokflow = tasksByCompoundWorkflow.get(entry.getKey());
+                	String stoppedWorkflows = getStoppedWorkflows(entry.getKey());
+                	String summary = null;
+                	
+                	if (!StringUtils.isBlank(stoppedWorkflows) && !StringUtils.isBlank(tasksForWokflow))
+                		summary = stoppedWorkflows + "; " + tasksForWokflow;  
+                	else if (!StringUtils.isBlank(stoppedWorkflows))
+                		summary = stoppedWorkflows;
+                	else
+                		summary = tasksForWokflow;
+                	
+                    entry.getValue().setWorkflowStatus(summary);
                 }
                 return compoundWorkflows;
             }

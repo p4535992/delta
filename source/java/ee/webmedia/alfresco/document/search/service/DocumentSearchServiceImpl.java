@@ -1132,7 +1132,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         }
         return count;
     }
-    
+
     /**
      * query documents with storeRefs provided
      * @param filter
@@ -1149,7 +1149,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
             throw new UnableToPerformException(UnableToPerformException.MessageSeverity.INFO, "docSearch_error_noInput");
         }
         try {
-            Pair<List<NodeRef>, Boolean> results = searchDocumentsImpl(query, limit, /* queryName */"documentsByFilter", storeRefs);
+            Pair<List<NodeRef>, Boolean> results = searchDocumentsImpl(query, limit, "documentsByFilter", storeRefs);
             
             
             if (log.isDebugEnabled()) {
@@ -1165,9 +1165,9 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
             throw e;
         }
     }
-    
+
     @Override
-    public Pair<List<NodeRef>, Boolean> queryDocuments(Node filter, int limit) {
+    public Pair<List<NodeRef>, Boolean> queryDocuments(Node filter, int limit, QName sortBy, boolean ascending) {
         long startTime = System.currentTimeMillis();
         Map<String, Object> properties = filter.getProperties();
         @SuppressWarnings("unchecked")
@@ -1181,7 +1181,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
             throw new UnableToPerformException(UnableToPerformException.MessageSeverity.INFO, "docSearch_error_noInput");
         }
         try {
-            Pair<List<NodeRef>, Boolean> results = searchDocumentsImpl(query, limit, /* queryName */"documentsByFilter", storeRefs);
+            Pair<List<NodeRef>, Boolean> results = searchDocumentsImpl(query, limit, /* queryName */"documentsByFilter", storeRefs, sortBy, ascending);
             
             
             if (log.isDebugEnabled()) {
@@ -1228,25 +1228,8 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
 
     @Override
     public Pair<List<NodeRef>, Boolean> searchAllDocumentRefsByParentRefCheckExists(NodeRef parentRef, int limit) {
-        NodeRef seriesRef = generalService.getAncestorNodeRefWithType(parentRef, SeriesModel.Types.SERIES);
-        List<NodeRef> restrictedSeries = new ArrayList<NodeRef>(1);
-        if (seriesRef != null && Boolean.FALSE.equals(nodeService.getProperty(seriesRef, SeriesModel.Props.DOCUMENTS_VISIBLE_FOR_USERS_WITHOUT_ACCESS))) {
-            restrictedSeries.add(seriesRef);
-        }
+        Pair<List<NodeRef>, Boolean> result = searchAllDocumentsByParentRef(parentRef, limit);
 
-        String query = generateDocumentSearchQueryWithoutRestriction(new ArrayList<String>(Arrays.asList(
-                SearchUtil.generateParentQuery(parentRef),
-                SearchUtil.generateDocAccess(restrictedSeries, null))));
-
-        if (log.isDebugEnabled()) {
-            log.debug("Documents by parent query: " + query);
-        }
-
-        Pair<List<NodeRef>, Boolean> result = searchNodes(query, limit, "allDocumentsByParentRef", Collections.singletonList(parentRef.getStoreRef()));
-        // in case of GUEST user take out open for all documents if guest user or group is not set
-        if (result != null && userService.isGuest()) {
-        	result.setFirst(filterDocumentsForGuest(result.getFirst()));
-        }
         List<NodeRef> childrenFromDb = bulkLoadNodeService.loadChildDocNodeRefs(parentRef);
         for (Iterator<NodeRef> i = result.getFirst().iterator(); i.hasNext();) {
             if (!childrenFromDb.contains(i.next())) {
@@ -2831,6 +2814,16 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     	// in case of GUEST user take out open for all documents if guest user or group is not set
         if (results != null && userService.isGuest()) {
         	results.setFirst(filterDocumentsForGuest(results.getFirst()));
+        }
+        return results;
+    }
+
+    private Pair<List<NodeRef>, Boolean> searchDocumentsImpl(String query, int limit, String queryName, Collection<StoreRef> storeRefs, QName sortBy, boolean ascending) {
+        Pair<List<NodeRef>, Boolean> results = searchNodes(query, limit, queryName, storeRefs, sortBy, ascending);
+
+        // in case of GUEST user take out open for all documents if guest user or group is not set
+        if (results != null && userService.isGuest()) {
+            results.setFirst(filterDocumentsForGuest(results.getFirst()));
         }
         return results;
     }

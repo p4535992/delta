@@ -1578,7 +1578,8 @@ public class NotificationServiceImpl implements NotificationService {
                 NotificationModel.NotificationType.REVIEW_DOCUMENT_NOT_SIGNED,
                 NotificationModel.NotificationType.TASK_CANCELLED,
                 NotificationModel.NotificationType.GROUP_ASSIGNMENT_TASK_COMPLETED_BY_OTHERS,
-                NotificationModel.NotificationType.COMPOUND_WORKFLOW_STOPPED);
+                NotificationModel.NotificationType.COMPOUND_WORKFLOW_STOPPED,
+                NotificationModel.NotificationType.MY_FILE_MODIFIED);
 
     }
 
