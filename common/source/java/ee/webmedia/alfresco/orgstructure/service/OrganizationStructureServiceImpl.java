@@ -342,8 +342,10 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
                 if (orgStruct == null) {
                     continue;
                 }
-        		getPersonService().setPersonProperty(dto.getPersonCode(), ContentModel.PROP_ORGID, dto.getUnitId());
-        		getPersonService().setPersonProperty(dto.getPersonCode(), ContentModel.PROP_ORGANIZATION_PATH, (ArrayList<String>)orgStruct.getOrganizationPath());
+                if (getPersonService().personExists(dto.getPersonCode())) {
+                	getPersonService().setPersonProperty(dto.getPersonCode(), ContentModel.PROP_ORGID, dto.getUnitId());
+                	getPersonService().setPersonProperty(dto.getPersonCode(), ContentModel.PROP_ORGANIZATION_PATH, (ArrayList<String>)orgStruct.getOrganizationPath());
+                }
         	}
         }
 	}
