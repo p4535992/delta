@@ -6,7 +6,12 @@ Dokumendihaldussüsteem DELTA.
 
 ### Versioonid ###
 ------------------------------------------------------------------------------------------
-DELTA version: 5.9.3
+DELTA version: 5.9.3 RC2
+------------------------------------------------------------------------------------------
+•	PERH parandus, kontrollitakse kas kasutaja on olemas deltas või mitte
+
+------------------------------------------------------------------------------------------
+DELTA version: 5.9.3 RC1
 ------------------------------------------------------------------------------------------
 •	DELTA-1548 Menüü "Dokumendid", "Terviktöövood", "Asjatoimikud" veergude muudatus: veerus "Töövoo seis" tööülesande täitja nime järel kuvada ka TÜ tähtaeg + kuvada pealkiri pikemalt
 •	DELTA-1541 Veerus "Töövoo seis" kuvada staatuseks "Peatatud" kui töövoog peatub
