@@ -380,7 +380,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             }
         }
         List<ActionDefinition> actionDefinitions = new ArrayList<>(workflowDefs.size());
-        if (CompoundWorkflowType.DOCUMENT_WORKFLOW.equals(compoundWorkflowType)) {
+        if (!CompoundWorkflowType.CASE_FILE_WORKFLOW.equals(compoundWorkflowType)) {
             boolean showCWorkflowDefsWith1Workflow = false;
             
             boolean oneMultistepWorkflowAllowed =  Boolean.valueOf(BeanHelper.getParametersService().getStringParameter(Parameters.ONE_MULTISTEP_WORKFLOW_ALLOWED));

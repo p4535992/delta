@@ -473,7 +473,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
     }
 
     public boolean isShowDocumentTypes() {
-        return isType(CompoundWorkflowType.DOCUMENT_WORKFLOW);
+        return isType(CompoundWorkflowType.DOCUMENT_WORKFLOW) || isType(CompoundWorkflowType.INDEPENDENT_WORKFLOW);
     }
 
     public boolean isShowCaseFileTypes() {
@@ -1507,7 +1507,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
 
     /** Actions performed on compundWorkflowDefinition object only (i.e. not on compoundWorkflow object) */
     private void preprocessWorkflowDefinition() {
-        if (!compoundWorkflow.isDocumentWorkflow()) {
+        if (compoundWorkflow.isCaseFileWorkflow()) {
             compoundWorkflow.setProp(WorkflowCommonModel.Props.DOCUMENT_TYPES, null);
         }
         if (!compoundWorkflow.isCaseFileWorkflow()) {
