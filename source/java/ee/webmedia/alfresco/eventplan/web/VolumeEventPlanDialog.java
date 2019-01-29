@@ -9,7 +9,9 @@ import static ee.webmedia.alfresco.utils.RepoUtil.convertNullToFalse;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.faces.component.UIComponent;
 import javax.faces.component.UIInput;
+import javax.faces.component.UISelectBoolean;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 import javax.faces.event.ValueChangeEvent;
@@ -28,6 +30,7 @@ import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.eventplan.model.EventPlan;
 import ee.webmedia.alfresco.eventplan.model.EventPlanModel;
 import ee.webmedia.alfresco.eventplan.model.EventPlanVolume;
+import ee.webmedia.alfresco.eventplan.model.FirstEvent;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
@@ -167,6 +170,30 @@ public class VolumeEventPlanDialog extends BaseDialogBean {
         if (predefinedPlan.isSaved()) {
             plan.initFromEventPlan(predefinedPlan);
         }
+    }
+
+    public void nextEventChanged(ValueChangeEvent e) {
+    	String newValue = e.getNewValue().toString();
+    	List<UIComponent> propertySheetElements = e.getComponent().getParent().getParent().getChildren();
+    	UISelectBoolean markedForDestruction = getMarkedForDestructionComponent(propertySheetElements);
+    	
+    	if(newValue == null || markedForDestruction == null){
+    		return;
+    	}else if(FirstEvent.DESTRUCTION.is(newValue) || FirstEvent.SIMPLE_DESTRUCTION.is(newValue)){
+    		markedForDestruction.setValue(Boolean.TRUE);
+    	}else if(FirstEvent.REVIEW.is(newValue) || FirstEvent.TRANSFER.is(newValue)){
+    		markedForDestruction.setValue(Boolean.FALSE);
+    	}
+    }
+
+    private UISelectBoolean getMarkedForDestructionComponent(List<UIComponent> propertySheetElements){
+    	for(UIComponent component : propertySheetElements){
+    		UIComponent secondElement = (UIComponent) component.getChildren().get(1);
+    		if(secondElement instanceof UISelectBoolean && secondElement.getClientId(FacesContext.getCurrentInstance()).contains("markedForDestruction")){
+    			return (UISelectBoolean) secondElement;
+    		}
+    	}
+    	return null;
     }
 
 }
