@@ -19,10 +19,12 @@ import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.users.UsersBeanProperties;
 import org.alfresco.web.ui.common.component.PickerSearchParams;
 import org.alfresco.web.ui.common.component.data.UIRichList;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.user.model.UserListRowVO;
@@ -160,6 +162,59 @@ public class UserListDialog extends BaseDialogBean {
      */
     public SelectItem[] searchOtherUsers(PickerSearchParams params) {
         return searchUsers(params, true, true);
+    }
+
+    public String getCallbackByPickerFilterValues(SelectItem[] items){
+    	final Integer contactGroupsFilterIndex = 8;
+    	ArrayList<Integer> values = new ArrayList<Integer>();
+    	
+    	for(SelectItem item : items){
+    		values.add(new Integer((int) item.getValue()));
+    	}
+    	
+    	if(values.size() == 1 && values.get(0).equals(UserContactGroupSearchBean.USERS_FILTER)){
+    		
+    		return "UserListDialog.searchUsers";
+    		
+    	}else if(values.size() == 2 && values.contains(UserContactGroupSearchBean.USERS_FILTER) 
+    			&& values.contains(UserContactGroupSearchBean.CONTACTS_FILTER)){  	
+    		
+    		return "UserListDialog.searchUsersAndContacts";
+    		
+    	}else if(values.size() == 2 && values.contains(UserContactGroupSearchBean.USERS_FILTER) 
+    			&& values.contains(UserContactGroupSearchBean.USER_GROUPS_FILTER)){
+    		
+    		return "UserListDialog.searchUsersAndUserGroups";
+    		
+    	}else if(values.size() == 4){
+    		
+    		return "UserListDialog.searchAll";
+    		
+    	}
+    	return null;
+    }
+    
+    public SelectItem[] searchUsersAndContacts(PickerSearchParams params){
+
+    	return (SelectItem[]) ArrayUtils.addAll(
+    			searchUsers(params, false, true), 
+    			BeanHelper.getAddressbookSearchBean().searchContacts(params));
+    }
+    
+    public SelectItem[] searchUsersAndUserGroups(PickerSearchParams params){
+
+    	return (SelectItem[]) ArrayUtils.addAll(
+    			BeanHelper.getUserListDialog().searchUsers(params),
+    			BeanHelper.getUserContactGroupSearchBean().searchGroups(params, true));
+    }
+    
+    public SelectItem[] searchAll(PickerSearchParams params){
+    	SelectItem[] results = new SelectItem[0];
+        results = (SelectItem[]) ArrayUtils.addAll(results, BeanHelper.getUserListDialog().searchUsers(params));
+        results = (SelectItem[]) ArrayUtils.addAll(results, BeanHelper.getUserContactGroupSearchBean().searchGroups(params, true));
+        results = (SelectItem[]) ArrayUtils.addAll(results, BeanHelper.getAddressbookSearchBean().searchContacts(params));
+        results = (SelectItem[]) ArrayUtils.addAll(results, BeanHelper.getAddressbookSearchBean().searchTaskCapableContactGroups(params));
+    	return results;
     }
 
     private SelectItem[] searchUsers(PickerSearchParams params, boolean excludeCurrentUser, boolean showSubstitutionInfo) {

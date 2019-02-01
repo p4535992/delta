@@ -34,6 +34,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.faces.application.Application;
 import javax.faces.application.FacesMessage;
@@ -49,6 +51,7 @@ import javax.faces.component.html.HtmlPanelGroup;
 import javax.faces.component.html.HtmlSelectOneMenu;
 import javax.faces.context.FacesContext;
 import javax.faces.el.MethodBinding;
+import javax.faces.el.ValueBinding;
 import javax.faces.event.ActionEvent;
 import javax.faces.event.PhaseId;
 import javax.faces.event.ValueChangeEvent;
@@ -75,10 +78,12 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.shared_impl.renderkit.RendererUtils;
 import org.apache.myfaces.shared_impl.renderkit.html.HTML;
+import org.jsoup.helper.StringUtil;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
 import ee.webmedia.alfresco.common.propertysheet.ajaxcapablepanelgroup.AjaxCapablePanelGroup;
+import ee.webmedia.alfresco.common.propertysheet.datepicker.DateTimePicker;
 import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.propertysheet.workflow.TaskListContainer;
@@ -93,9 +98,11 @@ import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.workflow.model.CompoundWorkflowType;
+import ee.webmedia.alfresco.workflow.model.SigningType;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
@@ -472,6 +479,100 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         }
     }
 
+    /**
+     * Action listener for JSP.
+     */
+    public void ownerNameChanged(ValueChangeEvent event)
+    {
+    	UIComponent root = FacesContext.getCurrentInstance().getViewRoot();
+    	CompoundWorkflowDialog dialog = BeanHelper.getCompoundWorkflowDialog();
+    	String value = event.getNewValue().toString().trim();
+    	HtmlInputText ownerNameinput = (HtmlInputText) event.getComponent();
+    	ownerNameinput.setValue(value);
+
+    	String pickerValue = BeanHelper.getCompoundWorkflowDialog().getPickerValueFromParam();
+
+        List<DateTimePicker> dateTimePicker = new ArrayList<>();
+	    dialog.findChildrenByType(root, dateTimePicker, DateTimePicker.class);
+	    List<HtmlSelectOneMenu> htmlSelectOneMenus = new ArrayList<>();
+	    dialog.findChildrenByType(root, htmlSelectOneMenus, HtmlSelectOneMenu.class);
+
+    	try{
+    		setSigningAndParallelTypes(htmlSelectOneMenus);
+	    	if(value != "" && pickerValue != null){
+	    		UIGenericPicker picker = dialog.getPickerByInput(event);
+	    		String inputId = event.getComponent().getId();
+		    	picker.getAttributes().put(Search.OPEN_DIALOG_KEY, dialog.getOpenDialogKey(inputId));
+		    	processOwnerSearchResults(picker, Integer.parseInt(pickerValue.split("¤")[1]));
+	    	}else if(value == ""){
+	    		String valueBinding = ownerNameinput.getValueBinding("value").getExpressionString();
+	    		Task task = dialog.getTaskFromValueBinding(valueBinding);
+	    		task.setOwnerName(null);
+	    	}
+	    	if(compoundWorkflow != null) dialog.setTaskDates(dateTimePicker);
+    	}catch(Exception e){
+    		e.printStackTrace();
+    	}
+    }
+    
+    private void setSigningAndParallelTypes(List<HtmlSelectOneMenu> htmlSelectOneMenus){
+    	for(HtmlSelectOneMenu htmlSelectOneMenu : htmlSelectOneMenus){
+    		if(htmlSelectOneMenu == null) continue;
+    		if(htmlSelectOneMenu.getId().contains("signingType") && compoundWorkflow != null){
+    			setSigningTypes(htmlSelectOneMenu);
+            }else if(htmlSelectOneMenu.getId().contains("parallelTasks")){
+            	setParallelTypes(htmlSelectOneMenu);
+            }
+        }  
+    }
+    
+    private void setSigningTypes(HtmlSelectOneMenu htmlSelectOneMenu){
+    	String selectOneValue = StringUtils.EMPTY;
+    	if(htmlSelectOneMenu.getValue() != null){
+    		selectOneValue = htmlSelectOneMenu.getValue().toString();
+    	}
+		SigningType signingType = null;		
+		if(selectOneValue.equals("SIGN_SEPARATELY")){
+			signingType = SigningType.SIGN_SEPARATELY;
+		}else if(selectOneValue.equals("SIGN_TOGETHER")){
+			signingType = SigningType.SIGN_TOGETHER;
+		}
+		compoundWorkflow.getWorkflows().get(getWorkflowIndexSelectOne(htmlSelectOneMenu)).setSigningType(signingType);
+    }
+    
+    private void setParallelTypes(HtmlSelectOneMenu htmlSelectOneMenu){
+    	Integer workflowIndex = getWorkflowIndexSelectOne(htmlSelectOneMenu);
+    	Boolean value = null;
+    	if(htmlSelectOneMenu.getValue() != null){
+    	    value = Boolean.parseBoolean(htmlSelectOneMenu.getValue().toString());
+    	}
+    	if(compoundWorkflow != null){
+    		Workflow workflow = compoundWorkflow.getWorkflows().get(workflowIndex);
+    		if(value != null) workflow.setParallelTasks(value);
+    	}else{
+    		CompoundWorkflowDefinitionDialog compoundWorkflowDefenitionDialog = (CompoundWorkflowDefinitionDialog) BeanHelper.getDialogManager().getBean();
+    		compoundWorkflowDefenitionDialog.compoundWorkflow.getWorkflows().get(workflowIndex).setParallelTasks(value);
+    	}
+    }
+    
+    private Integer getWorkflowIndexSelectOne(HtmlSelectOneMenu htmlSelectOneMenu){
+    	UIComponent simUIProperty = (UIComponent) htmlSelectOneMenu.getParent().getParent();
+    	
+    	List<HtmlInputText> ownerNameInputs = new ArrayList<>();
+    	BeanHelper.getCompoundWorkflowDialog().findChildrenByType(simUIProperty, ownerNameInputs, HtmlInputText.class);
+		UIComponent ownerNameInput = ownerNameInputs.get(0);
+		
+		String valueBinding = ownerNameInput.getValueBinding("value").getExpressionString();
+		
+		Pattern pattern = Pattern.compile("workflows\\[[0-9]*\\]");
+		Matcher matcher = pattern.matcher(valueBinding);
+		if(matcher.find()){
+			String result = matcher.group();
+			return Integer.parseInt(result.substring(result.indexOf("[") + 1, result.indexOf("]")));
+		}
+		return null;
+    }
+
     public boolean isShowDocumentTypes() {
         return isType(CompoundWorkflowType.DOCUMENT_WORKFLOW);
     }
@@ -636,7 +737,11 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
     }
 
     private void processOwnerSearchResults(ActionEvent event, int filterIndex) {
-        UIGenericPicker picker = (UIGenericPicker) event.getComponent();
+    	UIGenericPicker picker = (UIGenericPicker) event.getComponent();
+        processOwnerSearchResults(picker, filterIndex);
+    }
+
+    private void processOwnerSearchResults(UIGenericPicker picker, int filterIndex) {
         int wfIndex = (Integer) picker.getAttributes().get(TaskListGenerator.ATTR_WORKFLOW_INDEX);
         int taskIndex = Integer.parseInt((String) picker.getAttributes().get(Search.OPEN_DIALOG_KEY));
         picker.getAttributes().remove(Search.OPEN_DIALOG_KEY);
@@ -650,7 +755,8 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         }
         String[] results = picker.getSelectedResults();
         if (results == null) {
-            return;
+        	results = new String[1];
+        	results[0] = BeanHelper.getCompoundWorkflowDialog().getPickerValueFromParam().split("¤")[0];
         }
         log.debug("processOwnerSearchResults: " + picker.getId() + ", " + wfIndex + ", " //
                 + taskIndex + ", " + filterIndex + " = " + StringUtils.join(results, ","));
