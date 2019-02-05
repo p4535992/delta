@@ -83,17 +83,18 @@ public class ReportHelper {
 
         Map<TemplateReportType, List<String>> reportHeaderMsgKeys = new HashMap<TemplateReportType, List<String>>();
         reportHeaderMsgKeys.put(TemplateReportType.TASKS_REPORT,
-                Arrays.asList("task_search_result_regNum", "task_search_result_regDate", "task_search_result_createdDate", "task_search_result_docType",
-                        "task_search_result_docName", "task_search_result_creatorName", "task_search_result_startedDate", "task_search_result_ownerName",
-                        "task_search_result_ownerOrganizationName", "task_search_result_ownerJobTitle", "task_search_result_taskType", "task_search_result_dueDate",
-                        "task_search_result_completedDate", "task_search_result_comment", "task_search_result_responsible", "task_search_result_stoppedDate",
-                        "task_search_result_resolution", "task_search_result_overdue", "task_search_result_status", "task_search_result_function", "task_search_result_series",
-                        "task_search_result_volume", "task_search_result_case", "task_search_result_compound_workflow_url",
+                Arrays.asList("task_search_result_docName", "task_search_result_docType", "task_search_result_regNum", "task_search_result_regDate", "task_search_result_dueDate",
+                        "task_search_result_creatorName", "task_search_result_startedDate", "task_search_result_ownerName", "task_search_result_ownerOrganizationName",
+                        "task_search_result_ownerJobTitle", "task_search_result_taskType", "task_search_result_resolution",
+                        "task_search_result_status", "task_search_result_completedDate", "task_search_result_comment",
+                        "task_search_result_responsible", "task_search_result_stoppedDate", "task_search_result_overdue",
                         "task_search_result_compound_workflow_type", "task_search_result_compound_workflow_title", "task_search_result_compound_workflow_owner_name",
                         "task_search_result_compound_workflow_owner_organization_path", "task_search_result_compound_workflow_owner_job_title",
                         "task_search_result_compound_workflow_created_date_time", "task_search_result_compound_workflow_started_date_time",
                         "task_search_result_compound_workflow_stopped_date_time", "task_search_result_compound_workflow_finished_date_time",
-                        "task_search_result_compound_workflow_status", "task_search_result_compound_workflow_document_count"));
+                        "task_search_result_compound_workflow_status", "task_search_result_compound_workflow_document_count", "task_search_result_createdDate",
+                        "task_search_result_function", "task_search_result_series",
+                        "task_search_result_volume", "task_search_result_case", "task_search_result_compound_workflow_url"));
         reportHeaderMsgKeys.put(TemplateReportType.DOCUMENTS_REPORT,
                 Arrays.asList("document_report_regNumber", "document_report_regDate", "document_report_docType", "document_report_function", "document_report_series",
                         "document_report_volume", "document_report_case", "document_report_docName", "document_report_accessRestriction",
