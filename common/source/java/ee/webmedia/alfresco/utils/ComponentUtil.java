@@ -1173,6 +1173,10 @@ public class ComponentUtil {
             return component;
         }
         for (UIComponent child : getChildren(component)) {
+            //fix for substitute ajax bug
+            if ("picker_substituteSearch".equals(child.getId()) && "substituteSearch".equals(child.getParent().getId())) {
+                child.setId("search");
+            }
             UIComponent result = findChildComponentById(context, child, clientId, includeFacets);
             if (result != null) {
                 return result;

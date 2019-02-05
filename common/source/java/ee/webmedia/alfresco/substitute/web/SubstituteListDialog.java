@@ -5,13 +5,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getSubstituteService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
@@ -23,6 +17,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.collections.comparators.NullComparator;
+import org.apache.commons.collections.comparators.ReverseComparator;
 import org.apache.commons.collections.comparators.TransformingComparator;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
@@ -50,7 +45,7 @@ public class SubstituteListDialog extends BaseDialogBean {
         public Date tr(Substitute component) {
             return component.getSubstitutionStartDate();
         }
-    }, new NullComparator());
+    }, new ReverseComparator(new NullComparator()));
 
     private NodeRef userNodeRef;
     private String username;
@@ -271,7 +266,7 @@ public class SubstituteListDialog extends BaseDialogBean {
     public void addNewValue(ActionEvent event) {
         Substitute newSubstitute = Substitute.newInstance();
         newSubstitute.setReplacedPersonUserName(username);
-        substitutes.add(newSubstitute);
+        substitutes.add(0, newSubstitute);
         addedSubstitutes.put(newSubstitute.getNodeRef().toString(), newSubstitute);
     }
 
