@@ -24,6 +24,8 @@ public enum Parameters {
     EXTERNAL_REVIEW_AUTOMATIC_FOLDER("externalReviewAutomaticFolder"),
     // Default sender email value when sending out a document
     DOC_SENDER_EMAIL("docSenderEmail"),
+    // Send out block: Don't show reg. docs older than sendOutAfterDate
+    DOC_SENDOUT_AFTER_DATE("sendOutAfterDate"),
     // Info message for document sendout view
     DOC_SENDOUT_INFO("docSendoutInfo"),
     // Default max number of email recipients

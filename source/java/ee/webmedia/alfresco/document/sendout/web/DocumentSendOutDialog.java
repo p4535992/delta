@@ -47,7 +47,7 @@ import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 
 import ee.sk.digidoc.SignedDoc;
-import ee.smit.digisign.SignCertificate;
+import ee.smit.digisign.domain.SignCertificate;
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
@@ -67,7 +67,6 @@ import org.apache.commons.collections.Transformer;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.validator.EmailValidator;
-import org.apache.cxf.message.MessageUtils;
 import org.apache.myfaces.shared_impl.renderkit.JSFAttr;
 import org.apache.myfaces.shared_impl.renderkit.html.HTML;
 import org.apache.myfaces.shared_impl.taglib.UIComponentTagUtils;
@@ -166,6 +165,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
     
     
     private boolean sendOutAndFinish(FacesContext context) {
+        log.info("SEND OUT AND FINISH....");
         boolean success = false;
         try {
             success = sendOut(context);
@@ -604,6 +604,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
     }
 
     private boolean validate(FacesContext context) {
+        log.info("DOCUMENT SEND OUT - VALIDATE....");
         boolean valid = true;
         EmailValidator emailValidator = EmailValidator.getInstance();
 
@@ -621,9 +622,14 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         Set<String> idCodesToCheck = new HashSet<>();
         for (int i = 0; i < names.size(); i++) {
             String name = names.get(i);
+            log.debug("NAME: " + name);
             String idCode = idCodes.get(i);
+            log.debug("ID-CODE: " + idCode);
             String email = StringUtils.trim(emails.get(i));
+            log.debug("EMAIL: " + email);
             String mode = modes.get(i);
+            log.debug("MODE: " + mode);
+
             if (!hasValidRecipient && StringUtils.isNotBlank(name) && StringUtils.isNotBlank(mode) && (StringUtils.isNotBlank(email)
                     || (!SendMode.EMAIL.equals(mode) && !SendMode.EMAIL_DVK.equals(mode) && !SendMode.EMAIL_BCC.equals(mode)))) {
                 hasValidRecipient = true;
@@ -635,9 +641,11 @@ public class DocumentSendOutDialog extends BaseDialogBean {
                 hasInvalidRecipient = true;
             }
             if (!hasMissingIdCodes && StringUtils.isNotBlank(mode) && SendMode.STATE_PORTAL_EESTI_EE.equals(mode)) {
+                log.info("SEND MODE IS STATE PORTAL EESTI EE..");
                 if (StringUtils.isBlank(idCode)) {
                     hasMissingIdCodes = true;
                 } else {
+                    log.debug("ADD ID-CODE TO check SET..." + idCode);
                     idCodesToCheck.add(idCode);
                     dvkRecipients.add(new Pair<>(name, mode));
                 }
@@ -720,20 +728,28 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         if (valid && !idCodesToCheck.isEmpty()) {
             Set<String> unregisteredAditUsers = null;
             try {
+                log.info("ADIT: GET USER(S) ADIT STATUS....");
                 unregisteredAditUsers = BeanHelper.getAditService().getUnregisteredAditUsers(idCodesToCheck);
+
             } catch (XRoadServiceConsumptionException e) {
                 valid = false;
                 String faultMessage = e.getNonTechnicalFaultString();
                 MessageUtil.addErrorMessage(context, "document_send_failed_xtee_query", StringUtils.isNotBlank(faultMessage) ? faultMessage : e.getFaultString());
             }
             if (unregisteredAditUsers != null && !unregisteredAditUsers.isEmpty()) {
+                log.info("ADIT: unregisteredAditUsers is not NULL or is not EMPTY!");
                 valid = false;
                 for (String user : unregisteredAditUsers) {
+                    log.info("ADIT: USER: " + user);
                     MessageUtil.addErrorMessage(context, "document_send_failed_no_adit_account", user);
                 }
             }
         }
-
+        if(valid){
+            log.info("DOCUMENT SEND OUT - VALIDATE.... ALL IS VALID! - TRUE");
+        } else {
+            log.info("DOCUMENT SEND OUT - VALIDATE.... NOT VALID! - FALSE");
+        }
         return valid;
     }
 
@@ -748,6 +764,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
     }
 
     private boolean sendOut(FacesContext context) {
+        log.info("SEND OUT...");
         boolean result = true;
         boolean isEncrypt = model.isEncrypt();
         List<String> names = new ArrayList<>();
@@ -757,9 +774,13 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         List<String> encryptionIdCodes = null;
         List<X509Certificate> allCertificates = null;
 
+        log.info("ADD ALL NAMES...");
         names.addAll(model.getProperties().get(PROP_KEYS[0]));
+        log.info("ADD ALL ID-CODES...");
         idCodes.addAll(model.getProperties().get(PROP_KEYS[1]));
+        log.info("ADD ALL EMAILS...");
         emails.addAll(model.getProperties().get(PROP_KEYS[2]));
+        log.info("ADD ALL MODES...");
         modes.addAll(model.getProperties().get(PROP_KEYS[3]));
 
         if (isEncrypt) {
@@ -794,6 +815,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
 
         List<NodeRef> fileRefs = getFileRefs();
         try {
+            log.debug("Try send out...");
             result = getSendOutService().sendOut(model.getNodeRef(), names, emails, modes, idCodes, encryptionIdCodes, allCertificates, model.getSenderEmail(), model.getSubject(),
                     model.getContent(), fileRefs, model.isZip());
         } catch (UnableToPerformException e) {

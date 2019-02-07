@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+    <bean id="AditAdapterService" class="ee.smit.adit.AditAdapterServiceImpl">
+        <property name="defaultUri" value="${adit.service.url}" />
+        <property name="aditAdapterActive" value="${adit.service.active}" />
+        <property name="regCode" value="${x-tee.institution}" />
+    </bean>
+
+    <bean id="AditAdapterSearches" class="ee.smit.adit.AditAdapterSearchesImpl">
+        <property name="aditAdapterService" ref="AditAdapterService"/>
+    </bean>
+</beans>
