@@ -1,5 +1,6 @@
 package ee.smit.digisign;
 
+import ee.smit.digisign.domain.SignCertificate;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -7,11 +8,9 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 public interface DigiSignSearches {
     String BEAN_NAME = "DigiSignSearches";

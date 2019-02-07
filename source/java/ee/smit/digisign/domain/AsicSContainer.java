@@ -1,4 +1,4 @@
-package ee.smit.digisign;
+package ee.smit.digisign.domain;
 
 
 import org.alfresco.util.Base64;

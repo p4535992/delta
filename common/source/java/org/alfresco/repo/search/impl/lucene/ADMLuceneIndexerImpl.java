@@ -824,11 +824,17 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
             Date registerDate = (Date) properties.get(DocumentCommonModel.Props.REG_DATE_TIME);
 
             Date docSendOutAfterDate = BeanHelper.getDigiSignSearches().stringToDate(getParametersService().getStringParameter(Parameters.DOC_SENDOUT_AFTER_DATE));
+            log.debug("REGISTER DATE: " + registerDate + "; DOC SEND OUT AFTER PARAM DATE: " + docSendOutAfterDate);
 
             if (DocumentCommonModel.Types.DOCUMENT.equals(typeQName)) {
                 boolean isUnsentDocument = DocumentStatus.FINISHED.getValueName().equals(properties.get(DocumentCommonModel.Props.DOC_STATUS))
-                        && !isSentAfterRegistration(registerDate, sentDates)
-                        && (docSendOutAfterDate.before(registerDate))
+
+                        // REVERTED BACK FROM DELTA-1124 -----------
+                        && RepoUtil.isEmptyListOrString(properties.get(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE))
+                        //&& !isSentAfterRegistration(registerDate, sentDates)
+                        //&& (docSendOutAfterDate.before(registerDate))
+                        // -----------------------------------------
+
                         && (Boolean.FALSE.equals(properties.get(DocumentCommonModel.Props.DOCUMENT_IS_IMPORTED))
                         || properties.get(DocumentCommonModel.Props.DOCUMENT_IS_IMPORTED) == null)
                         && !(RepoUtil.isEmptyListOrString(properties.get(DocumentCommonModel.Props.RECIPIENT_NAME))
@@ -842,6 +848,7 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
                                 && RepoUtil.isEmptyListOrString(properties.get(DocumentDynamicModel.Props.ADDITIONAL_RECIPIENT_POSTAL_CITY))
                                 && RepoUtil.isEmptyListOrString(properties.get(DocumentDynamicModel.Props.ADDITIONAL_RECIPIENT_STREET_HOUSE))
                                 && RepoUtil.isEmptyListOrString(properties.get(DocumentSpecificModel.Props.PARTY_NAME)));
+                log.debug("IS UNSENT DOCUMENT: " + isUnsentDocument);
                 if (isUnsentDocument) {
                     xdoc.add(new Field("IS_UNSENT_DOC", Boolean.TRUE.toString(), Field.Store.NO, Field.Index.NO_NORMS, Field.TermVector.NO));
                 }

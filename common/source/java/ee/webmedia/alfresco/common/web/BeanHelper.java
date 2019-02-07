@@ -3,6 +3,8 @@ package ee.webmedia.alfresco.common.web;
 import javax.faces.context.FacesContext;
 import javax.sql.DataSource;
 
+import ee.smit.adit.AditAdapterSearches;
+import ee.smit.adit.AditAdapterService;
 import ee.smit.alfresco.plumbr.PlumbrService;
 import ee.smit.alfresco.visual.VisualService;
 import ee.smit.digisign.DigiSignSearches;
@@ -941,6 +943,13 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
         return getService(TeraService.class, TeraService.BEAN_NAME);
     }
 
+    public static AditAdapterService getAditAdapterService(){
+        return getService(AditAdapterService.class, AditAdapterService.BEAN_NAME);
+    }
+
+    public static AditAdapterSearches getAditAdapterSearches(){
+        return getService(AditAdapterSearches.class, AditAdapterSearches.BEAN_NAME);
+    }
     // END: delta services
 
     // START: other beans

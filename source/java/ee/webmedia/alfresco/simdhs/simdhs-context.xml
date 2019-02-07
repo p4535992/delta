@@ -42,6 +42,7 @@
    <import resource="classpath:ee/webmedia/alfresco/postipoiss/postipoiss-simdhs-context.xml" />
    <import resource="classpath:ee/smit/tera/tera-context.xml" />
    <import resource="classpath:ee/smit/digisign/digisignService-context.xml" />
+   <import resource="classpath:ee/smit/adit/aditAdapterService-context.xml" />
 
    <import resource="classpath:ee/webmedia/alfresco/sharepoint/sharepoint-simdhs-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/gopro/gopro-simdhs-context.xml" />
