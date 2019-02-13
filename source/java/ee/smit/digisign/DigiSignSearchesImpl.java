@@ -482,7 +482,12 @@ public class DigiSignSearchesImpl implements DigiSignSearches {
 
     public Date digiSignStringToDate(String dateValue){
         // "2017-11-17T12:02:01Z"
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.000+0000");
+        dateValue = dateValue.replace("'", "");
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-ddTHH:mm:ss.000+0000");
+        //if(dateValue.matches("\\d{4}-\\d{2}-\\d{2}'T'\\d{2}:\\d{2}:\\d{2}.\\d{3}+\\d{4}")){
+        //    format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.000+0000");
+        //}
+
         return parseStringToDate(dateValue, format);
     }
 
