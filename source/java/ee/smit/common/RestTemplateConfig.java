@@ -1,4 +1,4 @@
-package ee.smit.digisign;
+package ee.smit.common;
 
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.springframework.beans.factory.annotation.Autowired;
