@@ -1,25 +1,22 @@
 package ee.smit.digisign;
 
 import com.google.common.io.ByteStreams;
+import ee.smit.common.FileMessageResource;
+import ee.smit.common.RestUtil;
+import ee.smit.digisign.domain.SignCertificate;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.FilenameUtil;
-import org.alfresco.repo.content.ContentStore;
-import org.alfresco.repo.content.UnsupportedContentUrlException;
-import org.alfresco.repo.content.filestore.FileContentStore;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.ContentReader;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.util.Pair;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.*;
@@ -42,11 +39,10 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import static ee.smit.common.RestUtil.makePostRequest;
+
 public class DigiSignSearchesImpl implements DigiSignSearches {
     protected final static Log log = LogFactory.getLog(DigiSignSearchesImpl.class);
-
-    private static RestTemplate restTemplate = new RestTemplate();
-
 
     protected DigiSignService digiSignService;
     private String defaultRootDir;
@@ -59,7 +55,7 @@ public class DigiSignSearchesImpl implements DigiSignSearches {
      */
     public JSONObject getCertificatesByCn(String cn)  throws JSONException{
         String seachUri = digiSignService.getUri() + "/api/certificate/searchByCn/" + cn;
-        return searchByGet(seachUri);
+        return RestUtil.searchByGet(seachUri);
     }
 
 
@@ -72,7 +68,7 @@ public class DigiSignSearchesImpl implements DigiSignSearches {
         }
 
         String seachUri = digiSignService.getUri() + "/api/certificate/search?cn=" + cn + "&serialnumber="+serialnumber;
-        return searchByGet(seachUri);
+        return RestUtil.searchByGet(seachUri);
     }
 
     /**
@@ -84,57 +80,8 @@ public class DigiSignSearchesImpl implements DigiSignSearches {
     public JSONObject getCertificatesBySerialNumber(String serialNumber)  throws JSONException{
         String seachUri = digiSignService.getUri() + "/api/certificate/searchBySerialNumber/" + serialNumber;
         log.debug("getCertificatesBySerialNumber: uri: " + seachUri);
-        return searchByGet(seachUri);
+        return RestUtil.searchByGet(seachUri);
     }
-
-    /**
-     *
-     * @param searchUri
-     * @return
-     * @throws Exception
-     */
-    private JSONObject searchByGet(String searchUri) throws JSONException{
-
-        log.debug("SEARCH URI: " + searchUri);
-        @SuppressWarnings("rawtypes")
-        ResponseEntity<Map> result = restTemplate.getForEntity(searchUri, Map.class);
-        JSONObject responseJson = new JSONObject(result.getBody());
-
-        logResponseEntityMap(result, responseJson);
-
-        return responseJson;
-    }
-
-    private void logResponseEntityMap(ResponseEntity<Map> result, JSONObject json){
-        if(result != null){
-            log.debug("RESULT STATUS CODE: name(): " + result.getStatusCode().name());
-            log.debug("RESULT STATUS CODE: getReasonPhrase(): " + result.getStatusCode().getReasonPhrase());
-            log.debug("RESULT STATUS CODE: series().name(): " + result.getStatusCode().series().name());
-            if(json != null){
-                log.debug("JSON FOUND.....check objeckts...");
-                try{
-                    JSONArray jsonArray = json.names();
-                    int length = jsonArray.length();
-                    log.debug("Found: " + length);
-
-                    for(int i = 0; i < length; i++){
-                        //log.debug("JSON Array names value: " + jsonArray.get(i));
-                    }
-                } catch (Exception ex){{
-                    log.error(ex.getMessage(), ex);
-                }
-
-                }
-
-            } else {
-                log.debug("JSON RESPONSE IS NULL!");
-            }
-        } else {
-            log.debug("RESULT IS NULL!");
-        }
-    }
-
-
 
     private void getOutputStreamCdocResponse(OutputStream out, JSONObject json) throws JSONException, IOException {
         log.debug("RESPONSE status: " + json.get("status"));
@@ -218,27 +165,6 @@ public class DigiSignSearchesImpl implements DigiSignSearches {
         return null;
     }
 
-    protected Pair<String, String> getContentUrlParts(String contentUrl)
-    {
-        if (contentUrl == null)
-        {
-            throw new IllegalArgumentException("The contentUrl may not be null");
-        }
-        int index = contentUrl.indexOf(ContentStore.PROTOCOL_DELIMITER);
-        if (index <= 0)
-        {
-            throw new UnsupportedContentUrlException((ContentStore) this, contentUrl);
-        }
-        String protocol = contentUrl.substring(0, index);
-        String identifier = contentUrl.substring(
-                index + ContentStore.PROTOCOL_DELIMITER.length(),
-                contentUrl.length());
-        if (identifier.length() == 0)
-        {
-            throw new UnsupportedContentUrlException((ContentStore) this, contentUrl);
-        }
-        return new Pair<String, String>(protocol, identifier);
-    }
 
     private List<JSONObject> convertX509CertListToBase64List(List<X509Certificate> certs) throws CertificateEncodingException, JSONException {
         List<JSONObject> certList = new ArrayList<>();
@@ -424,21 +350,6 @@ public class DigiSignSearchesImpl implements DigiSignSearches {
         getOutputStreamCdocResponse(out, resp);
     }
 
-    private JSONObject makePostRequest(JSONObject request, String postUri) throws JSONException {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> entity = new HttpEntity<String>(request.toString(), headers);
-        log.debug("Request post uri: " + postUri);
-        //log.trace("Request string: " + request.toString());
-        ResponseEntity<String> result = restTemplate.postForEntity(postUri, entity, String.class);
-        log.debug("POST REQUEST status: " + result.getStatusCode());
-        log.debug("Has body: " + result.hasBody());
-
-        String body = result.getBody();
-        log.debug("Body length: " + body.length());
-        JSONObject responseJson = new JSONObject(body);
-        return responseJson;
-    }
 
     public List<SignCertificate> getCertificatesFromDigiSignService(String serialNumber, String cn){
         List<SignCertificate> signCertificateList = new ArrayList<>();
@@ -564,18 +475,32 @@ public class DigiSignSearchesImpl implements DigiSignSearches {
         return certList;
     }
 
-    public Date digiSignStringToDate(String stringDate){
-        // "2017-11-17T12:02:01Z"
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.000+0000");
+    public Date stringToDate(String dateValue){
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        return parseStringToDate(dateValue, format);
+    }
 
+    public Date digiSignStringToDate(String dateValue){
+        // "2017-11-17T12:02:01Z"
+        dateValue = dateValue.replace("'", "");
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-ddTHH:mm:ss.000+0000");
+        //if(dateValue.matches("\\d{4}-\\d{2}-\\d{2}'T'\\d{2}:\\d{2}:\\d{2}.\\d{3}+\\d{4}")){
+        //    format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.000+0000");
+        //}
+
+        return parseStringToDate(dateValue, format);
+    }
+
+    private Date parseStringToDate(String dateValue, SimpleDateFormat format){
         try {
-            Date date = format.parse(stringDate);
+            Date date = format.parse(dateValue);
             return date;
         } catch (ParseException e) {
             log.error("String to Date convert failed! " + e.getMessage(), e);
         }
 
         return null;
+
     }
 
     private JSONObject getCertBySerialNumber(String orgCode){
