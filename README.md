@@ -2,9 +2,24 @@
 
 Dokumendihaldussüsteem DELTA.
 
-
-
 ### Versioonid ###
+------------------------------------------------------------------------------------------
+DELTA version: 5.10.0 RC2
+------------------------------------------------------------------------------------------
+Added fix:
+•	DELTA-982 Luua uus süsteemne teavitus, mille saadab süsteem siis, kui töövoog peatub
+
+------------------------------------------------------------------------------------------
+DELTA version: 5.10.0 RC1
+------------------------------------------------------------------------------------------
+Added ADIT-adapter 1.0.0 support (https://bitbucket.org/smitdevel/adit-adapter/wiki/Home)
+Deploys as jar.
+
+Add alfresco-gobal.properties NEW params (if not exists):
+x-tee.institution=[Reg.Nr]
+adit.service.url=https://adit-adapter.develop:8090
+adit.service.active=false|true
+
 ------------------------------------------------------------------------------------------
 DELTA version: 5.9.3 RC2
 ------------------------------------------------------------------------------------------

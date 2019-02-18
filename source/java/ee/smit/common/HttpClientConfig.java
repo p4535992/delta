@@ -1,4 +1,4 @@
-package ee.smit.digisign;
+package ee.smit.common;
 
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;

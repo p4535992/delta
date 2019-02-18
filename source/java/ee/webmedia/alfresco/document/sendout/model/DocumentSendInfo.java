@@ -4,12 +4,15 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.Map;
 
+import ee.webmedia.alfresco.parameters.model.Parameters;
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.MessageUtil;
+
+import static ee.webmedia.alfresco.common.web.BeanHelper.getParametersService;
 
 public class DocumentSendInfo extends SendInfo implements Serializable {
 
@@ -39,7 +42,7 @@ public class DocumentSendInfo extends SendInfo implements Serializable {
     public String getSendMode() {
         return (String) getProperties().get(DocumentCommonModel.Props.SEND_INFO_SEND_MODE);
     }
-    
+
     @Override
     public String getSendModeExtended() {
     	Boolean isZipped = (Boolean)getProperties().get(DocumentCommonModel.Props.SEND_INFO_IS_ZIPPED);

@@ -226,6 +226,7 @@ public class NotificationServiceImpl implements NotificationService {
     private CompoundWorkflowType getWorkflowType(Workflow workflow) {
         return workflowService.getWorkflowCompoundWorkflowType(workflow.getNodeRef());
     }
+    
 
     @Override
     public void notifyExternalReviewError(String notificationContent) {
@@ -250,7 +251,7 @@ public class NotificationServiceImpl implements NotificationService {
             notification.addRecipient(userFullName, userService.getUserEmail(userName));
         }
     }
-
+    
     @Override
     public void notifyCompoundWorkflowEvent(WorkflowEvent compoundWorkflowEvent, NotificationCache notificationCache) {
         // the future is bright!
@@ -262,20 +263,43 @@ public class NotificationServiceImpl implements NotificationService {
         Notification notification = null;
         CompoundWorkflowType compoundWorkflowType = compoundWorkflow.getTypeEnum();
         Status originalStatus = compoundWorkflowEvent.getOriginalStatus();
+        
         if (compoundWorkflow.isStatus(Status.STOPPED)) {
             if (originalStatus == Status.FINISHED) {
                 if (compoundWorkflow.isIndependentWorkflow()) {
                     notification = setupNotification(NotificationModel.NotificationType.COMPOUND_WORKFLOW_REOPENED, compoundWorkflowType);
                 }
             } else if (originalStatus == Status.IN_PROGRESS) {
-                notification = setupNotification(NotificationModel.NotificationType.COMPOUND_WORKFLOW_STOPPED, compoundWorkflowType);
+            	
+            	boolean EligibleToSendStoppedNotification = true;
+            	boolean WorkflowFinishMessageSend = false;
+            	for (Workflow wf : compoundWorkflow.getWorkflows())
+            		if(isNotifyAboutWorkflowFinished(wf) ) {
+            			WorkflowFinishMessageSend  = true;
+            			break;
+            		}
+
+            	if(WorkflowFinishMessageSend) {
+            		boolean stoppedFound = false;
+	            	for (Workflow wf : compoundWorkflow.getWorkflows())
+	            		if(wf.isStatus(Status.STOPPED) ) {
+	            			stoppedFound = true;
+	            			break;
+	            		}
+	            	
+	            	if (stoppedFound == false )
+	            		EligibleToSendStoppedNotification = false;
+            	}
+            	
+            	if (EligibleToSendStoppedNotification)
+            		notification = setupNotification(NotificationModel.NotificationType.COMPOUND_WORKFLOW_STOPPED, compoundWorkflowType);    
             }
         } else if (compoundWorkflow.isStatus(Status.IN_PROGRESS)) {
             if (originalStatus == Status.STOPPED) {
                 notification = setupNotification(NotificationModel.NotificationType.COMPOUND_WORKFLOW_CONTINUED, compoundWorkflowType);
             }
         } else if (compoundWorkflow.isStatus(Status.FINISHED)) {
-            notification = setupNotification(NotificationModel.NotificationType.COMPOUND_WORKFLOW_FINISHED, compoundWorkflowType);
+            notification = setupNotification(NotificationModel.NotificationType.COMPOUND_WORKFLOW_FINISHED, compoundWorkflowType);     
         }
 
         if (notification != null) {
@@ -803,36 +827,47 @@ public class NotificationServiceImpl implements NotificationService {
         return notification;
     }
 
+    private boolean isNotifyAboutWorkflowFinished(Workflow workflow) {
+        boolean notifyOwner = false;
+        final CompoundWorkflow compoundWorkflow = workflow.getParent();
+        
+	    if (StringUtils.isNotEmpty(compoundWorkflow.getOwnerId()) && workflow.isStatus(Status.FINISHED) && workflow.isStopOnFinish()){
+	    	
+	    	notifyOwner = true;
+	        if (workflow.isType(WorkflowSpecificModel.Types.REVIEW_WORKFLOW )) {
+	        		
+	        		for (Task reviewTask : workflow.getTasks()) {
+	                     if((reviewTask.getOutcome().startsWith("Koosk\u00F5lastamata"))) {
+	                    	 if(isSubscribed(compoundWorkflow.getOwnerId(), NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_NOT_ACCEPTED))
+	                    		notifyOwner = false;
+	                    	 	break;
+	                     }
+	               }
+	    	}
+	    	else if (workflow.isType(WorkflowSpecificModel.Types.CONFIRMATION_WORKFLOW) ) {
+	         		for (Task confirmationTask : workflow.getTasks()) {
+	                    if((confirmationTask.getOutcome().startsWith("Kinnitamata"))) {
+	                    	if (isSubscribed(compoundWorkflow.getOwnerId(), NotificationModel.NotificationType.TASK_CONFIRMATION_TASK_COMPLETED_NOT_ACCEPTED))
+								notifyOwner = false;
+								break;
+	                    }
+	         		}
+	    	}
+	    }
+	    
+        return notifyOwner;
+    }
+    
     private List<Notification> processFinishedWorkflow(Workflow workflow) {
         final CompoundWorkflow compoundWorkflow = workflow.getParent();
-
         List<Notification> notifications = new ArrayList<>();
-
-        List<Workflow> workflows = compoundWorkflow.getWorkflows();
-        boolean needNotifyOwner = false;
-        for (Workflow nestedWorkflow : workflows) {
-            if (nestedWorkflow.isType(WorkflowSpecificModel.Types.REVIEW_WORKFLOW)) {
-                if (nestedWorkflow.isParallelTasks()) {
-                    List<Task> tasks = nestedWorkflow.getTasks();
-                    int count = tasks.size();
-
-                    if (count <= 1)
-                        continue;
-
-                    for (Task reviewTask : tasks) {
-                        if((reviewTask.getOutcome().startsWith("Koosk\u00F5lastatud m\u00E4rkustega"))) {
-                            needNotifyOwner = true;
-                        }
-                    }
-
-                    if (needNotifyOwner) {
-                        Notification notification = setupNotification(new Notification(), NotificationModel.NotificationType.PARRALEL_WORKFLOW_COMPLETED, getWorkflowType(workflow));
-                        addCompoundWorkflowOwnerRecipient(compoundWorkflow, notification);
-                        notifications.add(notification);
-                        break;
-                    }
-                }
-            }
+        
+        boolean notifyOwner = isNotifyAboutWorkflowFinished(workflow);
+     		
+        if (notifyOwner) {     		
+            Notification notification = setupNotification(new Notification(), NotificationModel.NotificationType.WORKFLOW_WORKFLOW_FINISHED, getWorkflowType(workflow));
+            addCompoundWorkflowOwnerRecipient(compoundWorkflow, notification);
+            notifications.add(notification);
         }
 
         if (isSubscribed(compoundWorkflow.getOwnerId(), NotificationModel.NotificationType.WORKFLOW_WORKFLOW_COMPLETED)) {
@@ -1556,7 +1591,7 @@ public class NotificationServiceImpl implements NotificationService {
                 NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED,
                 NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_NOT_ACCEPTED,
                 NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_WITH_REMARKS,
-                NotificationModel.NotificationType.PARRALEL_WORKFLOW_COMPLETED,
+                NotificationModel.NotificationType.WORKFLOW_WORKFLOW_FINISHED,
                 NotificationModel.NotificationType.TASK_SIGNATURE_TASK_COMPLETED,
                 NotificationModel.NotificationType.TASK_ORDER_ASSIGNMENT_WORKFLOW_COMPLETED,
                 NotificationModel.NotificationType.TASK_ORDER_ASSIGNMENT_TASK_COMPLETED,
