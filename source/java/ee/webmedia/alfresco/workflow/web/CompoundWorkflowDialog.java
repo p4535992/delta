@@ -28,14 +28,22 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 import java.util.TreeMap;
+import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.faces.application.Application;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIInput;
 import javax.faces.component.UIPanel;
+import javax.faces.component.UIViewRoot;
+import javax.faces.component.html.HtmlInputText;
+import javax.faces.component.html.HtmlPanelGrid;
 import javax.faces.component.html.HtmlSelectOneMenu;
 import javax.faces.context.FacesContext;
+import javax.faces.context.ResponseWriter;
 import javax.faces.event.ActionEvent;
+import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 
 import org.alfresco.model.ContentModel;
@@ -54,6 +62,7 @@ import org.alfresco.web.bean.dialog.DialogState;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.config.DialogsConfigElement.DialogButtonConfig;
 import org.alfresco.web.ui.common.Utils;
+import org.alfresco.web.ui.common.component.UIGenericPicker;
 import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.collections.Transformer;
@@ -71,9 +80,12 @@ import org.springframework.web.jsf.FacesContextUtils;
 import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.casefile.web.CaseFileDialog;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
+import ee.webmedia.alfresco.common.propertysheet.component.SimUIPropertySheet;
+import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerWithDueDateGenerator;
 import ee.webmedia.alfresco.common.propertysheet.datepicker.DateTimePicker;
 import ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent.ModalLayerSubmitEvent;
+import ee.webmedia.alfresco.common.propertysheet.workflow.TaskListContainer;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.Confirmable;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
@@ -109,6 +121,7 @@ import ee.webmedia.alfresco.utils.MessageData;
 import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 import ee.webmedia.alfresco.utils.WebUtil;
@@ -127,6 +140,7 @@ import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowServiceImpl;
 import ee.webmedia.alfresco.workflow.service.WorkflowServiceImpl.DialogAction;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
+import ee.webmedia.alfresco.workflow.web.DelegationBean.NewWorkflowTasksFetcher;
 import ee.webmedia.alfresco.workflow.web.evaluator.AbstractFullAccessEvaluator;
 
 /**
@@ -1079,6 +1093,169 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         if (dueDateDays != null) {
             task.setDueDate(getNewDueDate(task.getPropBoolean(WorkflowSpecificModel.Props.IS_DUE_DATE_WORKING_DAYS), dueDateDays, task.getDueDate()));
         }
+        addSearchSuggestToOwnerNameInputs(event);
+    }
+    
+    private void addSearchSuggestToOwnerNameInputs(ActionEvent event){   	
+        UIComponent topElement = FacesContext.getCurrentInstance().getViewRoot();
+  
+        List<HtmlInputText> htmlInputTextList = new ArrayList<>();
+        List<UIGenericPicker> pickersList = new ArrayList<>();
+        
+        try{
+	        findChildrenByType(topElement, htmlInputTextList, HtmlInputText.class);
+	        findChildrenByType(topElement, pickersList, UIGenericPicker.class);
+        }catch(Exception e){
+        	e.printStackTrace();
+        }
+
+        for(HtmlInputText htmlInputText : htmlInputTextList){
+        	String inputId = htmlInputText.getId();
+        	for(UIGenericPicker picker : pickersList){
+        		String pickertIdNr = picker.getId().split("_")[1];
+        		if(inputId.contains(pickertIdNr)){
+        			String callBack = BeanHelper.getUserListDialog().getCallbackByPickerFilterValues(picker.getFilterOptions());
+        		    SearchUtil.addSimpleSearchSuggest(htmlInputText, callBack, picker.getClientId(FacesContext.getCurrentInstance()), true);
+        		}
+        	}
+        }
+    }
+    
+    public UIGenericPicker getPickerByInput(ValueChangeEvent event){
+    	CompoundWorkflowDialog dialog = BeanHelper.getCompoundWorkflowDialog();
+        UIViewRoot root = FacesContext.getCurrentInstance().getViewRoot();
+		
+        List<UIGenericPicker> pickersList = new ArrayList<>();
+        
+        try{
+        	dialog.findChildrenByType(root, pickersList, UIGenericPicker.class);
+        }catch(Exception e){
+        	e.printStackTrace();
+        }
+        UIGenericPicker inputPicker = null;
+        
+        String inputId = event.getComponent().getId();
+        for(UIGenericPicker picker : pickersList){
+        	String pickertIdNr = picker.getId().split("_")[1];
+        	if(inputId.contains(pickertIdNr)){
+        		inputPicker = picker;
+        	}
+        }
+    	return inputPicker;
+    }
+    
+    public <C extends UIComponent> void findChildrenByType(UIComponent parent, List<C> found, Class<C> type) {
+        for (UIComponent child : (List<UIComponent>) parent.getChildren()) {
+            if (type.isAssignableFrom(child.getClass())) {
+                found.add(type.cast(child));
+            }
+
+            findChildrenByType(child, found, type);
+        }
+    }
+    
+    public void setTaskDates(List<DateTimePicker> dateTimePickers){
+    	for(DateTimePicker dateTimePicker: dateTimePickers){
+    		String vb = dateTimePicker.getValueBinding("value").getExpressionString();
+    		Task task = getTaskFromValueBinding(vb);
+    		Date date = (Date) dateTimePicker.getValue();
+    		if(task != null) task.setDueDate(date);
+    	}
+    }
+    
+    public Task getTaskFromValueBinding(String valueBinding){
+    	
+    	boolean delegatable = false;
+		
+		Integer workflowIndex = null;
+		Integer taskIndex = null;
+		
+		if(valueBinding.contains("workflows")){
+			Pattern pattern = Pattern.compile("workflows\\[[0-9]*\\]");
+			Matcher matcher = pattern.matcher(valueBinding);
+			if(matcher.find()){
+				String result = matcher.group();
+				workflowIndex = Integer.parseInt(result.substring(result.indexOf("[") + 1, result.indexOf("]")));
+			}
+		}
+		
+		if(workflowIndex == null){
+			return getTaskFromDelegationBindingValue(valueBinding);
+		}else if(valueBinding.contains("tasks")){
+			Pattern pattern = Pattern.compile("tasks\\[[0-9]*\\]");
+			Matcher matcher = pattern.matcher(valueBinding);
+			if(matcher.find()){
+				String result = matcher.group();
+				taskIndex = Integer.parseInt(result.substring(result.indexOf("[") + 1, result.indexOf("]")));
+			}
+		}
+		
+		if(compoundWorkflow != null){
+			return compoundWorkflow.getWorkflows().get(workflowIndex).getTasks().get(taskIndex);
+		}else{
+			CompoundWorkflowDefinitionDialog compoundWorkflowDefenitionDialog = (CompoundWorkflowDefinitionDialog) BeanHelper.getDialogManager().getBean();
+			return compoundWorkflowDefenitionDialog.compoundWorkflow.getWorkflows().get(workflowIndex).getTasks().get(taskIndex);
+		}
+
+    }
+    
+    private Task getTaskFromDelegationBindingValue(String valueBinding){
+    	if(valueBinding.contains("delegatableTasks")){
+    		Integer workflowIndex = null;
+    		Integer taskIndex = null;
+    		
+	    	Pattern pattern = Pattern.compile("delegatableTasks\\[[0-9]*\\]");
+			Matcher matcher = pattern.matcher(valueBinding);
+			if(matcher.find()){
+				String result = matcher.group();
+				workflowIndex = Integer.parseInt(result.substring(result.indexOf("[") + 1, result.indexOf("]")));
+			}
+			pattern = Pattern.compile("tasks\\[[0-9]*\\]");
+			matcher = pattern.matcher(valueBinding);
+			if(matcher.find()){
+				String result = matcher.group();
+				taskIndex = Integer.parseInt(result.substring(result.indexOf("[") + 1, result.indexOf("]")));
+			}
+            return BeanHelper.getDelegationBean().getDelegatableTasks().get(workflowIndex).getParent().getTasks().get(taskIndex);	
+		}else if(valueBinding.contains("newWorkflowTasksFetchers")){
+			Long workflowIndex = null;
+			Integer taskIndex = null;
+    		String taskType = null;
+
+			Pattern pattern = Pattern.compile("newWorkflowTasksFetchers\\[[0-9]*\\]");
+			Matcher matcher = pattern.matcher(valueBinding);
+			if(matcher.find()){
+				String result = matcher.group();
+				workflowIndex = Long.parseLong(result.substring(result.indexOf("[") + 1, result.indexOf("]")));
+			}
+			
+			pattern = Pattern.compile("nonAssignmentTasksByType\\[.*\\]\\[[0-9]*\\]");
+			matcher = pattern.matcher(valueBinding);
+			if(matcher.find()){
+				String result = matcher.group();
+				taskType = result.substring(result.indexOf("[") + 1, result.indexOf("]")).replaceAll("\"", "");
+				taskIndex = Integer.parseInt(result.substring(result.lastIndexOf("[") + 1, result.lastIndexOf("]")));
+			}
+			Map<Long,DelegationBean.NewWorkflowTasksFetcher> fetchers = BeanHelper.getDelegationBean().getNewWorkflowTasksFetchers();
+			NewWorkflowTasksFetcher fetcher = fetchers.get(workflowIndex);
+			return fetcher.getNonAssignmentTasksByType().get(taskType).get(taskIndex);
+		}
+    	return null;
+    }
+    
+    public String getPickerValueFromParam(){
+	    Map<String, String> params = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap();    
+		for(Entry<String, String> param : params.entrySet()){
+			if(param.getKey().contains("_results")){
+				return param.getValue();
+			}
+		}
+		return null;
+	}
+    
+    public String getOpenDialogKey(String inputId){
+    	String[] split =  inputId.split("-");
+    	return split[split.length - 1];
     }
 
     public void calculateTaskGroupDueDate(ActionEvent event) {
@@ -2043,3 +2220,4 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     }
 
 }
+

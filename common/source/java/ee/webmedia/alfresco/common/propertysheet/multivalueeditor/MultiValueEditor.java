@@ -263,7 +263,15 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
         for (int ri = 0; ri < numRows; ri++) {
             appendRowComponent(context, ri, propertySheet);
         }
-
+        
+        try{
+	        String suggestSearch = "<script type=\"text/javascript\">attachSendOutSearchSuggest();</script>";
+	        context.getResponseWriter().write(suggestSearch);
+        }catch(IOException e){
+        	e.printStackTrace();
+        	log.debug("Unable to write into response writer:" + e.getMessage());
+        }
+        
         if (log.isDebugEnabled()) {
             for (Pair<QName, List<Object>> columnListWithPropName : columnListsWithPropNames) {
                 log.debug("Column list=" + columnListWithPropName);

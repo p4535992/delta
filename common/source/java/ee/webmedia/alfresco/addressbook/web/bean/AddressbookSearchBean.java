@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.addressbook.web.bean;
 import static ee.webmedia.alfresco.addressbook.util.AddressbookUtil.transformAddressbookNodesToSelectItems;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getAddressbookService;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.faces.context.FacesContext;
@@ -11,6 +12,7 @@ import javax.faces.model.SelectItem;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.common.component.PickerSearchParams;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
@@ -59,6 +61,23 @@ public class AddressbookSearchBean {
     public SelectItem[] searchContactGroups(PickerSearchParams params) {
         Integer filter = params.isIncludeFilterIndex() ? UserContactGroupSearchBean.CONTACT_GROUPS_FILTER : null;
         return transformAddressbookNodesToSelectItems(getAddressbookService().searchContactGroups(params.getSearchString(), true, false, params.getLimit()), filter);
+    }
+    
+    public SelectItem[] searchTaskCapableContactGroups(PickerSearchParams params) {
+        Integer filter = params.isIncludeFilterIndex() ? UserContactGroupSearchBean.CONTACT_GROUPS_FILTER : null;
+        List<Node> nodes = getAddressbookService().searchContactGroups(params.getSearchString(), true, false, params.getLimit());
+        return transformAddressbookNodesToSelectItems(filterTaskCapable(nodes), filter);
+    }
+    
+    private List<Node> filterTaskCapable(List<Node> nodes){
+    	List<Node> filteredNodes = new ArrayList<Node>();
+    	for(Node node : nodes){
+    		Boolean taskCapable = (Boolean) node.getProperties().get(AddressbookModel.Props.TASK_CAPABLE);
+    		if(taskCapable){
+    			filteredNodes.add(node);
+    		}
+    	}
+    	return filteredNodes;
     }
 
     public List<String> getContactData(String nodeRef) {
