@@ -14,6 +14,7 @@ import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.commitToMetadataCon
 import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.getDuplicateFieldIds;
 import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.isSavedInPreviousDocTypeVersionOrFieldDefinitions;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -43,24 +44,24 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.base.BaseObject;
+import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.classificator.model.Classificator;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter_ET_EN;
 import ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditor;
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
-import ee.webmedia.alfresco.docadmin.service.DynamicType;
-import ee.webmedia.alfresco.docadmin.service.Field;
-import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
-import ee.webmedia.alfresco.docadmin.service.FieldGroup;
-import ee.webmedia.alfresco.docadmin.service.MetadataContainer;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
+import ee.webmedia.alfresco.docadmin.service.*;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.dvk.service.DecContainerHandler;
+import ee.webmedia.alfresco.functions.model.FunctionsModel;
+import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
+import ee.webmedia.alfresco.volume.model.VolumeModel;
 
 /**
  * Details dialog for creating/editing objects of type field or fieldDefinition
@@ -79,6 +80,9 @@ public class FieldDetailsDialog extends BaseDialogBean {
                     DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DESC.getLocalName())));
     private static final Set<FieldType> DVK_INFO_NOT_RENDERED_FIELDTYPES = Collections.unmodifiableSet(new HashSet<FieldType>(
             Arrays.asList(FieldType.INFORMATION_TEXT, FieldType.STRUCT_UNIT, FieldType.USER, FieldType.USERS, FieldType.DOUBLE)));
+    private static final List<String> DOC_SEARCH_FIELD_GROUP = Collections.unmodifiableList(new ArrayList<>(
+            Arrays.asList(FunctionsModel.Types.FUNCTION.getLocalName(), VolumeModel.Types.VOLUME.getLocalName(),
+                    SeriesModel.Types.SERIES.getLocalName(), CaseModel.Types.CASE.getLocalName())));
 
     private transient UIPropertySheet propertySheet;
 
@@ -99,6 +103,9 @@ public class FieldDetailsDialog extends BaseDialogBean {
             resetHidenProps();
             removeDecElementsWhitespaceAndUnusedTextFields();
             if (isFieldDefinition()) {
+                if (field != null && DOC_SEARCH_FIELD_GROUP.contains(field.getFieldId())) {
+                    changeDocSearchValues(context);
+                }
                 field = getDocumentAdminService().saveOrUpdateField(field);
                 MessageUtil.addInfoMessage(context, "save_success");
             } else {
@@ -109,6 +116,33 @@ public class FieldDetailsDialog extends BaseDialogBean {
             return null;
         }
         return outcome;
+    }
+
+    private void changeDocSearchValues(FacesContext context) {
+        UnmodifiableFieldDefinition currentValue = getDocumentAdminService().getFieldDefinition(field.getFieldId());
+        boolean isParameterInDocSearchCurrentValue = currentValue.isParameterInDocSearch();
+        boolean isParameterInDocSearchNewValue = field.isParameterInDocSearch();
+        if (isParameterInDocSearchCurrentValue != isParameterInDocSearchNewValue) {
+            List<FieldDefinition> fieldDefinitions = getDocumentAdminService().getFieldDefinitions(getRelatedFieldIds());
+            for (FieldDefinition fieldDefinition : fieldDefinitions) {
+                fieldDefinition.setProp(DocumentAdminModel.Props.IS_PARAMETER_IN_DOC_SEARCH, isParameterInDocSearchNewValue);
+                if (!isParameterInDocSearchNewValue) {
+                    fieldDefinition.setProp(DocumentAdminModel.Props.PARAMETER_ORDER_IN_DOC_SEARCH, null);
+                }
+                getDocumentAdminService().saveOrUpdateField(fieldDefinition);
+            }
+            MessageUtil.addInfoMessage(context, isParameterInDocSearchNewValue ? "field_definition_message_doc_search_added" : "field_definition_message_doc_search_deleted");
+        }
+    }
+    
+    private List<String> getRelatedFieldIds(){
+        List<String> relatedFieldIds = new ArrayList<>();
+        for (String fieldId : DOC_SEARCH_FIELD_GROUP) {
+            if (!fieldId.equals(field.getFieldId())) {
+                relatedFieldIds.add(fieldId);
+            }
+        }
+        return relatedFieldIds;
     }
 
     @Override

@@ -17,8 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 import ee.sk.digidoc.SignedDoc;
-import ee.smit.digisign.SignCertificate;
-import ee.webmedia.alfresco.document.sendout.web.DocumentSendOutDialog;
+import ee.smit.digisign.domain.SignCertificate;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;

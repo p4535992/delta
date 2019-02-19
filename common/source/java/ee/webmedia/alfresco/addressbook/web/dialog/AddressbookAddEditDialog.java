@@ -1,7 +1,7 @@
 package ee.webmedia.alfresco.addressbook.web.dialog;
 
 import ee.smit.digisign.DigiSignSearches;
-import ee.smit.digisign.SignCertificate;
+import ee.smit.digisign.domain.SignCertificate;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
 import ee.webmedia.alfresco.addressbook.service.AddressbookEntry;

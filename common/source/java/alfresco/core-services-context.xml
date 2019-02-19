@@ -268,6 +268,53 @@
             <ref bean="defaultDataSource" />
         </property>
     </bean>
+    
+        <!-- Datasource bean -->
+    <bean id="oracleDefaultDataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+        <property name="driverClassName">
+            <value>${oracle.db.driver}</value>
+        </property>
+        <property name="url">
+            <value>${oracle.db.url}</value>
+        </property>
+        <property name="username">
+            <value>${oracle.db.username}</value>
+        </property>
+        <property name="password">
+            <value>${oracle.db.password}</value>
+        </property>
+        <property name="initialSize" >
+            <value>${oracle.db.pool.initial}</value>
+        </property>
+        <property name="maxActive" >
+            <value>${oracle.db.pool.max}</value>
+        </property>
+        <property name="defaultAutoCommit" >
+            <value>false</value>
+        </property>
+        <property name="defaultTransactionIsolation" >
+            <value>${oracle.db.txn.isolation}</value>
+        </property>
+    </bean>
+    
+    <bean id="oracleDataSource" class="org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy">
+        <constructor-arg ref="oracleEagerDataSource"/>
+    </bean>
+
+	<bean id="oracleTxManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+	    <property name="dataSource" ref="oracleDataSource"/>
+	</bean>
+
+
+
+    <bean id="oracleEagerDataSource" class="org.alfresco.config.JndiObjectFactoryBean">
+        <property name="jndiName">
+            <value>java:comp/env/jdbc/oracleDataSource</value>
+        </property>
+        <property name="defaultObject">
+            <ref bean="oracleDefaultDataSource" />
+        </property>
+    </bean>
 
     <!-- Characterset decoder -->
     <bean id="charset.finder" class="org.alfresco.repo.content.encoding.ContentCharsetFinder">

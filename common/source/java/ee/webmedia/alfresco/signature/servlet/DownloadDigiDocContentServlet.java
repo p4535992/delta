@@ -53,8 +53,6 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
     /**
      * Helper to generate a URL to a content node for downloading content from the server.
      *
-     * @param pattern
-     *            The pattern to use for the URL
      * @param ref
      *            NodeRef of the content node to generate URL for (cannot be null)
      * @param name
@@ -244,6 +242,7 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
 
             ServletOutputStream os = res.getOutputStream();
             FileCopyUtils.copy(item.getData(), os); // closes both streams
+            logFileOpened(dDocRef, item.getDisplayName(), nodeService);
         } catch (SignatureException e) {
             logger.error("Failed to fetch a document from " + (isBdoc ? ".bdoc" : ".ddoc") + ", noderef: " + dDocRef + ", id = " + dataFileOrderNr, e);
         }

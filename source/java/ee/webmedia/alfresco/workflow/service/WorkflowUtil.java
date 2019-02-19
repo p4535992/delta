@@ -599,6 +599,10 @@ public class WorkflowUtil {
         return isResponsible(task) && Boolean.TRUE.equals(task.getNode().getProperties().get(WorkflowSpecificModel.Props.ACTIVE));
     }
 
+    public static boolean isActive(Task task) {
+        return Boolean.TRUE.equals(task.getNode().getProperties().get(WorkflowSpecificModel.Props.ACTIVE));
+    }
+
     public static boolean isInactiveResponsible(Task task) {
         return isResponsible(task) && Boolean.FALSE.equals(task.getNode().getProperties().get(WorkflowSpecificModel.Props.ACTIVE));
     }
@@ -849,20 +853,47 @@ public class WorkflowUtil {
 
     private static String getCompoundWorkflowState(CompoundWorkflow compoundWorkflow, boolean onlyInProgress) {
         List<String> workflowStates = new ArrayList<>();
+        
+        StringBuilder sb = new StringBuilder();
+        String stoppedWorkflows = null;
+        
+        if (!onlyInProgress) {
+	        for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+		        if (Status.STOPPED.equals(workflow.getStatus())) {
+		        	if (sb.length() > 0)
+		        		sb.append("; ");
+		        	sb.append("Peatatud");
+		        }
+	        }
+	        stoppedWorkflows = sb.toString();
+        }
+        
         for (Workflow workflow : compoundWorkflow.getWorkflows()) {
-            if (onlyInProgress && !Status.IN_PROGRESS.equals(workflow.getStatus())) {
+            if (!Status.IN_PROGRESS.equals(workflow.getStatus())) {
                 continue;
             }
             List<String> taskOwners = new ArrayList<>();
             for (Task task : workflow.getTasks()) {
                 if (task.isStatus(Status.IN_PROGRESS)) {
-                    taskOwners.add(task.getOwnerName());
-                }
+                    taskOwners.add(task.getOwnerName() + ' ' + task.getDueDateStr());
+                } 
             }
+            
             workflowStates.add(MessageUtil.getMessage(workflow.getType().getLocalName())
                     + (taskOwners.isEmpty() ? "" : " (" + TextUtil.joinNonBlankStrings(taskOwners, ", ") + ")"));
         }
-        return TextUtil.joinNonBlankStrings(workflowStates, "; ");
+        
+        String inProgress = TextUtil.joinNonBlankStrings(workflowStates, "; ");
+        String summary = null;
+        
+        if(StringUtils.isBlank(stoppedWorkflows))
+        	summary = inProgress; 
+        else if (!StringUtils.isBlank(stoppedWorkflows) && !StringUtils.isBlank(inProgress))
+        	summary = stoppedWorkflows + "; " + inProgress;
+        else
+        	summary = stoppedWorkflows;
+        
+        return summary; 
     }
 
     public static boolean isFirstConfirmationTask(Task task) {

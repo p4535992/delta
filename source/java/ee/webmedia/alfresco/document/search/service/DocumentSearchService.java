@@ -48,7 +48,7 @@ public interface DocumentSearchService {
      *
      * @param searchString
      * @param containerNodeRef if not null, only documents with given parent container nodeRef are returned
-     * @param limited
+     * @param limit
      * @return list of matching documents (max 100 entries)
      */
     Pair<List<NodeRef>, Boolean> quickSearchDocuments(String searchString, NodeRef containerNodeRef, int limit);
@@ -62,7 +62,9 @@ public interface DocumentSearchService {
      * where multiple files under the same document matched the search criteria.
      *
      * @param filter
+     * @param limit
      * @param sortBy
+     * @param ascending
      * @return list of matching documents (max 100 entries)
      */
     Pair<List<NodeRef>, Boolean> queryDocuments(Node filter, int limit, QName sortBy, boolean ascending);

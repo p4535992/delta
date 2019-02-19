@@ -216,7 +216,7 @@ public class MessageUtil {
             logMessage(messageData, logger);
         }
     }
-
+ 
     public static FacesMessage getFacesMessage(MessageData msgData) {
         String msg = getMessage(msgData);
         return new FacesMessage(getFacesSeverity(msgData.getSeverity()), msg, msg);

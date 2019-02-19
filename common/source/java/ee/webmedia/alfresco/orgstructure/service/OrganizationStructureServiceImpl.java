@@ -1,13 +1,23 @@
 package ee.webmedia.alfresco.orgstructure.service;
 
-import ee.webmedia.alfresco.common.service.ApplicationConstantsBean;
-import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.orgstructure.model.OrganizationStructure;
-import ee.webmedia.alfresco.orgstructure.model.OrganizationStructureModel;
-import ee.webmedia.alfresco.user.service.UserService;
-import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
-import ee.webmedia.alfresco.workflow.service.WorkflowService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getPersonService;
+import static java.util.Arrays.asList;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.faces.event.ActionEvent;
+
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.cache.SimpleCache;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
@@ -23,16 +33,21 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.collections.comparators.NullComparator;
-import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.BooleanUtils;
 
-import javax.faces.event.ActionEvent;
-import java.io.Serializable;
-import java.util.*;
-
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getPersonService;
-import static java.util.Arrays.asList;
+import ee.webmedia.alfresco.common.service.ApplicationConstantsBean;
+import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.orgstructure.dao.OrgStructDao;
+import ee.webmedia.alfresco.orgstructure.model.OrgStructDto;
+import ee.webmedia.alfresco.orgstructure.model.OrganizationStructure;
+import ee.webmedia.alfresco.orgstructure.model.OrganizationStructureModel;
+import ee.webmedia.alfresco.orgstructure.model.PersonOrgDto;
+import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
+import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 public class OrganizationStructureServiceImpl implements OrganizationStructureService {
 
@@ -48,8 +63,11 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
     private UserRegistry userRegistry;
     private AuthorityService authorityService;
     private ApplicationConstantsBean applicationConstantsBean;
-
+    private OrgStructDao orgStructDao;
+    
     private Boolean syncActiveStatus = true;
+    
+    private Boolean fromDatabase;
 
     // START: properties that would cause dependency cycle when trying to inject them
     private UserService _userService;
@@ -65,10 +83,20 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
 
     @Override
     public int updateOrganisationStructures() {
-        Iterator<NodeDescription> orgStructs = userRegistry.getOrganizationStructures();
+    	int orgStructuresCount = 0;
+        Iterator<NodeDescription> orgStructs;
+        if (fromDatabase) {
+        	// check if need to update
+        	if (!BooleanUtils.toBoolean(orgStructDao.getOrgParamValue(OrgStructDao.PARAM_NAME_ORG_STRUCT))) {
+        		return orgStructuresCount;
+        	}
+        	orgStructs = getOrganizationStructuresFromDatabase();
+        } else {
+        	orgStructs = userRegistry.getOrganizationStructures();
+        }
         // save old organization structures, that will be removed if everything goes right
         List<ChildAssociationRef> oldOrganizations = nodeService.getChildAssocs(getOrgStructsRoot(), OrganizationStructureModel.Assocs.ORGSTRUCT, RegexQNamePattern.MATCH_ALL);
-        int orgStructuresCount = 0;
+        
         while (orgStructs.hasNext()) {
             NodeDescription orgStruct = orgStructs.next();
             String unitId = (String) orgStruct.getProperties().get(OrganizationStructureModel.Props.UNIT_ID);
@@ -80,7 +108,73 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
             orgStructPropertiesCache.remove((String) nodeService.getProperty(oldOrganization.getChildRef(), OrganizationStructureModel.Props.UNIT_ID));
             nodeService.deleteNode(oldOrganization.getChildRef());
         }
+        
+        if (fromDatabase) {
+        	log.info("Set orgStructChanged to 0");
+	        orgStructDao.updateOrgParamValue(OrgStructDao.PARAM_NAME_ORG_STRUCT, 0);
+        }
+        
         return orgStructuresCount;
+    }
+    
+    private Iterator<NodeDescription> getOrganizationStructuresFromDatabase() {
+    	List<OrgStructDto> dtos = orgStructDao.getOrgStructs();
+    	Map<String, NodeDescription> orgStructs = new HashMap<>();
+    	for (OrgStructDto dto: dtos) {
+    		NodeDescription orgStruct = new NodeDescription();
+    		orgStruct.getProperties().put(OrganizationStructureModel.Props.UNIT_ID, dto.getUnitId());
+    		
+    		String superUnitId = null;
+    		if (dto.getUnitId().contains(";")) {
+    			superUnitId = StringUtils.substringBeforeLast(dto.getUnitId(), ";");
+    			orgStruct.getProperties().put(OrganizationStructureModel.Props.SUPER_UNIT_ID, superUnitId);
+    		}
+    		orgStruct.getProperties().put(OrganizationStructureModel.Props.NAME, dto.getName());
+    		if (StringUtils.isNotBlank(dto.getGroupEmail())) {
+    			orgStruct.getProperties().put(OrganizationStructureModel.Props.GROUP_EMAIL, dto.getGroupEmail());
+    		}
+    		if (StringUtils.isNotBlank(dto.getInstitutionRegCode())) {
+    			orgStruct.getProperties().put(OrganizationStructureModel.Props.INSTITUTION_REG_CODE, dto.getInstitutionRegCode());
+    		}
+    		orgStruct.getProperties().put(OrganizationStructureModel.Props.ORGANIZATION_PATH, (ArrayList<String>)getOrganizationPath(dto.getUnitId()));
+    		
+    		addSuperUnits(superUnitId, orgStructs);
+    		
+    		orgStructs.put(dto.getUnitId(), orgStruct);
+    		
+    	}
+    	return orgStructs.values().iterator();
+    }
+    
+    private void addSuperUnits(String unitId, Map<String, NodeDescription> orgStructs) {
+    	if (StringUtils.isNotBlank(unitId) && !orgStructs.containsKey(unitId)) {
+			NodeDescription orgStruct = new NodeDescription();
+			orgStruct.getProperties().put(OrganizationStructureModel.Props.UNIT_ID, unitId);
+			orgStruct.getProperties().put(OrganizationStructureModel.Props.ORGANIZATION_PATH, (ArrayList<String>)getOrganizationPath(unitId));
+			String superUnitId = null;
+			if (unitId.contains(";")) {
+				orgStruct.getProperties().put(OrganizationStructureModel.Props.NAME, StringUtils.substringAfterLast(unitId, ";"));
+    			superUnitId = StringUtils.substringBeforeLast(unitId, ";");
+    			orgStruct.getProperties().put(OrganizationStructureModel.Props.SUPER_UNIT_ID, superUnitId);
+    			
+    			addSuperUnits(superUnitId, orgStructs);
+    		} else {
+    			orgStruct.getProperties().put(OrganizationStructureModel.Props.NAME, unitId);
+    		}
+			orgStructs.put(unitId, orgStruct);
+    	}
+    }
+    
+    private List<String> getOrganizationPath(String unitId) {
+    	String [] unitIdSplit = unitId.split(";");
+		//ArrayUtils.reverse(unitIdSplit);
+		List<String> unitIdList = Arrays.asList(unitIdSplit);
+		List<String> paths = new ArrayList<>();
+		for (int i = 0; i <= unitIdList.size(); i++) {
+			paths.add(StringUtils.join(unitIdList.subList(0, i),","));
+		}
+		
+		return paths;
     }
 
     @Override
@@ -99,6 +193,19 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
         getPersonService().clearPersonCache();
         getPersonService().clearPersonNodesCache();
 
+        List<OrganizationStructure> allOrganizationStructures = getAllOrganizationStructures();
+        Map<String, OrganizationStructure> orgStructById = new HashMap<String, OrganizationStructure>(allOrganizationStructures.size());
+        for (OrganizationStructure organizationStructure : allOrganizationStructures) {
+            orgStructById.put(organizationStructure.getUnitId(), organizationStructure);
+        }
+        
+        if (BooleanUtils.toBoolean(orgStructDao.getOrgParamValue(OrgStructDao.PARAM_NAME_PERSON_ORG))) {
+        	updatePersonsOrgStruct(orgStructById);
+        	log.info("Set personOrgChanged to 0");
+	        orgStructDao.updateOrgParamValue(OrgStructDao.PARAM_NAME_PERSON_ORG, 0);
+        }
+        
+        
         NodeRef zone = authorityService.getOrCreateZone(STRUCT_UNIT_BASED);
         String structUnitZoneName = (String) nodeService.getProperty(zone, ContentModel.PROP_NAME);
         Set<String> generatedGroups = new HashSet<String>(authorityService.getAllAuthoritiesInZone(structUnitZoneName, AuthorityType.GROUP));
@@ -112,11 +219,7 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
         // Fetch all groups that user has added manually or are automatically generated by the application
         Set<String> defaultGroups = new HashSet<String>(authorityService.getAllAuthoritiesInZone(AuthorityService.ZONE_APP_DEFAULT, AuthorityType.GROUP));
 
-        List<OrganizationStructure> allOrganizationStructures = getAllOrganizationStructures();
-        Map<String, OrganizationStructure> orgStructById = new HashMap<String, OrganizationStructure>(allOrganizationStructures.size());
-        for (OrganizationStructure organizationStructure : allOrganizationStructures) {
-            orgStructById.put(organizationStructure.getUnitId(), organizationStructure);
-        }
+        
 
         for (OrganizationStructure os : allOrganizationStructures) {
             String organizationPath = os.getOrganizationDisplayPath();
@@ -141,10 +244,10 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
             if (isGeneratedGroupAuthority) {
                 String oldAuthorityEmail = authorityService.getAuthorityEmail(groupAuthority);
                 log.debug(os.getOrganizationDisplayPath() + ":: oldAuthorityEmail: " + oldAuthorityEmail);
-                if (StringUtils.isNotBlank(authorityEmail) && (StringUtils.isBlank(oldAuthorityEmail) || StringUtils.isNotBlank(oldAuthorityEmail) && !oldAuthorityEmail.equals(authorityEmail))) {
+                if (StringUtils.isNotBlank(authorityEmail) && !authorityEmail.equals(oldAuthorityEmail)) {
                     log.debug(os.getOrganizationDisplayPath() + ":: addAuthorityEmail: " + authorityEmail);
                     authorityService.addAuthorityEmail(groupAuthority, authorityEmail);
-                } else {
+                } else if (StringUtils.isBlank(authorityEmail)) {
                     log.debug(os.getOrganizationDisplayPath() + ":: addAuthorityEmail: NULL! Try to remove units " +
                             "e-mail...");
                     authorityService.deleteAuthorityEmail(groupAuthority);
@@ -230,6 +333,22 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
 
         return 0;
     }
+
+	private void updatePersonsOrgStruct(Map<String, OrganizationStructure> orgStructById) {
+		if (fromDatabase) {
+        	List<PersonOrgDto> dtos = orgStructDao.getPersonOrgs();
+        	for (PersonOrgDto dto: dtos) {
+        		OrganizationStructure orgStruct = orgStructById.get(dto.getUnitId());
+                if (orgStruct == null) {
+                    continue;
+                }
+                if (getPersonService().personExists(dto.getPersonCode())) {
+                	getPersonService().setPersonProperty(dto.getPersonCode(), ContentModel.PROP_ORGID, dto.getUnitId());
+                	getPersonService().setPersonProperty(dto.getPersonCode(), ContentModel.PROP_ORGANIZATION_PATH, (ArrayList<String>)orgStruct.getOrganizationPath());
+                }
+        	}
+        }
+	}
 
     @Override
     public void updateOrganisationStructureBasedGroups(ActionEvent event) {
@@ -365,7 +484,7 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
         props.put(UNIT_PROP, unitId + (StringUtils.equals(unitId, orgStruct) ? "" : " " + orgStruct));
         props.put(UNIT_NAME_PROP, orgStruct);
     }
-
+        
     // public String getOrganizationStructureByUser(Map<QName, Serializable> userProps) {
     // return getOrganizationStructure((String) userProps.get(ContentModel.PROP_ORGID));
     // }
@@ -410,6 +529,10 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
         return _workflowService;
     }
 
+    public void setOrgStructDao(OrgStructDao orgStructDao) {
+        this.orgStructDao = orgStructDao;
+    }
+    
     public void setGeneralService(GeneralService generalService) {
         this.generalService = generalService;
     }
@@ -433,5 +556,10 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
     public void setApplicationConstantsBean(ApplicationConstantsBean applicationConstantsBean) {
         this.applicationConstantsBean = applicationConstantsBean;
     }
+    
+    public void setFromDatabase(Boolean fromDatabase) {
+    	this.fromDatabase = fromDatabase;
+    }
+    
     // END: getters / setters
 }

@@ -16,7 +16,7 @@
          <f:facet name="header">
             <a:sortLink id="col1-lbl" label="#{msg.casefile_title_column}" value="title" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col1-act" value="#{r.title}" actionListener="#{CaseFileDialog.openFromDocumentList}" styleClass="tooltip condence50- no-underline">
+         <a:actionLink id="col1-act" value="#{r.title}" actionListener="#{CaseFileDialog.openFromDocumentList}" styleClass="tooltip condence100- no-underline">
             <f:param name="nodeRef" value="#{r.node.nodeRef}" />
          </a:actionLink>
       </a:column>

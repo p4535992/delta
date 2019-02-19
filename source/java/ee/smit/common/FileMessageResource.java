@@ -1,4 +1,4 @@
-package ee.smit.digisign;
+package ee.smit.common;
 
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.ws.mime.MimeMessage;

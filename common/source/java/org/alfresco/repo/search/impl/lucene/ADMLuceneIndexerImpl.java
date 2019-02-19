@@ -35,6 +35,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import ee.webmedia.alfresco.parameters.model.Parameters;
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
@@ -107,6 +108,8 @@ import ee.webmedia.alfresco.utils.ClosingTransactionListener;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
+
+import static ee.webmedia.alfresco.common.web.BeanHelper.getParametersService;
 
 /**
  * The implementation of the lucene based indexer. Supports basic transactional behaviour if used on its own.
@@ -819,9 +822,19 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
             // Document field "DOC_VISIBLE_TO" is added with authority names with "viewDocumentMetaData" privilege (including inherited authorities with same privilege).
             List<Date> sentDates = (List<Date>) properties.get(DocumentCommonModel.Props.SEARCHABLE_SEND_INFO_SEND_DATE_TIME);
             Date registerDate = (Date) properties.get(DocumentCommonModel.Props.REG_DATE_TIME);
+
+            Date docSendOutAfterDate = BeanHelper.getDigiSignSearches().stringToDate(getParametersService().getStringParameter(Parameters.DOC_SENDOUT_AFTER_DATE));
+            log.debug("REGISTER DATE: " + registerDate + "; DOC SEND OUT AFTER PARAM DATE: " + docSendOutAfterDate);
+
             if (DocumentCommonModel.Types.DOCUMENT.equals(typeQName)) {
                 boolean isUnsentDocument = DocumentStatus.FINISHED.getValueName().equals(properties.get(DocumentCommonModel.Props.DOC_STATUS))
-                        && !isSentAfterRegistration(registerDate, sentDates)
+
+                        // REVERTED BACK FROM DELTA-1124 -----------
+                        && RepoUtil.isEmptyListOrString(properties.get(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE))
+                        //&& !isSentAfterRegistration(registerDate, sentDates)
+                        //&& (docSendOutAfterDate.before(registerDate))
+                        // -----------------------------------------
+
                         && (Boolean.FALSE.equals(properties.get(DocumentCommonModel.Props.DOCUMENT_IS_IMPORTED))
                         || properties.get(DocumentCommonModel.Props.DOCUMENT_IS_IMPORTED) == null)
                         && !(RepoUtil.isEmptyListOrString(properties.get(DocumentCommonModel.Props.RECIPIENT_NAME))
@@ -835,6 +848,7 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
                                 && RepoUtil.isEmptyListOrString(properties.get(DocumentDynamicModel.Props.ADDITIONAL_RECIPIENT_POSTAL_CITY))
                                 && RepoUtil.isEmptyListOrString(properties.get(DocumentDynamicModel.Props.ADDITIONAL_RECIPIENT_STREET_HOUSE))
                                 && RepoUtil.isEmptyListOrString(properties.get(DocumentSpecificModel.Props.PARTY_NAME)));
+                log.debug("IS UNSENT DOCUMENT: " + isUnsentDocument);
                 if (isUnsentDocument) {
                     xdoc.add(new Field("IS_UNSENT_DOC", Boolean.TRUE.toString(), Field.Store.NO, Field.Index.NO_NORMS, Field.TermVector.NO));
                 }

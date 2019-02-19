@@ -40,7 +40,7 @@ public class Digidoc4jSignatureModalComponent extends UICommand {
         ResponseWriter out = context.getResponseWriter();
         ComponentUtil.writeModalHeader(out, getDialogId(context), Application.getMessage(context, "task_title_signatureTask"), "signatureModalWrap",
                 "return cancelSign();");
-        out.write(generateApplet(context));
+        out.write(generateSignaturePlace(context));
         ComponentUtil.writeModalFooter(out);
 
         out.write("<script type=\"text/javascript\">$jQ(document).ready(function(){");
@@ -50,7 +50,7 @@ public class Digidoc4jSignatureModalComponent extends UICommand {
         out.write("});</script>");
     }
 
-    private String generateApplet(FacesContext context) {
+    private String generateSignaturePlace(FacesContext context) {
         StringBuilder sb = new StringBuilder();
         String path = context.getExternalContext().getRequestContextPath();
 
