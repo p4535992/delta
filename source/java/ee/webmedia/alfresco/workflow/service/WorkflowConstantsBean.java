@@ -134,7 +134,7 @@ public class WorkflowConstantsBean implements InitializingBean {
     }
 
     public boolean isDocumentWorkflowEnabled() {
-        return documentWorkflowEnabled;
+        return documentWorkflowEnabled || independentWorkflowEnabled;
     }
 
     public void setDocumentWorkflowEnabled(boolean documentWorkflowEnabled) {

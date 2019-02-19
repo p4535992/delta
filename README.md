@@ -4,6 +4,15 @@ Dokumendihaldussüsteem DELTA.
 
 ### Versioonid ###
 ------------------------------------------------------------------------------------------
+DELTA version: 5.10.1 RC1
+------------------------------------------------------------------------------------------
+•	DELTA-1001 - Kasutajat peab olema võimalik otsida ka tööülesande täitja andmeväljalt
+•	DELTA-1430 - Iseseisvas terviktöövoos peab saama siduda dokumendi liiki konkreetsete töövoogudega
+•	DELTA-1569 - Teatud tingimusel ei kuva menüüs "Dokumendi otsing" välja ikooni "Lisa otsetee"
+•	DELTA-1625 - Toimikute elukäikude andmetes on märgistatud väli "Märgitud hävitamiseks"
+•	DELTA-1637 - Teadmiseks TÜ edastamisel tähtaja lahtri täitmise kontroll ebakorrektne
+
+------------------------------------------------------------------------------------------
 DELTA version: 5.10.0 RC2
 ------------------------------------------------------------------------------------------
 Added fix:
