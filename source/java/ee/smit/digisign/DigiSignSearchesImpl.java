@@ -370,8 +370,7 @@ public class DigiSignSearchesImpl implements DigiSignSearches {
         return signCertificateList;
     }
 
-    private List<SignCertificate> getCertsByCnandSerialNr(String cn, String serialNumber){
-        JSONObject jsonByCn = getCertByCnandSerialNr(cn, serialNumber);
+    private List<SignCertificate> getSignCertificates(JSONObject jsonByCn) {
         log.debug("Check CN JSON Response...");
         List<SignCertificate> certListCn = checkJsonResponse(jsonByCn);
         if(certListCn != null && !certListCn.isEmpty()){
@@ -382,16 +381,14 @@ public class DigiSignSearchesImpl implements DigiSignSearches {
         return certListCn;
     }
 
+    private List<SignCertificate> getCertsByCnandSerialNr(String cn, String serialNumber){
+        JSONObject jsonByCn = getCertByCnandSerialNr(cn, serialNumber);
+        return getSignCertificates(jsonByCn);
+    }
+
     private List<SignCertificate> getCertsByCn(String cn){
         JSONObject jsonByCn = getCertByCn(cn);
-        log.debug("Check CN JSON Response...");
-        List<SignCertificate> certListCn = checkJsonResponse(jsonByCn);
-        if(certListCn != null && !certListCn.isEmpty()){
-            log.debug("Found crypt supported certificates by cn (name)..");
-        } else {
-            log.trace("JSON response is NULL!");
-        }
-        return certListCn;
+        return getSignCertificates(jsonByCn);
     }
 
     private List<SignCertificate> getCertsBySerialNumber(String serialNumber){
@@ -481,13 +478,7 @@ public class DigiSignSearchesImpl implements DigiSignSearches {
     }
 
     public Date digiSignStringToDate(String dateValue){
-        // "2017-11-17T12:02:01Z"
-        dateValue = dateValue.replace("'", "");
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-ddTHH:mm:ss.000+0000");
-        //if(dateValue.matches("\\d{4}-\\d{2}-\\d{2}'T'\\d{2}:\\d{2}:\\d{2}.\\d{3}+\\d{4}")){
-        //    format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.000+0000");
-        //}
-
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.000+0000");
         return parseStringToDate(dateValue, format);
     }
 
