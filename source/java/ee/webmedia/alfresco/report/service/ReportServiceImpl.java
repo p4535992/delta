@@ -837,22 +837,28 @@ public class ReportServiceImpl implements ReportService {
                 Map<QName, Serializable> docProps = documentProps.get(cwfRef);
                 Row row = rowProvider.getRow();
                 int cellIndex = 0;
+                setCellValueTruncateIfNeeded(row.createCell(cellIndex++), getTitle(compoundWorkflow, docProps), LOG);
                 if (documentWorkflowEnabled) {
+                    setCellValueTruncateIfNeeded(row.createCell(cellIndex++), docProps != null ? types.get(docProps.get(Props.OBJECT_TYPE_ID)) : "", LOG);
                     setCellValueTruncateIfNeeded(row.createCell(cellIndex++), docProps != null ? (String) docProps.get(DocumentCommonModel.Props.REG_NUMBER) : "", LOG);
                     setCellValueTruncateIfNeeded(row.createCell(cellIndex++),
                             docProps != null ? formatDateOrEmpty(DATE_FORMAT, (Date) docProps.get(DocumentCommonModel.Props.REG_DATE_TIME)) : "", LOG);
-                    setCellValueTruncateIfNeeded(row.createCell(cellIndex++), docProps != null ? formatDateOrEmpty(DATE_FORMAT, (Date) docProps.get(ContentModel.PROP_CREATED))
-                            : "", LOG);
-                    setCellValueTruncateIfNeeded(row.createCell(cellIndex++), docProps != null ? types.get(docProps.get(Props.OBJECT_TYPE_ID)) : "", LOG);
                 }
-                setCellValueTruncateIfNeeded(row.createCell(cellIndex++), getTitle(compoundWorkflow, docProps), LOG);
+                setCellValueTruncateIfNeeded(row.createCell(cellIndex++), formatDateOrEmpty(DATE_FORMAT, task.getDueDate()), LOG);
                 setCellValueTruncateIfNeeded(row.createCell(cellIndex++), task.getCreatorName(), LOG);
                 setCellValueTruncateIfNeeded(row.createCell(cellIndex++), formatDateOrEmpty(DATE_FORMAT, task.getStartedDateTime()), LOG);
                 setCellValueTruncateIfNeeded(row.createCell(cellIndex++), task.getOwnerName(), LOG);
                 setCellValueTruncateIfNeeded(row.createCell(cellIndex++), task.getOwnerOrgStructUnit(), LOG);
                 setCellValueTruncateIfNeeded(row.createCell(cellIndex++), task.getOwnerJobTitle(), LOG);
                 setCellValueTruncateIfNeeded(row.createCell(cellIndex++), taskNames.get(task.getType()), LOG);
-                setCellValueTruncateIfNeeded(row.createCell(cellIndex++), formatDateOrEmpty(DATE_FORMAT, task.getDueDate()), LOG);
+                String taskResolution;
+                if (task.isType(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK)) {
+                    taskResolution = MessageUtil.getMessage("task_search_due_date_extension_task_resolution", task.getProposedDueDateStr(), task.getWorkflowResolution());
+                } else {
+                    taskResolution = task.getResolution();
+                }
+                setCellValueTruncateIfNeeded(row.createCell(cellIndex++), taskResolution, LOG);
+                setCellValueTruncateIfNeeded(row.createCell(cellIndex++), task.getStatus(), LOG);
                 setCellValueTruncateIfNeeded(row.createCell(cellIndex++), formatDateOrEmpty(DATE_FORMAT, task.getCompletedDateTime()), LOG);
                 if (task.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK, WorkflowSpecificModel.Types.REVIEW_TASK, WorkflowSpecificModel.Types.OPINION_TASK)) {
                     setCellValueTruncateIfNeeded(row.createCell(cellIndex++), task.getOutcome(), LOG);
@@ -865,17 +871,7 @@ public class ReportServiceImpl implements ReportService {
                 }
                 setCellValueTruncateIfNeeded(row.createCell(cellIndex++), formatBoolean(task.isResponsible()), LOG);
                 setCellValueTruncateIfNeeded(row.createCell(cellIndex++), formatDateOrEmpty(DATE_FORMAT, task.getStoppedDateTime()), LOG);
-                String taskResolution;
-                if (task.isType(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK)) {
-                    taskResolution = MessageUtil.getMessage("task_search_due_date_extension_task_resolution", task.getProposedDueDateStr(), task.getWorkflowResolution());
-                } else {
-                    taskResolution = task.getResolution();
-                }
-                setCellValueTruncateIfNeeded(row.createCell(cellIndex++), taskResolution, LOG);
                 setCellValueTruncateIfNeeded(row.createCell(cellIndex++), isAfterDate(task.getCompletedDateTime(), task.getDueDate()) ? "jah" : "ei", LOG);
-                setCellValueTruncateIfNeeded(row.createCell(cellIndex++), task.getStatus(), LOG);
-                cellIndex += writeStructureLables(docProps, row, cellIndex);
-                setCellValueTruncateIfNeeded(row.createCell(cellIndex++), getUrl(docProps, compoundWorkflow, task), LOG);
                 setCellValueTruncateIfNeeded(row.createCell(cellIndex++),
                         compoundWorkflow != null ? workflowConstantsBean.getCompoundWorkflowTypeMessage(compoundWorkflow.getTypeEnum()) : "", LOG);
                 setCellValueTruncateIfNeeded(row.createCell(cellIndex++), compoundWorkflow != null ? compoundWorkflow.getTitle() : "", LOG);
@@ -888,6 +884,12 @@ public class ReportServiceImpl implements ReportService {
                 setCellValueTruncateIfNeeded(row.createCell(cellIndex++), compoundWorkflow != null ? compoundWorkflow.getEndedDateStr() : "", LOG);
                 setCellValueTruncateIfNeeded(row.createCell(cellIndex++), compoundWorkflow != null ? compoundWorkflow.getStatus() : "", LOG);
                 setCellValueTruncateIfNeeded(row.createCell(cellIndex++), compoundWorkflow != null ? compoundWorkflow.getNumberOfDocumentsStr() : "", LOG);
+                if (documentWorkflowEnabled) {
+                    setCellValueTruncateIfNeeded(row.createCell(cellIndex++), docProps != null ? formatDateOrEmpty(DATE_FORMAT, (Date) docProps.get(ContentModel.PROP_CREATED))
+                            : "", LOG);
+                }
+                cellIndex += writeStructureLables(docProps, row, cellIndex);
+                setCellValueTruncateIfNeeded(row.createCell(cellIndex++), getUrl(docProps, compoundWorkflow, task), LOG);
             }
         }
 
