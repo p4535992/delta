@@ -43,7 +43,8 @@
          <f:facet name="header">
             <h:outputText id="col3-sort" value="#{msg.workflow_creator}" styleClass="header" />
          </f:facet>
-         <h:outputText id="col3-text" value="#{r.taskCreatorName}" />
+         <h:outputText id="col3-text" value="#{r.taskCreatorName}" rendered="#{NavigationBean.currentUser.fullName != r.taskCreatorName}"/>
+         <h:outputText id="col3b-text" value="#{r.taskCreatorName}" rendered="#{NavigationBean.currentUser.fullName == r.taskCreatorName}" styleClass="bold"/>
       </a:column>
       
       <%-- workflow --%>
