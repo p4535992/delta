@@ -11,6 +11,11 @@ DELTA version: 5.10.1 RC1
 •	DELTA-1569 - Teatud tingimusel ei kuva menüüs "Dokumendi otsing" välja ikooni "Lisa otsetee"
 •	DELTA-1625 - Toimikute elukäikude andmetes on märgistatud väli "Märgitud hävitamiseks"
 •	DELTA-1637 - Teadmiseks TÜ edastamisel tähtaja lahtri täitmise kontroll ebakorrektne
+•	DELTA-1639 - Päästeameti Deltas lühimenetluse otsuse vormil tekkib "Saada välja" nupu vajutusel süsteemi viga
+
+------------------------------------------------------------------------------------------
+DELTA version: 5.10.0 RELEASE - 14.02.2019
+------------------------------------------------------------------------------------------
 
 ------------------------------------------------------------------------------------------
 DELTA version: 5.10.0 RC2
