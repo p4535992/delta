@@ -333,7 +333,8 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         } else {
             names = getNames(props, DocumentCommonModel.Props.RECIPIENT_NAME, DocumentDynamicModel.Props.RECIPIENT_PERSON_NAME);
             idCodes = newListIfNull((List<String>) props.get(DocumentDynamicModel.Props.RECIPIENT_ID), false);
-            emails = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_EMAIL), false);
+
+            emails = newListIfNull(convertStringToList(props.get(DocumentCommonModel.Props.RECIPIENT_EMAIL)), false);
             groups = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_GROUP), false);
 
             while (groups.size() < names.size()) {
@@ -420,6 +421,22 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         properties.put(PROP_KEYS[5], groups);
 
         model.setProperties(properties);
+    }
+
+    /**
+     * 
+     * @param obj
+     * @return
+     */
+    private List<String> convertStringToList(Object obj){
+        if(obj instanceof String){
+            List<String> list = new ArrayList<>();
+            String str = (String) obj;
+            list.add(str);
+            return list;
+        }
+
+        return (List<String>) obj;
     }
 
     @SuppressWarnings("unchecked")
