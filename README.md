@@ -4,6 +4,11 @@ Dokumendihaldussüsteem DELTA.
 
 ### Versioonid ###
 ------------------------------------------------------------------------------------------
+DELTA version: 5.10.1 RC2
+------------------------------------------------------------------------------------------
+•	DELTA-1430 fix - Iseseisvas terviktöövoos peab saama siduda dokumendi liiki konkreetsete töövoogudega
+
+------------------------------------------------------------------------------------------
 DELTA version: 5.10.1 RC1
 ------------------------------------------------------------------------------------------
 •	DELTA-1001 - Kasutajat peab olema võimalik otsida ka tööülesande täitja andmeväljalt
