@@ -823,8 +823,8 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
             List<Date> sentDates = (List<Date>) properties.get(DocumentCommonModel.Props.SEARCHABLE_SEND_INFO_SEND_DATE_TIME);
             Date registerDate = (Date) properties.get(DocumentCommonModel.Props.REG_DATE_TIME);
 
-            Date docSendOutAfterDate = BeanHelper.getDigiSignSearches().stringToDate(getParametersService().getStringParameter(Parameters.DOC_SENDOUT_AFTER_DATE));
-            log.debug("REGISTER DATE: " + registerDate + "; DOC SEND OUT AFTER PARAM DATE: " + docSendOutAfterDate);
+            //Date docSendOutAfterDate = BeanHelper.getDigiSignSearches().stringToDate(getParametersService().getStringParameter(Parameters.DOC_SENDOUT_AFTER_DATE));
+            //log.debug("REGISTER DATE: " + registerDate + "; DOC SEND OUT AFTER PARAM DATE: " + docSendOutAfterDate);
 
             if (DocumentCommonModel.Types.DOCUMENT.equals(typeQName)) {
                 boolean isUnsentDocument = DocumentStatus.FINISHED.getValueName().equals(properties.get(DocumentCommonModel.Props.DOC_STATUS))
