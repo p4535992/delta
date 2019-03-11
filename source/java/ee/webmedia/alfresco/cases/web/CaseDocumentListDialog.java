@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.cases.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getClassificatorService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 
@@ -12,6 +13,7 @@ import javax.faces.event.ActionEvent;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.cases.service.UnmodifiableCase;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
@@ -41,6 +43,7 @@ public class CaseDocumentListDialog extends DocumentListDialog {
     private Volume parent;
     private List<UnmodifiableCase> cases;
     private boolean volumeRefInvalid;
+    private String searchCriteria = "";
 
     @Override
     public void init(NodeRef volumeRef) {
@@ -95,6 +98,19 @@ public class CaseDocumentListDialog extends DocumentListDialog {
         showAll(volumeRef);
     }
 
+    public void search() {
+        if (StringUtils.isNotBlank(getSearchCriteria())) {
+            clearCases();
+            cases = getCaseService().search(parent.getNode().getNodeRef(), getSearchCriteria());
+        } else {
+            MessageUtil.addInfoMessage("volume_error_emptySearchField");
+        }
+    }
+
+    private void clearCases() {
+        cases = null;
+    }
+
     public void showAllFromShortcut(ActionEvent event) {
         MenuBean.clearViewStack(String.valueOf(MenuBean.MY_TASKS_AND_DOCUMENTS_ID), null);
         NodeRef volumeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
@@ -116,10 +132,26 @@ public class CaseDocumentListDialog extends DocumentListDialog {
         return true;
     }
 
+    public void showAll() {
+        clearCases();
+        searchCriteria = "";
+        setupDefaultCases();
+    }
+
+    private void setupDefaultCases() {
+        if (parent != null) {
+            cases = getCaseService().getAllCasesByVolume(parent.getNode().getNodeRef());
+        } else {
+            cases = new ArrayList<UnmodifiableCase>();
+        }
+    }
+
     private void showAll(NodeRef volumeRef) {
+        clearCases();
         parent = getVolumeService().getVolumeByNodeRef(volumeRef, null);
         getLogService().addLogEntry(LogEntry.create(LogObject.VOLUME, getUserService(), volumeRef, "applog_space_open", parent.getVolumeMark(), parent.getTitle()));
         initAssocsBlock();
+        showAll();
     }
 
     private void initAssocsBlock() {
@@ -131,11 +163,6 @@ public class CaseDocumentListDialog extends DocumentListDialog {
     }
 
     public List<UnmodifiableCase> getCases() {
-        if (parent != null) {
-            cases = getCaseService().getAllCasesByVolume(parent.getNode().getNodeRef());
-        } else {
-            cases = new ArrayList<UnmodifiableCase>();
-        }
         return cases;
     }
 
@@ -144,6 +171,8 @@ public class CaseDocumentListDialog extends DocumentListDialog {
         super.restored();
         doInitialSearch();
         initAssocsBlock();
+        searchCriteria = "";
+        showAll();
     }
 
     @Override
@@ -159,6 +188,7 @@ public class CaseDocumentListDialog extends DocumentListDialog {
         super.clean();
         parent = null;
         cases = null;
+        searchCriteria = "";
     }
 
     public void resetCases() {
@@ -176,4 +206,11 @@ public class CaseDocumentListDialog extends DocumentListDialog {
         cases = null;
     }
 
+    public String getSearchCriteria() {
+        return searchCriteria;
+    }
+
+    public void setSearchCriteria(String searchCriteria) {
+        this.searchCriteria = searchCriteria;
+    }
 }

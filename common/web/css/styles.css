@@ -1438,7 +1438,7 @@ table.recipient td {
 }
 
 .recipient.cells5 textarea {
-	width: 95% !important;
+	width: 98px !important;
 }
 
 .recipient.cells6 textarea {
@@ -2292,8 +2292,4 @@ DIV.trans-scroll TABLE {
 
 #dialog\:dialog-body\:tableSendOut .recipient.hiddenIdCode th + th + th {
    display: table-cell;
-}
-
-#dialog\:dialog-body\:tableSendOut .recipient {
-	width: 100% !important;
 }

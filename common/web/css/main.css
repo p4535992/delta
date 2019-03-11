@@ -21,7 +21,6 @@ input[type="text"],
 textarea,
 select {
 	border: 1px solid #888;
-	border-radius: 2px;
 }
 
 body {
