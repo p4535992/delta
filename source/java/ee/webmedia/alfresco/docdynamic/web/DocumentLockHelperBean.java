@@ -20,6 +20,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.util.EqualsHelper;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
+import org.alfresco.web.bean.repository.Repository;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 
@@ -197,6 +198,19 @@ public class DocumentLockHelperBean implements Serializable {
             messageId = e.getCustomMessageId();
         }
         handleLockedNode(messageId, e.getNodeRef());
+    }
+
+    public void handleLockedFileNode(String messageId, NodeLockedException e) {
+        if (StringUtils.isNotBlank(e.getCustomMessageId())) {
+            messageId = e.getCustomMessageId();
+        }
+        handleLockedFileNode(messageId, e.getNodeRef(), new Object[0]);
+    }
+
+    private void handleLockedFileNode(String messageId, NodeRef nodeRef, Object... valueHolders) {
+        Pair<String, Object[]> messageKeyAndValueHolders = getErrorMessageKeyAndValueHolders(messageId, nodeRef, valueHolders);
+        String fileName = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getFileFolderService().getFileInfo(nodeRef).getName();
+        MessageUtil.addErrorMessage(messageKeyAndValueHolders.getFirst(), fileName, messageKeyAndValueHolders.getSecond());
     }
 
     public void handleLockedNode(String messageId, NodeRef nodeRef) {
