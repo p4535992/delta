@@ -35,9 +35,17 @@
 
 <a:panel label="#{msg.file_title} (#{FileBlockBean.activeFilesCount})" id="files-panel" facetsId="dialog:dialog-body:files-panel-facets" styleClass="panel-100" progressive="true"
    expanded="<%=new Boolean(!(Application.getDialogManager().getBean() instanceof AddFileDialog || Application.getDialogManager().getBean() instanceof ChangeFileDialog)).toString() %>">
-   <a:richList id="filelistList" viewMode="details" value="#{FileBlockBean.files}" var="r" rowStyleClass="recordSetRow"
+   <a:richList id="filelistList" viewMode="details" value="#{FileBlockBean.activeFiles}" var="r" rowStyleClass="recordSetRow"
       altRowStyleClass="recordSetRowAlt" width="100%" refreshOnBind="true">
 
+      <%-- checkbox --%>
+      <a:column id="col-files-checkbox" primary="true" rendered="#{FileBlockBean.toggleActive && FileBlockBean.guest == false && FileBlockBean.activeFilesCount > 0}">
+         <f:facet name="header">
+            <h:selectBooleanCheckbox id="col-files-checkbox-header" value="false" styleClass="selectAllActiveHeader"/>
+         </f:facet>
+         <h:selectBooleanCheckbox id="col-files-checkbox-checkbox" styleClass="headerActiveSelectable" value="#{FileBlockBean.listFileCheckboxes[r.nodeRef]}" rendered="#{r.activeAndNotDigiDoc}"/>
+      </a:column>
+      
       <%-- Name with URL link column --%>
       <a:column id="col1" primary="true" rendered="#{r.activeAndNotDigiDoc}">
          <f:facet name="header">
@@ -231,15 +239,29 @@
 
 
    </a:richList>
+   <h:panelGroup rendered="#{FileBlockBean.toggleActive && FileBlockBean.guest == false && FileBlockBean.activeFilesCount > 0}">
+      <h:commandButton action="save" value="#{msg.file_toggle_deactive_button}" actionListener="#{FileBlockBean.deactivateFiles}" />
+      <f:verbatim>&nbsp;</f:verbatim>
+      <h:commandButton action="delete" value="#{msg.file_remove}" actionListener="#{FileBlockBean.confirmDeleteActiveFiles}" />
+   </h:panelGroup>
 </a:panel>
 
 
 
 <a:panel label="#{msg.file_inactive_title} (#{FileBlockBean.notActiveFilesCount})" id="inactive-files-panel" facetsId="dialog:dialog-body:inactive-files-panel-facets" styleClass="panel-100" progressive="true" expanded="false">
 
-   <a:richList id="inactiveFilelistList" viewMode="details" value="#{FileBlockBean.files}" var="r" rowStyleClass="recordSetRow"
+   <a:richList id="inactiveFilelistList" viewMode="details" value="#{FileBlockBean.inactiveFiles}" var="r" rowStyleClass="recordSetRow"
       altRowStyleClass="recordSetRowAlt" width="100%" refreshOnBind="true">
 
+
+      <%-- checkbox --%>
+      <a:column id="col-inactive-checkbox" primary="true" rendered="#{FileBlockBean.toggleActive && FileBlockBean.guest == false && FileBlockBean.notActiveFilesCount > 0}">
+         <f:facet name="header">
+            <h:selectBooleanCheckbox id="col-inactive-checkbox-header" value="false" styleClass="selectAllInactiveHeader"/>
+         </f:facet>
+         <h:selectBooleanCheckbox id="col-inactive-checkbox-checkbox" styleClass="headerInactiveSelectable" value="#{FileBlockBean.listInactiveCheckboxes[r.nodeRef]}" rendered="#{r.notActiveAndNotDigiDoc}"/>
+      </a:column>
+      
       <%-- Name with URL link column --%>
       <a:column id="col21" primary="true" rendered="#{r.notActiveAndNotDigiDoc}">
          <f:facet name="header">
@@ -411,6 +433,11 @@
       </a:column>
 
    </a:richList>
+   <h:panelGroup rendered="#{FileBlockBean.toggleActive && FileBlockBean.guest == false && FileBlockBean.notActiveFilesCount > 0}">
+      <h:commandButton action="save" value="#{msg.file_toggle_active_button}" actionListener="#{FileBlockBean.activateFiles}" />
+      <f:verbatim>&nbsp;</f:verbatim>
+      <h:commandButton action="delete" value="#{msg.file_remove}" actionListener="#{FileBlockBean.confirmDeleteInactiveFiles}" />
+   </h:panelGroup>
 </a:panel>
 
 <a:panel label="PDF" id="pdf-panel" facetsId="dialog:dialog-body:pdf-panel-facets" styleClass="panel-100" progressive="true" rendered="#{FileBlockBean.inWorkspace and FileBlockBean.pdfUrl != null}">
@@ -515,4 +542,24 @@
       $jQ('.pdf-file-download').show();      
    }
    
+</script>
+<script type="text/javascript">
+
+    $jQ(document).ready(function(){
+        $jQ(".selectAllActiveHeader").prop('checked', false);
+        $jQ(".selectAllActiveHeader").change(function() {
+            $jQ(".headerActiveSelectable").prop('checked',$jQ(this).prop('checked'));
+        });
+    });
+
+</script>
+<script type="text/javascript">
+
+    $jQ(document).ready(function(){
+        $jQ(".selectAllInactiveHeader").prop('checked', false);
+        $jQ(".selectAllInactiveHeader").change(function() {
+            $jQ(".headerInactiveSelectable").prop('checked',$jQ(this).prop('checked'));
+        });
+    });
+
 </script>
