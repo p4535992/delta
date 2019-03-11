@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view 
+   xmlns:view="http://www.alfresco.org/view/repository/1.0" 
+   xmlns:param="http://alfresco.webmedia.ee/model/parameters/1.0" 
+>
+   <param:stringParameter view:childName="param:incomingLetterDueDateWarning">
+      <view:properties>
+         <param:value>false</param:value>
+         <param:description>Hoiatus väljamineva kirja kohta loodud tööülesande käivitamisel, kui: 1) tööülesande tüüp on &quot;Allkirjastamiseks&quot;, &quot;Arvamuse andmiseks&quot;, &quot;Kooskõlastamiseks&quot; või &quot;Kinnitamiseks&quot;, 2) tööülesande tähtaeg on hilisem, kui sissetuleva kirja (alusdokumendi) vastamistähtaeg</param:description>
+         <param:name>incomingLetterDueDateWarning</param:name>
+      </view:properties>
+   </param:stringParameter>
+</view:view>

@@ -145,6 +145,7 @@ public enum Parameters {
     
     DIGIDOC_FILE_FORMAT("digidocFileFormat"),
 	ALLOW_CLOSE_FOR_ARCIVED_VOLUMES("allowCloseForArchivedVolumes"),
+    INCOMING_LETTER_DUE_DATE_WARNING("incomingLetterDueDateWarning"),
 	ONE_MULTISTEP_WORKFLOW_ALLOWED("oneMultistepWorkflowAllowed");
 
     private String xPath;
