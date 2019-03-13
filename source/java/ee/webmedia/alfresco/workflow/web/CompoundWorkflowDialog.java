@@ -696,6 +696,32 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                 independentCompWorkflowDocs = BeanHelper.getCompoundWorkflowAssocListDialog().getDocumentList();
             }
         }
+        boolean incomingLetterDueDateWarning =  Boolean.valueOf(BeanHelper.getParametersService().getStringParameter(Parameters.INCOMING_LETTER_DUE_DATE_WARNING));
+        if (checkDocumentDueDate && incomingLetterDueDateWarning) {
+            if (documentWorkflow && SystematicDocumentType.OUTGOING_LETTER.isSameType((String) nodeService.getProperty(docRef, DocumentAdminModel.Props.OBJECT_TYPE_ID))) {
+                NodeRef initialDocumentRef = BeanHelper.getDocumentAssociationsService().getInitialDocumentRef(compoundWorkflow.getParent());
+                if (initialDocumentRef != null) {
+                    Document initialDocument = BeanHelper.getDocumentService().getDocumentByNodeRef(initialDocumentRef);
+                    if (initialDocument != null && SystematicDocumentType.INCOMING_LETTER.isSameType(initialDocument.getObjectTypeId())) {
+                        for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+                            for (Task task : workflow.getTasks()) {
+                                Date taskDueDate = task.getDueDate();
+                                Date initialDocumentDueDate = initialDocument.getDueDate();
+                                if (initialDocumentDueDate != null && taskDueDate != null && task.isType(WorkflowSpecificModel.Types.SIGNATURE_TASK, WorkflowSpecificModel.Types.OPINION_TASK,
+                                        WorkflowSpecificModel.Types.REVIEW_TASK, WorkflowSpecificModel.Types.CONFIRMATION_TASK) &&
+                                        !isSameDay(initialDocumentDueDate, taskDueDate) && taskDueDate.after(initialDocumentDueDate)) {
+                                    DateFormat dateFormat = Utils.getDateFormat(FacesContext.getCurrentInstance());
+                                    String invoiceTaskDueDateConfirmationMsg = MessageUtil.getMessage("task_confirm_due_date_overdue",
+                                            MessageUtil.getMessage(workflow.getType().getLocalName()),
+                                            dateFormat.format(taskDueDate), dateFormat.format(initialDocumentDueDate));
+                                    messages.add(invoiceTaskDueDateConfirmationMsg);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
         boolean inProgressIndependentCWF = independentWorkflow && WorkflowUtil.isStatus(compoundWorkflow, Status.IN_PROGRESS);
         boolean finishingTask = TASK_FINISH_CALLBACKS.contains(workflowBlockCallback);
         boolean addedDueDateInPastMsg = false;
@@ -2220,4 +2246,3 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     }
 
 }
-
