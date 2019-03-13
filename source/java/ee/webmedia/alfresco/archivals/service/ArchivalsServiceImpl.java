@@ -19,6 +19,7 @@ import javax.faces.event.ActionEvent;
 import org.alfresco.jlan.server.filesys.FileInfo;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
+import org.alfresco.repo.node.integrity.IntegrityChecker;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
@@ -166,6 +167,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
     	else {
     		restorePausedStoppedActivitiesStatus();
     	}
+    	
     }
     
     @Override
@@ -627,6 +629,18 @@ public class ArchivalsServiceImpl implements ArchivalsService {
                 }
             }
             x.end(); // andmevaliMV
+        } else if (serializableValue instanceof List) {
+            x.start("dul", "andmevali").attr("dul", "avKood", field.getFieldId()).attr("dul", "avNimetus", field.getName()).attr("dul", "avTyyp", avTyyp);
+            @SuppressWarnings("unchecked")
+            List<Serializable> value = (List<Serializable>) serializableValue;
+            for (Serializable val : value) {
+                if (val != null && "date".equals(dataTypeName.getLocalName())) {
+                    x.child("dul", "vaartus", DATE_FORMAT.format(val));
+                } else {
+                    x.child("dul", "vaartus", (String) DefaultTypeConverter.INSTANCE.convert(textData, val));
+                }
+            }
+            x.end(); // andmevali list
         } else if (serializableValue != null) {
             String val = "date".equals(dataTypeName.getLocalName()) ? DATE_FORMAT.format(serializableValue) : (String) DefaultTypeConverter.INSTANCE.convert(textData,
                     serializableValue);
