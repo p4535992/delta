@@ -4,6 +4,15 @@ Dokumendihaldussüsteem DELTA.
 
 ### Versioonid ###
 ------------------------------------------------------------------------------------------
+DELTA version: 5.10.1 RC3
+------------------------------------------------------------------------------------------
+•	rahmin-fix1
+•	DELTA-1642 Saatmise plokis ei kuvata saatmisviisi "riigiportaal eesti.ee" puhul välja saadetavate failide nimesid
+•	DELTA-1547 Süsteem peab kontrollima sissetuleva kirja täitmise tähtaega vastu loodava vastus-/järgikirja tööülesannete tähtaegu
+•	DELTA-974 Teema välja otsing peab otsima ka teema peakirja seest ja teemade nimekirjadesse lisada otsingu väli
+•	DELTA-768 Failid ja taustainfo failide plokis peab saama mitut faili korraga panna taustainfo failide alla ja vastupidi ning kustutada.
+
+------------------------------------------------------------------------------------------
 DELTA version: 5.10.1 RC2
 ------------------------------------------------------------------------------------------
 •	DELTA-1430 fix - Iseseisvas terviktöövoos peab saama siduda dokumendi liiki konkreetsete töövoogudega
