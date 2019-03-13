@@ -187,30 +187,30 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
         Node file = new Node(documentNodeRef);
         NodeRef document = BeanHelper.getNodeService().getPrimaryParent(documentNodeRef).getParentRef();
         if (file.getType().equals(ContentModel.TYPE_CONTENT)) {
-            document = getNodeService().getPrimaryParent(file.getNodeRef()).getParentRef();
+            document = getNodeService().getPrimaryParent(documentNodeRef).getParentRef();
         }
+        String fileName = file.getName();
         if (getDocLockService().getLockStatus(document) == LockStatus.LOCKED) {
-            addLockedMessage(file.getName(), document);
-        } else if (getDocLockService().getLockStatus(file.getNodeRef()) == LockStatus.LOCKED) {
-            addLockedMessage(file.getName(), file.getNodeRef());
+            addLockedMessage(fileName, document);
+        } else if (getDocLockService().getLockStatus(documentNodeRef) == LockStatus.LOCKED) {
+            addLockedMessage(fileName, documentNodeRef);
         } else { // could be locked: LockStatus: LOCK_OWNER | NO_LOCK | LOCK_EXPIRED
+            String displayName = (String) file.getProperties().get(FileModel.Props.DISPLAY_NAME);
             if (ContentModel.TYPE_MULTILINGUAL_CONTAINER.equals(file.getType())) {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Trying to delete multilingual container: " + file.getId() + " and its translations");
                 }
                 // delete the mlContainer and its translations
-                getMultilingualContentService().deleteTranslationContainer(file.getNodeRef());
+                getMultilingualContentService().deleteTranslationContainer(documentNodeRef);
             } else {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Trying to delete content node: " + file.getId());
                 }
                 // delete the node
-                getNodeService().deleteNode(file.getNodeRef());
+                getNodeService().deleteNode(documentNodeRef);
             }
-
-            String fileName = file.getName();
+            
             if (document != null && getDictionaryService().isSubClass(getNodeService().getType(document), DocumentCommonModel.Types.DOCUMENT)) {
-                String displayName = (String) file.getProperties().get(FileModel.Props.DISPLAY_NAME);
                 BeanHelper.getFileService().reorderFiles(document);
                 if (StringUtils.isNotBlank(displayName)) {
                     fileName = displayName;
@@ -219,12 +219,12 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
                 getDocumentService().updateSearchableFiles(document);
             }
             
-            NodeRef previouslyGeneratedPdf = BeanHelper.getFileService().getPreviouslyGeneratedPdf(file.getNodeRef());
+            NodeRef previouslyGeneratedPdf = BeanHelper.getFileService().getPreviouslyGeneratedPdf(documentNodeRef);
             if (previouslyGeneratedPdf != null) {
                 getNodeService().setProperty(previouslyGeneratedPdf, FileModel.Props.PDF_GENERATED_FROM_FILE, null);
             }
             if (document != null && BeanHelper.getConstantNodeRefsBean().getTemplateRoot().equals(document)) {
-                BeanHelper.getDocumentTemplateService().removeTemplateFromCache(file.getNodeRef());
+                BeanHelper.getDocumentTemplateService().removeTemplateFromCache(documentNodeRef);
             }
             deletedFiles.add(fileName);
         }
