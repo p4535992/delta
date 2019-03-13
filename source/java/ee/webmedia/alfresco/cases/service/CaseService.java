@@ -30,6 +30,8 @@ public interface CaseService {
 
     void saveAddedAssocs(Node caseNode);
 
+    List<UnmodifiableCase> search(NodeRef volumeRef, String name);
+
     List<UnmodifiableCase> getAllCasesByVolume(NodeRef volumeRef);
 
     List<UnmodifiableCase> getAllCasesByVolume(NodeRef volumeRef, DocListUnitStatus status);

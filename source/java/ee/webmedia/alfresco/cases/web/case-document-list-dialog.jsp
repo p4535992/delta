@@ -6,11 +6,13 @@
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
+<%@ include file="searchPanel.jsp" %>
+
 <a:panel id="case-panel" styleClass="panel-100 with-pager" label="#{DialogManager.bean.caseListTitle}" progressive="true" rendered="#{DialogManager.bean.parent.containsCases}">
 
    <%-- Main List --%>
    <a:richList id="casesList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-      width="100%" value="#{CaseDocumentListDialog.cases}" var="r" initialSortColumn="title">
+      width="100%" value="#{CaseDocumentListDialog.cases}" var="r" initialSortColumn="title" refreshOnBind="true">
 
       <%-- Title --%>
       <a:column id="col2">

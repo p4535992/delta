@@ -67,33 +67,40 @@ jQuery.autocomplete = function(input, options) {
 
    // if there is a data array supplied
    if( options.data != null ){
-      var sFirstChar = "", stMatchSets = {}, row = [];
+      if(options.searchAll){
+          for (var r = 0; r < options.data.length; r++) {
+              options.cacheLength++;
+              addToCache(r, options.data[r]);
+          }
+      } else {
+          var sFirstChar = "", stMatchSets = {}, row = [];
 
-      // no url was specified, we need to adjust the cache length to make sure it fits the local data store
-      if( typeof options.url != "string" ) options.cacheLength = 1;
+          // no url was specified, we need to adjust the cache length to make sure it fits the local data store
+          if (typeof options.url != "string") options.cacheLength = 1;
 
-      // loop through the array and create a lookup structure
-      for( var i=0; i < options.data.length; i++ ){
-         // if row is a string, make an array otherwise just reference the array
-         row = ((typeof options.data[i] == "string") ? [options.data[i]] : options.data[i]);
+          // loop through the array and create a lookup structure
+          for (var i = 0; i < options.data.length; i++) {
+              // if row is a string, make an array otherwise just reference the array
+              row = ((typeof options.data[i] == "string") ? [options.data[i]] : options.data[i]);
 
-         // if the length is zero, don't add to list
-         if( row[0].length > 0 ){
-            // get the first character
-            sFirstChar = row[0].substring(0, 1).toLowerCase();
-            // if no lookup array for this character exists, look it up now
-            if( !stMatchSets[sFirstChar] ) stMatchSets[sFirstChar] = [];
-            // if the match is a string
-            stMatchSets[sFirstChar].push(row);
-         }
-      }
+              // if the length is zero, don't add to list
+              if (row[0].length > 0) {
+                  // get the first character
+                  sFirstChar = row[0].substring(0, 1).toLowerCase();
+                  // if no lookup array for this character exists, look it up now
+                  if (!stMatchSets[sFirstChar]) stMatchSets[sFirstChar] = [];
+                  // if the match is a string
+                  stMatchSets[sFirstChar].push(row);
+              }
+          }
 
-      // add the data items to the cache
-      for( var k in stMatchSets ){
-         // increase the cache size
-         options.cacheLength++;
-         // add to the cache
-         addToCache(k, stMatchSets[k]);
+          // add the data items to the cache
+          for (var k in stMatchSets) {
+              // increase the cache size
+              options.cacheLength++;
+              // add to the cache
+              addToCache(k, stMatchSets[k]);
+          }
       }
       allOptions = getAllData(); // initialize allOptions(if options.suggestAll is set)
    }
@@ -343,13 +350,22 @@ jQuery.autocomplete = function(input, options) {
          var row = data[i];
          if (!row) continue;
          var li = document.createElement("li");
-         if (options.formatItem) {
-            li.innerHTML = options.formatItem(row, i, num);
-            li.selectValue = row[0];
-         } else {
-            li.innerHTML = row[0];
-            li.selectValue = row[0];
-         }
+          if (options.formatItem) {
+              li.innerHTML = options.formatItem(row, i, num);
+              if (options.searchAll) {
+                  li.selectValue = row;
+              } else {
+                  li.selectValue = row[0];
+              }
+          } else {
+              if (options.searchAll) {
+                  li.innerHTML = row;
+                  li.selectValue = row;
+              } else {
+                  li.innerHTML = row[0];
+                  li.selectValue = row[0];
+              }
+          }
          var extra = null;
          if (row.length > 1) {
             extra = [];
@@ -401,6 +417,15 @@ jQuery.autocomplete = function(input, options) {
          } else {
             return null;
          }
+      }
+      if (options.searchAll && q.length > 2) {
+          var res = [];
+          for (var r = 0; r < cache.length; r++) {
+              if (cache.data[r].toLowerCase().indexOf(q.toLowerCase()) !== -1) {
+                  res[res.length] = cache.data[r];
+              }
+          }
+          return res;
       }
       if (cache.data[q]) return cache.data[q];
       if (options.matchSubset) {
@@ -509,7 +534,7 @@ jQuery.autocomplete = function(input, options) {
    }
 
    function addToCache(q, data) {
-      if (!data || !q || !options.cacheLength) return;
+      if (!data || !q && !options.searchAll || !options.cacheLength) return;
       if (!cache.length || cache.length > options.cacheLength) {
          flushCache();
          cache.length++;
@@ -563,6 +588,7 @@ jQuery.fn.autocomplete = function(url, options, data) {
    options.selectOnly = options.selectOnly || false;
    options.maxItemsToShow = options.maxItemsToShow || -1;
    options.autoFill = options.autoFill || false;
+   options.searchAll = options.searchAll || false;
    options.width = parseInt(options.width, 10) || 0;
 
    // XXX: additional functionality:

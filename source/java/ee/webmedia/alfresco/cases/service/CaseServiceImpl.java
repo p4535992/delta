@@ -66,15 +66,26 @@ public class CaseServiceImpl implements CaseService {
 
     @Override
     public List<UnmodifiableCase> getAllCasesByVolume(NodeRef volumeRef) {
+        return getCasesByVolumeAndName(volumeRef, null);
+    }
+
+    private List<UnmodifiableCase> getCasesByVolumeAndName(NodeRef volumeRef, String name) {
         List<NodeRef> caseRefs = getCaseChildAssocsByVolume(volumeRef);
         List<UnmodifiableCase> caseOfVolume = new ArrayList<>(caseRefs.size());
         Map<Long, QName> propertyTypes = new HashMap<>();
         for (NodeRef caseRef : caseRefs) {
             UnmodifiableCase unmodifiableCase = getUnmodifiableCase(caseRef, propertyTypes);
-            caseOfVolume.add(unmodifiableCase);
+            if (StringUtils.isBlank(name) || unmodifiableCase.getTitle().contains(name)) {
+                caseOfVolume.add(unmodifiableCase);
+            }
         }
         Collections.sort(caseOfVolume);
         return caseOfVolume;
+    }
+
+    @Override
+    public List<UnmodifiableCase> search(NodeRef volumeRef, String name) {
+        return getCasesByVolumeAndName(volumeRef, name);
     }
 
     private UnmodifiableCase getUnmodifiableCase(NodeRef caseRef, Map<Long, QName> propertyTypes) {
