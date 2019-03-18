@@ -894,8 +894,11 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
             }
         }
 
+        // What is the point?
+        // Why we should change encoding?
         if ("windows-1257".equals(encoding)) {
-            return StandardCharsets.UTF_8.name();
+            // AARE: REMOVING active encondig change.
+            //return StandardCharsets.UTF_8.name();
         }
         return encoding;
     }
