@@ -484,6 +484,124 @@ function addSearchSuggest(clientId, containerClientId, pickerCallback, pickerCal
    });
 }
 
+var readyForBlur = false;
+
+function addSimpleSearchSuggest(clientId, pickerCallback, pickerCallbackParams, pickerClientId, isAjax){
+	autocompleters.push(function addAutocompleter() {
+		      var jQInput = $jQ("#"+escapeId4JQ(clientId));
+		      var uri = getContextPath() + "/ajax/invoke/AjaxSearchBean.searchSuggest";
+		      var suggest = jQInput.autocomplete(uri, {extraParams: {'pickerCallback' : pickerCallback, 'pickerCallbackParams' : pickerCallbackParams}, matchContains: 1, minChars: 3, suggestAll: 1, delay: 50,		      
+		      onItemSelect: function (li) {
+		    	  blur();
+		    	  var inputValue = li.selectValue;
+		    	  setUpPickerProps(pickerClientId, inputValue);
+		    	  var formattedInput = formatInputValue(inputValue);
+		    	  jQInput.val(formattedInput + " ");
+		    	  jQInput.attr("value", formattedInput + " ");
+		    	  processButtonState();
+                  if(isAjax){
+                      var component = "dialog:dialog-body:compound-workflow-panel-group";
+                      ajaxSubmit(component, component, [], '/dhs/ajax/invoke/AjaxBean.submit?componentClientId=' + component + '&viewName=/jsp/dialog/container.jsp');
+                  }else {
+                      document.forms['dialog'].submit();
+                  }
+		     }
+		     });
+		      jQInput.focus(function() {
+		    	  jQInput.keydown();
+		      });
+		      jQInput.blur(function() {
+			    	  var isNotReadonly = !jQInput.is('[readonly="readonly"]');
+			    	  if(readyForBlur && isNotReadonly) {
+			    	      jQInput.val('');
+			    	  }
+		      });
+	});
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+    setTimeout(function(){ readyForBlur = true; }, 100);
+});
+
+function addSendOutSearchSuggest(clientId, pickerCallback, pickerCallbackParams){
+	autocompleters.push(function addAutocompleter() {
+		      var jQInput = $jQ("#"+escapeId4JQ(clientId));
+		      var uri = getContextPath() + "/ajax/invoke/AjaxSearchBean.searchSuggest";
+		      var suggest = jQInput.autocomplete(uri, {extraParams: {'pickerCallback' : pickerCallback, 'pickerCallbackParams' : pickerCallbackParams}, matchContains: 1, minChars: 3, suggestAll: 1, delay: 50,		      
+		      onItemSelect: function (li) {
+		    	  var component = clientId.substring(0, clientId.lastIndexOf(":"));
+		    	  var pickerId = component + ":picker";
+		    	  var inputValue = li.selectValue;
+		    	  setUpSendOutPickerProps(clientId, pickerId, inputValue, component);
+		    	  processButtonState();
+                  $jQ("." + escapeId4JQ("picker-add")).first().click();
+                  var textareas = document.getElementsByTagName( "textarea" );
+                  for (i = 0; i < textareas.length; i++) {
+  		        	  if(textareas[i].id.indexOf("recipientName") !== -1){
+  		        		  var recipientNameId = textareas[i].id;
+  		        		  addSendOutSearchSuggest(recipientNameId,  "UserListDialog.searchAll", "4");
+  		        		  }
+  		        	  }
+  		          }
+		     });
+		     jQInput.focus(function() {
+		         jQInput.keydown();
+             });
+	});
+}
+
+function setUpPickerProps(pickerClientId, inputValue){
+	var result = inputValue.substring(inputValue.indexOf(">") + 1, inputValue.indexOf("¤"));
+	var filterIndex = inputValue.substring(inputValue.indexOf("¤") + 1, inputValue.indexOf("</"));
+	var picker = $jQ("#"+escapeId4JQ(pickerClientId));
+	picker.val('3');
+	result = result + "¤" + filterIndex;
+	var pickerSelect = $jQ("#"+escapeId4JQ(pickerClientId + "_results"));
+	pickerSelect.append('<option value="' + result + '">' + result + '</option>');
+	pickerSelect.val(result);
+	var pickerFilter = $jQ("#"+escapeId4JQ(pickerClientId + "_filter"));
+	pickerFilter.val(filterIndex);
+}
+
+function formatInputValue(inputValue){
+	var end = inputValue.indexOf("(") - 1;
+	if (end > 0) {
+		inputValue = inputValue.substring(0, end);
+	}else{
+		end = inputValue.indexOf("<");
+		if (end > 0) {
+			inputValue = inputValue.substring(0, end);
+        }
+    }
+    return inputValue;
+}
+
+function setUpSendOutPickerProps(clientId, pickerClientId, inputValue, component){
+	var result = inputValue.substring(inputValue.indexOf(">") + 1, inputValue.indexOf("¤"));
+	var filterIndex = inputValue.substring(inputValue.indexOf("¤") + 1, inputValue.indexOf("</"));
+	var picker = $jQ("#"+escapeId4JQ(pickerClientId));
+	picker.val('3');
+	
+	var openDialog = clientId.split("_")[2];
+	
+	document.forms['dialog'][component +'_action'].value='openDialog;' + openDialog;
+	
+	var pickerSelect = $jQ("#"+escapeId4JQ(pickerClientId + "_results"));
+	pickerSelect.append('<option value="' + result + '">' + result + '</option>');
+	pickerSelect.val(result);
+	var pickerFilter = $jQ("#"+escapeId4JQ(pickerClientId + "_filter"));
+	pickerFilter.val(filterIndex);
+}
+
+function attachSendOutSearchSuggest(){
+	var textareas = document.getElementsByTagName( "textarea" );
+	for (i = 0; i < textareas.length; i++) {
+		if(textareas[i].id.indexOf("recipientName") !== -1){
+			var recipientNameId = textareas[i].id;
+			addSendOutSearchSuggest(recipientNameId,  "UserListDialog.searchAll", "4");
+		}
+	}
+}
 
 // Autocompleters are applied here, this guarantees sequentiality
 // When they were applied in random order from AJAX updating function, then something was broken

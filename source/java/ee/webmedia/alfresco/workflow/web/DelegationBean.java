@@ -948,9 +948,6 @@ public class DelegationBean implements Serializable {
             inputPicker.getAttributes().put(Search.OPEN_DIALOG_KEY, dialog.getOpenDialogKey(inputId));
             
 	    	Integer filterIndex = Integer.parseInt(pickerValue.split("¤")[1]);
-	    	if (filterIndex == UserContactGroupSearchBean.USER_GROUPS_FILTER) {
-                filterIndex = UserContactGroupSearchBean.CONTACTS_FILTER;
-		    }
 	    	processOwnerSearchResults(event, inputPicker, filterIndex);
     	}else if(value == ""){
     		String valueBinding = ownerNameinput.getValueBinding("value").getExpressionString();
