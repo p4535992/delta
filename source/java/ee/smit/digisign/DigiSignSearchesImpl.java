@@ -478,8 +478,18 @@ public class DigiSignSearchesImpl implements DigiSignSearches {
     }
 
     public Date digiSignStringToDate(String dateValue){
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.000+0000");
-        return parseStringToDate(dateValue, format);
+        if (dateValue == null){
+            return null;
+        }
+        Locale locale = Locale.getDefault();
+        log.info("LOCALE: Country: " + locale.getCountry() + "; Language: " + locale.getLanguage());
+        try {
+            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", locale);
+            return parseStringToDate(dateValue, format);
+        } catch (Exception e){
+            log.error(e.getMessage(), e);
+        }
+        return null;
     }
 
     private Date parseStringToDate(String dateValue, SimpleDateFormat format){
