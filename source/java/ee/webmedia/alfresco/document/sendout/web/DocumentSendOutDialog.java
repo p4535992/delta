@@ -903,7 +903,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
     	}
 		if (addressbookOrgCerts == null || addressbookOrgCerts.isEmpty()) {
 
-            if(BeanHelper.getDigiSignService().getDigiSignServiceActive()){
+            if(BeanHelper.getDigiSignCryptService().getActive()){
                 log.info("Using DigiSign-service to get certificates...");
                 List<SignCertificate> signCertificateList = BeanHelper.getDigiSignSearches().getCertificatesFromDigiSignService(orgCode, orgName);
                 if(signCertificateList == null || signCertificateList.isEmpty()){

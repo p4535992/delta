@@ -6,9 +6,16 @@
         <property name="defaultUri" value="${digisign.service.url}" />
         <property name="appname" value="${digisign.service.appname}" />
         <property name="apppass" value="${digisign.service.apppass}" />
-        <property name="digiSignServiceActive" value="${digisign.service.active}" />
+        <property name="active" value="${digisign.service.active}" />
         <property name="maxThreads" value="${digisign.service.threadCount}" />
         <property name="batchSize" value="${digisign.service.batchSize}" />
+    </bean>
+
+    <bean id="DigiSignCryptService" class="ee.smit.digisign.DigiSignCryptServiceImpl">
+        <property name="defaultUri" value="${digisign.crypt.service.url}" />
+        <property name="appname" value="${digisign.crypt.service.appname}" />
+        <property name="apppass" value="${digisign.crypt.service.apppass}" />
+        <property name="active" value="${digisign.crypt.service.active}" />
     </bean>
 
     <bean id="DigiSignSearches" class="ee.smit.digisign.DigiSignSearchesImpl">

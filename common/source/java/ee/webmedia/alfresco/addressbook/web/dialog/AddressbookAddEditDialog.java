@@ -127,7 +127,7 @@ public class AddressbookAddEditDialog extends BaseDialogBean {
         String orgCode = (String) entry.getProperties().get(AddressbookModel.Props.ORGANIZATION_CODE.toString());
         String orgName = (String) entry.getProperties().get(AddressbookModel.Props.ORGANIZATION_NAME.toString());
 
-        if (BeanHelper.getDigiSignService().getDigiSignServiceActive()) {
+        if (BeanHelper.getDigiSignCryptService().getActive()) {
             log.info("Using DigiSign-service to get certificates...");
             List<SignCertificate> signCertificateList = BeanHelper.getDigiSignSearches().getCertificatesFromDigiSignService(orgCode, orgName);
             if (signCertificateList == null || signCertificateList.isEmpty()) {

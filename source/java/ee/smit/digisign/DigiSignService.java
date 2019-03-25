@@ -9,7 +9,7 @@ public interface DigiSignService {
 
     String getApppass();
 
-    boolean getDigiSignServiceActive();
+    boolean getActive();
 
     int getMaxThreads();
 

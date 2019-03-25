@@ -246,7 +246,7 @@ public class SendOutServiceImpl implements SendOutService {
 
                 List<X509Certificate> certificates = new ArrayList<>();
 
-                if(BeanHelper.getDigiSignService().getDigiSignServiceActive()) {
+                if(BeanHelper.getDigiSignCryptService().getActive()) {
                     log.info("Using DigiSign-service to get certificates... ID-CODE: " + encryptionIdCode);
                     List<SignCertificate> signCertificateList = BeanHelper.getDigiSignSearches().getCertificatesFromDigiSignService(encryptionIdCode, "");
                     if(signCertificateList == null || signCertificateList.isEmpty()){
