@@ -7,6 +7,7 @@ import ee.smit.adit.AditAdapterSearches;
 import ee.smit.adit.AditAdapterService;
 import ee.smit.alfresco.plumbr.PlumbrService;
 import ee.smit.alfresco.visual.VisualService;
+import ee.smit.digisign.DigiSignCryptService;
 import ee.smit.digisign.DigiSignSearches;
 import ee.smit.digisign.DigiSignService;
 import ee.smit.tera.TeraService;
@@ -933,6 +934,10 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
 
     public static DigiSignService getDigiSignService(){
         return getService(DigiSignService.class, DigiSignService.BEAN_NAME);
+    }
+
+    public static DigiSignCryptService getDigiSignCryptService(){
+        return getService(DigiSignCryptService.class, DigiSignCryptService.BEAN_NAME);
     }
 
     public static DigiSignSearches getDigiSignSearches(){

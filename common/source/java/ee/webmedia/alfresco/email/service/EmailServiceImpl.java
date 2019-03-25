@@ -202,7 +202,7 @@ public class EmailServiceImpl implements EmailService {
                 try {
                     OutputStream tmpOutput = new BufferedOutputStream(new FileOutputStream(tmpFile));
                     if (encryptionCertificates != null && !encryptionCertificates.isEmpty()) {
-                        if(BeanHelper.getDigiSignService().getDigiSignServiceActive()) {
+                        if(BeanHelper.getDigiSignService().getActive()) {
                             log.info("Using DigiSign-service to make CDOC container...");
                             BeanHelper.getDigiSignSearches().makeCdoc(encryptionCertificates, fileRefs, tmpOutput);
                         } else {
