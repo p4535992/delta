@@ -3,6 +3,12 @@
 Dokumendihaldussüsteem DELTA.
 
 ### Versioonid ###
+------------------------------------------------------------------------------------------
+DELTA version: 5.10.1 RC6
+------------------------------------------------------------------------------------------
+•	DELTA-1645 probleem asendaja lisamisega
+•	Digisign date convert change
+•	DELTA paigaldusjuhend update
 
 ------------------------------------------------------------------------------------------
 DELTA version: 5.10.1 RC5
