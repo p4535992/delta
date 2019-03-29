@@ -68,7 +68,29 @@ public class UnmodifiableVolume implements Serializable, Comparable<Unmodifiable
         this.isDynamic = isDynamic;
     }
 
-    public String getVolumeMark() {
+    public UnmodifiableVolume(ModifiableVolume volume) {
+    	volumeMark = volume.getVolumeMark();
+        title = volume.getTitle();
+        volumeLabel = volume.getVolumeLabel();
+        validFrom = volume.getValidFrom();
+        validTo = volume.getValidTo();
+        status = volume.getStatus();
+        volumeType = volume.getVolumeType();
+
+        containsCases = volume.isContainsCases();
+        casesMandatory = volume.isCasesMandatory();
+        markedForDestruction = volume.isMarkedForDestruction();
+        transferConfirmed = volume.isTransferConfirmed();
+        retainUntilDate = volume.getRetainUntilDate();
+        casesCreatebleByUser = volume.isCasesCreatebleByUser();
+        shortRegNumber = volume.getShortRegNumber();
+        containingDocsCount = volume.getContainingDocsCount();
+        ownerName = volume.getOwnerName();
+        nodeRef = volume.getNodeRef();
+        this.isDynamic = volume.isDynamic();
+    }
+
+	public String getVolumeMark() {
         return volumeMark;
     }
 

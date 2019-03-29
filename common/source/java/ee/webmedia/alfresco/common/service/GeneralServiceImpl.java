@@ -441,10 +441,8 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     }
 
     private Node loadPropertiesAndAspects(NodeRef nodeRef, Set<QName> propsToLoad, Map<Long, QName> propertyTypes) {
-        final Node node = new Node(nodeRef);
-        node.getAspects();
-        node.getProperties(propertyTypes, propsToLoad);
-        return node;
+        return new Node(nodeRef);
+
     }
 
     @Override

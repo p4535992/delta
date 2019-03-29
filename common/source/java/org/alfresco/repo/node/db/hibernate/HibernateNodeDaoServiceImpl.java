@@ -1436,12 +1436,6 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         Node node = getNodeNotNull(nodeId);
         Map<PropertyMapKey, NodePropertyValue> nodeProperties = node.getProperties();
 
-        for (Map.Entry<PropertyMapKey, NodePropertyValue> entry : nodeProperties.entrySet()) {
-            PropertyMapKey propertyMapKey = entry.getKey();
-            NodePropertyValue nodePropertyValue = entry.getValue();
-
-        }
-
         // Convert the QName IDs
         Map<QName, Serializable> converted = HibernateNodeDaoServiceImpl.convertToPublicProperties(
                 nodeProperties,

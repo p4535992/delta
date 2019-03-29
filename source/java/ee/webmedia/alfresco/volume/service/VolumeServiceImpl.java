@@ -7,10 +7,12 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -26,10 +28,12 @@ import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.time.DateUtils;
 
+import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
 import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.common.service.BulkLoadNodeService;
+import ee.webmedia.alfresco.common.service.CreateObjectCallback;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.service.NodeBasedObjectCallback;
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -53,6 +57,7 @@ import ee.webmedia.alfresco.volume.model.DeletedDocument;
 import ee.webmedia.alfresco.volume.model.UnmodifiableVolume;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
+import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
 public class VolumeServiceImpl implements VolumeService {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(VolumeServiceImpl.class);
@@ -90,10 +95,9 @@ public class VolumeServiceImpl implements VolumeService {
     public List<UnmodifiableVolume> getAllVolumesBySeries(NodeRef seriesNodeRef) {
         List<NodeRef> volumeChildRefs = getVolumeRefs(seriesNodeRef);
         List<NodeRef> caseFileChildRefs = getCaseFileRefs(seriesNodeRef);
-        List<UnmodifiableVolume> volumeList = new ArrayList<>(volumeChildRefs.size() + caseFileChildRefs.size());
+        List<UnmodifiableVolume> volumeList = bulkLoadNodeService.getVolumeByParentSeries(seriesNodeRef);
         Map<Long, QName> propertyTypes = new HashMap<>();
         getVolumeFromChildAssoc(volumeChildRefs, volumeList, false, propertyTypes);
-        getVolumeFromChildAssoc(caseFileChildRefs, volumeList, true, propertyTypes);
         Collections.sort(volumeList);
         return volumeList;
     }

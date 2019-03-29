@@ -15,6 +15,7 @@ import ee.webmedia.alfresco.document.file.model.SimpleFile;
 import ee.webmedia.alfresco.document.file.model.SimpleFileWithOrder;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.substitute.model.Substitute;
+import ee.webmedia.alfresco.volume.model.UnmodifiableVolume;
 
 public interface BulkLoadNodeService {
 
@@ -126,4 +127,5 @@ public interface BulkLoadNodeService {
 
     List<Node> loadAssociatedTargetNodes(NodeRef parentRef, Set<QName> propsToLoad, QName assocType, CreateObjectCallback<Node> createNodeCallback);
 
+    List<UnmodifiableVolume> getVolumeByParentSeries(NodeRef parentRef);
 }

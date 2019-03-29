@@ -15,10 +15,12 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.text.SimpleDateFormat;
 
 import org.alfresco.model.ApplicationModel;
 import org.alfresco.model.ContentModel;
@@ -45,9 +47,13 @@ import org.springframework.jdbc.core.simple.ParameterizedRowMapper;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.springframework.util.Assert;
 
+import com.google.common.collect.Collections2;
+
+import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.file.model.SimpleFile;
 import ee.webmedia.alfresco.document.file.model.SimpleFileWithOrder;
@@ -55,11 +61,15 @@ import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.search.model.FakeDocument;
 import ee.webmedia.alfresco.dvk.model.DvkModel;
+import ee.webmedia.alfresco.eventplan.model.EventPlanModel;
 import ee.webmedia.alfresco.substitute.model.Substitute;
 import ee.webmedia.alfresco.substitute.model.SubstituteModel;
 import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
+import ee.webmedia.alfresco.volume.model.ModifiableVolume;
+import ee.webmedia.alfresco.volume.model.UnmodifiableVolume;
+import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.service.WorkflowConstantsBean;
@@ -1359,7 +1369,88 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
     }
 
     @Override
-    @SuppressWarnings("deprecation")
+    public List<UnmodifiableVolume> getVolumeByParentSeries(NodeRef parentRef) {
+    	final QName propName = null;
+    	String requiredValue = null;
+    	QName type = CaseFileModel.Assocs.CASE_FILE;
+    	final List<UnmodifiableVolume> result = new ArrayList<UnmodifiableVolume>();
+        List<Object> params = new ArrayList<Object>();
+
+        Set<QName> typeArray = type != null ? Collections.singleton(type) : null;
+        boolean checkPropValue = requiredValue != null;
+        String sqlQuery = getChildNodeQueryWithParamsBySeriesParent(parentRef, params, typeArray);
+
+        if (checkPropValue) {
+            sqlQuery += (typeArray == null ? " where " : " and ") + getPropTableAlias(propName) + ".string_value=?";
+            params.add(requiredValue);
+        }
+        Object[] paramArray = params.toArray();
+        final Map<NodeRef, ModifiableVolume> nodeRefsByNodes = new HashMap<>();
+        jdbcTemplate.query(sqlQuery, new ParameterizedRowMapper<Void>() {
+
+            @Override
+            public Void mapRow(ResultSet rs, int rowNum) throws SQLException {
+                NodeRef nodeRef = getNodeRef(rs);
+                ModifiableVolume currentVolume;
+            	if(!nodeRefsByNodes.containsKey(nodeRef)) {
+            		currentVolume = new ModifiableVolume(nodeRef);
+            		nodeRefsByNodes.put(nodeRef, currentVolume);
+            	}else {
+            		currentVolume = nodeRefsByNodes.get(nodeRef);
+            	}
+            	setParam(rs, currentVolume);
+                return null;
+            }
+        }, paramArray);
+        for(ModifiableVolume volume: nodeRefsByNodes.values()) {
+        	result.add(new UnmodifiableVolume(volume));
+        }
+        return result;
+    }
+    
+    private void setParam(ResultSet rs, ModifiableVolume currentVolume){
+    	String dateString = "";
+	    try {
+	    	SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+	    	Map<QName, Long> parameterQNamesByQNameIds = ModifiableVolume.getParameterMap();
+	    	Long qNameId = rs.getLong("qname_id");
+	    	if(qNameId.equals(parameterQNamesByQNameIds.get(VolumeModel.Props.VOLUME_MARK))) {
+	    		currentVolume.setVolumeMark(rs.getString("string_value"));
+	    	}else if(qNameId.equals(parameterQNamesByQNameIds.get(VolumeModel.Props.TITLE))) {
+	    		currentVolume.setTitle(rs.getString("string_value"));
+	    	}else if(qNameId.equals(parameterQNamesByQNameIds.get(VolumeModel.Props.VALID_FROM))) {
+	    		dateString = rs.getString("string_value");
+	    		if(dateString != null && !dateString.equals("")) currentVolume.setValidFrom(format.parse(dateString));
+	    	}else if(qNameId.equals(parameterQNamesByQNameIds.get(VolumeModel.Props.VALID_TO))) {
+	    		dateString = rs.getString("string_value");
+	    		if(dateString != null && !dateString.equals("")) currentVolume.setValidFrom(format.parse(dateString));
+	    	}else if(qNameId.equals(parameterQNamesByQNameIds.get(VolumeModel.Props.STATUS))) {
+	    		currentVolume.setStatus(rs.getString("string_value"));
+	    	}else if(qNameId.equals(parameterQNamesByQNameIds.get(VolumeModel.Props.CONTAINS_CASES))) {
+	    		currentVolume.setContainsCases(rs.getBoolean("boolean_value"));
+	    	}else if(qNameId.equals(parameterQNamesByQNameIds.get(VolumeModel.Props.CASES_MANDATORY))) {
+	    		currentVolume.setCasesMandatory(rs.getBoolean("boolean_value"));
+	    	}else if(qNameId.equals(parameterQNamesByQNameIds.get(EventPlanModel.Props.TRANSFER_CONFIRMED))) {
+	    		currentVolume.setTransferConfirmed(rs.getBoolean("boolean_value"));
+	    	}else if(qNameId.equals(parameterQNamesByQNameIds.get(DocumentAdminModel.Props.OBJECT_TYPE_ID))) {
+	    		currentVolume.setVolumeType(rs.getString("string_value"));
+	    	}else if(qNameId.equals(parameterQNamesByQNameIds.get(EventPlanModel.Props.RETAIN_UNTIL_DATE))) {
+	    		dateString = rs.getString("string_value");
+	    		if(dateString != null && !dateString.equals("")) currentVolume.setRetainUntilDate(format.parse(dateString));
+	    	}else if(qNameId.equals(parameterQNamesByQNameIds.get(VolumeModel.Props.CASES_CREATABLE_BY_USER))) {
+	    		currentVolume.setCasesCreatebleByUser(rs.getBoolean("boolean_value"));
+	    	}else if(qNameId.equals(parameterQNamesByQNameIds.get(VolumeModel.Props.VOL_SHORT_REG_NUMBER))) {
+	    		currentVolume.setShortRegNumber(rs.getLong("long_value"));
+	    	}else if(qNameId.equals(parameterQNamesByQNameIds.get(VolumeModel.Props.CONTAINING_DOCS_COUNT))) {
+	    		currentVolume.setContainingDocsCount((int) rs.getLong("long_value"));
+	    	}else if(qNameId.equals(parameterQNamesByQNameIds.get(DocumentDynamicModel.Props.OWNER_NAME))) {
+	    		currentVolume.setOwnerName(rs.getString("string_value"));
+	    	}
+    	}catch (Exception e) {
+    		throw new RuntimeException("Unable to get value from db "+ dateString + " " + e.getMessage());
+    	}
+    }
+    
     public Set<NodeRef> loadChildRefs(NodeRef parentRef, final QName propName, String requiredValue, QName type) {
         final Set<NodeRef> result = new HashSet<>();
         List<Object> params = new ArrayList<Object>();
@@ -1487,6 +1578,34 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
 
         if (childNodeTypes != null && !childNodeTypes.isEmpty()) {
             sql += " WHERE child.type_qname_id in (" + createQnameIdListing(childNodeTypes) + ")";
+        }
+        return sql;
+    }
+    
+    private String getChildNodeQueryWithParamsBySeriesParent(NodeRef parentRef, List<Object> params, Set<QName> childNodeTypes) {
+        String propTableAlias = null;
+        String sql = "SELECT child.store_id, child.uuid, node_properties.qname_id,"
+        		+ " node_properties.boolean_value, node_properties.long_value, node_properties.string_value "
+                + " FROM " + getNodeTableConditionalJoin(Collections.singletonList(parentRef), params)
+                + " JOIN alf_child_assoc child_assoc on child_assoc.parent_node_id = node.id "
+                + " JOIN alf_node child on child_assoc.child_node_id = child.id "
+        		+ " JOIN alf_node_properties node_properties on node_properties.node_id = child.id ";
+
+        if (childNodeTypes != null && !childNodeTypes.isEmpty()) {
+            sql += " WHERE child.type_qname_id in (" + createQnameIdListing(childNodeTypes) + ")";
+            List<Long> paramQNameIds = new ArrayList(ModifiableVolume.getParameterMap().values());
+            if(!paramQNameIds.isEmpty()) {
+            	Iterator<Long> iterator = paramQNameIds.iterator();
+            	sql += " AND (";
+            	while(iterator.hasNext()) {
+                    Long id = iterator.next();
+                    sql += " node_properties.qname_id = " + id;
+                    if(iterator.hasNext()) {
+                    	sql += " OR ";
+                    }
+                 }
+	            sql += ")";
+            }
         }
         return sql;
     }

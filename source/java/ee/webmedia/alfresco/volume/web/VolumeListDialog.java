@@ -79,6 +79,7 @@ public class VolumeListDialog extends BaseDialogBean {
                     @Override
                     public int compare(UnmodifiableVolume o1, UnmodifiableVolume o2) {
                         // This field is mandatory
+                    	if(o2.getValidFrom() == null || o1.getValidFrom() == null) return -1;
                         return o2.getValidFrom().compareTo(o1.getValidFrom());
                     }
                 });
