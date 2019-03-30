@@ -85,6 +85,9 @@ public class LogEntryDataProvider extends LazyListDataProvider<String, LogEntry>
         COLUMN_MAPPING.put("eventDescription", "description");
         COLUMN_MAPPING.put("objectName", "object_name");
         COLUMN_MAPPING.put("objectId", "object_id");
+        COLUMN_MAPPING.put("docName", "doc_name");
+        COLUMN_MAPPING.put("regNumber", "reg_number");
+        COLUMN_MAPPING.put("url", "url");
     }
 
     @Override

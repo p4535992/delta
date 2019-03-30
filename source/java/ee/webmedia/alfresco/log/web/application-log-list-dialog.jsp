@@ -46,7 +46,21 @@
          <f:facet name="header">
             <a:sortLink id="col5-sort" label="#{msg.applog_item_description}" value="eventDescription" styleClass="header" />
          </f:facet>
-         <h:outputText id="col5-text" value="#{r.eventDescriptionAndLinks}" styleClass="condence150" escape="false"/>
+         <h:outputText id="col5-text" value="#{r.eventDescriptionAndLinks}" styleClass="condence100" escape="false"/>
+      </a:column>
+
+      <a:column id="col8">
+         <f:facet name="header">
+            <a:sortLink id="col8-sort" label="#{msg.applog_item_doc_name}" value="docName" styleClass="header" />
+         </f:facet>
+         <h:outputText id="col8-text" value="#{r.docName}" styleClass="condence100" escape="false"/>
+      </a:column>
+
+      <a:column id="col9">
+         <f:facet name="header">
+            <a:sortLink id="col9-sort" label="#{msg.applog_item_reg_number}" value="regNumber" styleClass="header" />
+         </f:facet>
+         <h:outputText id="col9-text" value="#{r.regNumber}" />
       </a:column>
 
       <a:column id="col6">
@@ -54,6 +68,13 @@
             <a:sortLink id="col6-sort" label="#{msg.applog_item_object}" value="objectName" styleClass="header" />
          </f:facet>
          <h:outputText id="col6-text" value="#{r.objectName}" />
+      </a:column>
+
+      <a:column id="co20">
+         <f:facet name="header">
+            <a:sortLink id="co20-sort" label="#{msg.applog_item_url}" value="url" styleClass="header" />
+         </f:facet>
+         <h:outputText id="co20-text" value="#{r.url}" />
       </a:column>
 
       <a:column id="col7">
