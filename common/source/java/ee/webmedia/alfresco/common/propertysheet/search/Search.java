@@ -292,6 +292,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
     private Object getRowObjectByIndex(Integer index) {
         UIComponent comp = getParent().getParent();
         UIRichList list = (UIRichList) comp;
+        if (index == null) index = 0;
         return list.getDataModel().getRow(index);
     }
 
