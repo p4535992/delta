@@ -1170,6 +1170,12 @@ public class ComponentUtil {
             return null;
         }
         if (clientId.equals(component.getClientId(context))) {
+            for (UIComponent child : getChildren(component)) {
+                //fix for substitute ajax bug
+                if ("picker_substituteSearch".equals(child.getId()) && "substituteSearch".equals(child.getParent().getId())) {
+                    child.setId("search");
+                }
+            }
             return component;
         }
         for (UIComponent child : getChildren(component)) {
