@@ -210,10 +210,10 @@ public class LogServiceImpl implements LogService, InitializingBean {
             creatorName = overridecreatorName.get();
         }
         jdbcTemplate.update(
-                "INSERT INTO delta_log (log_entry_id,created_date_time,level,creator_id,creator_name,computer_ip,computer_name,object_id,object_name,description) "
-                        + "VALUES (?,?,?,?,?,?,?,?,?,?)",
+                "INSERT INTO delta_log (log_entry_id,created_date_time,level,creator_id,creator_name,computer_ip,computer_name,object_id,object_name,description,doc_name,reg_number,url) "
+                        + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 new Object[] { entryId, now, log.getLevel(), creatorId, creatorName, log.getComputerIp(), log.getComputerName(),
-                        log.getObjectId(), log.getObjectName(), log.getEventDescription() });
+                        log.getObjectId(), log.getObjectName(), log.getEventDescription(), log.getDocName(), log.getRegNumber(), log.getUrl() });
     }
 
     private boolean logEnabled(LogEntry log) {
@@ -238,7 +238,7 @@ public class LogServiceImpl implements LogService, InitializingBean {
 
     @Override
     public List<LogEntry> getLogEntries(LogFilter filter, String orderbyColumn, boolean descending, int limit, int offset) {
-        return queryLogEntries("SELECT log_entry_id, level, created_date_time, creator_id, creator_name, computer_ip, computer_name, object_id, object_name, description FROM delta_log",
+        return queryLogEntries("SELECT log_entry_id, level, created_date_time, creator_id, creator_name, computer_ip, computer_name, object_id, object_name, description, doc_name, reg_number, url FROM delta_log",
                 new LogRowMapper(), filter, orderbyColumn, descending, limit, offset);
     }
 
@@ -482,6 +482,9 @@ public class LogServiceImpl implements LogService, InitializingBean {
             log.setObjectId(rs.getString(8));
             log.setObjectName(rs.getString(9));
             log.setEventDescription(rs.getString(10));
+            log.setDocName(rs.getString(11));
+            log.setRegNumber(rs.getString(12));
+            log.setUrl(rs.getString(13));
             return log;
         }
     }

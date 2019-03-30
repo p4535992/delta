@@ -7,9 +7,12 @@ import java.util.Date;
 
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.model.Document;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.log.LogHelper;
 import ee.webmedia.alfresco.log.service.LogListItem;
 import ee.webmedia.alfresco.notification.service.NotificationService;
@@ -41,6 +44,12 @@ public class LogEntry implements Serializable, LogListItem {
     private String objectId;
 
     private String objectName;
+    
+    private String docName;
+    
+    private String regNumber;
+    
+    private String url;
 
     private String description;
 
@@ -215,8 +224,18 @@ public class LogEntry implements Serializable, LogListItem {
         result.objectName = object.getObjectName();
         result.objectId = nodeRef != null ? nodeRef.toString() : null;
         result.description = desc + result.getSubstitutionLog();
+        if (nodeRef != null && DocumentCommonModel.Types.DOCUMENT.equals(new Node(nodeRef).getType())) {
+            addDocumentLog(nodeRef, result);
+        }
         LogHelper.update(result);
         return result;
+    }
+
+    private static void addDocumentLog(NodeRef nodeRef, LogEntry result) {
+        Document document = BeanHelper.getDocumentService().getDocumentByNodeRef(nodeRef);
+        result.setDocName(document.getDocName());
+        result.setRegNumber(document.getAkString() + StringUtils.defaultString(document.getRegNumber()));
+        result.setUrl(BeanHelper.getDocumentTemplateService().getDocumentUrl(nodeRef));
     }
 
     private String getSubstitutionLog() {
@@ -227,5 +246,29 @@ public class LogEntry implements Serializable, LogListItem {
             return "";
         }
         return " " + MessageUtil.getMessage("applog_log_subtitution", getUserService().getUserFullName(runAsUser), runAsUser);
+    }
+
+    public String getDocName() {
+        return docName;
+    }
+
+    public void setDocName(String docName) {
+        this.docName = docName;
+    }
+
+    public String getRegNumber() {
+        return regNumber;
+    }
+
+    public void setRegNumber(String regNumber) {
+        this.regNumber = regNumber;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
     }
 }
