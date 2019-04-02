@@ -199,7 +199,7 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
             orgStructById.put(organizationStructure.getUnitId(), organizationStructure);
         }
         
-        if (BooleanUtils.toBoolean(orgStructDao.getOrgParamValue(OrgStructDao.PARAM_NAME_PERSON_ORG))) {
+        if (fromDatabase && BooleanUtils.toBoolean(orgStructDao.getOrgParamValue(OrgStructDao.PARAM_NAME_PERSON_ORG))) {
         	updatePersonsOrgStruct(orgStructById);
         	log.info("Set personOrgChanged to 0");
 	        orgStructDao.updateOrgParamValue(OrgStructDao.PARAM_NAME_PERSON_ORG, 0);
