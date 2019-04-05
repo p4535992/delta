@@ -4,6 +4,23 @@ Dokumendihaldussüsteem DELTA.
 
 ### Versioonid ###
 ------------------------------------------------------------------------------------------
+DELTA version: 5.10.1 RC7
+------------------------------------------------------------------------------------------
+•	DELTA-1645 probleem asendaja lisamisega (updated)
+•	DELTA-1365 Süsteemi rakenduse logisse lisada dokumendi pealkiri, viit ning link
+•	DELTA-1652 Delta-AMR-i sünk on katki
+•	Digisign-crypt separate service support.
+	
+	alfresco-gobal.properties file new params:
+	
+	digisign.crypt.service.url=https://digisign-crypt.smit.ee
+	digisign.crypt.service.client.id=[digisign-crypt id name]
+	digisign.crypt.service.client.secure=[digisign-crypt secure code]
+	digisign.crypt.service.appname=[registred application username]
+	digisign.crypt.service.apppass=[registred application password]
+	digisign.crypt.service.active=true/false
+	
+------------------------------------------------------------------------------------------
 DELTA version: 5.10.1 RC6
 ------------------------------------------------------------------------------------------
 •	DELTA-1645 probleem asendaja lisamisega
